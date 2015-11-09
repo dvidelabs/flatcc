@@ -1,0 +1,6 @@
+
+table main {
+    time: long;
+    device: ubyte;
+    samples: [float];
+}
