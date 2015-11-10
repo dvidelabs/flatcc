@@ -167,15 +167,15 @@
  * bool to other types (useful in enums that are not bool because
  * official flatc has no boolean enum type.
  *
- * However, there is no good reason to mix bool with other types in a
- * schema definition, especially not when boolean enumerations are
- * allowed, so by default it is disabled.
+ * However, there appears to be no strong reason for mixing boolean types
+ * with other types, but since `flatc` supports, it is enabled by
+ * default.
  */
 #ifndef FLATCC_ALLOW_BOOLEAN_CONVERSION
 #define FLATCC_ALLOW_BOOLEAN_CONVERSION 1
 #endif
 
-/* FB flatc parser does not recognize later enums. */
+/* flatc does not recognize later defined enums, be we do by default. */
 #ifndef FLATCC_HIDE_LATER_ENUM
 #define FLATCC_HIDE_LATER_ENUM 0
 #endif
@@ -290,6 +290,8 @@
  */
 #define FLATCC_CGEN_PAD 0
 
+/* ---- CGEN are flagss specific the C code generator. ---- */
+
 /*
  * Generate support code for sorting arrays.
  */
@@ -302,17 +304,24 @@
 #define FLATCC_CGEN_PRAGMAS 1
 #endif
 
+/* ---- BGEN are flags specific to the binary schema generator. ---- */
+
 /* Export option for --schema. */
 #ifndef FLATCC_BGEN_BFBS
 #define FLATCC_BGEN_BFBS 0
 #endif
 
-/* Add uoffset length field before buffer. */
-#ifndef FLATCC_BGEN_LENGTH_PREFIX
-#define FLATCC_BGEN_LENGTH_PREFIX 0
+/*
+ * Add uoffset length field before buffer. This is not a valid buffer
+ * then but can be used to concatenate multiple files and it is
+ * compatible with the layout of nested buffers that have a similar
+ * prefix. The prefix is a uoffset_t field.
+ */
+#ifndef FLATCC_BGEN_LENGTH_PREFIX #define FLATCC_BGEN_LENGTH_PREFIX 0
 #endif
 
-/* Prefix type names with namespace during schema export. */
+/* Prefix type names with namespace during schema export.
+ * flatc does not include the namespace prefix. */
 #ifndef FLATCC_BGEN_QUALIFY_NAMES
 #define FLATCC_BGEN_QUALIFY_NAMES 1
 #endif
