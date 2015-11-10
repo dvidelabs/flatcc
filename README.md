@@ -353,8 +353,9 @@ Namespaces can be long so we use a macro to manage this.
     /* main() {...} */
 
 The above example is not very elegant. For a more complete example of
-read only buffer access see `examples/reflection/bfbs2json` which
-converts a binary FlatBuffers schema into a JSON file.
+read only buffer access see [the bfbs2json
+example](https://github.com/dvidelabs/flatcc/blob/master/examples/reflection/bfbs2json.c)
+which converts a binary FlatBuffers schema into a JSON file.
 
 Assuming our above file is `monster_test.c` the following are a few ways to compile the project:
 
