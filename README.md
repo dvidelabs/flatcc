@@ -325,7 +325,7 @@ Namespaces can be long so we use a macro to manage this.
             return -1;
         }
 
-        /* -3.2f is actually -3.20000005 and not -3.2 due to tation loss. */
+        /* -3.2f is actually -3.20000005 and not -3.2 due to representation loss. */
         if (ns(Vec3_z(vec)) != -3.2f) {
             printf("Position failing on z coordinate\n");
             return -1;
@@ -351,6 +351,10 @@ Namespaces can be long so we use a macro to manage this.
         return 0;
     }
     /* main() {...} */
+
+The above example is not very elegant. For a more complete example of
+read only buffer access see `examples/reflection/bfbs2json` which
+converts a binary FlatBuffers schema into a JSON file.
 
 Assuming our above file is `monster_test.c` the following are a few ways to compile the project:
 
@@ -440,9 +444,9 @@ or the simplistic direct buffer access shown below. See also
         vec->x = 1, vec->y = 2, vec->z = -3.2f;
         /* _end call converts to protocol endian format - for LE it is a nop. */
         ns(Monster_pos_end(B));
+
         /* Name is required, or we get an assertion in debug builds. */
         ns(Monster_name_create_str(B, "MyMonster"));
-        ns(Monster_pos_end(B));
 
         ns(Monster_end_as_root(B));
     }
@@ -482,6 +486,60 @@ Compile the example project:
 
 Note that here the include directive is required even without the portability
 layer so that `flatbuffers/flatcc_builder.h` can be found.
+
+
+## Buffer Identifiers and Schema Roots
+
+The FlatBuffers schema is intended to have a single root object and a
+single file identifier and extension - but this mostly makes sense for a
+JSON parser needing to make an automated choice (and `flatcc` does not
+read JSON objecs).
+
+In praxis all objects (tables and structs) can be roots. This makes it
+ambigious as to what identifier an individual object should use as root.
+`flatcc` uses the `file_identifier` last set in the current schema file
+(ignoring included schema). The identifier is frozen by a define
+`myobject_identifer` and `myobject_extension` so it does not change with
+different included include schema. There is also a global
+`file_identifier` representing the last set schema identifier, and ditto
+extension. The binary schema code generator uses this to set the
+identifier and file extension of its output.
+
+Each object created `_as_root` will automatically use the identifier
+from its `myobject_identifier` definition. When an object is read
+`as_root` this identifier is checked and will return null or assert in
+debug. The `_as_root` call is really a wrapper around first opening or
+closing a buffer then reading the first object as the given root type.
+This can be done as two steps and allows detailed control of identifier
+handling - see `builder.md` for more.
+
+
+## Global Scope and Included Schema
+
+Attributes included in the schema are viewed in a global namespace and
+each include file adds to this namespace so a schema file can use
+included attributes without namespace prefixes.
+
+Each included schema will also add types to a global scope until it sees
+a `namespace` declaration. An included schema does not inherit the
+namespace of an including file or an earlier included file, so all
+schema files starts in the global scope. An included file can, however,
+see other types previously defined in the global scope. Because include
+statements always appear first in a schema, this can only be earlier
+included files, not types from a containing schema.
+
+The generated output for any included schema is indendent of how it was
+included, but it might not compile without the earlier included files
+being present and included first. By including the toplevel `myschema.h`
+or `myschema_builder.h` all these dependencies are handled correctly.
+
+Note: `libflatcc.a` can only parse a single schema when the schema is
+given as a memory buffer, but can handle the above when given a
+filename. It is almost possible to simply concatenate schema together to
+obtain the same effect in memory, but for this to work each schema must
+be separated by a global scope reset such as an empty `namespace;`. This
+is currently not supported.
+
 
 ## Required Fields and Duplicate Fields
 
