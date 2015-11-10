@@ -35,7 +35,7 @@ top-down construction mixed freely.
 `flatcc` does not support parsing JSON objects.
 
 See also the Google FPL
-[[FlatBuffers](http://google.github.io/flatbuffers/) homepage.
+[FlatBuffers](http://google.github.io/flatbuffers/) homepage.
 
 ## Time / Space / Usability Tradeoff
 
