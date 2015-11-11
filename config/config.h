@@ -317,7 +317,8 @@
  * compatible with the layout of nested buffers that have a similar
  * prefix. The prefix is a uoffset_t field.
  */
-#ifndef FLATCC_BGEN_LENGTH_PREFIX #define FLATCC_BGEN_LENGTH_PREFIX 0
+#ifndef FLATCC_BGEN_LENGTH_PREFIX
+#define FLATCC_BGEN_LENGTH_PREFIX 0
 #endif
 
 /* Prefix type names with namespace during schema export.
