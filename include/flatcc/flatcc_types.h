@@ -5,6 +5,8 @@
 #include "flatcc/flatcc_portable.h"
 #endif
 
+#include <stdlib.h>
+
 #ifndef UINT8_MAX
 #include <stdint.h>
 #endif

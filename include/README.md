@@ -5,7 +5,7 @@ reading already created flatbuffers.
 
 ## Flatcc Builder Support
 
-For user code to generate flatbuffers, the `libflatccbuilder` library
+For user code to generate flatbuffers, the `libflatccrt.a` library
 must be linked and `flatcc` must be in the include path to provide the
 necessary headers for the library. This is not needed when only reading
 flatbuffers.

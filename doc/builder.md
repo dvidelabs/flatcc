@@ -83,8 +83,8 @@ a `myschema_builder.h` and some common support files. When building a
 buffer the `myschema_builder.h` must be used but when only reading the
 `myschema.h` file should be used instead. Here we are only concerned
 with building. When building, it is necessary to link with
-`libflatccbuilder.a` but when reading, all nesessary code is contained in
-the generated header files.
+`libflatccrt.a` runtime library but when reading, all nesessary code is
+contained in the generated header files.
 
 The builder object only manages a stack of currently active objects and
 does not store an object that is complete. Instead it calls an emitter
@@ -1284,9 +1284,9 @@ abnormal temparature readings based on the sorted vector data.
 In the above example, the original sensor devices are not interested in
 the reader interface nor the sort interface. While the sort and find
 operations may be available, it is dead inline code that does not
-inflate the binary codes image size, but the libflatccbuilder library is
+inflate the binary codes image size, but the libflatccrt library is
 linked in. The collecting server is not interested in the builder
-interface and does not link with the `libflatccbuilder` library but uses
+interface and does not link with the `libflatccrt` library but uses
 both the inline functions of the reader intrface and the sort interface.
 The upstream data storage service uses no interface at all since it
 treats the buffers as binary blobs in a database indexed by device and

@@ -15,9 +15,9 @@ cp test/reflection_test/*.c ${TMP}
 cd ${TMP}
 
 $CC -g -I ${ROOT}/include reflection_test.c \
-    ${ROOT}/lib/libflatccbuilder_d.a -o reflection_test_d
+    ${ROOT}/lib/libflatccrt.a -o reflection_test_d
 $CC -O3 -DNDEBUG -I ${ROOT}/include reflection_test.c \
-    ${ROOT}/lib/libflatccbuilder.a -o reflection_test
+    ${ROOT}/lib/libflatccrt.a -o reflection_test
 echo "running reflection test debug"
 ./reflection_test_d
 echo "running reflection test optimized"

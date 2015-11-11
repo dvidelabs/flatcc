@@ -20,6 +20,7 @@ add_library(flatcc
     codegen_c_builder.c
     codegen_c_sort.c
     codegen_schema.c
-    ../builder/builder.c
-    ../builder/emitter.c
+    # needed for building binary schema
+    ../runtime/builder.c
+    ../runtime/emitter.c
 )

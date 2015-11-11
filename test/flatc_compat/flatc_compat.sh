@@ -14,6 +14,7 @@ bin/flatcc -a -o ${TMP}/flatc_compat test/monster_test/monster_test.fbs
 cp test/flatc_compat/*.{json,mon,c} ${TMP}/flatc_compat/
 cd ${TMP}/flatc_compat
 cc -g -I ${ROOT}/include flatc_compat.c \
-    ${ROOT}/lib/libflatccbuilder_d.a -o flatc_compat_d
+    ${ROOT}/lib/libflatccrt.a -o flatc_compat_d
 echo "Google FPL flatc compatibility test - reading flatc generated binary"
 ./flatc_compat_d
+

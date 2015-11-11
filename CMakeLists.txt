@@ -11,7 +11,7 @@ set (dist_dir "${PROJECT_SOURCE_DIR}")
 # The targets we copy to bin and lib directories, i.e. not tests.
 set(dist_targets
     flatcc
-    flatccbuilder
+    flatccrt
     flatcc_cli
 )
 
@@ -45,7 +45,7 @@ endif()
 
 add_subdirectory(test)
 add_subdirectory(src/compiler)
-add_subdirectory(src/builder)
+add_subdirectory(src/runtime)
 add_subdirectory(src/cli)
 
 set_target_properties(${dist_targets}

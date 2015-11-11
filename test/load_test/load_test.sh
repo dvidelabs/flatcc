@@ -13,9 +13,9 @@ bin/flatcc -a -o ${TMP} test/monster_test/monster_test.fbs
 cp test/load_test/*.c ${TMP}
 cd ${TMP}
 cc -g -I ${ROOT}/include load_test.c \
-    ${ROOT}/lib/libflatccbuilder_d.a -o load_test_d
+    ${ROOT}/lib/libflatccrt.a -o load_test_d
 cc -O3 -DNDEBUG -I ${ROOT}/include load_test.c \
-    ${ROOT}/lib/libflatccbuilder.a -o load_test
+    ${ROOT}/lib/libflatccrt.a -o load_test
 echo "running load test debug"
 ./load_test_d
 echo "running load test optimized"

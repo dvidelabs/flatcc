@@ -13,6 +13,7 @@ bin/flatcc -a -o ${TMP}/emit_test test/emit_test/emit_test.fbs \
 cp test/emit_test/*.c ${TMP}/emit_test
 cd ${TMP}/emit_test
 cc -g -I ${ROOT}/include emit_test.c \
-    ${ROOT}/lib/libflatccbuilder_d.a -o emit_test_d
+    ${ROOT}/lib/libflatccrt.a -o emit_test_d
 echo "running emit test"
 ./emit_test_d
+

@@ -5,7 +5,7 @@ The project includes:
 - an executable `flatcc` FlatBuffers schema compiler for C and a
   corresponding library `libflatcc.a`. The compiler generates C header
   files or a binary flatbuffers schema.
-- a typeless runtime library `libflatccbuilder.a` for building
+- a typeless runtime library `libflatccrt.a` for building and verifying
   flatbuffers from C. Generated builder headers depend on this library.
   It may also be useful for other language interfaces. The library
   maintains a stack state to make it easy to build buffers from a parser
@@ -103,7 +103,7 @@ additional edge cases.
 
 For building flatbuffers a separate builder header file is generated per
 schema. It requires a `flatbuffers_common_builder.h` file also generated
-by the compiler and a small runtime library `libflatccbuilder.a`. It is
+by the compiler and a small runtime library `libflatccrt.a`. It is
 because of this requirement that the reader and builder generated code
 is kept separate. Typical uses can be seen in the `monster_test.c` file.
 The builder allows of repeated pushing of content to a vector or a
@@ -261,7 +261,7 @@ headers could not found. In this case `-DFLATCC_PORTABLE` should help.
 FlatBuffers use 32-bit `uoffset_t` and 16-bit `voffset_t`. `soffset_t`
 always has the same size as `uoffset_t`. These types can be changed by
 preprocessor defines without regenerating code. However, it is important
-that `libflatccbuilder.a` is compiled with the same types as defined in
+that `libflatccrt.a` is compiled with the same types as defined in
 `flatcc_types.h`.
 
 `uoffset_t` currently always point forward like `flatc`. In retrospect
@@ -483,7 +483,7 @@ or the simplistic direct buffer access shown below. See also
 
 Compile the example project:
 
-    cc --std=c11 -I include monster_example.c lib/libflatccbuilder.a -o monster_example
+    cc --std=c11 -I include monster_example.c lib/libflatccrt.a -o monster_example
 
 Note that here the include directive is required even without the portability
 layer so that `flatbuffers/flatcc_builder.h` can be found.

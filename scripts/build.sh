@@ -10,7 +10,7 @@ mkdir -p ${ROOT}/lib
 
 rm -f ${ROOT}/bin/flatcc{,_d}
 rm -f ${ROOT}/libflatcc{,_d}.a
-rm -f ${ROOT}/libflatccbuilder{,_d}.a
+rm -f ${ROOT}/libflatccrt{,_d}.a
 
 if [ ! -d ${ROOT}/build/Debug ] || [ ! -d  ${ROOT}/build/Release ]; then
     ${ROOT}/scripts/initbuild.sh

@@ -68,9 +68,9 @@ ${ROOT}/bin/flatcc -I ${ROOT}/test/monster_test -a \
 cd ${TMP}/monster_test_main
 cp ${ROOT}/test/monster_test/monster_test.c .
 $CC -g -I ${ROOT}/include monster_test.c \
-    ${ROOT}/lib/libflatccbuilder_d.a -o monster_test
+    ${ROOT}/lib/libflatccrt.a -o monster_test
 $CC -O3 -DNDEBUG -DFLATBUFFERS_BENCHMARK -I ${ROOT}/include monster_test.c \
-    ${ROOT}/lib/libflatccbuilder.a -o monster_test_optimized
+    ${ROOT}/lib/libflatccrt.a -o monster_test_optimized
 ./monster_test
 
 echo "running optimized version of main monster test"
