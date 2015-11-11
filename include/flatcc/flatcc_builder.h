@@ -64,6 +64,42 @@
 #include "flatcc_types.h"
 #include "flatcc_emitter.h"
 
+/* It is possible to enable logging here. */
+#ifndef FLATCC_BUILDER_ASSERT
+#define FLATCC_BUILDER_ASSERT(cond, reason) assert(cond)
+#endif
+
+/*
+ * Eror handling is not convenient and correct use should not cause
+ * errors beyond possibly memory allocation, but assertions are a
+ * good way to trace problems.
+ *
+ * Note: some internal assertion will remain if disabled.
+ */
+#ifndef FLATCC_BUILDER_ASSERT_ON_ERROR
+#define FLATCC_BUILDER_ASSERT_ON_ERROR 1
+#endif
+
+/*
+ * If set, checks user input agains state and returns error,
+ * otherwise errors are ignored (assuming they won't happen).
+ * Errors will be asserted if enabled and checks are not skipped.
+ */
+#ifndef FLATCC_BUILDER_SKIP_CHECKS
+#define FLATCC_BUILDER_SKIP_CHECKS 0
+#endif
+
+
+/*
+ * When adding the same field to a table twice this is either an error
+ * or the existing field is returned, potentially introducing garbage
+ * if the type is a vector, table, or string. When implementing parsers
+ * it may be convenient to not treat this as an error.
+ */
+#ifndef FLATCC_BUILDER_ALLOW_REPEAT_TABLE_ADD
+#define FLATCC_BUILDER_ALLOW_REPEAT_TABLE_ADD 0
+#endif
+
 /**
  * This type must have same size as `flatbuffers_uoffset_t`
  * and must be a signed type.
