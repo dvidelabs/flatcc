@@ -1,4 +1,4 @@
-/* 
+/*
  * Uses various known flags to decide endianness and defines:
  *
  * __LITTLE_ENDIAN__ or __BIG_ENDIAN__ if not already defined
@@ -6,14 +6,14 @@
  * and also defines
  *
  * __BYTE_ORDER__ to either __ORDER_LITTLE_ENDIAN__ or
- * __ORDER_BIG_ENDIAN if not already defined 
+ * __ORDER_BIG_ENDIAN if not already defined
  *
  * If none of these could be set, __UNKNOWN_ENDIAN__ is defined,
  * which is not a known flag. If __BYTE_ORDER__ is defined but
  * not big or little endian, __UNKNOWN_ENDIAN__ is also defined.
  */
 
-#ifndef PENDIANT_DETECT
+#ifndef PENDIAN_DETECT
 #define PENDIAN_DETECT
 
 #ifndef __ORDER_LITTLE_ENDIAN__
@@ -24,7 +24,7 @@
 #define __ORDER_BIG_ENDIAN__ 4321
 #endif
 
-#ifdef __BYTE_ORDER__ 
+#ifdef __BYTE_ORDER__
 
 #if defined(__LITTLE_ENDIAN__) && __BYTE_ORDER != __ORDER_BIG_ENDIAN
 #error __LITTLE_ENDIAN__ inconsistent with __BYTE_ORDER__
