@@ -1,7 +1,7 @@
 #ifndef PINTTYPES_H
 #define PINTTYPES_H
 
-#if 0 || (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+#if (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
 #include <inttypes.h>
 #else
 
