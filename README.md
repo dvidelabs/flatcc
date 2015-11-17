@@ -126,7 +126,7 @@ excluding header files. Readers do not need to link with a library.
 
 For read-only access to Flatbuffers, no support code is required. The
 compiler generates a header file per schema file and a necessary
-`flatbuffers_common.h` file which allow for custom name prefixes of all
+`flatbuffers_common_reader.h` file which allow for custom name prefixes of all
 operations if so desired - this may be relevant if changing offset sizes
 in the buffer format.
 
@@ -296,15 +296,15 @@ add the recursion because `monster_test.fbs` includes other files.
 
 we get:
 
-    flatbuffers_common.h
-    include_test1.h
-    include_test2.h
-    monster_test.h
+    flatbuffers_common_reader.h
+    include_test1_reader.h
+    include_test2_reader.h
+    monster_test_reader.h
 
 Namespaces can be long so we use a macro to manage this.
 
 
-    #include "monster_test.h"
+    #include "monster_test_reader.h"
 
     #undef ns
     #define ns(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Example, x)
@@ -405,16 +405,16 @@ First we must generate the files:
 
 This produces:
 
-    flatbuffers_common.h
+    flatbuffers_common_reader.h
     flatbuffers_common_builder.h
     flatbuffers_common_verifier.h
-    include_test1.h
+    include_test1_reader.h
     include_test1_builder.h
     include_test1_verifier.h
-    include_test2.h
+    include_test2_reader.h
     include_test2_builder.h
     include_test2_verifier.h
-    monster_test.h
+    monster_test_reader.h
     monster_test_builder.h
     monster_test_verifier.h
 
@@ -752,7 +752,7 @@ it detectable by `is_present`.
 
 The portablity layer is not required when --std=c11 is defined on a clang
 compiler where little endian is avaiable and easily detected, or where
-`<endian.h>` is available and easily detected. `flatcc_builder_common.h`
+`<endian.h>` is available and easily detected. `flatbuffers_common_reader.h`
 contains a minimal portability abstraction that also works for some
 platforms even without C11, e.g. OS-X clang. The portablity file
 can be included before other headers, or by setting the compile time

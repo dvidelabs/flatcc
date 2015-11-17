@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define FLATCC_VERSION_TEXT "0.1.0"
+#define FLATCC_VERSION_TEXT "0.1.1"
 
 /*
  * This is an alternative implementation to googles `flatc` compiler.

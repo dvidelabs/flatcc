@@ -16,7 +16,7 @@ add_library(flatcc
     semantics.c
     coerce.c
     flatcc.c
-    codegen_c.c
+    codegen_c_reader.c
     codegen_c_sort.c
     codegen_c_builder.c
     codegen_c_verifier.c

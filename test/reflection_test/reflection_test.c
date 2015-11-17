@@ -1,5 +1,5 @@
 #include "support/readfile.h"
-#include "flatcc/reflection/reflection.h"
+#include "flatcc/reflection/reflection_reader.h"
 
 #define lld(x) (long long int)(x)
 

@@ -293,7 +293,7 @@ public:
   const_iterator end() const { return const_iterator(Data(), size()); }
 
   // Change elements if you have a non-const pointer to this object.
-  // Scalars only. See reflection.h, and the documentation.
+  // Scalars only. See reflection_reader.h, and the documentation.
   void Mutate(uoffset_t i, T val) {
     assert(i < size());
     WriteScalar(data() + i, val);

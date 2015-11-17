@@ -13,7 +13,7 @@
 
 /*
  * This should match generated type declaratios in
- * `flatbuffers_common.h` (might have different name prefix).
+ * `flatbuffers_common_reader.h` (might have different name prefix).
  * Read only generated code does not depend on library code,
  * hence the duplication.
  */

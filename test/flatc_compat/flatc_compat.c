@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "monster_test.h"
+#include "monster_test_reader.h"
 #include "monster_test_verifier.h"
 #include "support/readfile.h"
 #include "support/hexdump.h"

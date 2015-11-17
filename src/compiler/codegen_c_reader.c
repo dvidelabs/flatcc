@@ -441,8 +441,8 @@ int fb_gen_common_c_header(output_t *out)
     const char *nscup = out->nscup;
 
     fprintf(out->fp,
-        "#ifndef %s_COMMON_H\n"
-        "#define %s_COMMON_H\n",
+        "#ifndef %s_COMMON_READER_H\n"
+        "#define %s_COMMON_READER_H\n",
         nscup, nscup);
     fprintf(out->fp, "\n/* " FLATCC_GENERATED_BY " */\n\n");
     fprintf(out->fp, "/* Common FlatBuffers read functionality for C. */\n\n");
@@ -593,8 +593,8 @@ static void gen_pretext(output_t *out)
     int do_pad = out->opts->cgen_pad;
 
     fprintf(out->fp,
-        "#ifndef %s_H\n"
-        "#define %s_H\n",
+        "#ifndef %s_READER_H\n"
+        "#define %s_READER_H\n",
         out->S->basenameup, out->S->basenameup);
 
     fprintf(out->fp, "\n/* " FLATCC_GENERATED_BY " */\n\n");
@@ -616,11 +616,11 @@ static void gen_pretext(output_t *out)
     }
 
     fprintf(out->fp,
-            "#ifndef %s_COMMON_H\n"
-            "#include \"%scommon.h\"\n"
+            "#ifndef %s_COMMON_READER_H\n"
+            "#include \"%scommon_reader.h\"\n"
             "#endif\n",
             nscup, nsc);
-    fb_gen_c_includes(out, ".h", "_H");
+    fb_gen_c_includes(out, "_reader.h", "_READER_H");
 
     if (!do_pad) {
         fprintf(out->fp,
@@ -1736,7 +1736,7 @@ int fb_codegen_common_c(fb_options_t *opts)
     nsc_len = strlen(output.nsc) - 1;
     ret = 0;
     if (opts->cgen_common_reader) {
-        if (open_output_file(out, out->nsc, nsc_len, "_common.h")) {
+        if (open_output_file(out, out->nsc, nsc_len, "_common_reader.h")) {
             return -1;
         }
         ret = fb_gen_common_c_header(out);
@@ -1766,7 +1766,7 @@ int fb_codegen_c(fb_options_t *opts, fb_schema_t *S)
     basename_len = strlen(out->S->basename);
     ret = 0;
     if (opts->cgen_reader) {
-        if (open_output_file(out, out->S->basename, basename_len, ".h")) {
+        if (open_output_file(out, out->S->basename, basename_len, "_reader.h")) {
             return -1;
         }
         ret = fb_gen_c_reader(out);

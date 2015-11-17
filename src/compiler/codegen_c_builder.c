@@ -537,8 +537,8 @@ static int gen_builder_pretext(output_t *out)
         out->S->basenameup, out->S->basenameup);
 
     fprintf(out->fp, "\n/* " FLATCC_GENERATED_BY " */\n\n");
-    fprintf(out->fp, "#ifndef %s_H\n", out->S->basenameup);
-    fprintf(out->fp, "#include \"%s.h\"\n", out->S->basename);
+    fprintf(out->fp, "#ifndef %s_READER_H\n", out->S->basenameup);
+    fprintf(out->fp, "#include \"%s_reader.h\"\n", out->S->basename);
     fprintf(out->fp, "#endif\n");
     fprintf(out->fp, "#ifndef %s_COMMON_BUILDER_H\n", nscup);
     fprintf(out->fp, "#include \"%scommon_builder.h\"\n", nsc);
