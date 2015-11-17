@@ -407,12 +407,16 @@ This produces:
 
     flatbuffers_common.h
     flatbuffers_common_builder.h
+    flatbuffers_common_verifier.h
     include_test1.h
     include_test1_builder.h
+    include_test1_verifier.h
     include_test2.h
     include_test2_builder.h
+    include_test2_verifier.h
     monster_test.h
     monster_test_builder.h
+    monster_test_verifier.h
 
 Note: we wouldn't actually do the readonly generation shown earlier unless we only intend to
 read buffers - the builder generation always generates read acces too.
@@ -420,6 +424,9 @@ read buffers - the builder generation always generates read acces too.
 By including `"monster_test_builder.h"` all other files are included
 automatically. The C compiler needs the -I include directive to access
 `flatbuffers/flatcc_builder.h` and related.
+
+The verifiers are not required and just created because we lazily chose
+the -a option.
 
 The builder must be initialized first to set up the runtime environment we need
 for building buffers efficiently - the builder depends on an emitter object to
