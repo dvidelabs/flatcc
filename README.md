@@ -43,10 +43,10 @@ See also the Google FPL
 The project is still young but test cases cover most functionality
 and has been run on OS-X 10.11 with clang and Ubuntu 14.04 with gcc.
 
-Buffer verification added post v0.1.0 which verifies boundaries and
-alignment. Please note that verification does not ensure buffers that
-can be mutated as it will not detect overlapping memory regions created
-maliciously or accidentally.
+Buffer verification was introduced in v0.1.1 which verifies boundaries
+and alignment. Please note that verification does not ensure that it is
+safe to mutate buffers because an attacker may still overlap objects
+within the buffer.
 
 Big endian platforms have not been tested at all. While care has been
 taken to handle endian encoding, there are bound to be some issues. The
