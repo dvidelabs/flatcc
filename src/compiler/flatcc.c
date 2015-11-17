@@ -148,12 +148,11 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
         if (!(buf = fb_read_file(filename, P->opts.max_schema_size, &size))) {
             if (size + P->schema.root_schema->total_source_size > P->opts.max_schema_size && P->opts.max_schema_size > 0) {
                 fb_print_error(P, "input exceeds maximum allowed size\n");
-            } else {
-                fb_print_error(P, "error reading schema file: %s\n", filename);
-            }
-            return -1;
+                return -1;
+            } 
+        } else {
+            checkmem((path = fb_copy_path(filename, -1)));
         }
-        checkmem((path = fb_copy_path(filename, -1)));
     }
     for (i = 0; !buf && i < P->opts.inpath_count; ++i) {
         inpath = P->opts.inpaths[i];
