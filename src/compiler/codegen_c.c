@@ -1779,5 +1779,12 @@ int fb_codegen_c(fb_options_t *opts, fb_schema_t *S)
         ret = fb_gen_c_builder(out);
         close_output_file(out);
     }
+    if (!ret && opts->cgen_verifier) {
+        if (open_output_file(out, out->S->basename, basename_len, "_verifier.h")) {
+            return -1;
+        }
+        ret = fb_gen_c_verifier(out);
+        close_output_file(out);
+    }
     return ret;
 }

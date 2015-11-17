@@ -21,6 +21,8 @@ static void hexdump(char *desc, void *addr, int len, FILE *fp) {
 
             // Output the offset.
             fprintf(fp, "  %04x ", i);
+        } else if ((i % 8) == 0) {
+            fprintf(fp, " ");
         }
 
         // Now the hex code for the specific character.

@@ -1291,6 +1291,14 @@ flatcc_builder_ref_t flatcc_builder_create_offset_vector_direct(flatcc_builder_t
     push_iov(_pad, vec_pad);
     base = (uoffset_t)B->emit_start - (uoffset_t)iov.len;
     for (i = 0; i < count; ++i) {
+        /*
+         * 0 is either end of buffer, start of vtables, or start of
+         * buffer depending on the direction in which the buffer is
+         * built. None of these can create a valid 0 reference but it
+         * is easy to create by mistake when manually building offset
+         * vectors.
+         */
+        check(vec[i] != 0, "offset vector cannot have null entry");
         offset = vec[i] - base - i * field_size - field_size;
         vec[i] = store_uoffset(offset);
     }

@@ -1,5 +1,8 @@
 #include <stdio.h>
+
 #include "monster_test_builder.h"
+#include "monster_test_verifier.h"
+
 #include "support/hexdump.h"
 #include "support/elapsed.h"
 
@@ -107,9 +110,30 @@ int test_empty_monster(flatcc_builder_t *B)
     buffer = flatcc_builder_finalize_buffer(B, &size);
 
     hexdump("empty monster table", buffer, size, stderr);
-    ret = verify_empty_monster(buffer);
-    free(buffer);
+    if ((ret = verify_empty_monster(buffer))) {
+        goto done;
+    }
 
+    if (!ns(Monster_verify_as_root(buffer, size, ns(Monster_identifier)))) {
+        printf("could not verify empty monster\n");
+        return -1;
+    }
+
+    /*
+     * Note: this will assert if the verifier is set to assert during
+     * debugging. Also not that a buffer size - 1 is not necessarily
+     * invalid, but because we pack vtables tight at the end, we expect
+     * failure in this case.
+     */
+#if 1 
+    if (ns(Monster_verify_as_root(buffer, size - 1, ns(Monster_identifier)))) {
+        printf("Monster verify failed to detect short buffer\n");
+        return -1;
+    }
+#endif
+
+done:
+    free(buffer);
     return ret;
 }
 
@@ -628,7 +652,7 @@ int gen_monster(flatcc_builder_t *B)
     ns(Monster_name_create_str(B, "the enemy"));
 
     /* Create array of monsters to test various union constructors. */
-    ns(Monster_testarrayoftables_start(B, 1));
+    ns(Monster_testarrayoftables_start(B, 0));
 
     ns(Monster_push_start(B));
     /* Same as using Any_as_Monster used earlier, but here explicit. */
@@ -680,7 +704,12 @@ int test_monster(flatcc_builder_t *B)
 
     buffer = flatcc_builder_finalize_buffer(B, &size);
     hexdump("monster table", buffer, size, stderr);
+    if (!ns(Monster_verify_as_root(buffer, size, ns(Monster_identifier)))) {
+        printf("Monster buffer failed to verify\n");
+        return -1;
+    }
     ret = verify_monster(buffer);
+done:
     free(buffer);
     return ret;
 }

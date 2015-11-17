@@ -5,4 +5,5 @@ include_directories (
 add_library(flatccrt
     builder.c
     emitter.c
+    verifier.c
 )

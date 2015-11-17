@@ -17,7 +17,7 @@ void usage(FILE *fp)
             "  -c                         Generate common include header(s)\n"
             "  -w                         Generate builders (writable buffers)\n"
             "  -r                         Recursively generate included schema files\n"
-            "  -a                         Generate all (like -cwr)\n"
+            "  -a                         Generate all (like -cwvr)\n"
             "  -I<inpath>                 Search path for include files (multiple allowed)\n"
             "  -o<outpath>                Write files to given output directory (must exist)\n"
             "  --stdout                   Concatenate all output to stdout\n"
@@ -26,7 +26,7 @@ void usage(FILE *fp)
             "  --schema                   Generate binary schema (.bfbs)\n"
             "  --schema-namespace=yes     Generate namespace prefix in binary schema\n"
             "  --schema-length=no         Add length prefix to binary schema\n"
-            "  -v                         Show version\n"
+            "  --version                  Show version\n"
             "  -h | --help                Help message\n"
     );
 }
@@ -49,6 +49,9 @@ void help(FILE *fp)
         "-w monster.fbs` will generate `monster.h` and `monster_builder.h`, and\n"
         "also a builder specific common file with the -cw option. The builder\n"
         "must link with the extern `flatbuilder` library.\n"
+        "\n"
+        "-v generates a verifier file per schema. It depends on the runtime library\n"
+        "but not on other generated files, except other included verifiers.\n"
         "\n"
         "All C output can be concatenated to a single file using --stdout. This is\n"
         "the exact same content as the generated files ordered by dependencies.\n"
@@ -110,6 +113,11 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         help(stdout);
         exit(0);
     }
+    if (0 == strcmp("-version", s)) {
+        fprintf(stderr, "%s\n", TITLE);
+        fprintf(stderr, "version: %s\n", VERSION);
+        exit(0);
+    }
     if (0 == strcmp("-stdout", s)) {
         opts->gen_stdout = 1;
         return noarg;
@@ -158,10 +166,6 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
     case '-':
         fprintf(stderr, "invalid option: -%s\n", s);
         exit(-1);
-    case 'v':
-        fprintf(stderr, "%s\n", TITLE);
-        fprintf(stderr, "version: %s\n", VERSION);
-        exit(0);
     case 'I':
         if (s[1]) {
             ret = suffixarg;
@@ -193,6 +197,9 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
     case 'w':
         opts->cgen_builder = 1;
         return noarg;
+    case 'v':
+        opts->cgen_verifier = 1;
+        return noarg;
     case 'c':
         opts->cgen_common_reader = 1;
         return noarg;
@@ -201,6 +208,7 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         return noarg;
     case 'a':
         opts->cgen_builder = 1;
+        opts->cgen_verifier = 1;
         opts->cgen_common_reader = 1;
         opts->cgen_recursive = 1;
         return noarg;
@@ -239,7 +247,7 @@ int main(int argc, const char *argv[])
 {
     flatcc_options_t opts;
     flatcc_context_t ctx;
-    int i, ret, status;
+    int i, ret, status, cgen;
     const char *s, *a;
 
     ctx = 0;
@@ -275,11 +283,13 @@ int main(int argc, const char *argv[])
         status = ret ? -1 : 0;
         goto done;
     }
-    if (!opts.bgen_bfbs || opts.cgen_builder) {
+    if (!(opts.bgen_bfbs && !opts.cgen_verifier) || opts.cgen_builder) {
         /* Assume default if no other output specified. */
         opts.cgen_reader = 1;
     }
-    if (opts.bgen_bfbs && (opts.cgen_reader || opts.cgen_common_reader)) {
+    cgen = opts.cgen_reader || opts.cgen_builder || opts.cgen_verifier
+        || opts.cgen_common_reader || opts.cgen_common_builder;
+    if (opts.bgen_bfbs && cgen) {
         if (opts.gen_stdout) {
             fprintf(stderr, "--stdout cannot be used with mixed text and binary output");
             status = -1;

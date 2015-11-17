@@ -172,6 +172,9 @@ int __flatcc_fb_gen_c_reader(output_t *out);
 int __flatcc_fb_gen_c_builder(output_t *out);
 #define fb_gen_c_builder __flatcc_fb_gen_c_builder
 
+int __flatcc_fb_gen_c_verifier(output_t *out);
+#define fb_gen_c_verifier __flatcc_fb_gen_c_verifier
+
 
 static inline int gen_pragma_push(output_t *out)
 {

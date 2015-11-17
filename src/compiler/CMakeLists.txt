@@ -17,8 +17,9 @@ add_library(flatcc
     coerce.c
     flatcc.c
     codegen_c.c
-    codegen_c_builder.c
     codegen_c_sort.c
+    codegen_c_builder.c
+    codegen_c_verifier.c
     codegen_schema.c
     # needed for building binary schema
     ../runtime/builder.c

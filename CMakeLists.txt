@@ -31,6 +31,11 @@ set(dist_targets
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
 
+# If enabled the runtime librarys verifier will print an error message
+# before asserting on error, otherwise it will just return an error code
+# like release builds.
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_DEBUG_VERIFY")
+
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 set(CMAKE_DEBUG_POSTFIX "_d")

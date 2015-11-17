@@ -2,6 +2,7 @@
 #include <assert.h>
 
 #include "monster_test.h"
+#include "monster_test_verifier.h"
 #include "support/readfile.h"
 #include "support/hexdump.h"
 
@@ -163,7 +164,22 @@ int main(int argc, char *argv[])
         return -1;
     }
     hexdump("monsterdata_test.mon", buffer, size, stderr);
+    /* 
+     * Not automated, but verifying size - 3 fails as expected because the last
+     * object in the file is a string, and the zero termination fails.
+     * size - 1 and size - 2 verifies because the buffers contains
+     * padding. Note that `flatcc` does not pad at the end beyond whatever
+     * is stored (normally a vtable), but this is generated with `flatc
+     * v1.1`.
+     */
+    if (!ns(Monster_verify_as_root(buffer, size, "MONS"))) {
+        fprintf(stderr, "could not verify foreign monster file\n");
+        ret = -1;
+        goto done;
+    }
     ret = verify_monster(buffer);
+
+done:
     free(buffer);
     return ret;
 }

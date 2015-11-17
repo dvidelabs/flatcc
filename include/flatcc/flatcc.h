@@ -56,6 +56,7 @@ struct flatcc_options {
     int cgen_common_builder;
     int cgen_reader;
     int cgen_builder;
+    int cgen_verifier;
     int cgen_recursive;
 
     int bgen_bfbs;

@@ -3,7 +3,9 @@
 ## [Unreleased]
 
 - Assert on error in flatcc builder by default.
-- Rename libflatccbuilder.a to libflatccrt.a (flatcc runtime)
+- Assert on null entries in table vectors and fix `monster_test`.
+- Rename libflatccbuilder.a to libflatccrt.a (flatcc runtime).
+- Add verification.
 
 ## [0.1.0]
 
