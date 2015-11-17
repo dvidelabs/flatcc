@@ -51,12 +51,13 @@
 #define flatcc_verify(cond, reason) if (!(cond)) { return 0; }
 #endif
 
+
 #define uoffset_t flatbuffers_uoffset_t
 #define soffset_t flatbuffers_soffset_t
 #define voffset_t flatbuffers_voffset_t
 
 #define uoffset_size sizeof(uoffset_t)
-#define soffset_size sizeof(uoffset_t)
+#define soffset_size sizeof(soffset_t)
 #define voffset_size sizeof(voffset_t)
 #define offset_size uoffset_size
 
@@ -130,18 +131,18 @@ static inline const void *get_field_ptr(flatcc_table_verifier_descriptor_t *td, 
     return vte ? (const uint8_t *)td->buf + td->table + vte : 0;
 }
 
-/*
- * Otherwise range check assumptions break, and normal access code likely also.
- * We don't require voffset_size < uoffset_size, but some checks are faster if true.
- */
-static_assert(uoffset_size >= voffset_size, "uoffset size must be at least voffset size");
-static_assert(soffset_size == uoffset_size, "soffset size must equal uoffset size");
-
 static int verify_field(flatcc_table_verifier_descriptor_t *td,
         voffset_t id, int required, uint16_t align, size_t size)
 {
     uoffset_t k, k2;
     voffset_t vte;
+
+    /*
+     * Otherwise range check assumptions break, and normal access code likely also.
+     * We don't require voffset_size < uoffset_size, but some checks are faster if true.
+     */
+    assert(uoffset_size >= voffset_size);
+    assert(soffset_size == uoffset_size);
 
     vte = read_vt_entry(td, id);
     if (!vte) {
@@ -210,7 +211,7 @@ static inline int verify_string(const void *buf, uoffset_t end, uoffset_t base, 
  */
 static inline int verify_vector(const void *buf, uoffset_t end, uoffset_t base, uoffset_t offset, uint16_t align, uoffset_t elem_size, uoffset_t max_count)
 {
-    uoffset_t n, k;
+    uoffset_t n;
 
     verify(check_aligned_header(end, base, offset, align), "table header out of range or unaligned");
     base += offset;
@@ -218,7 +219,6 @@ static inline int verify_vector(const void *buf, uoffset_t end, uoffset_t base, 
     base += offset_size;
     /* `n * elem_size` can overflow uncontrollably otherwise. */
     verify(n <= max_count, "vector count exceeds representable vector size");
-    k = n * elem_size;
     verify(end - base >= n * elem_size, "vector out of range");
     return 1;
 }
