@@ -1,5 +1,9 @@
 # Change Log
 
+## [Unreleased]
+
+- Upgrade to pstdint.h 0.1.15 to fix 64-bit printf issue on OS-X.
+
 ## [0.1.1]
 
 - Rename libflatccbuilder.a to libflatccrt.a (flatcc runtime).
