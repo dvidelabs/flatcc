@@ -12,23 +12,8 @@
 
 #include "pstdint.h"
 
-/*
- * Work around pstdint.h issue on x64 OS-X 10.11 clang that defines the
- * modifier to "l" which generates warnings
- *
- * Note: with the __STD__ test above inttypes.h would normally be used
- * instead.
- */
-#if __clang__
-#undef PRINTF_INT64_MODIFIER
-#endif
-
 #ifndef PRINTF_INT64_MODIFIER
-#ifdef _MSC_VER
-#define PRINTF_INT64_MODIFIER "I64"
-#else
-#define PRINTF_INT64_MODIFIER "ll"
-#endif
+#error "please define PRINTF_INT64_MODIFIER"
 #endif
 
 #ifndef PRId64
