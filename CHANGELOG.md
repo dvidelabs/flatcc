@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 - Upgrade to pstdint.h 0.1.15 to fix 64-bit printf issue on OS-X.
+- Remove user state from builder interface.
+- Support for portable unaligned reads.
 
 ## [0.1.1]
 
