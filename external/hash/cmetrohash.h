@@ -4,6 +4,9 @@
 //
 // Copyright (c) 2015 J. Andrew Rogers
 //
+// Updated Nov. 2015 to use safe unaligned reads and platform neutral
+// hash. This WILL change hashes on big endian platfors. / mikkelfj
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -26,6 +29,8 @@
 #ifndef CMETROHASH_METROHASH_H
 #define CMETROHASH_METROHASH_H
 
+#include "unaligned.h"
+
 #pragma once
 
 #if defined (__cplusplus)
@@ -46,27 +51,25 @@ inline static uint64_t crotate_right(uint64_t v, unsigned k)
     return (v >> k) | (v << (64 - k));
 }
 
-// unaligned reads, fast and safe on Nehalem and later microarchitectures
 inline static uint64_t cread_u64(const void * const ptr)
 {
-    return * (uint64_t *) ptr;
+    return (uint64_t)unaligned_read_le64toh(ptr);
 }
 
 inline static uint64_t cread_u32(const void * const ptr)
 {
-    return * (uint32_t *) ptr;
+    return (uint64_t)unaligned_read_le32toh(ptr);
 }
 
 inline static uint64_t cread_u16(const void * const ptr)
 {
-    return * (uint16_t *) ptr;
+    return (uint64_t)unaligned_read_le16toh(ptr);
 }
 
 inline static uint64_t cread_u8 (const void * const ptr)
 {
     return * (uint8_t *) ptr;
 }
-
 
 #if defined (__cplusplus)
 }
