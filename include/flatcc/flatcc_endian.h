@@ -1,6 +1,16 @@
 #ifndef FLATCC_ENDIAN_H
 #define FLATCC_ENDIAN_H
 
+/*
+ * This files does not cover all endian cases, but attempts to support
+ * major platforms. It provides extra facilities not available to the
+ * `common_....h` generated files by also attempting to support be32toh
+ * and friends without portability layer which requries OS platform
+ * detection and support. This means the runtime library (for which this
+ * is intended) can support more features in this respect than
+ * standalone generated code.
+ */
+
 #include "flatcc_types.h"
 
 /*
@@ -25,6 +35,34 @@
 #endif
 #if defined(flatbuffers_is_native_pe)
 /* NOP */
+#else
+
+#if (defined(__APPLE__) && defined(__MACH__))
+
+#include <sys/types.h>
+#include <libkern/OSByteOrder.h>
+
+#if !defined(le16toh)
+#define le16toh(x) OSSwapLittleToHostInt16(x)
+#define le32toh(x) OSSwapLittleToHostInt32(x)
+#define le64toh(x) OSSwapLittleToHostInt64(x)
+#define htole16(x) OSSwapHostToLittleInt16(x)
+#define htole32(x) OSSwapHostToLittleInt32(x)
+#define htole64(x) OSSwapHostToLittleInt64(x)
+
+#define be16toh(x) OSSwapBigToHostInt16(x)
+#define be32toh(x) OSSwapBigToHostInt32(x)
+#define be64toh(x) OSSwapBigToHostInt64(x)
+#define htobe16(x) OSSwapHostToBigInt16(x)
+#define htobe32(x) OSSwapHostToBigInt32(x)
+#define htobe64(x) OSSwapHostToBigInt64(x)
+#endif
+
+#elif defined(OS_FREEBSD) || defined(OS_OPENBSD) || defined(OS_NETBSD) || defined(OS_DRAGONFLYBSD)
+#include <sys/types.h>
+#include <sys/endian.h>
+#elif defined(__linux__)
+#include <endian.h>
 #elif !defined(le16toh) && FLATBUFFERS_LITTLEENDIAN
 #define le16toh(n) ((uint16_t)(n))
 #define le32toh(n) ((uint32_t)(n))
@@ -32,15 +70,29 @@
 #define htole16(n) ((uint16_t)(n))
 #define htole32(n) ((uint32_t)(n))
 #define htole64(n) ((uint64_t)(n))
-/* pe indicates protocol endian, which for FlatBuffers is little endian. */
-#define flatbuffers_is_native_pe() 1
+
+/* This is little endian. Use portability layer for big endian. */
+#if defined(__WINDOWS__)
+#include <stdlib.h>
+#define be16toh(n) _byteswap_ushort(n)
+#define be32toh(n) _byteswap_ulong(n)
+#define be64toh(n) _byteswap_uint64(n)
+#define htobe16(n) _byteswap_ushort(n)
+#define htobe32(n) _byteswap_ulong(n)
+#define htobe64(n) _byteswap_uint64(n)
+#endif
+
 #else
-#if defined(OS_FREEBSD) || defined(OS_OPENBSD) || defined(OS_NETBSD) || defined(OS_DRAGONFLYBSD)
-#include <sys/types.h>
-#include <sys/endian.h>
-#else
+
+/*
+ * Use portable layer if needed, it has more complete platform neutral
+ * swapping and detection logic.
+ */
+
+/* Just a wild guess, and to allow user to provide a custom file. */
 #include <endian.h>
 #endif
+
 #if defined(letoh16) && !defined(le16toh)
 #define le16toh letoh16
 #define le32toh letoh32
@@ -51,7 +103,25 @@
 #define flatbuffers_is_native_pe() (le16toh(1) == 1)
 #endif
 
-#if __LITTLE_ENDIAN__ || FLATBUFFERS_LITTLEENDIAN
+#ifndef flatbuffers_is_native_le
+#define flatbuffers_is_native_le() flatbuffers_is_native_pe()
+#endif
+
+#ifndef flatbuffers_is_native_be
+#define flatbuffers_is_native_be() (!flatbuffers_is_native_pe())
+#endif
+
+#if defined(__LITTLE_ENDIAN__) || FLATBUFFERS_LITTLEENDIAN
+
+/* pe indicates protocol endian, which for FlatBuffers is little endian. */
+#undef flatbuffers_is_native_le
+#define flatbuffers_is_native_le() 1
+
+#undef flatbuffers_is_native_be
+#define flatbuffers_is_native_be() 0
+
+#undef flatbuffers_is_native_pe
+#define flatbuffers_is_native_pe flatbuffers_is_le
 
 #undef flatbuffers_store_uoffset
 #undef flatbuffers_store_voffset
@@ -64,6 +134,15 @@
 #define flatbuffers_load_voffset(n) (n)
 
 #else
+
+#undef flatbuffers_is_native_le
+#define flatbuffers_is_native_le() 1
+
+#undef flatbuffers_is_native_be
+#define flatbuffers_is_native_be() 0
+
+#undef flatbuffers_is_native_pe
+#define flatbuffers_is_native_pe flatbuffers_is_le
 
 #define __FLATCC_ENDIAN_PASTE_2(A, B) A ## B
 #define __FLATCC_ENDIAN_PASTE_3(A, B, C) A ## B ## C
