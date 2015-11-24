@@ -151,10 +151,13 @@ enum flatcc_builder_alloc_type {
     flatcc_builder_alloc_ht,
     /* The vtable descriptor buffer, i.e. list elements for emitted vtables. */
     flatcc_builder_alloc_vd,
+
+    /* Number of allocation buffers. */
+    flatcc_builder_alloc_buffer_count
 };
 
 /** Must reflect the `flatcc_builder_alloc_type` enum. */
-#define FLATCC_BUILDER_ALLOC_BUFFER_COUNT 7
+#define FLATCC_BUILDER_ALLOC_BUFFER_COUNT flatcc_builder_alloc_buffer_count
 
 /**
  * Emits data to a conceptual deque by appending to either front or
@@ -295,7 +298,6 @@ struct __flatcc_builder_frame {
     flatbuffers_uoffset_t ds_offset;
     uint16_t align;
     uint16_t type;
-    size_t user_state;
     union {
         __flatcc_builder_table_frame_t table;
         __flatcc_builder_vector_frame_t vector;
@@ -365,8 +367,9 @@ struct flatcc_builder {
     int level;
     /* Aggregate check for allocated frame and max_level. */
     int limit_level;
-    /* Settings may happen with no frame allocated. */
-    size_t user_state;
+
+    /* Settings that may happen with no frame allocated. */
+
     char identifier[FLATBUFFERS_IDENTIFIER_SIZE];
 
     /* Settings that survive reset (emitter, alloc, and contexts also survive): */
@@ -730,37 +733,6 @@ flatcc_builder_ref_t flatcc_builder_embed_buffer(flatcc_builder_t *B,
  */
 void flatcc_builder_set_identifier(flatcc_builder_t *B,
         const char identifier[FLATBUFFERS_IDENTIFIER_SIZE]);
-
-/**
- * Sets and gets a custom state at the current nesting level. Child
- * levels (inside start calls) will inherit the state until changed.
- * The state is replaced by the parent state when it goes out of scope
- * after a close. The default state is 0.
- *
- * The state may be cast to a pointer:
- *
- *      void *p = 0;
- *      set_state(B, (size_t)p);
- *      (void*)get_state(B);
- *
- * The state may be useful to track state in an interuptible
- * state-machine parser, but the `get_level` method could also be used
- * to index a small stack along with setting `max_level` to protect
- * against overflow.
- */
-void flatcc_builder_set_state(flatcc_builder_t *B, size_t state);
-
-/**
- * Returns the userdefined state set by `set_state` for the given
- * nesting level and any children with unmodified state.
- */
-size_t flatcc_builder_get_state(flatcc_builder_t *B);
-
-/**
- * Returns state at the given level, or 0 if out of scope.
- * State cannot be set outside the current level.
- */
-size_t flatcc_builder_get_state_at(flatcc_builder_t *B, int level);
 
 enum flatcc_builder_type {
     flatcc_builder_empty = 0,

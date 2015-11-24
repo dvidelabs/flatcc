@@ -498,7 +498,6 @@ static int enter_frame(flatcc_builder_t *B, uint16_t align)
         ++B->frame;
     }
     frame(ds_offset) = B->ds_offset;
-    frame(user_state) = B->user_state;
     frame(align) = B->align;
     B->align = align;
     /* Note: do not assume padding before first has been allocated! */
@@ -512,7 +511,6 @@ static int enter_frame(flatcc_builder_t *B, uint16_t align)
 static inline void exit_frame(flatcc_builder_t *B)
 {
     memset(B->ds, 0, B->ds_offset);
-    B->user_state = frame(user_state);
     B->ds_offset = frame(ds_offset);
     B->ds_first = frame(ds_first);
     refresh_ds(B, frame(type_limit));
@@ -636,8 +634,7 @@ flatcc_builder_ref_t flatcc_builder_embed_buffer(flatcc_builder_t *B,
         return 0;
     }
     pad = front_pad(B, size, align);
-    size_field = size + pad;
-    size_field = store_uoffset(size_field);
+    size_field = store_uoffset(size + pad);
     init_iov();
     /* Add ubyte vector size header if nested buffer. */
     push_iov_cond(&size_field, field_size, !is_top_buffer(B));
@@ -672,10 +669,8 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
     push_iov(identifier, id_size);
     push_iov(_pad, header_pad);
     buffer_base = (uoffset_t)B->emit_start - (uoffset_t)iov.len + (is_nested ? field_size : 0);
-    buffer_size = (uoffset_t)B->buffer_mark - buffer_base;
-    buffer_size = store_uoffset(buffer_size);
-    object_offset = (uoffset_t)object_ref - buffer_base;
-    object_offset = store_uoffset(object_offset);
+    buffer_size = store_uoffset((uoffset_t)B->buffer_mark - buffer_base);
+    object_offset = store_uoffset((uoffset_t)object_ref - buffer_base);
     if (0 == (buffer_ref = emit_front(B, &iov))) {
         check(0, "emitter rejected buffer content");
         return 0;
@@ -1104,7 +1099,7 @@ flatcc_builder_ref_t flatcc_builder_create_table(flatcc_builder_t *B, const void
 {
     int i;
     size_t pad;
-    uoffset_t vt_offset, vt_base, base, offset, *offset_field;
+    uoffset_t vt_offset, vt_offset_field, vt_base, base, offset, *offset_field;
     iov_state_t iov;
 
     check(offset_count >= 0, "expected non-negative offset_count");
@@ -1127,12 +1122,11 @@ flatcc_builder_ref_t flatcc_builder_create_table(flatcc_builder_t *B, const void
         return -1;
     }
     /* Protocol endian encoding. */
-    vt_offset = store_uoffset(vt_offset);
+    vt_offset_field = store_uoffset(vt_offset);
     for (i = 0; i < offset_count; ++i) {
         offset_field = (uoffset_t *)((size_t)data + offsets[i]);
         offset = *offset_field - base - offsets[i] - field_size;
-        offset = store_uoffset(offset);
-        *offset_field = offset;
+        *offset_field = store_uoffset(offset);
     }
     init_iov();
     push_iov(&vt_offset, field_size);
@@ -1221,8 +1215,7 @@ flatcc_builder_ref_t flatcc_builder_create_vector(flatcc_builder_t *B,
      * `emit_front/back` captures overflow, but not if our size type wraps first.
      */
     check_error(sizeof(uoffset_t) <= sizeof(size_t) || vec_size < SIZE_MAX, 0, "vector larger than address space");
-    length_prefix = (uoffset_t)count;
-    length_prefix = store_uoffset(length_prefix);
+    length_prefix = store_uoffset((uoffset_t)count);
     /* Alignment is calculated for the first element, not the header. */
     vec_pad = front_pad(B, vec_size, align);
     init_iov();
@@ -1281,8 +1274,7 @@ flatcc_builder_ref_t flatcc_builder_create_offset_vector_direct(flatcc_builder_t
     }
     set_min_align(B, field_size);
     vec_size = count * field_size;
-    length_prefix = (uoffset_t)count;
-    length_prefix = store_uoffset(length_prefix);
+    length_prefix = store_uoffset((uoffset_t)count);
     /* Alignment is calculated for the first element, not the header. */
     vec_pad = front_pad(B, vec_size, field_size);
     init_iov();
@@ -1337,8 +1329,7 @@ flatcc_builder_ref_t flatcc_builder_create_string(flatcc_builder_t *B, const cha
     if (len > max_string_len) {
         return 0;
     }
-    length_prefix = (uoffset_t)len;
-    length_prefix = store_uoffset(length_prefix);
+    length_prefix = store_uoffset((uoffset_t)len);
     /* Add 1 for zero termination. */
     s_pad = front_pad(B, len + 1, field_size) + 1;
     init_iov();
@@ -1522,25 +1513,6 @@ void flatcc_builder_set_identifier(flatcc_builder_t *B, const char identifier[id
     memcpy(B->identifier, identifier ? identifier : (const char *)_pad, identifier_size);
 }
 
-void flatcc_builder_set_state(flatcc_builder_t *B,
-        size_t state)
-{
-    B->user_state = state;
-}
-
-size_t flatcc_builder_get_state(flatcc_builder_t *B)
-{
-    return B->user_state;
-}
-
-size_t flatcc_builder_get_state_at(flatcc_builder_t *B, int level)
-{
-    if (level < 1 || level > B->level) {
-        return 0;
-    }
-    return B->frame[level - B->level].user_state;
-}
-
 enum flatcc_builder_type flatcc_builder_get_type(flatcc_builder_t *B)
 {
     return B->frame ? frame(type) : flatcc_builder_empty;
@@ -1551,7 +1523,7 @@ enum flatcc_builder_type flatcc_builder_get_type_at(flatcc_builder_t *B, int lev
     if (level < 1 || level > B->level) {
         return flatcc_builder_empty;
     }
-    return B->frame[level - B->level].user_state;
+    return B->frame[level - B->level].type;
 }
 
 void *flatcc_builder_get_direct_buffer(flatcc_builder_t *B, size_t *size_out)
