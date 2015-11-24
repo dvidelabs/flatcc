@@ -15,5 +15,6 @@
 #endif
 
 #include "pendian.h"
+#include "punaligned.h"
 
 #endif /* PORTABLE_H */

@@ -3,7 +3,8 @@ only a small highly useful subset such as static assertions, inline
 functions and alignment.
 
 In addition, compatibility with the Linux `<endian.h>` system file is
-provided.
+provided, and "punaligned.h" is provided for unaligned memory reads
+which in part depends on endian support.
 
 Many compilers already have the required functionality but named
 slightly different.
