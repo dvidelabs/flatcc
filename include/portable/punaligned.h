@@ -27,12 +27,12 @@
 #define unaligned_read_64(p) (*(uint64_t*)(p))
 
 #define unaligned_read_le16toh(p) le16toh(*(uint16_t*)(p))
-#define unaligned_read_le32toh(p) le16toh(*(uint32_t*)(p))
-#define unaligned_read_le64toh(p) le16toh(*(uint64_t*)(p))
+#define unaligned_read_le32toh(p) le32toh(*(uint32_t*)(p))
+#define unaligned_read_le64toh(p) le64toh(*(uint64_t*)(p))
 
 #define unaligned_read_be16toh(p) be16toh(*(uint16_t*)(p))
-#define unaligned_read_be32toh(p) be16toh(*(uint32_t*)(p))
-#define unaligned_read_be64toh(p) be16toh(*(uint64_t*)(p))
+#define unaligned_read_be32toh(p) be32toh(*(uint32_t*)(p))
+#define unaligned_read_be64toh(p) be64toh(*(uint64_t*)(p))
 
 #else
 
