@@ -1,9 +1,35 @@
 #ifndef PENDIAN_H
 #define PENDIAN_H
 
-/* NOTE: this implementation expects arguments with no side-effects. */
+/*
+ * Defines platform optimized (as per linux <endian.h>
+ *
+ *     le16toh, le32to, le64toh, be16toh, be32toh, be64toh
+ *     htole16, htole32, htole64, htobe16, htobe32, htobe64
+ *
+ * Falls back to auto-detect endian conversion which is also fast
+ * if fast byteswap operation was detected.
+ *
+ * Also defines platform optimized:
+ *
+ *     bswap16, bswap32, bswap64,
+ *
+ * with fall-back to shift-or implementation.
+ *
+ * For convenience also defines:
+ *
+ *     le8to, be8toh, htole8, htobe8
+ *     bswap8
+ *
+ * The convience functions makes is simpler to define conversion macros
+ * based on type size.
+ *
+ * NOTE: this implementation expects arguments with no side-effects and
+ * with appropriately sized unsigned arguments. These are expected to be
+ * used with typesafe wrappers.
+ */
 
-#ifndef UINT32_MAX
+#ifndef UINT8_MAX
 #include "pstdint.h"
 #endif
 
@@ -64,10 +90,20 @@
           | (((uint64_t)(v) >> 56)))
 #endif
 
+#ifndef bswap8
+#define bswap8(v) ((uint8_t)(v))
+#endif
+
 #if !defined(le16toh) && defined(letoh16)
 #define le16toh letoh16
 #define le32toh letoh32
 #define le64toh letoh64
+#endif
+
+#if !defined(be16toh) && defined(betoh16)
+#define be16toh betoh16
+#define be32toh betoh32
+#define be64toh betoh64
 #endif
 
 /* Assume it goes for all. */
@@ -133,5 +169,12 @@ static const int __pendian_test = 1;
 
 #endif /* le16toh */
 
+/* Helpers not part of Linux <endian.h> */
+#if !defined(le8toh)
+#define le8toh(n) (n)
+#define htole8(n) (n)
+#define be8toh(n) (n)
+#define htobe8(n) (n)
+#endif
 
 #endif /* PENDIAN_H */
