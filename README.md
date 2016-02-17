@@ -10,10 +10,9 @@ The project includes:
   It may also be useful for other language interfaces. The library
   maintains a stack state to make it easy to build buffers from a parser
   or similar.
-- an optional portability layer for non-C11 compliant compilers. This is
-  not mature and needs target specific testing but should be a good
-  starting point for using the generated code with most C compilers
-  around.
+- a small `portable` header only library for non-C11 compliant
+  compilers, and small helpers for all compilers including endian
+  handling and numeric printing and parsing.
 
 The `flatcc` compiler is implemented as a standalone tool instead of
 extending Googles `flatc` compiler in order to have a pure portable C
