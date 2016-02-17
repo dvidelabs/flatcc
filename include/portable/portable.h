@@ -5,7 +5,7 @@
 #include "pinttypes.h"
 #include "pstdalign.h"
 #include "pinline.h"
-#include "static_assert.h"
+#include "pstatic_assert.h"
 #else
 #include <inttypes.h>
 #include <stdalign.h>
