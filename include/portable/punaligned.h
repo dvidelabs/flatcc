@@ -60,7 +60,7 @@
         (((uint16_t)(((uint8_t *)(p))[0])) <<  8) |                         \
         (((uint16_t)(((uint8_t *)(p))[1])) <<  0))
 
-#define unaligned_read_be64toh(p)  (                                        \
+#define unaligned_read_be32toh(p)  (                                        \
         (((uint32_t)(((uint8_t *)(p))[0])) << 24) |                         \
         (((uint32_t)(((uint8_t *)(p))[1])) << 16) |                         \
         (((uint32_t)(((uint8_t *)(p))[2])) <<  8) |                         \
