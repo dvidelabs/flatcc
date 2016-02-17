@@ -1,142 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "flatcc/reflection/reflection_builder.h"
 #include "symbols.h"
 #include "parser.h"
 #include "codegen.h"
 #include "fileio.h"
-#include "flatcc/reflection/reflection_builder.h"
 /* Needed to store length prefix. */
-#include "flatcc/flatcc_endian.h"
-
-
-typedef struct entry entry_t;
-typedef entry_t object_entry_t;
-typedef entry_t enum_entry_t;
-
-struct entry {
-    fb_compound_type_t *ct;
-    char *name;
-};
-
-typedef struct catalog catalog_t;
-
-struct catalog {
-    int qualify_names;
-    int nobjects;
-    int nenums;
-    int name_table_size;
-    object_entry_t *objects;
-    enum_entry_t *enums;
-    char *name_table;
-    reflection_Object_ref_t *object_map;
-    object_entry_t *next_object;
-    enum_entry_t *next_enum;
-    char *next_name;
-};
-
-static void count_symbol(void *context, fb_symbol_t *sym)
-{
-    catalog_t *catalog = context;
-    fb_ref_t *scope_name;
-    int n = 0;
-
-    /*
-     * Find out how much space the name requires. We must store each
-     * name in full for sorting because comparing a variable number of
-     * parent scope names is otherwise tricky.
-     */
-    if (catalog->qualify_names) {
-        scope_name = ((fb_compound_type_t *)sym)->scope->name;
-        while (scope_name) {
-            /* + 1 for '.'. */
-            n += scope_name->ident->len + 1;
-            scope_name = scope_name->link;
-        }
-    }
-    /* + 1 for '\0'. */
-    n += sym->ident->len + 1;
-    catalog->name_table_size += n;
-
-    switch (sym->kind) {
-    case fb_is_struct:
-    case fb_is_table:
-        ++catalog->nobjects;
-        break;
-    case fb_is_union:
-    case fb_is_enum:
-        ++catalog->nenums;
-        break;
-    default: return;
-    }
-}
-
-static void install_symbol(void *context, fb_symbol_t *sym)
-{
-    catalog_t *catalog = context;
-    fb_ref_t *scope_name;
-    int n = 0;
-    char *s, *name;
-
-    s = catalog->next_name;
-    name = s;
-    if (catalog->qualify_names) {
-        scope_name = ((fb_compound_type_t *)sym)->scope->name;
-        while (scope_name) {
-            n = scope_name->ident->len;
-            memcpy(s, scope_name->ident->text, n);
-            s += n;
-            *s++ = '.';
-            scope_name = scope_name->link;
-        }
-    }
-    n = sym->ident->len;
-    memcpy(s, sym->ident->text, n);
-    s += n;
-    *s++ = '\0';
-    catalog->next_name = s;
-
-    switch (sym->kind) {
-    case fb_is_struct:
-    case fb_is_table:
-        catalog->next_object->ct = (fb_compound_type_t *)sym;
-        catalog->next_object->name = name;
-        catalog->next_object++;
-        break;
-    case fb_is_union:
-    case fb_is_enum:
-        catalog->next_enum->ct = (fb_compound_type_t *)sym;
-        catalog->next_enum->name = name;
-        catalog->next_enum++;
-        break;
-    default: break;
-    }
-}
-
-static void count_symbols(void *context, fb_scope_t *scope)
-{
-    fb_symbol_table_visit(&scope->symbol_index, count_symbol, context);
-}
-
-static void install_symbols(void *context, fb_scope_t *scope)
-{
-    fb_symbol_table_visit(&scope->symbol_index, install_symbol, context);
-}
-
-int compare_entries(const void *x, const void *y)
-{
-    return strcmp(((const entry_t *)x)->name, ((const entry_t *)y)->name);
-}
-
-static void sort_entries(entry_t *entries, int count)
-{
-    int i;
-
-    qsort(entries, count, sizeof(entries[0]), compare_entries);
-
-    for (i = 0; i < count; ++i) {
-        entries[i].ct->export_index = (size_t)i;
-    }
-}
+#include "catalog.h"
 
 #define BaseType(x) FLATBUFFERS_WRAP_NAMESPACE(reflection_BaseType, x)
 
@@ -382,28 +252,19 @@ static void export_root_type(flatcc_builder_t *B, fb_symbol_t * root_type,
     }
 }
 
-
 static int export_schema(flatcc_builder_t *B, fb_options_t *opts, fb_schema_t *S)
 {
     catalog_t catalog;
+    reflection_Object_ref_t *object_map;
 
-    memset(&catalog, 0, sizeof(catalog));
+    if (build_catalog(&catalog, S, opts->bgen_qualify_names, &S->root_schema->scope_index)) {
+        return -1;
+    }
 
-    catalog.qualify_names = opts->bgen_qualify_names;
-    /* Build support datastructures before export. */
-    fb_scope_table_visit(&S->root_schema->scope_index, count_symbols, &catalog);
-    catalog.objects = calloc(catalog.nobjects, sizeof(catalog.objects[0]));
-    catalog.enums = calloc(catalog.nenums, sizeof(catalog.enums[0]));
-    catalog.name_table = malloc(catalog.name_table_size);
-    catalog.object_map = malloc(catalog.nobjects * sizeof(catalog.object_map[0]));
-    catalog.next_object = catalog.objects;
-    catalog.next_enum = catalog.enums;
-    catalog.next_name = catalog.name_table;
-
-    fb_scope_table_visit(&S->root_schema->scope_index, install_symbols, &catalog);
-    /* Presort objects and enums because the sorted index is required in Type tables. */
-    sort_entries(catalog.objects, catalog.nobjects);
-    sort_entries(catalog.enums, catalog.nenums);
+    if (!(object_map = malloc(catalog.nobjects * sizeof(object_map[0])))) {
+        clear_catalog(&catalog);
+        return -1;
+    }
 
     /* Build the schema. */
 
@@ -416,18 +277,18 @@ static int export_schema(flatcc_builder_t *B, fb_options_t *opts, fb_schema_t *S
         reflection_Schema_file_ext_create(B,
                 S->file_extension.s.s, S->file_extension.s.len);
     }
-    export_objects(B, catalog.objects, catalog.nobjects, catalog.object_map);
-    export_enums(B, catalog.enums, catalog.nenums, catalog.object_map);
-    export_root_type(B, S->root_type.type, catalog.object_map);
+    export_objects(B, catalog.objects, catalog.nobjects, object_map);
+    export_enums(B, catalog.enums, catalog.nenums, object_map);
+    export_root_type(B, S->root_type.type, object_map);
 
     reflection_Schema_end_as_root(B);
 
     /* Clean up support datastructures. */
 
-    free(catalog.objects);
-    free(catalog.enums);
-    free(catalog.name_table);
-    free(catalog.object_map);
+    clear_catalog(&catalog);
+    if (object_map) {
+        free(object_map);
+    }
     return 0;
 }
 
@@ -526,11 +387,13 @@ done:
 void *fb_codegen_bfbs_alloc_buffer(fb_options_t *opts, fb_schema_t *S, size_t *size)
 {
     flatcc_builder_t builder, *B;
-    void *buffer;
+    void *buffer = 0;
 
     B = &builder;
     flatcc_builder_init(B);
-    export_schema(B, opts, S);
+    if (export_schema(B, opts, S)) {
+        goto done;
+    }
     if (!(buffer = flatcc_builder_finalize_buffer(B, size))) {
         goto done;
     }
@@ -557,7 +420,7 @@ int fb_codegen_bfbs_to_file(fb_options_t *opts, fb_schema_t *S)
         goto done;
     }
     if (opts->bgen_length_prefix) {
-        flatbuffers_uoffset_t length = flatbuffers_store_uoffset(size);
+        flatbuffers_uoffset_t length = __flatbuffers_uoffset_cast_to_pe(size);
         if (sizeof(flatbuffers_uoffset_t) != fwrite(&length, 1, sizeof(length), fp)) {
             fprintf(stderr, "cound not write binary schema to file\n");
             goto done;

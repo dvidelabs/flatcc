@@ -1,7 +1,9 @@
 #define BENCH_TITLE "flatc for C++"
-#define DECLARE_BUILDER(B)\
-    void *B = 0
-#define CLEAR_BUILDER(B)
+
+#define BENCHMARK_BUFSIZ 1000
+#define DECLARE_BENCHMARK(BM)\
+    void *BM = 0
+#define CLEAR_BENCHMARK(BM)
 
 #include <string.h>
 #include "flatbench_generated.h"
@@ -10,11 +12,13 @@ using namespace flatbuffers;
 using namespace benchfb;
 
 /* The builder is created each time - perhaps fbb can be reused somehow? */
-int encode(void *unused_builder, void *buffer, size_t *size)
+int encode(void *bench, void *buffer, size_t *size)
 {
     const int veclen = 3;
     Offset<FooBar> vec[veclen];
     FlatBufferBuilder fbb;
+
+    (void)bench;
 
     for (int i = 0; i < veclen; i++) {
         // We add + i to not make these identical copies for a more realistic
@@ -37,10 +41,11 @@ int encode(void *unused_builder, void *buffer, size_t *size)
     return 0;
 }
 
-int64_t decode(void *buffer, size_t size, int64_t sum)
+int64_t decode(void *bench, void *buffer, size_t size, int64_t sum)
 {
     auto foobarcontainer = GetFooBarContainer(buffer);
 
+    (void)bench;
     sum += foobarcontainer->initialized();
     sum += foobarcontainer->location()->Length();
     sum += foobarcontainer->fruit();

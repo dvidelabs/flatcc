@@ -2,13 +2,6 @@
 
 #include "codegen_c.h"
 
-/*
- * TODO: replace %llu with "PRI64" macros in inttypes.h instead of
- * casting. Not all compilers have long long type defined, and it isn't
- * correct either. Should do the same for uint32_t actually.
- * Add portable inttypes using PRINTF_INT64_MODIFIER and friends from
- * stdint.h and portable pstdint.h.
- */
 #define llu(x) (long long unsigned int)(x)
 #define lld(x) (long long int)(x)
 
@@ -1209,7 +1202,7 @@ static int gen_builder_table_fields(output_t *out, fb_compound_type_t *ct)
                 break;
             case vt_float:
                 fprintf(out->fp,
-                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %lf)\n",
+                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %.17g)\n",
                     nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname, 
                     llu(member->size), member->align, member->value.f);
                 break;

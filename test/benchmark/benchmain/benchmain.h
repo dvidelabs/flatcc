@@ -11,24 +11,29 @@
 
 int main(int argc, char *argv[])
 {
-    const int bufsize = 1000, rep = 1000000;
+    /*
+     * The size must be large enough to hold different representations,
+     * including printed json, but we know the printed json is close to
+     * 700 bytes.
+     */
+    const int bufsize = BENCHMARK_BUFSIZ, rep = 1000000;
     void *buf;
     size_t size, old_size;
     double t1, t2, t3;
     /* Use volatie to prevent over optimization. */
     volatile int64_t total = 0;
     int i, ret = 0;
-    DECLARE_BUILDER(B);
+    DECLARE_BENCHMARK(BM);
 
     buf = malloc(bufsize);
 
     /* Warmup to preallocate internal buffers. */
     size = bufsize;
-    encode(B, buf, &size);
+    encode(BM, buf, &size);
     t1 = elapsed_realtime();
     for (i = 0; i < rep; ++i) {
         size = bufsize;
-        ret |= encode(B, buf, &size);
+        ret |= encode(BM, buf, &size);
         assert(ret == 0);
         if (i > 0 && size != old_size) {
             printf("abort on inconsistent encoding size\n");
@@ -38,7 +43,7 @@ int main(int argc, char *argv[])
     }
     t2 = elapsed_realtime();
     for (i = 0; i < rep; ++i) {
-        total = decode(buf, size, total);
+        total = decode(BM, buf, size, total);
     }
     t3 = elapsed_realtime();
     if (total != -8725036910085654784LL) {
@@ -55,6 +60,6 @@ done:
     if (buf) {
         free(buf);
     }
-    CLEAR_BUILDER(B);
+    CLEAR_BENCHMARK(BM);
     return 0;
 }

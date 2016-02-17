@@ -1,95 +1,85 @@
-Generated on core i7 MBP 2014 Haswell 2.2GHz,
-clang OS-X 10.11
-
-flatc version 1.1
-flatcc version 0.1.0
-
-Note that some numbers are from debug builds.
-
-------------------------------------------------------------------------
-
-running all benchmarks (raw, flatc C++, flatcc C)\n
+running all benchmarks (raw, flatc C++, flatcc C)
 building and benchmarking raw strucs
 running flatbench for raw C structs (debug)
 ----
 operation: flatbench for raw C structs encode (debug)
-elapsed time: 0.107 (s)
+elapsed time: 0.106 (s)
 iterations: 1000000
 size: 312 (bytes)
-bandwidth: 2923.867 (MB/s)
-throughput in ops per sec: 9371368.595
-throughput in 1M ops per sec: 9.371
-time per op: 106.708 (ns)
+bandwidth: 2956.926 (MB/s)
+throughput in ops per sec: 9477325.499
+throughput in 1M ops per sec: 9.477
+time per op: 105.515 (ns)
 
 operation: flatbench for raw C structs decode/traverse (debug)
-elapsed time: 0.073 (s)
+elapsed time: 0.074 (s)
 iterations: 1000000
 size: 312 (bytes)
-bandwidth: 4278.192 (MB/s)
-throughput in ops per sec: 13712154.454
-throughput in 1M ops per sec: 13.712
-time per op: 72.928 (ns)
+bandwidth: 4222.379 (MB/s)
+throughput in ops per sec: 13533264.765
+throughput in 1M ops per sec: 13.533
+time per op: 73.892 (ns)
 ----
 running flatbench for raw C structs (optimized)
 ----
 operation: flatbench for raw C structs encode (optimized)
-elapsed time: 0.053 (s)
+elapsed time: 0.052 (s)
 iterations: 1000000
 size: 312 (bytes)
-bandwidth: 5887.015 (MB/s)
-throughput in ops per sec: 18868636.552
-throughput in 1M ops per sec: 18.869
-time per op: 52.998 (ns)
+bandwidth: 5991.474 (MB/s)
+throughput in ops per sec: 19203441.257
+throughput in 1M ops per sec: 19.203
+time per op: 52.074 (ns)
 
 operation: flatbench for raw C structs decode/traverse (optimized)
 elapsed time: 0.012 (s)
 iterations: 1000000
 size: 312 (bytes)
-bandwidth: 26216.284 (MB/s)
-throughput in ops per sec: 84026552.391
-throughput in 1M ops per sec: 84.027
-time per op: 11.901 (ns)
+bandwidth: 26342.452 (MB/s)
+throughput in ops per sec: 84430935.495
+throughput in 1M ops per sec: 84.431
+time per op: 11.844 (ns)
 ----
 building and benchmarking flatc generated C++
 running flatbench flatc for C++ (debug)
 ----
 operation: flatc for C++ encode (debug)
-elapsed time: 5.441 (s)
+elapsed time: 5.338 (s)
 iterations: 1000000
 size: 344 (bytes)
-bandwidth: 63.222 (MB/s)
-throughput in ops per sec: 183786.063
-throughput in 1M ops per sec: 0.184
-time per op: 5.441 (us)
+bandwidth: 64.444 (MB/s)
+throughput in ops per sec: 187337.801
+throughput in 1M ops per sec: 0.187
+time per op: 5.338 (us)
 
 operation: flatc for C++ decode/traverse (debug)
-elapsed time: 0.809 (s)
+elapsed time: 0.798 (s)
 iterations: 1000000
 size: 344 (bytes)
-bandwidth: 424.995 (MB/s)
-throughput in ops per sec: 1235449.494
-throughput in 1M ops per sec: 1.235
-time per op: 809.422 (ns)
+bandwidth: 430.966 (MB/s)
+throughput in ops per sec: 1252809.425
+throughput in 1M ops per sec: 1.253
+time per op: 798.206 (ns)
 ----
 running flatbench flatc for C++ (optimized)
 ----
 operation: flatc for C++ encode (optimized)
-elapsed time: 0.734 (s)
+elapsed time: 0.716 (s)
 iterations: 1000000
 size: 344 (bytes)
-bandwidth: 468.764 (MB/s)
-throughput in ops per sec: 1362687.438
-throughput in 1M ops per sec: 1.363
-time per op: 733.844 (ns)
+bandwidth: 480.630 (MB/s)
+throughput in ops per sec: 1397180.769
+throughput in 1M ops per sec: 1.397
+time per op: 715.727 (ns)
 
 operation: flatc for C++ decode/traverse (optimized)
 elapsed time: 0.029 (s)
 iterations: 1000000
 size: 344 (bytes)
-bandwidth: 11976.882 (MB/s)
-throughput in ops per sec: 34816516.956
-throughput in 1M ops per sec: 34.817
-time per op: 28.722 (ns)
+bandwidth: 12058.751 (MB/s)
+throughput in ops per sec: 35054509.763
+throughput in 1M ops per sec: 35.055
+time per op: 28.527 (ns)
 ----
 building and benchmarking flatcc generated C
 [1/1] Linking C executable ../../bin/flatcc_d
@@ -97,40 +87,83 @@ building and benchmarking flatcc generated C
 running flatbench flatcc for C (debug)
 ----
 operation: flatcc for C encode (debug)
-elapsed time: 1.934 (s)
+elapsed time: 1.975 (s)
 iterations: 1000000
 size: 336 (bytes)
-bandwidth: 173.718 (MB/s)
-throughput in ops per sec: 517017.368
-throughput in 1M ops per sec: 0.517
-time per op: 1.934 (us)
+bandwidth: 170.157 (MB/s)
+throughput in ops per sec: 506418.346
+throughput in 1M ops per sec: 0.506
+time per op: 1.975 (us)
 
 operation: flatcc for C decode/traverse (debug)
-elapsed time: 0.343 (s)
+elapsed time: 0.566 (s)
 iterations: 1000000
 size: 336 (bytes)
-bandwidth: 979.440 (MB/s)
-throughput in ops per sec: 2915001.472
-throughput in 1M ops per sec: 2.915
-time per op: 343.053 (ns)
+bandwidth: 593.408 (MB/s)
+throughput in ops per sec: 1766094.864
+throughput in 1M ops per sec: 1.766
+time per op: 566.221 (ns)
 ----
 running flatbench flatcc for C (optimized)
 ----
 operation: flatcc for C encode (optimized)
-elapsed time: 0.626 (s)
+elapsed time: 0.606 (s)
 iterations: 1000000
 size: 336 (bytes)
-bandwidth: 536.678 (MB/s)
-throughput in ops per sec: 1597255.277
-throughput in 1M ops per sec: 1.597
-time per op: 626.074 (ns)
+bandwidth: 554.266 (MB/s)
+throughput in ops per sec: 1649601.539
+throughput in 1M ops per sec: 1.650
+time per op: 606.207 (ns)
 
 operation: flatcc for C decode/traverse (optimized)
 elapsed time: 0.029 (s)
 iterations: 1000000
 size: 336 (bytes)
-bandwidth: 11726.930 (MB/s)
-throughput in ops per sec: 34901577.551
-throughput in 1M ops per sec: 34.902
-time per op: 28.652 (ns)
+bandwidth: 11740.452 (MB/s)
+throughput in ops per sec: 34941821.867
+throughput in 1M ops per sec: 34.942
+time per op: 28.619 (ns)
+----
+building and benchmarking flatcc json generated C
+[1/1] Linking C executable ../../bin/flatcc_d
+[1/1] Linking C executable ../../bin/flatcc
+running flatbench flatcc json parse and print for C (debug)
+----
+operation: flatcc json parser and printer for C encode (debug)
+elapsed time: 4.633 (s)
+iterations: 1000000
+size: 722 (bytes)
+bandwidth: 155.855 (MB/s)
+throughput in ops per sec: 215866.116
+throughput in 1M ops per sec: 0.216
+time per op: 4.633 (us)
+
+operation: flatcc json parser and printer for C decode/traverse (debug)
+elapsed time: 6.957 (s)
+iterations: 1000000
+size: 722 (bytes)
+bandwidth: 103.781 (MB/s)
+throughput in ops per sec: 143740.882
+throughput in 1M ops per sec: 0.144
+time per op: 6.957 (us)
+----
+running flatbench flatcc json parse and print for C (optimized)
+----
+operation: flatcc json parser and printer for C encode (optimized)
+elapsed time: 1.358 (s)
+iterations: 1000000
+size: 722 (bytes)
+bandwidth: 531.528 (MB/s)
+throughput in ops per sec: 736188.912
+throughput in 1M ops per sec: 0.736
+time per op: 1.358 (us)
+
+operation: flatcc json parser and printer for C decode/traverse (optimized)
+elapsed time: 2.224 (s)
+iterations: 1000000
+size: 722 (bytes)
+bandwidth: 324.572 (MB/s)
+throughput in ops per sec: 449546.295
+throughput in 1M ops per sec: 0.450
+time per op: 2.224 (us)
 ----

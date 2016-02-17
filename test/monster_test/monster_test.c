@@ -114,8 +114,8 @@ int test_empty_monster(flatcc_builder_t *B)
         goto done;
     }
 
-    if (!ns(Monster_verify_as_root(buffer, size, ns(Monster_identifier)))) {
-        printf("could not verify empty monster\n");
+    if ((ret = ns(Monster_verify_as_root(buffer, size, ns(Monster_identifier))))) {
+        printf("could not verify empty monster, got %s\n", flatcc_verify_error_string(ret));
         return -1;
     }
 
@@ -125,8 +125,8 @@ int test_empty_monster(flatcc_builder_t *B)
      * invalid, but because we pack vtables tight at the end, we expect
      * failure in this case.
      */
-#if 1 
-    if (ns(Monster_verify_as_root(buffer, size - 1, ns(Monster_identifier)))) {
+#if 1
+    if (flatcc_verify_ok == ns(Monster_verify_as_root(buffer, size - 1, ns(Monster_identifier)))) {
         printf("Monster verify failed to detect short buffer\n");
         return -1;
     }
@@ -704,8 +704,8 @@ int test_monster(flatcc_builder_t *B)
 
     buffer = flatcc_builder_finalize_buffer(B, &size);
     hexdump("monster table", buffer, size, stderr);
-    if (!ns(Monster_verify_as_root(buffer, size, ns(Monster_identifier)))) {
-        printf("Monster buffer failed to verify\n");
+    if ((ret = ns(Monster_verify_as_root(buffer, size, ns(Monster_identifier))))) {
+        printf("Monster buffer failed to verify, got: %s\n", flatcc_verify_error_string(ret));
         return -1;
     }
     ret = verify_monster(buffer);

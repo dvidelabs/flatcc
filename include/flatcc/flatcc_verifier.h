@@ -49,6 +49,49 @@
 
 #include "flatcc/flatcc_types.h"
 
+#define FLATCC_VERIFY_ERROR_MAP(XX)\
+    XX(ok, "ok")\
+    XX(buffer_header_too_small, "buffer header too small")\
+    XX(identifier_mismatch, "identifier mismatch")\
+    XX(max_nesting_level_reached, "max nesting level reached")\
+    XX(required_field_missing, "required field missing")\
+    XX(runtime_buffer_header_not_aligned, "runtime: buffer header not aligned")\
+    XX(runtime_buffer_size_too_large, "runtime: buffer size too large")\
+    XX(string_not_zero_terminated, "string not zero terminated")\
+    XX(string_out_of_range, "string out of range")\
+    XX(struct_out_of_range, "struct out of range")\
+    XX(struct_size_overflow, "struct size overflow")\
+    XX(struct_unaligned, "struct unaligned")\
+    XX(table_field_not_aligned, "table field not aligned")\
+    XX(table_field_out_of_range, "table field out of range")\
+    XX(table_field_size_overflow, "table field size overflow")\
+    XX(table_header_out_of_range_or_unaligned, "table header out of range or unaligned")\
+    XX(table_offset_out_of_range_or_unaligned, "table offset out of range or unaligned")\
+    XX(table_size_out_of_range, "table size out of range")\
+    XX(type_field_absent_from_required_union_field, "type field absent from required union field")\
+    XX(union_cannot_have_a_table_without_a_type, "union cannot have a table without a type")\
+    XX(union_type_NONE_cannot_have_a_table, "union type NONE cannot have a table")\
+    XX(vector_count_exceeds_representable_vector_size, "vector count exceeds representable vector size")\
+    XX(vector_out_of_range, "vector out of range")\
+    XX(vtable_header_out_of_range, "vtable header out of range")\
+    XX(vtable_header_too_small, "vtable header too small")\
+    XX(vtable_offset_out_of_range_or_unaligned, "vtable offset out of range or unaligned")\
+    XX(vtable_size_out_of_range_or_unaligned, "vtable size out of range or unaligned")\
+    XX(vtable_size_overflow, "vtable size overflow")\
+    XX(not_supported, "not supported")
+
+
+enum flatcc_verify_error_no {
+#define XX(no, str) flatcc_verify_error_##no,
+    FLATCC_VERIFY_ERROR_MAP(XX)
+#undef XX
+};
+
+#define flatcc_verify_ok flatcc_verify_error_ok
+
+const char *flatcc_verify_error_string(int err);
+
+
 /*
  * Type specific table verifier function that checks each known field
  * for existence in the vtable and then calls the appropriate verifier

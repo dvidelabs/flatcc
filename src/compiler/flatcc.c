@@ -25,6 +25,9 @@ void flatcc_init_options(flatcc_options_t *opts)
     opts->hide_later_struct = FLATCC_HIDE_LATER_STRUCT;
     opts->offset_size = FLATCC_OFFSET_SIZE;
     opts->voffset_size = FLATCC_VOFFSET_SIZE;
+    opts->utype_size = FLATCC_UTYPE_SIZE;
+    opts->bool_size = FLATCC_BOOL_SIZE;
+
     opts->require_root_type = FLATCC_REQUIRE_ROOT_TYPE;
     opts->strict_enum_init = FLATCC_STRICT_ENUM_INIT;
     /*
@@ -48,6 +51,8 @@ void flatcc_init_options(flatcc_options_t *opts)
     opts->cgen_common_builder = 0;
     opts->cgen_reader = 0;
     opts->cgen_builder = 0;
+    opts->cgen_json_parser = 0;
+    opts->cgen_spacing = FLATCC_CGEN_SPACING;
 
     opts->bgen_bfbs = FLATCC_BGEN_BFBS;
     opts->bgen_qualify_names = FLATCC_BGEN_QUALIFY_NAMES;
@@ -81,7 +86,22 @@ int flatcc_parse_buffer(flatcc_context_t ctx, const char *buf, int buflen)
         fb_print_error(P, "input exceeds maximum allowed size\n");
         return -1;
     }
+    /* Add self to set of visible schema. */
+    ptr_set_insert_item(&P->schema.visible_schema, &P->schema, ht_keep);
     return fb_parse(P, buf, buflen, 0) || fb_build_schema(P) ? -1 : 0;
+}
+
+static void visit_dep(void *context, void *ptr)
+{
+    fb_schema_t *parent = context;
+    fb_schema_t *dep = ptr;
+
+    ptr_set_insert_item(&parent->visible_schema, dep, ht_keep);
+}
+
+static void add_visible_schema(fb_schema_t *parent, fb_schema_t *dep)
+{
+    ptr_set_visit(&dep->visible_schema, visit_dep, parent);
 }
 
 static int __parse_include_file(fb_parser_t *P_parent, const char *filename)
@@ -90,6 +110,7 @@ static int __parse_include_file(fb_parser_t *P_parent, const char *filename)
     fb_parser_t *P = 0;
     fb_root_schema_t *rs;
     flatcc_options_t *opts = &P_parent->opts;
+    fb_schema_t *dep;
 
     rs = P_parent->schema.root_schema;
     if (rs->include_depth >= opts->max_include_depth && opts->max_include_depth > 0) {
@@ -105,7 +126,8 @@ static int __parse_include_file(fb_parser_t *P_parent, const char *filename)
     }
     P = (fb_parser_t *)ctx;
     /* Don't parse the same file twice, or any other file with same name. */
-    if (fb_name_table_find_item(&rs->include_index, &P->schema.name)) {
+    if ((dep = fb_schema_table_find_item(&rs->include_index, &P->schema))) {
+        add_visible_schema(&P_parent->schema, dep);
         flatcc_destroy_context(ctx);
         return 0;
     }
@@ -116,7 +138,11 @@ static int __parse_include_file(fb_parser_t *P_parent, const char *filename)
     P->schema.root_schema = rs;
     rs->include_depth++;
     rs->include_count++;
-    return flatcc_parse_file(ctx, filename);
+    if (flatcc_parse_file(ctx, filename)) {
+        return -1;
+    }
+    add_visible_schema(&P_parent->schema, &P->schema);
+    return 0;
 }
 
 int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
@@ -131,7 +157,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
 
     filename_len = strlen(filename);
     /* Don't parse the same file twice, or any other file with same basename. */
-    if (fb_name_table_insert_item(&P->schema.root_schema->include_index, &P->schema.name, ht_keep)) {
+    if (fb_schema_table_insert_item(&P->schema.root_schema->include_index, &P->schema, ht_keep)) {
         return 0;
     }
     buf = 0;
@@ -149,7 +175,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
             if (size + P->schema.root_schema->total_source_size > P->opts.max_schema_size && P->opts.max_schema_size > 0) {
                 fb_print_error(P, "input exceeds maximum allowed size\n");
                 return -1;
-            } 
+            }
         } else {
             checkmem((path = fb_copy_path(filename, -1)));
         }
@@ -202,11 +228,14 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
             include_file = 0;
             inc = inc->link;
         }
+        /* Add self to set of visible schema. */
+        ptr_set_insert_item(&P->schema.visible_schema, &P->schema, ht_keep);
         ret = fb_build_schema(P);
     }
     return ret;
 }
 
+#if FLATCC_REFLECTION
 int flatcc_generate_binary_schema_to_buffer(flatcc_context_t ctx, void *buf, size_t bufsiz)
 {
     fb_parser_t *P = ctx;
@@ -223,6 +252,7 @@ void *flatcc_generate_binary_schema(flatcc_context_t ctx, size_t *size)
 
     return fb_codegen_bfbs_alloc_buffer(&P->opts, &P->schema, size);
 }
+#endif
 
 int flatcc_generate_files(flatcc_context_t ctx)
 {
@@ -239,11 +269,13 @@ int flatcc_generate_files(flatcc_context_t ctx)
         P = P->dependencies;
     }
     P = ctx;
+#if FLATCC_REFLECTION
     if (P->opts.bgen_bfbs) {
         if (fb_codegen_bfbs_to_file(&P->opts, &P->schema)) {
             return -1;
         }
     }
+#endif
     /* This does not require a parse first. */
     if (fb_codegen_common_c(&P->opts)) {
         return -1;
@@ -261,7 +293,6 @@ int flatcc_generate_files(flatcc_context_t ctx)
         ret = P->failed || fb_codegen_c(&P->opts, &P->schema);
         P = P->inverse_dependencies;
     }
-    /* Revert back so we can deallocate memory. */
     return ret;
 }
 

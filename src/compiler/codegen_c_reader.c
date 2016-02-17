@@ -1,12 +1,9 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "codegen_c.h"
 #include "codegen_c_sort.h"
-#include "fileio.h"
-#include "../../external/hash/str_set.h"
 
 #define llu(x) (long long unsigned int)(x)
 #define lld(x) (long long int)(x)
@@ -28,6 +25,7 @@ static void gen_find(output_t *out)
      * returns index (0..len - 1), or not_found (-1).
      */
     fprintf(out->fp,
+        "#include <string.h>\n"
         "static %suoffset_t %snot_found = (%suoffset_t)-1;\n"
         "#define __%sidentity(n) (n)\n",
         nsc, nsc, nsc, nsc);
@@ -91,142 +89,56 @@ static void gen_helpers(output_t *out)
 
     fprintf(out->fp,
         /*
-         * Derived from flatcc_types.h but avoids direct dependency by
-         * copying here. Assumes stdint.h.
+         * Include the basic primitives for accessing flatbuffer datatypes independent
+         * of endianness.
+         *
+         * The included file must define the basic types and accessors
+         * prefixed with the common namespace which by default is
+         * "flatbuffers_".
          */
-        "#ifndef flatbuffers_types_defined\n"
-        "#define flatbuffers_types_defined\n"
-        "\n"
-        "#define flatbuffers_uoffset_t_defined\n"
-        "#define flatbuffers_soffset_t_defined\n"
-        "#define flatbuffers_voffset_t_defined\n"
-        "\n"
-        "#define FLATBUFFERS_UOFFSET_MAX UINT%u_MAX\n"
-        "#define FLATBUFFERS_SOFFSET_MAX INT%u_MAX\n"
-        "#define FLATBUFFERS_SOFFSET_MIN INT%u_MIN\n"
-        "#define FLATBUFFERS_VOFFSET_MAX UINT%u_MAX\n"
-        "\n"
-        "#define FLATBUFFERS_UOFFSET_WIDTH %u\n"
-        "#define FLATBUFFERS_SOFFSET_WIDTH %u\n"
-        "#define FLATBUFFERS_VOFFSET_WIDTH %u\n"
-        "\n"
-        "typedef uint%u_t flatbuffers_uoffset_t;\n"
-        "typedef int%u_t flatbuffers_soffset_t;\n"
-        "typedef uint%u_t flatbuffers_voffset_t;\n"
-        "\n"
-        "#define FLATBUFFERS_IDENTIFIER_SIZE 4\n"
-        "\n"
-        "typedef char flatbuffers_fid_t[FLATBUFFERS_IDENTIFIER_SIZE];\n"
-        "\n"
-        "#define FLATBUFFERS_ID_MAX (FLATBUFFERS_VOFFSET_MAX / sizeof(flatbuffers_voffset_t) - 3)\n"
-        "#define FLATBUFFERS_COUNT_MAX(elem_size) ((elem_size) > 0 ? FLATBUFFERS_UOFFSET_MAX/(elem_size) : 0)\n"
-        "\n"
-        "#endif /* flatbuffers_types_defined */\n"
-        "\n\n",
-        out->opts->offset_size * 8,
-        out->opts->offset_size * 8,
-        out->opts->offset_size * 8,
-        out->opts->voffset_size * 8,
-        out->opts->offset_size * 8,
-        out->opts->offset_size * 8,
-        out->opts->voffset_size * 8,
-        out->opts->offset_size * 8,
-        out->opts->offset_size * 8,
-        out->opts->voffset_size * 8);
-    fprintf(out->fp,
-        "/* Helpers to standardize type definitions.\n*/"
-        "#undef le8toh\n"
-        "#define le8toh(n) (n)\n"
-        "#undef htole8\n"
-        "#define htole8(n) (n)\n"
-        "#undef be8toh\n"
-        "#define be8toh(n) (n)\n"
-        "#undef htobe8\n"
-        "#define htobe8(n) (n)\n"
-    );
+        "#include \"flatcc/flatcc_flatbuffers.h\"\n"
+        "\n\n");
+    /*
+     * The remapping of basic types to the common namespace makes it
+     * possible to have different definitions. The generic
+     * `flatbuffers_uoffset_t` etc. cannot be trusted to have one specific
+     * size since it depends on the included `flatcc/flatcc_types.h`
+     * filer, but the namespace prefixed types can be trusted if used carefully.
+     * For example the common namespace could be `flatbuffers_large_`
+     * when allowing for 64 bit offsets.
+     */
     if (strcmp(nsc, "flatbuffers_")) {
         fprintf(out->fp,
                 "typedef flatbuffers_uoffset_t %suoffset_t;\n"
                 "typedef flatbuffers_soffset_t %ssoffset_t;\n"
                 "typedef flatbuffers_voffset_t %svoffset_t;\n"
+                "typedef flatbuffers_utype_t %sutype_t;\n"
+                "typedef flatbuffers_bool_t %sbool_t;\n"
                 "\n",
+                nsc, nsc, nsc, nsc, nsc);
+        fprintf(out->fp,
+                "#define %sendian flatbuffers_endian\n"
+                "__flatcc_define_basic_scalar_accessors(%s, flatbuffers_endian)"
+                "__flatcc_define_integer_accessors(%sbool, flatbuffers_bool_t,\\\n"
+                "        FLATBUFFERS_BOOL_WIDTH, flatbuffers_endian)\n",
                 nsc, nsc, nsc);
+        fprintf(out->fp,
+                "__flatcc_define_integer_accessors(__%suoffset, flatbuffers_uoffset_t,\n"
+                "        FLATBUFFERS_UOFFSET_WIDTH, flatbuffers_endian)\n"
+                "__flatcc_define_integer_accessors(__%ssoffset, flatbuffers_soffset_t,\n"
+                "        FLATBUFFERS_SOFFSET_WIDTH, flatbuffers_endian)\n"
+                "__flatcc_define_integer_accessors(__%svoffset, flatbuffers_voffset_t,\n"
+                "        FLATBUFFERS_VOFFSET_WIDTH, flatbuffers_endian)\n"
+                "__flatcc_define_integer_accessors(__%sutype, flatbuffers_utype_t,\n"
+                "        FLATBUFFERS_UTYPE_WIDTH, flatbuffers_endian)\n",
+                nsc, nsc, nsc, nsc);
+        fprintf(out->fp,
+                "#ifndef %s_WRAP_NAMESPACE\n"
+                "#define %s_WRAP_NAMESPACE(ns, x) ns ## _ ## x\n"
+                "#endif\n",
+                out->nscup, out->nscup);
     }
-    fprintf(out->fp,
-        "/*\n"
-        " * Define flatbuffer accessors be little endian.\n"
-        " * This must match the `flatbuffers_is_native_pe` definition.\n"
-        " */\n");
-    fprintf(out->fp,
-        "/*\n"
-        " * NOTE: the strict pointer aliasing rule in C makes it non-trival to byteswap\n"
-        " * floating point values using intrinsic integer based functions like `le32toh`.\n"
-        " * We cannot cast through pointers as it will generate warnings and potentially\n"
-        " * violate optimizer assumptions. Cast through union is a safer approach.\n"
-        " */\n"
-        "union __%sfu32 { float f; uint32_t u32; };\n"
-        "static_assert(sizeof(union __%sfu32) == 4, \"float cast union should have size 4\");\n"
-        "union __%sdu64 { double d; uint64_t u64; };\n"
-        "static_assert(sizeof(union __%sdu64) == 8, \"double cast union should have size 8\");\n"
-        "\n",
-        nsc, nsc, nsc, nsc);
-    fprintf(out->fp,
-        "#define __%sdefine_integer_accessors(N, T, W)\\\n"
-        "static inline T N ## _cast_from_pe(T v)\\\n"
-        "{ return (T) le ## W ## toh((uint ## W ## _t)v); }\\\n"
-        "static inline T N ## _cast_to_pe(T v)\\\n"
-        "{ return (T) htole ## W((uint ## W ## _t)v); }\\\n"
-        "static inline T N ## _read_from_pe(const void *p)\\\n"
-        "{ return N ## _cast_from_pe(*(T *)p); }\\\n"
-        "static inline T N ## _read_to_pe(const void *p)\\\n"
-        "{ return N ## _cast_to_pe(*(T *)p); }\\\n"
-        "static inline T N ## _read(const void *p)\\\n"
-        "{ return *(T *)p; }\n",
-        nsc);
-    fprintf(out->fp,
-        "static inline float %sfloat_cast_from_pe(float f)\n"
-        "{ union __%sfu32 x; x.f = f; x.u32 = le32toh(x.u32); return x.f; }\n"
-        "static inline double %sdouble_cast_from_pe(double d)\n"
-        "{ union __%sdu64 x; x.d = d; x.u64 = le64toh(x.u64); return x.d; }\n"
-        "static inline float %sfloat_cast_to_pe(float f)\n"
-        "{ union __%sfu32 x; x.f = f; x.u32 = htole32(x.u32); return x.f; }\n"
-        "static inline double %sdouble_cast_to_pe(double d)\n"
-        "{ union __%sdu64 x; x.d = d; x.u64 = htole64(x.u64); return x.d; }\n"
-        "static inline float %sfloat_read_from_pe(const void *p)\n"
-        "{ union __%sfu32 x; x.u32 = le32toh(*(uint32_t *)p); return x.f; }\n"
-        "static inline double %sdouble_read_from_pe(const void *p)\n"
-        "{ union __%sdu64 x; x.u64 = le64toh(*(uint64_t *)p); return x.d; }\n"
-        "static inline float %sfloat_read_to_pe(const void *p)\n"
-        "{ union __%sfu32 x; x.u32 = htole32(*(uint32_t *)p); return x.f; }\n"
-        "static inline double %sdouble_read_to_pe(const void *p)\n"
-        "{ union __%sdu64 x; x.u64 = htole64(*(uint64_t *)p); return x.d; }\n"
-        "static inline float %sfloat_read(const void *p) { return *(float *)p; }\n"
-        "static inline double %sdouble_read(const void *p) { return *(double *)p; }\n",
-        nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
-        nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
-    fprintf(out->fp,
-        "/* This allows us to use FLATBUFFERS_UOFFSET_WIDTH for W. */\n"
-        "#define __%sPASTE_3(A, B, C) A ## B ## C\n"
-        "#define __%sLOAD_PE(W, n) __%sPASTE_3(le, W, toh)(n)\n",
-        nsc, nsc, nsc);
-    fprintf(out->fp,
-        "#define %sload_uoffset(n)\\\n"
-        "(flatbuffers_uoffset_t)__%sLOAD_PE(FLATBUFFERS_UOFFSET_WIDTH, n)\n"
-        "#define %sload_soffset(n)\\\n"
-        "(flatbuffers_soffset_t) __%sLOAD_PE(FLATBUFFERS_SOFFSET_WIDTH, n)\n"
-        "#define %sload_voffset(n)\\\n"
-        "(flatbuffers_voffset_t) __%sLOAD_PE(FLATBUFFERS_VOFFSET_WIDTH, n)\n",
-        nsc, nsc, nsc, nsc, nsc, nsc);
-    fprintf(out->fp,
-        "/****************************************************************\n"
-        " *  From this point on endianness is abstracted away accessors. *\n"
-        " *  Protocol endian (pe) may be either little or big endian.    *\n"
-        " ****************************************************************/\n");
-    fprintf(out->fp,
-            "typedef uint8_t %sbool_t;\n"
-            "static const %sbool_t %strue = 1;\n"
-            "static const %sbool_t %sfalse = 0;\n",
-            nsc, nsc, nsc, nsc, nsc);
+    /* Build out a more elaborate type system based in the primitives included. */
     fprintf(out->fp,
         "#define __%sread_scalar_at_byteoffset(N, p, o) N ## _read_from_pe((uint8_t *)(p) + (o))\n"
         "#define __%sread_scalar(N, p) N ## _read_from_pe(p)\n",
@@ -238,12 +150,12 @@ static void gen_helpers(output_t *out)
         "    assert(t != 0 && \"null pointer table access\");\\\n"
         "    %svoffset_t id = ID;\\\n"
         "    %svoffset_t *vt = (%svoffset_t *)((uint8_t *)(t) -\\\n"
-        "        (%ssoffset_t)(%sload_uoffset(*(%suoffset_t *)(t))));\\\n"
-        "    if (%sload_voffset(vt[0]) >= sizeof(vt[0]) * (id + 3)) {\\\n"
-        "        offset = %sload_voffset(vt[id + 2]);\\\n"
+        "        __%ssoffset_read_from_pe(t));\\\n"
+        "    if (__%svoffset_read_from_pe(vt) >= sizeof(vt[0]) * (id + 3)) {\\\n"
+        "        offset = __%svoffset_read_from_pe(vt + id + 2);\\\n"
         "    }\\\n"
         "}\n",
-        nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+        nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "#define __%sfield_present(ID, t) { __%sread_vt(ID, offset, t) return offset != 0; }\n",
             nsc, nsc);
@@ -274,21 +186,21 @@ static void gen_helpers(output_t *out)
         "        elem = (%suoffset_t *)((uint8_t *)(t) + offset);\\\n"
         "        /* Add sizeof so C api can have raw access past header field. */\\\n"
         "        return (T)((uint8_t *)(elem) + adjust +\\\n"
-        "            (%suoffset_t)((%sload_uoffset(*elem))));\\\n"
+        "              __%suoffset_read_from_pe(elem));\\\n"
         "    }\\\n"
         "    assert(!(r) && \"required field missing\");\\\n"
         "    return 0;\\\n"
         "}\n",
-        nsc, nsc, nsc, nsc, nsc, nsc);
+        nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%svector_field(T, ID, t, r) __%soffset_field(T, ID, t, r, sizeof(%suoffset_t))\n"
         "#define __%stable_field(T, ID, t, r) __%soffset_field(T, ID, t, r, 0)\n",
         nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%svec_len(vec)\\\n"
-        "{ return (vec) ? %sload_uoffset((((%suoffset_t *)(vec))[-1])) : 0; }\n"
+        "{ return (vec) ? __%suoffset_read_from_pe((flatbuffers_uoffset_t *)vec - 1) : 0; }\n"
         "#define __%sstring_len(s) __%svec_len(s)\n",
-        nsc, nsc, nsc, nsc, nsc);
+        nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "static inline %suoffset_t %svec_len(const void *vec)\n"
         "__%svec_len(vec)\n",
@@ -309,7 +221,7 @@ static void gen_helpers(output_t *out)
         "#define __%soffset_vec_at(T, vec, i, adjust)\\\n"
         "{ assert(%svec_len(vec) > (i) && \"index out of range\");\\\n"
         "  const %suoffset_t *elem = (vec) + (i);\\\n"
-        "  return (T)((uint8_t *)(elem) + %sload_uoffset(*elem) + adjust); }\n",
+        "  return (T)((uint8_t *)(elem) + __%suoffset_read_from_pe(elem) + adjust); }\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "#define __%sdefine_scalar_vec_len(N) \\\n"
@@ -348,7 +260,7 @@ static void gen_helpers(output_t *out)
         fprintf(out->fp, "/* sort disabled */\n");
     }
     fprintf(out->fp,
-            "#define __%sdefine_scalar_vector(N, T, W)\\\n"
+            "#define __%sdefine_scalar_vector(N, T)\\\n"
             "typedef const T *N ## _vec_t;\\\n"
             "typedef T *N ## _mutable_vec_t;\\\n"
             "__%sdefine_scalar_vec_len(N)\\\n"
@@ -359,27 +271,24 @@ static void gen_helpers(output_t *out)
         fprintf(out->fp, "\\\n__%sdefine_scalar_sort(N, T)\n", nsc);
     }
     fprintf(out->fp, "\n");
+    /* Elaborate on the included basic type system. */
     fprintf(out->fp,
             "#define __%sdefine_integer_type(N, T, W)\\\n"
-            "__%sdefine_integer_accessors(N, T, W)\\\n"
-            "__%sdefine_scalar_vector(N, T, W)\n"
-            "#define __%sdefine_real_type(N, T, W)\\\n"
-            "/* `double` and `float` scalars accessors defined. */\\\n"
-            "__%sdefine_scalar_vector(N, T, W)\\\n"
-            "\n",
-            nsc, nsc, nsc, nsc, nsc);
+            "__flatcc_define_integer_accessors(N, T, W, %sendian)\\\n"
+            "__%sdefine_scalar_vector(N, T)\n",
+            nsc, nsc, nsc);
     fprintf(out->fp,
-            "__%sdefine_integer_type(%sbool, %sbool_t, 8)\n"
-            "__%sdefine_integer_type(%suint8, uint8_t, 8)\n"
-            "__%sdefine_integer_type(%sint8, int8_t, 8)\n"
-            "__%sdefine_integer_type(%suint16, uint16_t, 16)\n"
-            "__%sdefine_integer_type(%sint16, int16_t, 16)\n"
-            "__%sdefine_integer_type(%suint32, uint32_t, 32)\n"
-            "__%sdefine_integer_type(%sint32, int32_t, 32)\n"
-            "__%sdefine_integer_type(%suint64, uint64_t, 64)\n"
-            "__%sdefine_integer_type(%sint64, int64_t, 64)\n"
-            "__%sdefine_real_type(%sfloat, float, 32)\n"
-            "__%sdefine_real_type(%sdouble, double, 64)\n",
+            "__%sdefine_scalar_vector(%sbool, %sbool_t)\n"
+            "__%sdefine_scalar_vector(%suint8, uint8_t)\n"
+            "__%sdefine_scalar_vector(%sint8, int8_t)\n"
+            "__%sdefine_scalar_vector(%suint16, uint16_t)\n"
+            "__%sdefine_scalar_vector(%sint16, int16_t)\n"
+            "__%sdefine_scalar_vector(%suint32, uint32_t)\n"
+            "__%sdefine_scalar_vector(%sint32, int32_t)\n"
+            "__%sdefine_scalar_vector(%suint64, uint64_t)\n"
+            "__%sdefine_scalar_vector(%sint64, int64_t)\n"
+            "__%sdefine_scalar_vector(%sfloat, float)\n"
+            "__%sdefine_scalar_vector(%sdouble, double)\n",
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
@@ -399,22 +308,19 @@ static void gen_helpers(output_t *out)
     fprintf(out->fp,
             "/* If fid is null, the function returns true without testing as buffer is not expected to have any id. */\n"
             "static inline int %shas_identifier(const void *buffer, const char *fid)\n"
-            "{ return fid == 0 || (%sload_uoffset(((%suoffset_t *)buffer)[1]) ==\n"
+            "{ return fid == 0 || (__%suoffset_read_from_pe((flatbuffers_uoffset_t *)buffer + 1) ==\n"
             "      ((%suoffset_t)fid[0]) + (((%suoffset_t)fid[1]) << 8) +\n"
             "      (((%suoffset_t)fid[2]) << 16) + (((%suoffset_t)fid[3]) << 24)); }\n"
             "#define %sverify_endian() %shas_identifier(\"\\x00\\x00\\x00\\x00\" \"1234\", \"1234\")\n",
-            nsc,
-            nsc, nsc, nsc, nsc,
-            nsc, nsc,
-            nsc, nsc);
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
 
     fprintf(out->fp,
             "/* Null file identifier accepts anything, otherwise fid should be 4 characters. */\n"
             "#define __%sread_root(T, K, buffer, fid)\\\n"
             "  ((!buffer || !%shas_identifier(buffer, fid)) ? 0 :\\\n"
             "  ((T ## _ ## K ## t)(((uint8_t *)buffer) +\\\n"
-            "  %sload_uoffset(((%suoffset_t *)buffer)[0]))))\n",
-            nsc, nsc, nsc, nsc);
+            "    __%suoffset_read_from_pe(buffer))))\n",
+            nsc, nsc, nsc);
     fprintf(out->fp,
             "#define __%snested_buffer_as_root(C, N, T, K)\\\n"
             "static inline T ## _ ## K ## t C ## _ ## N ## _as_root_with_identifier(C ## _ ## table_t t, const char *fid)\\\n"
@@ -454,135 +360,12 @@ int fb_gen_common_c_header(output_t *out)
                 " */\n");
     }
     gen_pragma_push(out);
-    fprintf(out->fp,
-            "/* Include portability layer first if not on compliant C11 platform. */\n"
-            "#ifdef FLATCC_PORTABLE\n"
-            "#include \"flatcc/flatcc_portable.h\"\n"
-            "#endif\n"
-            "#ifndef UINT8_MAX\n"
-            "#include <stdint.h>\n"
-            "#endif\n");
-    fprintf(out->fp,
-            "/*\n"
-            " * For undetected platforms, provide a custom <endian.h> file in the include path,\n"
-            " * or include equivalent functionality (the 6 lexxtoh, htolexx functions) before this file.\n"
-            " */\n"
-            "#if !defined(FLATBUFFERS_LITTLEENDIAN)\n"
-            "#if (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) ||\\\n"
-            "      (defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN) ||\\\n"
-            "      (defined(_BYTE_ORDER) && _BYTE_ORDER == _LITTLE_ENDIAN) ||\\\n"
-            "    defined(__LITTLE_ENDIAN__) || defined(__ARMEL__) || defined(__THUMBEL__) ||\\\n"
-            "    /* for MSVC */ defined(_M_X64) || defined(_M_IX86) || defined(_M_I86) ||\\\n"
-            "    defined(__AARCH64EL__) || defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)\n"
-            "#define FLATBUFFERS_LITTLEENDIAN 1\n"
-            "#elif (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) ||\\\n"
-            "      (defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN) ||\\\n"
-            "      (defined(_BYTE_ORDER) && _BYTE_ORDER == _BIG_ENDIAN) ||\\\n"
-            "    defined(__BIG_ENDIAN__) || defined(__ARMEB__) || defined(__THUMBEB__) ||\\\n"
-            "    defined(__AARCH64EB__) || defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__)\n"
-            "#define FLATBUFFERS_LITTLEENDIAN 0\n"
-            "#endif\n"
-            "#endif\n"
-            "#if defined(flatbuffers_is_native_pe)\n"
-            "/* NOP */\n"
-            "#elif !defined(le16toh) && FLATBUFFERS_LITTLEENDIAN\n"
-            "#define le16toh(n) ((uint16_t)(n))\n"
-            "#define le32toh(n) ((uint32_t)(n))\n"
-            "#define le64toh(n) ((uint64_t)(n))\n"
-            "#define htole16(n) ((uint16_t)(n))\n"
-            "#define htole32(n) ((uint32_t)(n))\n"
-            "#define htole64(n) ((uint64_t)(n))\n"
-            "/* pe indicates protocol endian, which for FlatBuffers is little endian. */\n"
-            "#define flatbuffers_is_native_pe() 1\n"
-            "#else\n"
-            "#if defined(OS_FREEBSD) || defined(OS_OPENBSD) || defined(OS_NETBSD) || defined(OS_DRAGONFLYBSD)\n"
-            "#include <sys/types.h>\n"
-            "#include <sys/endian.h>\n"
-            "#else\n"
-            "#include <endian.h>\n"
-            "#endif\n"
-            "#if defined(letoh16) && !defined(le16toh)\n"
-            "#define le16toh letoh16\n"
-            "#define le32toh letoh32\n"
-            "#define le64toh letoh64\n"
-            "#endif\n"
-            "#endif\n"
-            "#ifndef flatbuffers_is_native_pe\n"
-            "#ifdef le16toh\n"
-            "/* This will not automatically define FLATBUFFERS_LITTLEENDIAN, but it will work. */\n"
-            "#define flatbuffers_is_native_pe() (le16toh(1) == 1)\n"
-            "#else\n"
-            "#error \"unable to detect endianness - define FLATBUFFERS_LITTLEENDIAN to 1 or 0\"\n"
-            "#endif\n"
-            "#endif\n"
-            "#include <assert.h>\n"
-            "/* clang assert.h sometimes fail to do this even with -std=c11 */\n"
-            "#ifndef static_assert\n"
-            "#ifndef FLATBUFFERS_NO_STATIC_ASSERT\n"
-            "#define static_assert(pred, msg) _Static_assert(pred, msg)\n"
-            "#else\n"
-            "#define static_assert(pred, msg)\n"
-            "#endif\n"
-            "#endif\n"
-            "/* Only needed for string search. */\n"
-            "#include <string.h>\n"
-            "\n");
     gen_helpers(out);
     gen_pragma_pop(out);
     fprintf(out->fp,
         "#endif /* %s_COMMON_H */\n",
         nscup);
     return 0;
-}
-
-static void _str_set_destructor(void *context, char *item)
-{
-    (void)context;
-
-    free(item);
-}
-
-/*
- * Removal of duplicate inclusions is only for a cleaner output - it is
- * not stricly necessary because the preprocessor handles include
- * guards. The guards are required to deal with concatenated files
- * regardless unless we generate special code for concatenation.
- */
-void fb_gen_c_includes(output_t *out, const char *ext, const char *extup)
-{
-    fb_include_t *inc = out->S->includes;
-    char *basename, *basenameup, *s;
-    str_set_t set;
-
-    fb_clear(set);
-
-    /* Don't include our own file. */
-    str_set_insert_item(&set, fb_copy_path(out->S->basenameup, -1), ht_keep);
-    while (inc) {
-        checkmem((basename = fb_create_basename(
-                    inc->name.s.s, inc->name.s.len, out->opts->default_schema_ext)));
-        inc = inc->link;
-        checkmem((basenameup = fb_copy_path(basename, -1)));
-        s = basenameup;
-        while (*s) {
-            *s = toupper(*s);
-            ++s;
-        }
-        if (str_set_insert_item(&set, basenameup, ht_keep)) {
-            free(basenameup);
-            free(basename);
-            continue;
-        }
-        /* The include guard is needed when concatening output. */
-        fprintf(out->fp,
-            "#ifndef %s%s\n"
-            "#include \"%s%s\"\n"
-            "#endif\n",
-            basenameup, extup, basename, ext);
-        free(basename);
-        /* `basenameup` stored in str_set. */
-    }
-    str_set_destroy(&set, _str_set_destructor, 0);
 }
 
 static void gen_pretext(output_t *out)
@@ -656,11 +439,6 @@ static void gen_pretext(output_t *out)
             "#endif\n",
             nsc, nsc, out->opts->default_bin_ext);
     }
-    fprintf(out->fp,
-            "#ifndef %s_WRAP_NAMESPACE\n"
-            "#define %s_WRAP_NAMESPACE(ns, x) ns ## _ ## x\n"
-            "#endif\n",
-            nscup, nscup);
     fprintf(out->fp, "\n");
 }
 
@@ -697,115 +475,6 @@ static void gen_forward_decl(output_t *out, fb_compound_type_t *ct)
         fprintf(out->fp, "typedef const %suoffset_t *%s_vec_t;\n", nsc, snt.text);
         fprintf(out->fp, "typedef %suoffset_t *%s_mutable_vec_t;\n", nsc, snt.text);
     }
-}
-
-static const char *scalar_vector_type_name(fb_scalar_type_t scalar_type)
-{
-    const char *tname;
-    switch (scalar_type) {
-    case fb_ulong:
-        tname = "uint64_vec_t";
-        break;
-    case fb_uint:
-        tname = "uint32_vec_t";
-        break;
-    case fb_ushort:
-        tname = "uint16_vec_t";
-        break;
-    case fb_ubyte:
-        tname = "uint8_vec_t";
-        break;
-    case fb_bool:
-        tname = "uint8_vec_t";
-        break;
-    case fb_long:
-        tname = "int64_vec_t";
-        break;
-    case fb_int:
-        tname = "int32_vec_t";
-        break;
-    case fb_short:
-        tname = "int16_vec_t";
-        break;
-    case fb_byte:
-        tname = "bool_vec_t";
-        break;
-    case fb_float:
-        tname = "float_vec_t";
-        break;
-    case fb_double:
-        tname = "double_vec_t";
-        break;
-    default:
-        gen_panic(out, "internal error: unexpected type during code generation");
-        tname = __FLATCC_ERROR_TYPE;
-        break;
-    }
-    return tname;
-}
-
-static const char *scalar_suffix(fb_scalar_type_t scalar_type)
-{
-    const char *suffix;
-    switch (scalar_type) {
-    case fb_ulong:
-        suffix = "ULL";
-        break;
-    case fb_uint:
-        suffix = "UL";
-        break;
-    case fb_ushort:
-        suffix = "U";
-        break;
-    case fb_ubyte:
-        suffix = "U";
-        break;
-    case fb_bool:
-        suffix = "U";
-        break;
-    case fb_long:
-        suffix = "LL";
-        break;
-    case fb_int:
-        suffix = "L";
-        break;
-    case fb_short:
-        suffix = "";
-        break;
-    case fb_byte:
-        suffix = "";
-        break;
-    case fb_double:
-        suffix = "";
-    case fb_float:
-        suffix = "F";
-    default:
-        gen_panic(out, "internal error: unexpected type during code generation");
-        suffix = "";
-        break;
-    }
-    return suffix;
-}
-
-void fb_scoped_symbol_name(fb_scope_t *scope, fb_symbol_t *sym, fb_scoped_name_t *sn)
-{
-    fb_token_t *t = sym->ident;
-
-    if (sn->scope != scope) {
-        if (0 > (sn->scope_len = fb_copy_scope(scope, sn->text))) {
-            sn->scope_len = 0;
-            fprintf(stderr, "skipping too long namespace\n");
-        }
-    }
-    sn->len = t->len;
-    sn->total_len = sn->scope_len + sn->len;
-    if (sn->total_len > FLATCC_NAME_BUFSIZ - 1) {
-        fprintf(stderr, "warning: truncating identifier: %.*s\n", sn->len, t->text);
-        sn->len = FLATCC_NAME_BUFSIZ - sn->scope_len - 1;
-        sn->total_len = sn->scope_len + sn->len;
-    }
-    memcpy(sn->text + sn->scope_len, t->text, sn->len);
-    sn->text[sn->total_len] = '\0';
 }
 
 static inline void print_doc(output_t *out, const char *indent, fb_doc_t *doc)
@@ -1633,158 +1302,30 @@ int fb_gen_c_reader(output_t *out)
     return 0;
 }
 
-static int open_output_file(output_t *out, const char *name, int len, const char *ext)
-{
-    char *path;
-    int ret;
-    const char *prefix = out->opts->outpath ? out->opts->outpath : "";
-    int prefix_len = strlen(prefix);
-
-    if (out->opts->gen_stdout) {
-        out->fp = stdout;
-        return 0;
-    }
-    checkmem((path = fb_create_join_path(prefix, prefix_len, name, len, ext, 1)));
-    out->fp = fopen(path, "wb");
-    ret = 0;
-    if (!out->fp) {
-        fprintf(stderr, "error opening file for write: %s\n", path);
-        ret = -1;
-    }
-    free(path);
-    return ret;
-}
-
-static void close_output_file(output_t *out)
-{
-    if (out->fp != stdout && out->fp) {
-        fclose(out->fp);
-    }
-    out->fp = 0;
-}
-
-int fb_copy_scope(fb_scope_t *scope, char *buf)
-{
-    int n, len;
-    fb_ref_t *name;
-
-    len = scope->prefix.len;
-    for (name = scope->name; name; name = name->link) {
-        n = name->ident->len;
-        len += n + 1;
-    }
-    if (len > FLATCC_NAMESPACE_MAX + 1) {
-        buf[0] = '\0';
-        return -1;
-    }
-    len = scope->prefix.len;
-    memcpy(buf, scope->prefix.s, len);
-    for (name = scope->name; name; name = name->link) {
-        n = name->ident->len;
-        memcpy(buf + len, name->ident->text, n);
-        len += n + 1;
-        buf[len - 1] = '_';
-    }
-    buf[len + 1] = '\0';
-    return len;
-}
-
-static int init_output(output_t *out, fb_options_t *opts)
-{
-    const char *nsc;
-    char *p;
-    int n;
-
-    memset(out, 0, sizeof(*out));
-    out->opts = opts;
-    nsc = opts->nsc;
-    if (nsc) {
-        n = strlen(opts->nsc);
-        if (n > FLATCC_NAMESPACE_MAX) {
-            fprintf(stderr, "common namespace argument is limited to %i characters\n", (int)FLATCC_NAMESPACE_MAX);
-            return -1;
-        }
-    } else {
-        nsc = FLATCC_DEFAULT_NAMESPACE_COMMON;
-        n = strlen(nsc);
-    }
-    strncpy(out->nsc, nsc, FLATCC_NAMESPACE_MAX);
-    out->nsc[FLATCC_NAMESPACE_MAX] = '\0';
-    if (n) {
-        out->nsc[n] = '_';
-        out->nsc[n + 1] = '\0';
-    }
-    strcpy(out->nscup, out->nsc);
-    for (p = out->nscup; *p; ++p) {
-        *p = toupper(*p);
-    }
-    if (p != out->nscup) {
-      p[-1] = '\0'; /* No trailing _ */
-    }
-    return 0;
-}
-
 int fb_codegen_common_c(fb_options_t *opts)
 {
     output_t output, *out;
     out = &output;
     int ret, nsc_len;
 
-    if (init_output(out, opts)) {
+    if (fb_init_output(out, opts)) {
         return -1;
     }
     nsc_len = strlen(output.nsc) - 1;
     ret = 0;
     if (opts->cgen_common_reader) {
-        if (open_output_file(out, out->nsc, nsc_len, "_common_reader.h")) {
+        if (fb_open_output_file(out, out->nsc, nsc_len, "_common_reader.h")) {
             return -1;
         }
         ret = fb_gen_common_c_header(out);
-        close_output_file(out);
+        fb_close_output_file(out);
     }
     if (!ret && opts->cgen_common_builder) {
-        if (open_output_file(out, out->nsc, nsc_len, "_common_builder.h")) {
+        if (fb_open_output_file(out, out->nsc, nsc_len, "_common_builder.h")) {
             return -1;
         }
         fb_gen_common_c_builder_header(out);
-        close_output_file(out);
-    }
-    return ret;
-}
-
-int fb_codegen_c(fb_options_t *opts, fb_schema_t *S)
-{
-    output_t output, *out;
-    out = &output;
-    int ret, basename_len;
-
-    if (init_output(out, opts)) {
-        return -1;
-    }
-    out->S = S;
-    out->current_scope = fb_scope_table_find(&S->root_schema->scope_index, 0, 0);
-    basename_len = strlen(out->S->basename);
-    ret = 0;
-    if (opts->cgen_reader) {
-        if (open_output_file(out, out->S->basename, basename_len, "_reader.h")) {
-            return -1;
-        }
-        ret = fb_gen_c_reader(out);
-        close_output_file(out);
-    }
-    if (!ret && opts->cgen_builder) {
-        if (open_output_file(out, out->S->basename, basename_len, "_builder.h")) {
-            return -1;
-        }
-        ret = fb_gen_c_builder(out);
-        close_output_file(out);
-    }
-    if (!ret && opts->cgen_verifier) {
-        if (open_output_file(out, out->S->basename, basename_len, "_verifier.h")) {
-            return -1;
-        }
-        ret = fb_gen_c_verifier(out);
-        close_output_file(out);
+        fb_close_output_file(out);
     }
     return ret;
 }

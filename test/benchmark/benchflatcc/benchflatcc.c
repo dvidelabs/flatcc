@@ -1,11 +1,12 @@
 #define BENCH_TITLE "flatcc for C"
 
-#define DECLARE_BUILDER(B)\
-    flatcc_builder_t builder, *B;\
-    B = &builder;\
-    flatcc_builder_init(B);
+#define BENCHMARK_BUFSIZ 1000
+#define DECLARE_BENCHMARK(BM)\
+    flatcc_builder_t builder, *BM;\
+    BM = &builder;\
+    flatcc_builder_init(BM);
 
-#define CLEAR_BUILDER(B) flatcc_builder_clear(B);
+#define CLEAR_BENCHMARK(BM) flatcc_builder_clear(BM);
 
 
 #include "flatbench_builder.h"
@@ -59,7 +60,7 @@ int encode(flatcc_builder_t *B, void *buffer, size_t *size)
     return !buffer_ok;
 }
 
-int64_t decode(void *buffer, size_t size, int64_t sum)
+int64_t decode(flatcc_builder_t *B, void *buffer, size_t size, int64_t sum)
 {
     unsigned int i;
     C(table_t) foobarcontainer;
@@ -67,6 +68,8 @@ int64_t decode(void *buffer, size_t size, int64_t sum)
     FooBar(table_t) foobar;
     Bar(struct_t) bar;
     Foo(struct_t) foo;
+
+    (void)B;
 
     foobarcontainer = C(as_root(buffer));
     sum += C(initialized(foobarcontainer));

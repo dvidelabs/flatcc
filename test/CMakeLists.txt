@@ -1,1 +1,1 @@
-add_subdirectory(test_cgen)
+add_subdirectory(cgen_test)

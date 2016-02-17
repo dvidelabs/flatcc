@@ -2,9 +2,9 @@
 By contributing to this project you agree to:
 
 - You are the original creater of the submission.
-- No third party has any claims to the submission or it such claims
-  are under a compatible license and clearly documented as such.
-- You grant non-exclusive copyright license as per section 2. of the
+- No third party has any claims to the submission or if any such claims exists,
+  they are under a compatible license and clearly documented as such.
+- You grant a non-exclusive copyright license as per section 2. of the
   Apache 2.0 license.
 
 Section 2. of Apache 2.0 license for reference:

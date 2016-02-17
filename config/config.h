@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define FLATCC_VERSION_TEXT "0.1.1"
+#define FLATCC_VERSION_TEXT "0.1.1+"
 
 /*
  * This is an alternative implementation to googles `flatc` compiler.
@@ -71,7 +71,6 @@
 #define FLATCC_MAX_INCLUDE_COUNT 100
 #endif
 
-
 /*
  * Limit parser recursion depth when analyzing dependent structs.
  * The grammar itself does not contain recursion.
@@ -114,6 +113,25 @@
  */
 #ifndef FLATCC_VOFFSET_SIZE
 #define FLATCC_VOFFSET_SIZE 2
+#endif
+
+/*
+ * DO NOT CHANGE
+ * The union type field type.
+ * This is hardcoded in many places and difficult
+ * to change since size = 1 does not require
+ * endian conversion. Config only placed here
+ * for consistency and clarity.
+ */
+#ifndef FLATCC_UTYPE_SIZE
+#define FLATCC_UTYPE_SIZE 1
+#endif
+
+/*
+ * DO NOT CHANGE, see also FLATCC_UTYPE_SIZE
+ */
+#ifndef FLATCC_BOOL_SIZE
+#define FLATCC_BOOL_SIZE 1
 #endif
 
 /*
@@ -290,6 +308,7 @@
  */
 #define FLATCC_CGEN_PAD 0
 
+
 /* ---- CGEN are flagss specific the C code generator. ---- */
 
 /*
@@ -304,7 +323,28 @@
 #define FLATCC_CGEN_PRAGMAS 1
 #endif
 
+/* Default spacing when generating auto idented code. */
+#ifndef FLATCC_CGEN_SPACING
+#define FLATCC_CGEN_SPACING 4
+#endif
+
+
 /* ---- BGEN are flags specific to the binary schema generator. ---- */
+
+/*
+ * If disabled, no binary schema support is compiled in.
+ * This may be useful when generection reflection headers
+ * are no longer compatible with the current build. Disabling
+ * reflection makes it possible to still build the compiler and
+ * thus generate new reflection headers.
+ *
+ * This flag is enabled by the build system so files can also be
+ * excluded or included.
+ *
+ * #ifndef FLATCC_REFLECTION
+ * #define FLATCC_REFLECTION 0
+ * #endif
+*/
 
 /* Export option for --schema. */
 #ifndef FLATCC_BGEN_BFBS
@@ -325,6 +365,18 @@
  * flatc does not include the namespace prefix. */
 #ifndef FLATCC_BGEN_QUALIFY_NAMES
 #define FLATCC_BGEN_QUALIFY_NAMES 1
+#endif
+
+
+/* ---- JSON related code generation. ---- */
+
+/*
+ * Translate enum values to symbolic names. Ditto union types.
+ * This is also a runtime option but disabling it here uses
+ * a faster code path.
+ */
+#ifndef FLATCC_JSON_PRINT_MAP_ENUMS
+#define FLATCC_JSON_PRINT_MAP_ENUMS 1
 #endif
 
 #endif /* CONFIG_H */

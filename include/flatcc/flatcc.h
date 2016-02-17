@@ -37,6 +37,8 @@ struct flatcc_options {
     int hide_later_struct;
     int offset_size;
     int voffset_size;
+    int utype_size;
+    int bool_size;
     int require_root_type;
     int strict_enum_init;
     uint64_t vt_max_count;
@@ -57,7 +59,10 @@ struct flatcc_options {
     int cgen_reader;
     int cgen_builder;
     int cgen_verifier;
+    int cgen_json_parser;
+    int cgen_json_printer;
     int cgen_recursive;
+    int cgen_spacing;
 
     int bgen_bfbs;
     int bgen_qualify_names;

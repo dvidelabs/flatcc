@@ -7,6 +7,7 @@
 
 #include "lex/tokens.h"
 #include "hash/hash_table.h"
+#include "hash/ptr_set.h"
 
 typedef struct fb_token fb_token_t;
 typedef struct fb_string fb_string_t;
@@ -168,6 +169,7 @@ struct fb_name {
 #define fb_scope_table __flatcc_fb_scope_table
 
 DECLARE_HASH_TABLE(fb_name_table, fb_name_t *)
+DECLARE_HASH_TABLE(fb_schema_table, fb_schema_t *)
 DECLARE_HASH_TABLE(fb_value_set, fb_value_t *)
 DECLARE_HASH_TABLE(fb_symbol_table, fb_symbol_t *)
 DECLARE_HASH_TABLE(fb_scope_table, fb_scope_t *)
@@ -197,6 +199,12 @@ struct fb_member {
     fb_compound_type_t *nest;
     /* Used to generate table fields in sorted order. */
     fb_member_t *order;
+
+    /*
+     * Use by code generators. Only valid during export and may hold
+     * garbage from a prevous export.
+     */
+    size_t export_index;
 };
 
 struct fb_metadata {
@@ -209,6 +217,8 @@ struct fb_compound_type {
     fb_symbol_t symbol;
     /* `scope` may span multiple input files, but has a unique namespace. */
     fb_scope_t *scope;
+    /* Identifies the the schema the symbol belongs. */
+    fb_schema_t *schema;
     fb_symbol_t *members;
     fb_member_t *ordered_members;
     fb_metadata_t *metadata;
@@ -273,7 +283,7 @@ struct fb_scope {
 struct fb_root_schema {
     fb_scope_table_t scope_index;
     fb_name_table_t attribute_index;
-    fb_name_table_t include_index;
+    fb_schema_table_t include_index;
     int include_count;
     int include_depth;
     size_t total_source_size;
@@ -323,6 +333,56 @@ struct fb_schema {
     char *basenameup;
     /* Basename with extension. */
     char *errorname;
+
+    /*
+     * The dependency schemas visible to this schema (includes self).
+     * Compound symbols have a link to schema which can be checked
+     * against this set to see if the symbol is visible in this
+     * conctext.
+     */
+    ptr_set_t visible_schema;
 };
+
+/*
+ * Helpers to ensure a symbol is actually visible because a scope
+ * (namespace) may be extended when a parent inlcudes another file
+ * first.
+ */
+static inline fb_compound_type_t *get_enum_if_visible(fb_schema_t *schema, fb_symbol_t *sym)
+{
+    fb_compound_type_t *ct = 0;
+
+    switch (sym->kind) {
+    case fb_is_enum:
+        ct = (fb_compound_type_t *)sym;
+        if (!ptr_set_exists(&schema->visible_schema, ct->schema)) {
+            ct = 0;
+        }
+        break;
+    default:
+        break;
+    }
+    return ct;
+}
+
+static inline fb_compound_type_t *get_compound_if_visible(fb_schema_t *schema, fb_symbol_t *sym)
+{
+    fb_compound_type_t *ct = 0;
+
+    switch (sym->kind) {
+    case fb_is_struct:
+    case fb_is_table:
+    case fb_is_union:
+    case fb_is_enum:
+        ct = (fb_compound_type_t *)sym;
+        if (!ptr_set_exists(&schema->visible_schema, ct->schema)) {
+            ct = 0;
+        }
+        break;
+    default:
+        break;
+    }
+    return ct;
+}
 
 #endif /* SYMBOLS_H */

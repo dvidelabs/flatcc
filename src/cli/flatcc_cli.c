@@ -23,9 +23,15 @@ void usage(FILE *fp)
             "  --stdout                   Concatenate all output to stdout\n"
             "  --prefix=<prefix>          Add prefix to all generated names (no _ added)\n"
             "  --common-prefix=<prefix>   Replace 'flatbuffers' prefix in common files\n"
+#if FLATCC_REFLECTION
             "  --schema                   Generate binary schema (.bfbs)\n"
             "  --schema-namespace=yes     Generate namespace prefix in binary schema\n"
             "  --schema-length=no         Add length prefix to binary schema\n"
+#endif
+            "  --verifier                 Generate verifier for schema\n"
+            "  --json-parser              Generate json parser for schema\n"
+            "  --json-printer             Generate json printer for schema\n"
+            "  --json                     Generate both json parser and printer for schema\n"
             "  --version                  Show version\n"
             "  -h | --help                Help message\n"
     );
@@ -56,6 +62,7 @@ void help(FILE *fp)
         "All C output can be concatenated to a single file using --stdout. This is\n"
         "the exact same content as the generated files ordered by dependencies.\n"
         "\n"
+#if FLATCC_REFLECTION
         "--schema will generate a binary .bfbs file for each top-level schema file.\n"
         "Can be used with --stdout if no C output is specified. When used with multiple\n"
         "files --schema-length=yes is recommend.\n"
@@ -65,12 +72,25 @@ void help(FILE *fp)
         "--schema-length adds a length prefix of type uoffset_t to binary schema so\n"
         "they can be concatenated - the aligned buffer starts after the prefix.\n"
         "\n"
+#else
+        "Flatbuffers binary schema support (--schema) has been disabled."
+        "\n"
+#endif
+        "--json-parser generates a file that implements a fast typed json parser for\n"
+        "the schema. It depends on some flatcc headers and the runtime library but\n"
+        "not on other generated files except other parsers from included schema.\n"
+        "\n"
+        "--json-printer generates a file that implements json printers for the schema\n"
+        "and has dependencies similar to --json-parser.\n"
+        "\n"
+        "--json is generates both printer and parser.\n"
+        "\n"
         "The generated source can redefine offset sizes by including a modified\n"
         "`flattypes.h` file. The flatbuilder library must then be compiled with the\n"
         "same `flattypes.h` file. In this case --prefix and --common-prefix options\n"
         "may be helpful to avoid conflict with standard offset sizes.\n"
         "\n"
-        "The output size may seem bulky, but most content are rarely used inline\n"
+        "The output size may seem bulky, but most content is rarely used inline\n"
         "functions and macros. The compiled binary need not be large.\n"
         "\n"
         "The generated source assumes C11 functionality for alignment, compile\n"
@@ -122,10 +142,26 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         opts->gen_stdout = 1;
         return noarg;
     }
+#if FLATCC_REFLECTION
     if (0 == strcmp("-schema", s)) {
         opts->bgen_bfbs = 1;
         return noarg;
     }
+#endif
+    if (0 == strcmp("-json-parser", s)) {
+        opts->cgen_json_parser = 1;
+        return noarg;
+    }
+    if (0 == strcmp("-json-printer", s)) {
+        opts->cgen_json_printer = 1;
+        return noarg;
+    }
+    if (0 == strcmp("-json", s)) {
+        opts->cgen_json_parser = 1;
+        opts->cgen_json_printer = 1;
+        return noarg;
+    }
+#if FLATCC_REFLECTION
     if (match_long_arg("-schema-namespace", s, n)) {
         if (!a) {
             fprintf(stderr, "--schema-namespace option needs an argument\n");
@@ -146,6 +182,7 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         }
         return v ? noarg : nextarg;
     }
+#endif
     if (match_long_arg("-common-prefix", s, n)) {
         if (!a) {
             fprintf(stderr, "--common-prefix option needs an argument\n");
@@ -283,12 +320,13 @@ int main(int argc, const char *argv[])
         status = ret ? -1 : 0;
         goto done;
     }
-    if (!(opts.bgen_bfbs && !opts.cgen_verifier) || opts.cgen_builder) {
+    cgen = opts.cgen_reader || opts.cgen_builder || opts.cgen_verifier
+        || opts.cgen_common_reader || opts.cgen_common_builder
+        || opts.cgen_json_parser || opts.cgen_json_printer;
+    if (!opts.bgen_bfbs && (!cgen || opts.cgen_builder)) {
         /* Assume default if no other output specified. */
         opts.cgen_reader = 1;
     }
-    cgen = opts.cgen_reader || opts.cgen_builder || opts.cgen_verifier
-        || opts.cgen_common_reader || opts.cgen_common_builder;
     if (opts.bgen_bfbs && cgen) {
         if (opts.gen_stdout) {
             fprintf(stderr, "--stdout cannot be used with mixed text and binary output");

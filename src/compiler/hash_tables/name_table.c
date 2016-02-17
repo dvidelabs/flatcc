@@ -2,11 +2,7 @@
 #include "../symbols.h"
 #include "hash/hash_table_def.h"
 DEFINE_HASH_TABLE(fb_name_table)
-/*
- * TODO: also try "hash_table_impl_srh.h": it is slower on simple hashes
- * but may speed up complex keys such as parser tokens, and cache the
- * hash function.
- */
+
 #include "hash/hash_table_impl.h"
 
 static inline int ht_match(const void *key, size_t len, fb_name_t *name)

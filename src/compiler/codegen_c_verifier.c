@@ -57,7 +57,7 @@ static int gen_union_verifier(output_t *out, fb_compound_type_t *ct)
                 (unsigned)member->value.u, snref.text);
     }
     fprintf(out->fp,
-            "    default: return 1;\n    }\n}\n\n");
+            "    default: return flatcc_verify_ok;\n    }\n}\n\n");
     return 0;
 }
 
@@ -73,8 +73,7 @@ static int gen_table_verifier(output_t *out, fb_compound_type_t *ct)
     fb_compound_name(ct, &snt);
 
     fprintf(out->fp,
-            "static int __%s_table_verifier(flatcc_table_verifier_descriptor_t *td)\n"
-            "{\n    return ",
+            "static int __%s_table_verifier(flatcc_table_verifier_descriptor_t *td)\n{\n",
             snt.text);
 
     for (sym = ct->members; sym; sym = sym->link) {
@@ -82,8 +81,11 @@ static int gen_table_verifier(output_t *out, fb_compound_type_t *ct)
         if (member->metadata_flags & fb_f_deprecated) {
             continue;
         }
-        if (!first) {
-            fprintf(out->fp, "\n        && ");
+        
+        if (first) {
+            fprintf(out->fp, "    int ret;\n    if ((ret = ");
+        } else {
+            fprintf(out->fp, ")) return ret;\n    if ((ret = ");
         }
         first = 0;
         required = (member->metadata_flags & fb_f_required) != 0;
@@ -170,10 +172,11 @@ static int gen_table_verifier(output_t *out, fb_compound_type_t *ct)
         }
         fprintf(out->fp, " /* %.*s */", (int)sym->ident->len, sym->ident->text);
     }
-    if (first) {
-        fprintf(out->fp, "1");
-    }
-    fprintf(out->fp, ";\n}\n\n");
+    if (!first) {
+        fprintf(out->fp, ")) return ret;\n");
+    } 
+    fprintf(out->fp, "    return flatcc_verify_ok;\n");
+    fprintf(out->fp, "}\n\n");
     fprintf(out->fp,
             "static inline int %s_verify_as_root(const void *buf, size_t bufsiz, const char *fid)\n"
             "{\n    return flatcc_verify_table_as_root(buf, bufsiz, fid, &__%s_table_verifier);\n}\n\n",

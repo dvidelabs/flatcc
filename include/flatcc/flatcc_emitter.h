@@ -12,7 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "flatcc_types.h"
+#include "flatcc/flatcc_types.h"
+#include "flatcc/flatcc_iov.h"
 
 /*
  * The buffer steadily grows during emission but the design allows for

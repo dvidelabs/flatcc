@@ -15,8 +15,8 @@ echo "" 1>&2
 mkdir -p ${TMP}
 rm -rf ${TMP}/*
 
-echo "running generation of complex schema (test_cgen)"
-${ROOT}/test/test_cgen/test_cgen.sh
+echo "running generation of complex schema (cgen_test)"
+${ROOT}/test/cgen_test/cgen_test.sh
 
 mkdir -p ${TMP}/monster_test
 
@@ -76,13 +76,22 @@ $CC -O3 -DNDEBUG -DFLATBUFFERS_BENCHMARK -I ${ROOT}/include monster_test.c \
 echo "running optimized version of main monster test"
 ./monster_test
 
-echo "running reflection test"
-${ROOT}/test/reflection_test//reflection_test.sh
+if [ -e ${ROOT}/build/reflection_enabled ]; then
+    # TODO: temporarily disabled reflection test
+    echo "running reflection test"
+    ${ROOT}/test/reflection_test//reflection_test.sh
 
-echo "running reflection example"
-${ROOT}/examples/reflection/build.sh
+    echo "running reflection example"
+    ${ROOT}/examples/reflection/build.sh
+fi
+
+echo "running json test"
+${ROOT}/test/json_test/json_test.sh
 
 echo "running load test with large buffer"
 ${ROOT}/test/load_test/load_test.sh
 
 echo "TEST PASSED"
+if [ ! -e ${ROOT}/build/reflection_enabled ]; then
+    echo "(reflection disabled, skipping affected test and example)"
+fi

@@ -289,6 +289,7 @@ static inline fb_scope_t *fb_add_scope(fb_parser_t *P, fb_ref_t *name)
     p = new_elem(P, sizeof(*p));
     p->name = name;
     p->prefix = P->schema.prefix;
+
     fb_scope_table_insert_item(&P->schema.root_schema->scope_index, p, ht_keep);
     return p;
 }
@@ -1021,7 +1022,6 @@ static int parse_schema(fb_parser_t *P)
     revert_names(&P->schema.attributes);
     revert_symbols(&P->schema.symbols);
     return 0;
-
 }
 
 static inline void clear_elem_buffers(fb_parser_t *P)
@@ -1263,8 +1263,9 @@ void fb_clear_parser(fb_parser_t *P)
             fb_value_set_clear(&ct->value_set);
         }
     }
-    fb_name_table_clear(&P->schema.root_schema_instance.include_index);
+    fb_schema_table_clear(&P->schema.root_schema_instance.include_index);
     fb_name_table_clear(&P->schema.root_schema_instance.attribute_index);
+    ptr_set_clear(&P->schema.visible_schema);
     if (P->tmp_field_marker) {
         free(P->tmp_field_marker);
     }
@@ -1275,6 +1276,8 @@ void fb_clear_parser(fb_parser_t *P)
         free((void *)P->schema.basename);
     }
     if (P->schema.basenameup) {
+        /* Add self to set of visible schema. */
+        ptr_set_insert_item(&P->schema.visible_schema, &P->schema, ht_keep);
         free((void *)P->schema.basenameup);
     }
     if (P->schema.errorname) {

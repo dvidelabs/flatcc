@@ -205,7 +205,9 @@ static inline fb_symbol_t *lookup_reference(fb_parser_t *P, fb_scope_t *local, f
     }
     if (local && count == 1) {
         if ((sym = find_fb_symbol_by_token(&local->symbol_index, basename->ident))) {
-            return sym;
+            if (get_compound_if_visible(&P->schema, sym)) {
+                return sym;
+            }
         }
     }
     /* Null name is valid in scope lookup, indicating global scope. */
@@ -215,7 +217,11 @@ static inline fb_symbol_t *lookup_reference(fb_parser_t *P, fb_scope_t *local, f
     if (!(scope = fb_find_scope_by_ref(&P->schema, name, count - 1))) {
         return 0;
     }
-    return find_fb_symbol_by_token(&scope->symbol_index, basename->ident);
+    sym = find_fb_symbol_by_token(&scope->symbol_index, basename->ident);
+    if (sym && get_compound_if_visible(&P->schema, sym)) {
+        return sym;
+    }
+    return 0;
 }
 
 static inline fb_symbol_t *lookup_type_reference(fb_parser_t *P, fb_scope_t *local, fb_ref_t *name)
@@ -1291,6 +1297,8 @@ int fb_build_schema(fb_parser_t *P)
     fb_compound_type_t *ct;
     fb_attribute_t *a;
 
+    /* Make sure self is visible at this point in time. */
+    assert(ptr_set_exists(&P->schema.visible_schema, &P->schema));
     for (sym = S->symbols; sym; sym = sym->link) {
         switch (sym->kind) {
         case fb_is_table:
@@ -1298,6 +1306,7 @@ int fb_build_schema(fb_parser_t *P)
         case fb_is_union:
         case fb_is_struct:
             ct = (fb_compound_type_t *)sym;
+            ct->schema = &P->schema;
             if (ct->scope && (old_sym = define_fb_symbol(&ct->scope->symbol_index, sym))) {
                 error_sym_2(P, sym, "symbol already defined here", old_sym);
             }

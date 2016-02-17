@@ -13,12 +13,12 @@
  *
  */
 
+#include <stdlib.h>
 #include <memory.h>
 #include <string.h>
 #include <assert.h>
 
 #include "flatcc/flatcc_builder.h"
-#include "flatcc/flatcc_endian.h"
 #include "flatcc/flatcc_emitter.h"
 
 /*
@@ -63,8 +63,8 @@ const uint8_t flatcc_builder_padding_base[512] = { 0 };
 #define soffset_t flatbuffers_soffset_t
 #define voffset_t flatbuffers_voffset_t
 
-#define store_uoffset flatbuffers_store_uoffset
-#define store_voffset flatbuffers_store_voffset
+#define store_uoffset __flatbuffers_uoffset_cast_to_pe
+#define store_voffset  __flatbuffers_voffset_cast_to_pe
 
 #define field_size sizeof(uoffset_t)
 #define max_offset_count FLATBUFFERS_COUNT_MAX(field_size)
@@ -129,6 +129,9 @@ int flatcc_builder_default_alloc(void *alloc_context, iovec_t *b, size_t request
     case flatcc_builder_alloc_fs:
         n = sizeof(__flatcc_builder_frame_t) * 8;
         break;
+    case flatcc_builder_alloc_us:
+        n = 64;
+        break;
     default:
         /*
          * We have many small structures - vs stack for tables with few
@@ -161,10 +164,12 @@ int flatcc_builder_default_alloc(void *alloc_context, iovec_t *b, size_t request
 #define ds_ptr(pos) (T_ptr(B->buffers[flatcc_builder_alloc_ds].iov_base, (pos)))
 #define vs_ptr(pos) (T_ptr(B->buffers[flatcc_builder_alloc_vs].iov_base, (pos)))
 #define pl_ptr(pos) (T_ptr(B->buffers[flatcc_builder_alloc_pl].iov_base, (pos)))
+#define us_ptr(pos) (T_ptr(B->buffers[flatcc_builder_alloc_us].iov_base, (pos)))
 #define vd_ptr(pos) (T_ptr(B->buffers[flatcc_builder_alloc_vd].iov_base, (pos)))
 #define vb_ptr(pos) (T_ptr(B->buffers[flatcc_builder_alloc_vb].iov_base, (pos)))
 #define vs_offset(ptr) ((size_t)(ptr) - (size_t)B->buffers[flatcc_builder_alloc_vs].iov_base)
 #define pl_offset(ptr) ((size_t)(ptr) - (size_t)B->buffers[flatcc_builder_alloc_pl].iov_base)
+#define us_offset(ptr) ((size_t)(ptr) - (size_t)B->buffers[flatcc_builder_alloc_us].iov_base)
 
 #define table_limit (FLATBUFFERS_VOFFSET_MAX - field_size + 1)
 #define data_limit (FLATBUFFERS_UOFFSET_MAX - field_size + 1)
@@ -481,6 +486,41 @@ static inline void get_min_align(uint16_t *align, uint16_t b)
     }
 }
 
+void *flatcc_builder_enter_user_frame(flatcc_builder_t *B, size_t size)
+{
+    size_t *frame;
+
+    size = alignup(size, sizeof(size_t)) + sizeof(size_t);
+
+    if (!(frame = reserve_buffer(B, flatcc_builder_alloc_us, B->user_frame_end, size, 0))) {
+        return 0;
+    }
+    memset(frame, 0, size);
+    *frame++ = B->user_frame_offset;
+    B->user_frame_offset = B->user_frame_end;
+    B->user_frame_end += size;
+    return frame;
+}
+
+void flatcc_builder_exit_user_frame(flatcc_builder_t *B)
+{
+    size_t *hdr;
+
+    hdr = us_ptr(B->user_frame_offset);
+    B->user_frame_end = B->user_frame_offset;
+    B->user_frame_offset = *hdr;
+}
+
+void *flatcc_builder_get_user_frame(flatcc_builder_t *B)
+{
+    return us_ptr(B->user_frame_offset + sizeof(size_t));
+}
+
+int flatcc_builder_has_user_frame(flatcc_builder_t *B)
+{
+    return B->user_frame_end != 0;
+}
+
 static int enter_frame(flatcc_builder_t *B, uint16_t align)
 {
     if (++B->level > B->limit_level) {
@@ -639,7 +679,7 @@ flatcc_builder_ref_t flatcc_builder_embed_buffer(flatcc_builder_t *B,
     /* Add ubyte vector size header if nested buffer. */
     push_iov_cond(&size_field, field_size, !is_top_buffer(B));
     push_iov(data, size);
-    push_iov(_pad, pad)
+    push_iov(_pad, pad);
     return emit_front(B, &iov);
 }
 
@@ -1129,15 +1169,40 @@ flatcc_builder_ref_t flatcc_builder_create_table(flatcc_builder_t *B, const void
         *offset_field = store_uoffset(offset);
     }
     init_iov();
-    push_iov(&vt_offset, field_size);
+    push_iov(&vt_offset_field, field_size);
     push_iov(data, size);
     push_iov(_pad, pad);
     return emit_front(B, &iov);
 }
 
+int flatcc_builder_check_required_field(flatcc_builder_t *B, flatbuffers_voffset_t id)
+{
+    check(frame(type) == flatcc_builder_table, "expected table frame");
+
+    return id < B->id_end && B->vs[id] != 0;
+}
+
+int flatcc_builder_check_union_field(flatcc_builder_t *B, flatbuffers_voffset_t id)
+{
+    check(frame(type) == flatcc_builder_table, "expected table frame");
+
+    if (id == 0 || id >= B->id_end) {
+        return 0;
+    }
+    if (B->vs[id - 1] == 0) {
+        return B->vs[id] == 0;
+    }
+    if (*(uint8_t *)(B->ds + B->vs[id - 1])) {
+        return B->vs[id] != 0;
+    }
+    return B->vs[id] == 0;
+}
+
 int flatcc_builder_check_required(flatcc_builder_t *B, const flatbuffers_voffset_t *required, int count)
 {
     int i;
+
+    check(frame(type) == flatcc_builder_table, "expected table frame");
 
     if (B->id_end < count) {
         return 0;
@@ -1333,7 +1398,7 @@ flatcc_builder_ref_t flatcc_builder_create_string(flatcc_builder_t *B, const cha
     /* Add 1 for zero termination. */
     s_pad = front_pad(B, len + 1, field_size) + 1;
     init_iov();
-    push_iov(&len, field_size);
+    push_iov(&length_prefix, field_size);
     push_iov(s, len);
     push_iov(_pad, s_pad);
     return emit_front(B, &iov);
@@ -1414,6 +1479,8 @@ void *flatcc_builder_table_add(flatcc_builder_t *B, int id, size_t size, uint16_
 
 void *flatcc_builder_table_edit(flatcc_builder_t *B, size_t size)
 {
+    check(frame(type) == flatcc_builder_table, "expected table frame");
+
     return B->ds + B->ds_offset - size;
 }
 

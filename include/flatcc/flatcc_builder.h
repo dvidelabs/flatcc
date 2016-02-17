@@ -61,7 +61,7 @@
 #include <stdint.h>
 #endif
 
-#include "flatcc_types.h"
+#include "flatcc_flatbuffers.h"
 #include "flatcc_emitter.h"
 
 /* It is possible to enable logging here. */
@@ -120,7 +120,7 @@ typedef flatbuffers_soffset_t flatcc_builder_vt_ref_t;
  * flatcc_builder instance. Buffers containing only structs may avoid
  * allocation altogether using a `create` call. The vs stack must hold
  * vtable entries for all open tables up to their requested max id, but
- * unused max id overlap on the stack.  The final vtables only store the
+ * unused max id overlap on the stack. The final vtables only store the
  * largest id actually added. The fs stack must hold stack frames for
  * the nesting levels expected in the buffer, each about 50-100 bytes.
  * The ds stack holds open vectors, table data, and nested buffer state.
@@ -135,6 +135,10 @@ typedef flatbuffers_soffset_t flatcc_builder_vt_ref_t;
  * after build can either keep the allocation levels for the next
  * buffer, or reduce the buffers already allocated by requesting 1 byte
  * allocations (meaning provide a default).
+ *
+ * The user stack is not automatically allocated, but when entered
+ * explicitly, the boundary is rembered in the current live
+ * frame.
  */
 enum flatcc_builder_alloc_type {
     /* The stack where vtables are build. */
@@ -151,6 +155,8 @@ enum flatcc_builder_alloc_type {
     flatcc_builder_alloc_ht,
     /* The vtable descriptor buffer, i.e. list elements for emitted vtables. */
     flatcc_builder_alloc_vd,
+    /* User stack frame for custom data. */
+    flatcc_builder_alloc_us,
 
     /* Number of allocation buffers. */
     flatcc_builder_alloc_buffer_count
@@ -385,6 +391,12 @@ struct flatcc_builder {
     int is_default_emitter;
     /* Only used with default emitter. */
     flatcc_emitter_t default_emit_context;
+
+    /* Offset to the last entered user frame on the user frame stack, after frame header, or 0. */
+    size_t user_frame_offset;
+
+    /* The offset to the end of the most recent user frame. */
+    size_t user_frame_end;
 };
 
 /**
@@ -764,6 +776,46 @@ enum flatcc_builder_type flatcc_builder_get_type(flatcc_builder_t *B);
 enum flatcc_builder_type flatcc_builder_get_type_at(flatcc_builder_t *B, int level);
 
 /**
+ * The user stack is available for custom data. It may be used as
+ * a simple stack by extending or reducing the inner-most frame.
+ *
+ * A frame has a size and a location on the user stack. Entering
+ * a frame ensures the start is aligned to sizeof(size_t) and
+ * ensures the requested space is available without reallocation.
+ * When exiting a frame, the previous frame is restored.
+ *
+ * A user frame works completely independently of the builders
+ * frame stack for tracking tables vectors etc. and does not have
+ * to be completely at exit, but obviously it is not valid to
+ * exit more often the entered.
+ *
+ * The frame is zeroed when entered.
+ *
+ * The returned pointer is only valid until the next call to
+ * `enter/extend_user_frame`. The latest frame pointer
+ * can be restored by calling `get_user_frame`.
+ */
+void *flatcc_builder_enter_user_frame(flatcc_builder_t *B, size_t size);
+
+/**
+ * Makes the parent user frame current, if any. It is not valid to call
+ * if there isn't any frame.
+ */
+void flatcc_builder_exit_user_frame(flatcc_builder_t *B);
+
+/**
+ * Returns a pointer to the start of the inner-most user frame. It is
+ * not valid to call if there isn't any fram.
+ */
+void *flatcc_builder_get_user_frame(flatcc_builder_t *B);
+
+/**
+ * Returns 1 if there is a user frame, and 0 otherwise.
+ */
+int flatcc_builder_has_user_frame(flatcc_builder_t *B);
+
+
+/**
  * Returns the size of the buffer and the logical start and end address
  * of with respect to the emitters address range. `end` - `start` also
  * yields the size. During construction `size` is the emitted number of
@@ -956,13 +1008,13 @@ flatcc_builder_ref_t flatcc_builder_create_table(flatcc_builder_t *B,
  * `count` must be larger than the largest id used for this table
  * instance. Normally it is set to the number of fields defined in the
  * schema, but it may be less if memory is constrained and only few
- * fields are in used. The count can extended later with `reserve_table`
- * if necessary. `count` may be also be set to a large enough value
- * such as FLATBUFFERS_ID_MAX + 1 if memory is not a concern (reserves
- * about twice the maximum vtable size to track the current vtable and
- * voffsets where references must be translated to offsets at table
- * end). `count` may be zero if for example `reserve_table` is being
- * used.
+ * fields with low valued id's are in use. The count can extended later
+ * with `reserve_table` if necessary. `count` may be also be set to a
+ * large enough value such as FLATBUFFERS_ID_MAX + 1 if memory is not a
+ * concern (reserves about twice the maximum vtable size to track the
+ * current vtable and voffsets where references must be translated to
+ * offsets at table end). `count` may be zero if for example
+ * `reserve_table` is being used.
  *
  * Returns -1 on error, 0 on success.
  */
@@ -1008,9 +1060,46 @@ flatcc_builder_ref_t flatcc_builder_end_table(flatcc_builder_t *B);
  * to verify that all required fields have been set.
  * Each entry is a table field id.
  *
+ * Union fields should use the type field when checking for presence and
+ * may also want to check the soundness of the union field overall using
+ * `check_union_field` with the id one higher than the type field id.
+ *
+ * This funcion is typically called by an assertion in generated builder
+ * interfaces while release builds may want to avoid this performance
+ * overhead.
+ *
  * Returns 1 if all fields are matched, 0 otherwise.
  */
 int flatcc_builder_check_required(flatcc_builder_t *B, const flatbuffers_voffset_t *required, int count);
+
+/**
+ * Same as `check_required` when called with a single element.
+ *
+ * Typically used when direct calls are more convenient than building an
+ * array first. Useful when dealing with untrusted intput such as parsed
+ * text from an external source.
+ */
+int flatcc_builder_check_required_field(flatcc_builder_t *B, flatbuffers_voffset_t id);
+
+/**
+ * Checks that a union field is valid.
+ *
+ * The criteria is:
+ *
+ * If the type field is not present (at id - 1), or it holds a zero value,
+ * then the table field (at id) must be present.
+ *
+ * Generated builder code may be able to enforce valid unions without
+ * this check by setting both type and table together, but e.g. parsers
+ * may receive the type and the table independently and then it makes
+ * sense to validate the union fields before table completion.
+ *
+ * Note that an absent union field is perfectly valid. If a union is
+ * required, the type field (id - 1), should be checked separately
+ * while the table field should only be checked here because it can
+ * (and must) be absent when the type is NONE (= 0).
+ */
+int flatcc_builder_check_union_field(flatcc_builder_t *B, flatbuffers_voffset_t id);
 
 /**
  * A struct, enum or scalar added should be stored in little endian in
@@ -1079,6 +1168,8 @@ void *flatcc_builder_table_add_copy(flatcc_builder_t *B, int id, const void *dat
  * close operation provides the necessary reference.
  *
  * When the table closes, all references get converted into offsets.
+ * Before that point, it is not required that the offset is written
+ * to.
  */
 flatcc_builder_ref_t *flatcc_builder_table_add_offset(flatcc_builder_t *B, int id);
 

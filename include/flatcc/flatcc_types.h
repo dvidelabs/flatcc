@@ -1,10 +1,6 @@
 #ifndef FLATCC_TYPES_H
 #define FLATCC_TYPES_H
 
-#ifdef FLATCC_PORTABLE
-#include "flatcc/flatcc_portable.h"
-#endif
-
 #include <stdlib.h>
 
 #ifndef UINT8_MAX
@@ -35,54 +31,52 @@
  * representation). For 16-bit voffsets this yields a max of 2^15 - 4,
  * or (2^16 - 1) / 2 - 3.
  */
+
 #define flatbuffers_uoffset_t_defined
 #define flatbuffers_soffset_t_defined
 #define flatbuffers_voffset_t_defined
+#define flatbuffers_utype_t_defined
+#define flatbuffers_bool_t_defined
 
+/* uoffset_t is also used for vector and string headers. */
 #define FLATBUFFERS_UOFFSET_MAX UINT32_MAX
 #define FLATBUFFERS_SOFFSET_MAX INT32_MAX
 #define FLATBUFFERS_SOFFSET_MIN INT32_MIN
 #define FLATBUFFERS_VOFFSET_MAX UINT16_MAX
+#define FLATBUFFERS_UTYPE_MAX UINT8_MAX 
+/* Well - the max of the underlying type. */
+#define FLATBUFFERS_BOOL_MAX UINT8_MAX 
+
+#define FLATBUFFERS_ID_MAX (FLATBUFFERS_VOFFSET_MAX / sizeof(flatbuffers_voffset_t) - 3)
+/* Vectors of empty structs can yield div by zero, so we must guard against this. */
+#define FLATBUFFERS_COUNT_MAX(elem_size) (FLATBUFFERS_UOFFSET_MAX/((elem_size) == 0 ? 1 : (elem_size)))
 
 #define FLATBUFFERS_UOFFSET_WIDTH 32
+#define FLATBUFFERS_COUNT_WIDTH 32
 #define FLATBUFFERS_SOFFSET_WIDTH 32
 #define FLATBUFFERS_VOFFSET_WIDTH 16
+#define FLATBUFFERS_UTYPE_WIDTH 8 
+#define FLATBUFFERS_BOOL_WIDTH 8 
+
+#define FLATBUFFERS_TRUE 1
+#define FLATBUFFERS_FALSE 0
+
+#define FLATBUFFERS_PROTOCOL_IS_LE 1
+#define FLATBUFFERS_PROTOCOL_IS_BE 0
 
 typedef uint32_t flatbuffers_uoffset_t;
 typedef int32_t flatbuffers_soffset_t;
 typedef uint16_t flatbuffers_voffset_t;
+typedef uint8_t flatbuffers_utype_t;
+typedef uint8_t flatbuffers_bool_t;
+
+static const flatbuffers_bool_t flatbuffers_true = FLATBUFFERS_TRUE;
+static const flatbuffers_bool_t flatbuffers_false = FLATBUFFERS_FALSE;
 
 #define FLATBUFFERS_IDENTIFIER_SIZE 4
 
 typedef char flatbuffers_fid_t[FLATBUFFERS_IDENTIFIER_SIZE];
 
-#define FLATBUFFERS_ID_MAX (FLATBUFFERS_VOFFSET_MAX / sizeof(flatbuffers_voffset_t) - 3)
-#define FLATBUFFERS_COUNT_MAX(elem_size) (FLATBUFFERS_UOFFSET_MAX/(elem_size))
-
 #endif /* flatbuffers_types_defined */
-
-
-/*
- * Here follows other types not present in generated code.
- */
-
-/*
- * The emitter receives one, or a few buffers at a time via
- * this type.  <sys/iov.h> compatible iovec structure used for
- * allocation and emitter interface.
- */
-typedef struct flatcc_iovec flatcc_iovec_t;
-struct flatcc_iovec {
-    void *iov_base;
-    size_t iov_len;
-};
-
-/*
- * This will always be a relatively small integer, but large enough to
- * support flatcc builder operations. The emitter will never receive
- * longer io vectors than this.
- */
-#define FLATCC_IOV_COUNT_MAX 8
-
 
 #endif /* FLATCC_TYPES_H */

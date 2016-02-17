@@ -1,7 +1,9 @@
 #define BENCH_TITLE "flatbench for raw C structs"
-#define DECLARE_BUILDER(B)\
-    void *B = 0
-#define CLEAR_BUILDER(B) 
+
+#define BENCHMARK_BUFSIZ 1000
+#define DECLARE_BENCHMARK(BM)\
+    void *BM = 0
+#define CLEAR_BENCHMARK(BM) 
 
 #include <string.h>
 #include <stdint.h>
@@ -42,13 +44,15 @@ struct FooBarContainer {
   char location[STRING_LEN];
 };
 
-int encode(void *unused_builder, void *buffer, size_t *size)
+int encode(void *bench, void *buffer, size_t *size)
 {
     int i;
     struct FooBarContainer fbc;
     struct FooBar *foobar;
     struct Foo *foo;
     struct Bar *bar;
+
+    (void)bench;
 
     strcpy(fbc.location, "https://www.example.com/myurl/");
     fbc.location_len = strlen(fbc.location);
@@ -78,13 +82,15 @@ int encode(void *unused_builder, void *buffer, size_t *size)
     return 0;
 }
 
-int64_t decode(void *buffer, size_t size, int64_t sum)
+int64_t decode(void *bench, void *buffer, size_t size, int64_t sum)
 {
     int i;
     struct FooBarContainer *foobarcontainer;
     struct FooBar *foobar;
     struct Foo *foo;
     struct Bar *bar;
+
+    (void)bench;
 
     foobarcontainer = buffer;
     sum += foobarcontainer->initialized;

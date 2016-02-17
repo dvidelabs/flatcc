@@ -48,6 +48,18 @@ and alignment. Please note that verification does not ensure that it is
 safe to mutate buffers because an attacker may still overlap objects
 within the buffer.
 
+Native code generation for FlatBuffer JSON printing and parsing added in
+0.2.0. This is a very fast json processor that can parse or print a 700
+byte json message at a rate of ca 1/2 million messages/second (ca. 600MB/s
+print and 400MB/s parse). See benchmarks below.
+
+NOTE: In version 0.2.0 the buffer verifier result code has been inverted
+so non-zero is now indicates an error similar to other integer return
+codes in the runtime library. This makes it possible to return
+meaningful errors without loss of performance, e.g. that a buffer failed
+due to a string that was not zero terminated, or a vector was aligned to
+its element size.
+
 Big endian platforms have not been tested at all. While care has been
 taken to handle endian encoding, there are bound to be some issues. The
 approach taken is to make it work on little endian - then it can always
@@ -124,11 +136,20 @@ excluding header files. Readers do not need to link with a library.
 
 ## Generated Files
 
-For read-only access to Flatbuffers, no support code is required. The
-compiler generates a header file per schema file and a necessary
-`flatbuffers_common_reader.h` file which allow for custom name prefixes of all
-operations if so desired - this may be relevant if changing offset sizes
-in the buffer format.
+In earlier releases it was attempted to read-only code self-sufficient
+in a few geenrated header files. It is still possible to not rely on a
+runtime library. Other generated files depend on the same headers and a
+runtime library. The builder also depends on the generated reader, but
+other generated files such as the verifier, json parser and json printer
+are self sufficient and only depend on the fixed library code.
+
+The reader and builder rely on generated common reader and builder code.
+This common file makes it possible to change global namespace and
+redefine basic types (`uoffset_t` etc.). In the future this _might_ move
+into library code and use macros for these abstractions and eventually
+have a set of predefined files for types beyond the standard 32-bit
+unsigned offset (`uoffset_t`). The runtime library is specific to on set
+of type definitions.
 
 Reader code is reasonably straight forward and the generated code is
 more readable than the builder code because the generated functions
@@ -213,75 +234,10 @@ main reason is to use `mystruct_assign/copy_from/to_pe` for general
 endian handling of structs - eventually also with native big endian for
 other network protocols.
 
-
-## Endianness
-
-The generated code supports the `FLATBUFFERS_LITTLEENDIAN` flag defined
-by the `flatc` compiler and it can be used to force endianness. Big
-Endian will define it as 0. Other endian may lead to unexpected results.
-In most cases `FLATBUFFERS_LITTLEENDIAN` will be defined but in some
-cases a decision is made in runtime where the flag cannot be defined.
-This is likely just as fast, but `#if FLATBUFFERS_LITTLEENDIAN` can lead
-to wrong results alone - use `#if defined(FLATBUFFERS_LITTLEENDIAN) &&
-FLATBUFFERS_ENDIAN` to be sure the platform is recognized as little
-endian. The detection logic will set `FLATBUFFERS_LITTLEENDIAN` if at
-all possible and can be improved with the `pendian.h` file included by
-the `-DFLATCC_PORTABLE`.
-
-The user can always define `-DFLATBUFFERS_LITTLEENDIAN` as a compile
-time option and then this will take precedence.
-
-It is recommended to use `flatbuffers_is_native_pe()` instead of testing
-`FLATBUFFERS_LITTLEENDIAN` whenever it can be avoided to use the
-proprocessor for several reasons:
-
-- if it isn't defined, the source won't compile at all
-- combined with `pendian.h` it provides endian swapping even without
-  preprocessor detection.
-- it is normally a constant similar to `FLATBUFFERS_LITTLEENDIAN`
-- it works even with undefined `FLATBUFFERS_LITTLEENDIAN`
-- compiler should optimize out even runtime detection
-- protocol might not always be little endian.
-- it is defined as a macro and can be checked for existence.
-
-`pe` means protocol endian. This suggests that `flatcc` output may be
-used for other protocols in the future, or for variations of
-flatbuffers. The main reason for this is the generated structs that can
-be very useful on other predefined network protols in big endian. Each
-struct has a `mystruct_copy_from_pe` method and similar to do these
-conversions. Internally flatcc optimizes struct conversions by testing
-`flatbuffers_is_native_pe()` in some heavier struct conversions.
-
-In a few cases it may be relevant to test for `FLATBUFFERS_LITTLEENDIAN`
-but then code intended for general use should provide an alternitive for
-when the flag isn't defined.
-
-Even with correct endian detection, the code may break on platforms
-where `flatbuffers_is_native_pe()` is false because the necessary system
-headers could not found. In this case `-DFLATCC_PORTABLE` should help.
-
-
-## Offset Sizes and Direction
-
-FlatBuffers use 32-bit `uoffset_t` and 16-bit `voffset_t`. `soffset_t`
-always has the same size as `uoffset_t`. These types can be changed by
-preprocessor defines without regenerating code. However, it is important
-that `libflatccrt.a` is compiled with the same types as defined in
-`flatcc_types.h`.
-
-`uoffset_t` currently always point forward like `flatc`. In retrospect
-it would probably have simplified buffer constrution if offsets pointed
-the opposite direction or were allowed to be signed. This is a major
-change and not likely to happen for reasons of effort and compatibility,
-but it is worth keeping in mind for a v2.0 of the format.
-
-Vector header fields storing the lengthare defined as `uoffset_t` which
-is 32-bit wide by default. If `uoffset_t` is redefined this will
-therefore also affect vectors and strings.
-
-The practical buffer size is limited to about half of the `uoffset_t` range
-because vtable references are signed which in effect means that buffers
-are limited to about 2GB by default.
+JSON printer and parser can be generated using the --json flag or
+--json-printer or json-parser if only one of them is required. There are
+some certain runtime library compile time flags that can optimize out
+printing symbolic enums, but these can also be disabled at runtime.
 
 
 ## Quickstart - reading a buffer
@@ -503,26 +459,219 @@ layer so that `flatbuffers/flatcc_builder.h` can be found.
 
 ## Verifying a Buffer
 
-In the builder example above, we can apply a verifier to the output.
+A buffer can be verified to ensure it does not contain any ranges that
+point outside the the given buffer size, that all data structures are
+aligned according to the flatbuffer principles, that strings are zero
+terminated, and that required fields are present.
+
+In the builder example above, we can apply a verifier to the output:
 
     #include "monster_test_builder.h"
     #include "monster_test_verifier.h"
+    int ret;
     ...
     ... finalize
-    if (!ns(Monster_verify_as_root(buffer, size, "MONS"))) {
-        printf("Monsters are bad\n");
+    if ((ret = ns(Monster_verify_as_root(buffer, size, "MONS")))) {
+        printf("Monster buffer is invalid: %s\n",
+        flatcc_verify_error_string(ret));
     }
 
-Normally the verifier is not very informative and just returns true (1)
-if the buffer is good, or false if the buffer is bad. This applies to
-both release and debug builds. It is possible to build libflatccrt.a
-with verifier assertions enabled, and also to print out a message. The
-main CMakeLists.txt file has a commented out option to do this. This is
-useful to track down problems. The verifier did in fact find a bug in
-the main monster test where an extra table was added to a table vector
-but not filled in. This is now also caught by assertion in the builder.
+Flatbuffers can optionally leave out the identifier, here "MONS". Use a
+null pointer as identifier argument to ignore any existing identifiers
+and allow for missing identifiers.
 
-Also see comments in `include/flatcc/flatcc_verifier.h`.
+Nested flatbbuffers are always verified with a null identifier, but it
+may be checked later when accessing the buffer.
+
+The verifier does NOT verify that two datastructures are not
+overlapping. Sometimes this is indeed valid, such as a DAG (directed
+acyclic graph) where for example two string references refer to the same
+string in the buffer. In other cases an attacker may maliciously
+construct overlapping datastructures such that in-place updates may
+cause subsequent invalid buffers. Therefore an untrusted buffer should
+never be updated in-place without first rewriting it to a new buffer.
+
+Note: prior to version 0.2.0, the verifier would fail on 0 and report
+success on non-zero value. As of 0.2.0, success is indicated by 0, and
+non-zero yields an error code that can be translated into a string.
+
+The CMake build system has build option to enable assertions in the
+verifier. This will break debug builds and not usually what is desired,
+but it can be very useful when debugging why a buffer is invalid.
+
+See also `include/flatcc/flatcc_verifier.h`.
+
+
+## JSON Parsing and Printing
+
+By using the flatbuffer schema it is possible to generate schema
+specific JSON printers and parsers. This differs for better and worse
+from Googles `flatc` tool which takes a binary schema as input and
+processes json input and output. Here that parser and printer only rely
+on the `flatcc` runtime library, is faster (probably significantly so),
+but requires recompilition when new json formats are to be supported -
+this is not as bad as it sounds - it would for example not be difficult
+to create a Docker container to process a specific schema in a web
+server context.
+
+The json printer and parser are assymtric in the sense that the printer
+is a self-contained object with its own print context object that
+operates on a binary flatbuffer, while the parser has only a lightweight
+context for error messages and really rely on the flatcc builder object
+for its context.
+
+The parser always takes a text buffer as input and produces output
+according to how the builder object is initialized. The printer has
+different init functions: one for printing to a file pointer, including
+stdout, one for printing to a fixed size external buffer, and one for
+printing to a dynamically growing buffer. The dynamic buffer may be
+reused between prints via the reset function. See `flatcc_json_parser.h`
+for details.
+
+The parser will accept unquoted names (not strings) and trailing commas,
+i.e. non-strict json and also allows for hex `\x03` in strings. Strict
+mode must be enabled by a compile time flag. In addition the parser
+schema specific symbolic enum values that can optionally be unquoted
+where a numeric value is expected:
+
+    `color: Green`
+    `color: Color.Green`
+    `color: MyGame.Example.Color.Green`
+    `color: 2`
+
+The symbolic values do not have to be quoted, but can be while numeric
+values cannot be quoted. If no namespace is provided, like `color:
+Green`, the symbol must match the receiving enum type. Any scalar value
+may receive a symbolic value either in a relative namespace like `hp: Color.Green`,
+or an absolute namespace like `hp: MyGame.Example.Color.Green`, but not
+`hp: Green` (since `hp` in the monster example schema) is not an enum
+type with a `Green` value). A namespace is relative to the namespace of
+the receiving object.
+
+It is also possible to have multiple values:
+
+    `color: "Green Red"`
+    `color: Green Red`
+
+These are originally intended for enums that have the bit flag attribute
+defined (which Color does have), but this is tricky to process, so
+therefore any symblic value can be listed in a sequence with or without
+namespace as appropriate. Because this further causes problems with
+signed symbols the exact definition is that all symbols are first
+coerced to the target type (or fail), then added to the target type if
+not the first this results in:
+
+
+    `color: Green Blue Red Blue`
+    `color: 19`
+
+Because Green is 2, Red is 1, Blue is 8 and repeated.
+
+It is not valid to specify an empty set like:
+
+    `color: ""`
+
+because it might be understood as 0 or the default value, and it does
+not unquote very well.
+
+The printer will by default print valid json without any spaces and
+everything quoted. Use the non-strict formatting option (see headers and
+test examples) to produce pretty printing. It is possibly to disable
+symbolic enum values using the `noenum` option.
+
+Only enums will print symbolic values are there is no history of any
+parsed symbolic values at all. Furthermore, symbolic values are only
+printed if the stored value maps cleanly to one value, or in the case of
+bit-flags, cleanly to multiple values. For exmaple if parsing `color: Green Red`
+it will print as `"color":"Red Green"` by default, while `color: Green
+Blue Red Blue` will print as `color:19`.
+
+Both printer and parser are limited to roughly 100 table nesting levels
+and an additional 100 nested struct depths. This can be changed by
+configuration flags but must fit in the runtime stack since the
+operation is recursive descent. Exceedning the limits will result in an
+error.
+
+Numeric values are coerced to the receiving type. Integer types will
+fail if the assignment does not fit the target while floating point
+values may loose precision silently. Integer types never accepts
+floating point values. Strings only accept strings.
+
+Nested flatbuffers may either by arrays of byte sized integers, or a
+table or a struct of the target type. See test cases for details.
+
+The parser will by default fail on unknown fields, but these can also be
+skipped silently with a runtime option.
+
+Unions are difficult to parse. A union is two json fields: a table as usual, and an enum to indicate the type which has the same name with a `_type` suffix and accepts a numeric or symbolic type code:
+
+    {
+      name: "Container Monster", test_type: Monster,
+      test: { name: "Contained Monster" }
+    }
+
+Because other json processors may sort fields, it is possible to receive
+the type field after the test field. The parser does not store temporary
+datastructures. It constructs a flatbuffer directly. This is not
+possible when the type is late. This is handled by parsing the field as
+a skipped field on a first pass, followed by a typed back-tracking
+second pass once the type is known (only the table is parsed twice, but
+for nested unions this can still expand). Needless to say this slows down
+parsing. It is an error to provide only the table field or the type
+field alone, except if the type is `NONE` or `0` in which case the table
+is not allowed to be present.
+
+For detailed usage, please refer to
+
+    `test/json_test/test_json_printer.c`
+    `test/json_test/test_json_parser.c`
+    `test/json_test/json_test.c`
+    `test/benchmark/benchflatccjson`
+
+Be sure to have external/grisu3, `include/portable` and `include/flatcc`
+visible when compiling with default configuration. Do this by adding
+`external` and `include` to the include path, or copy grisu3 from
+external to include directory and just add `inlcude`.
+
+### Performance Notes
+
+Note that json parsing and printing is very fast reaching 500MB/s for
+printing and about 300 MB/s for parsing. Floating point parsing can
+signficantly skew these numbers. The integer and floating point
+parsing and printing are handled via support functions in the portable
+library. In addition the floating point `external/grisu3` library is
+expected to be available, but can be disabled. Disabling `grisu3` will
+revert to `sprintf` and `strtod`. Grisu3 will fall back to `strtod` and
+`grisu3` in some rare special cases. Due to the reliance on `strtod` and
+because `strtod` cannot efficiently handle non-zero-terminated buffers,
+it is recommended to zero terminate buffers. Alternatively, grisu3 can
+be compiled with a flag that allows errors in conversion. These errors
+are very small and still correct, but may break some checksums. Allowing
+for these errors can significantly improve parsing speed and moves the
+benchmark from below half a million parses to above half a million
+parses per second on 700 byte json string, on a 2.2 GHz core-i7.
+
+While unquoted strings may sound more efficient due to the compact size,
+it is actually slower to process. Furthermore, large flatbuffer
+generated JSON files may compress by a factor 8 using gzip or a factor
+4 using LZ4 so this is probably the better place to optimize. For small
+buffers it may be more efficient to compress flatbuffer binaries, but
+for large files, json may actually compress significantly better due to
+the absence of pointers in the format.
+
+SSE 4.2 has been experimentally added, but it the gains are limited
+because it works best when parsing space, and the space parsing is
+already fast without SSE 4.2 and because one might just leave out the
+spaces if in a hurry. For parsing strings, trivial use of SSE 4.2 string
+scanning doesn't work well becasuse all the escape codes below ASCII 32
+must be detected rather than just searching for `\` and `"`. That is not
+to say there are not gains, they just don't seem worthwhile.
+
+The parser is heavily optimized for 64-bit because it implements an
+8-byte wide trie directly in code. It might work well for 32-bit
+compilers too, but this hasn't been tested. The large trie does put some
+strain on compile time. Optimizing beyond -O2 leads to too large
+binaries which offsets any speed gains.
 
 
 ## Buffer Identifiers and Schema Roots
@@ -590,6 +739,7 @@ will return a default value.
 
 Writing the same field twice will also trigger an assertion in debug
 builds.
+
 
 ## Fast Buffers
 
@@ -690,6 +840,76 @@ One reason to change the common namespace is if the flatbuffer
 offset types are changed, for example to handle large 64-bit binary
 chunks. Note however that the builder library can currently only be
 compiled with one specific set of types.
+
+
+## Endianness
+
+The generated code supports the `FLATBUFFERS_LITTLEENDIAN` flag defined
+by the `flatc` compiler and it can be used to force endianness. Big
+Endian will define it as 0. Other endian may lead to unexpected results.
+In most cases `FLATBUFFERS_LITTLEENDIAN` will be defined but in some
+cases a decision is made in runtime where the flag cannot be defined.
+This is likely just as fast, but `#if FLATBUFFERS_LITTLEENDIAN` can lead
+to wrong results alone - use `#if defined(FLATBUFFERS_LITTLEENDIAN) &&
+FLATBUFFERS_ENDIAN` to be sure the platform is recognized as little
+endian. The detection logic will set `FLATBUFFERS_LITTLEENDIAN` if at
+all possible and can be improved with the `pendian.h` file included by
+the `-DFLATCC_PORTABLE`.
+
+The user can always define `-DFLATBUFFERS_LITTLEENDIAN` as a compile
+time option and then this will take precedence.
+
+It is recommended to use `flatbuffers_is_native_pe()` instead of testing
+`FLATBUFFERS_LITTLEENDIAN` whenever it can be avoided to use the
+proprocessor for several reasons:
+
+- if it isn't defined, the source won't compile at all
+- combined with `pendian.h` it provides endian swapping even without
+  preprocessor detection.
+- it is normally a constant similar to `FLATBUFFERS_LITTLEENDIAN`
+- it works even with undefined `FLATBUFFERS_LITTLEENDIAN`
+- compiler should optimize out even runtime detection
+- protocol might not always be little endian.
+- it is defined as a macro and can be checked for existence.
+
+`pe` means protocol endian. This suggests that `flatcc` output may be
+used for other protocols in the future, or for variations of
+flatbuffers. The main reason for this is the generated structs that can
+be very useful on other predefined network protols in big endian. Each
+struct has a `mystruct_copy_from_pe` method and similar to do these
+conversions. Internally flatcc optimizes struct conversions by testing
+`flatbuffers_is_native_pe()` in some heavier struct conversions.
+
+In a few cases it may be relevant to test for `FLATBUFFERS_LITTLEENDIAN`
+but then code intended for general use should provide an alternitive for
+when the flag isn't defined.
+
+Even with correct endian detection, the code may break on platforms
+where `flatbuffers_is_native_pe()` is false because the necessary system
+headers could not found. In this case `-DFLATCC_PORTABLE` should help.
+
+
+## Offset Sizes and Direction
+
+FlatBuffers use 32-bit `uoffset_t` and 16-bit `voffset_t`. `soffset_t`
+always has the same size as `uoffset_t`. These types can be changed by
+preprocessor defines without regenerating code. However, it is important
+that `libflatccrt.a` is compiled with the same types as defined in
+`flatcc_types.h`.
+
+`uoffset_t` currently always point forward like `flatc`. In retrospect
+it would probably have simplified buffer constrution if offsets pointed
+the opposite direction or were allowed to be signed. This is a major
+change and not likely to happen for reasons of effort and compatibility,
+but it is worth keeping in mind for a v2.0 of the format.
+
+Vector header fields storing the lengthare defined as `uoffset_t` which
+is 32-bit wide by default. If `uoffset_t` is redefined this will
+therefore also affect vectors and strings.
+
+The practical buffer size is limited to about half of the `uoffset_t` range
+because vtable references are signed which in effect means that buffers
+are limited to about 2GB by default.
 
 
 ## Pitfalls in Error Handling
@@ -876,7 +1096,7 @@ run with:
 this only requires a system C compiler (cc) to be installed (and
 flatcc's build environment).
 
-A summary for OS-X 2.2 GHz Haswell core i7 is found below. Generated
+A summary for OS-X 2.2 GHz Haswell core-i7 is found below. Generated
 files for OS-X and Ubuntu are found in the benchmark folder.
 
 The benchmarks use the same schema and dataset as Google FPL's
@@ -888,6 +1108,9 @@ ns/op encoding buffers and 29-34ns/op traversing buffers. `flatc` and
 `flatcc` is a bit faster encoding but it is likely due to less memory
 allocation. Throughput and time per operatin are of course very specific
 to this test case.
+
+Generated JSON parser/printer shown below, for flatcc only but for OS-X
+and Linux.
 
 
 ### operation: flatbench for raw C structs encode (optimized)
@@ -945,3 +1168,57 @@ to this test case.
     throughput in 1M ops per sec: 34.902
     time per op: 28.652 (ns)
 
+## JSON benchmark only available for flatcc for C with exact same data set as above
+
+The benchmark uses Grisu3 floating point parsing and printing algorithm
+with exact fallback to strtod/sprintf when the algorithm fails to be
+exact. Better performance can be gained by enabling inexact Grisu3 and
+SSE 4.2 in build options, but likely not worthwhile in praxis.
+
+### operation: flatcc json parser and printer for C encode (optimized)
+
+(encode means printing from existing binary buffer to JSON)
+
+    elapsed time: 1.407 (s)
+    iterations: 1000000
+    size: 722 (bytes)
+    bandwidth: 513.068 (MB/s)
+    throughput in ops per sec: 710619.931
+    throughput in 1M ops per sec: 0.711
+    time per op: 1.407 (us)
+
+### operation: flatcc json parser and printer for C decode/traverse (optimized)
+
+(decode/traverse means parsing json to flatbuffer binary and calculating checksum)
+
+    elapsed time: 2.218 (s)
+    iterations: 1000000
+    size: 722 (bytes)
+    bandwidth: 325.448 (MB/s)
+    throughput in ops per sec: 450758.672
+    throughput in 1M ops per sec: 0.451
+    time per op: 2.218 (us)
+
+## JSON parsing and printing on same hardware in Virtual Box Ubuntu
+
+Numbers for Linux included because parsing is significantly faster.
+
+### operation: flatcc json parser and printer for C encode (optimized)
+
+    elapsed time: 1.210 (s)
+    iterations: 1000000
+    size: 722 (bytes)
+    bandwidth: 596.609 (MB/s)
+    throughput in ops per sec: 826328.137
+    throughput in 1M ops per sec: 0.826
+    time per op: 1.210 (us)
+
+### operation: flatcc json parser and printer for C decode/traverse
+
+    elapsed time: 1.772 (s)
+    iterations: 1000000
+    size: 722 (bytes)
+    bandwidth: 407.372 (MB/s)
+    throughput in ops per sec: 564227.736
+    throughput in 1M ops per sec: 0.564
+    time per op: 1.772 (us)
