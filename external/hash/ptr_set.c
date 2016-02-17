@@ -43,6 +43,7 @@ static inline size_t ht_key_len(ht_item_t x)
 
 static inline int ht_match(const void *key, size_t len, ht_item_t x)
 {
+    (void)len;
     return (size_t)key == (size_t)x;
 }
 
@@ -55,6 +56,7 @@ static inline size_t ptr_set_hash_function(const void *s, size_t len)
     /* Knuths multiplication. */
     return ht_int_hash_function(s, len);
 #else
+    (void)len;
     return ht_default_hash_function(&s, sizeof(char *));
 #endif
 }
