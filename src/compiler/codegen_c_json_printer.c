@@ -80,12 +80,6 @@ static int gen_json_printer_enum(output_t *out, fb_compound_type_t *ct)
         }
     }
 
-    /*
-     * We pass a pointer to provide a generic yet efficient interface.
-     * td, id would not support vectors or structs of enums. Passing the
-     * value would have multiple types and lead to explotion that can
-     * easily be avoided by passing a pointer.
-     */
     fprintf(out->fp,
             "void __%s_print_json_enum(flatcc_json_printer_t *ctx, %s%s v)\n{\n",
             snt.text, ns, tn);
