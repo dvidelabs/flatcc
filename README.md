@@ -31,10 +31,19 @@ also does not preserve the order of structs. The option is controlled by
 a flag in `config.h` The generated source supports both bottom-up and
 top-down construction mixed freely.
 
-`flatcc` does not support parsing JSON objects.
+JSON is supported as of v0.2.0, but unlike Googles `flatc` compiler,
+JSON is not supported in the schema input file. Instead, a schema is
+used to generated JSON parser and printers similar to flatbuffer readers
+and writers.
 
-See also the Google FPL
-[FlatBuffers](http://google.github.io/flatbuffers/) homepage.
+
+See also:
+
+- [Google FPL FlatBuffers](http://google.github.io/flatbuffers/).
+
+- [Build Instructions](https://github.com/dvidelabs/flatcc#building).
+
+- [Online Forum](https://groups.google.com/forum/#!forum/flatbuffers).
 
 
 ## Status
