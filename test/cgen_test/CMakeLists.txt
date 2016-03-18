@@ -7,5 +7,5 @@ add_executable(cgen_test
 )
 
 target_link_libraries(cgen_test
-    PRIVATE flatcc
+    flatcc
 )

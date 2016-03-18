@@ -8,7 +8,7 @@ add_executable(flatcc_cli
 )
 
 target_link_libraries(flatcc_cli
-    PRIVATE flatcc
+    flatcc
 )
 
 # Rename because the libflatcc library and the flatcc executable would
