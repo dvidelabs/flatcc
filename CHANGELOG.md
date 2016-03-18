@@ -1,5 +1,9 @@
 # Change Log
 
+## [Unreleased]
+
+- Fix incorrectly named unaligned read macros.
+
 ## [0.2.0]
 
 - BREAKING: flatcc verify functions now return a distinct error code.
