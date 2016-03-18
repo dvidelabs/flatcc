@@ -1023,6 +1023,13 @@ To install build tools on Ubuntu:
     sudo apt-get update
     sudo apt-get install cmake ninja-build
 
+To install build tools on Centos (which does not have a ninja build package):
+
+    sudo yum group install "Development Tools"
+    sudo yum install cmake
+    # choose make as build tool
+    scripts/initbuild.sh make
+
 
 ### Building for different targets than host
 
