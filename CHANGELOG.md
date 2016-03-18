@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Remove PRIVATE flags from CMake build files to support older CMake versions.
 - Make scripts/initbuild.sh customizable.
 - Fix incorrectly named unaligned read macros.
 

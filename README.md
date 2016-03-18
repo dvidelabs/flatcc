@@ -1003,13 +1003,15 @@ builds.
 The build depends on CMake and by default the Ninja build tool to be
 installed along with Python.
 
-To use `make` instead run `scripts/initbuild.sh make`. This will totally
-clean the build and remember make is the build option. Calls to
+To use `make` instead run `scripts/initbuild.sh make`. This will clean
+the build and remember `make` is the build option. Calls to
 `initbuild.sh` without argument will remember last setting and not wipe
 the existing build. Other generators can be created by adding
-scripts/build.cfg.X`. All builds are made in the same build/debug and
-build/release folders rather then separate per build type because it
-simplifies test scripts.
+`scripts/build.cfg.X` and then use that configuration by calling
+`scripts/initbuild.sh X` where `X` is a custom name. Currently `ninja`
+and `make` are provided out of the box. All builds are made in the same
+build/Debug and build/Release folders rather then separate per build
+type because it simplifies test scripts.
 
 To install build tools on OS-X:
 
