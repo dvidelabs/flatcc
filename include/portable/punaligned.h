@@ -40,7 +40,7 @@
         (((uint16_t)(((uint8_t *)(p))[0])) <<  0) |                         \
         (((uint16_t)(((uint8_t *)(p))[1])) <<  8))
 
-#define unaligned_read_le64toh(p)  (                                        \
+#define unaligned_read_le32toh(p)  (                                        \
         (((uint32_t)(((uint8_t *)(p))[0])) <<  0) |                         \
         (((uint32_t)(((uint8_t *)(p))[1])) <<  8) |                         \
         (((uint32_t)(((uint8_t *)(p))[2])) << 16) |                         \
