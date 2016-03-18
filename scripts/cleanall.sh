@@ -11,5 +11,10 @@ rm -rf release
 rm -f bin/flatcc*
 rm -f bin/bfbs2json*
 rm -f lib/libflatcc*
-rmdir bin
-rmdir lib
+if [ -d bin ]; then
+    rmdir bin
+fi
+if [ -d lib ]; then
+    rmdir lib
+fi
+

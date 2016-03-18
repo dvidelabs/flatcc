@@ -2,3 +2,4 @@ build/*
 bin/*
 lib/*
 release/*
+scripts/build.cfg

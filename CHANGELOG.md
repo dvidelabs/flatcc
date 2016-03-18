@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Make scripts/initbuild.sh customizable.
 - Fix incorrectly named unaligned read macros.
 
 ## [0.2.0]
