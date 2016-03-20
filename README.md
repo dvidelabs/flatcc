@@ -585,6 +585,11 @@ the target type if not the first this results in:
 
 Because Green is 2, Red is 1, Blue is 8 and repeated.
 
+_NOTE_: Duplicate values should be considered implemention dependent as it
+cannot be guaranteed tht all flatbuffer JSON parsers will this the same.
+It may also be that this implementation will change in the future, for
+example to use when all members and target are of bitflag type.
+
 It is not valid to specify an empty set like:
 
     color: ""
@@ -643,10 +648,10 @@ is not allowed to be present.
 
 For detailed usage, please refer to
 
-    `test/json_test/test_json_printer.c`
-    `test/json_test/test_json_parser.c`
-    `test/json_test/json_test.c`
-    `test/benchmark/benchflatccjson`
+    test/json_test/test_json_printer.c
+    test/json_test/test_json_parser.c
+    test/json_test/json_test.c
+    test/benchmark/benchflatccjson
 
 Be sure to have external/grisu3, `include/portable` and `include/flatcc`
 visible when compiling with default configuration. Do this by adding
