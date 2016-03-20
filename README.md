@@ -585,10 +585,11 @@ the target type if not the first this results in:
 
 Because Green is 2, Red is 1, Blue is 8 and repeated.
 
-_NOTE_: Duplicate values should be considered implemention dependent as it
-cannot be guaranteed that all flatbuffer JSON parsers will this the same.
-It may also be that this implementation will change in the future, for
-example to use when all members and target are of bitflag type.
+_NOTE_: Duplicate values should be considered implemention dependent as
+it cannot be guaranteed that all flatbuffer JSON parsers will handle
+this the same. It may also be that this implementation will change in
+the future, for example to use when all members and target are of
+bit flag type.
 
 It is not valid to specify an empty set like:
 
