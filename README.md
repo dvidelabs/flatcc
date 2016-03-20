@@ -39,11 +39,11 @@ and writers.
 
 See also:
 
-- [Google FPL FlatBuffers](http://google.github.io/flatbuffers/).
+- [Google FPL FlatBuffers](http://google.github.io/flatbuffers/)
 
-- [Build Instructions](https://github.com/dvidelabs/flatcc#building).
+- [Build Instructions](https://github.com/dvidelabs/flatcc#building)
 
-- [Online Forum](https://groups.google.com/forum/#!forum/flatbuffers).
+- [Online Forum](https://groups.google.com/forum/#!forum/flatbuffers)
 
 
 ## Status
@@ -567,7 +567,7 @@ quoted in order to be compatible with Googles flatc tool for Flatbuffers
     `color: "Green Red"`
 
 The following is also accepted in flatc v0.2.0, but future releases will
-require it to be explicitly configured for flac compatibity reasons:
+require it to be explicitly configured for flatc compatibity reasons:
 
     `color: Green Red`
 
