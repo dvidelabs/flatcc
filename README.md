@@ -580,7 +580,7 @@ symbols are first coerced to the target type (or fail), then added to
 the target type if not the first this results in:
 
 
-    color: Green Blue Red Blue
+    color: "Green Blue Red Blue"
     color: 19
 
 Because Green is 2, Red is 1, Blue is 8 and repeated.
