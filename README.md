@@ -545,10 +545,10 @@ mode must be enabled by a compile time flag. In addition the parser
 schema specific symbolic enum values that can optionally be unquoted
 where a numeric value is expected:
 
-    `color: Green`
-    `color: Color.Green`
-    `color: MyGame.Example.Color.Green`
-    `color: 2`
+    color: Green
+    color: Color.Green
+    color: MyGame.Example.Color.Green
+    color: 2
 
 The symbolic values do not have to be quoted (unless required by runtime
 or compile time configuration), but can be while numeric values cannot
@@ -564,12 +564,12 @@ It is also possible to have multiple values, but these always have to be
 quoted in order to be compatible with Googles flatc tool for Flatbuffers
 1.1:
 
-    `color: "Green Red"`
+    color: "Green Red"
 
 The following is also accepted in flatc v0.2.0, but future releases will
 require it to be explicitly configured for flatc compatibity reasons:
 
-    `color: Green Red`
+    color: Green Red
 
 These multi value expressions are originally intended for enums that
 have the bit flag attribute defined (which Color does have), but this is
@@ -580,14 +580,14 @@ symbols are first coerced to the target type (or fail), then added to
 the target type if not the first this results in:
 
 
-    `color: Green Blue Red Blue`
-    `color: 19`
+    color: Green Blue Red Blue
+    color: 19
 
 Because Green is 2, Red is 1, Blue is 8 and repeated.
 
 It is not valid to specify an empty set like:
 
-    `color: ""`
+    color: ""
 
 because it might be understood as 0 or the default value, and it does
 not unquote very well.
@@ -621,7 +621,9 @@ table or a struct of the target type. See test cases for details.
 The parser will by default fail on unknown fields, but these can also be
 skipped silently with a runtime option.
 
-Unions are difficult to parse. A union is two json fields: a table as usual, and an enum to indicate the type which has the same name with a `_type` suffix and accepts a numeric or symbolic type code:
+Unions are difficult to parse. A union is two json fields: a table as
+usual, and an enum to indicate the type which has the same name with a
+`_type` suffix and accepts a numeric or symbolic type code:
 
     {
       name: "Container Monster", test_type: Monster,
