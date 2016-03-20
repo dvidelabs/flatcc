@@ -579,17 +579,16 @@ causes problems with signed symbols the exact definition is that all
 symbols are first coerced to the target type (or fail), then added to
 the target type if not the first this results in:
 
-
     color: "Green Blue Red Blue"
     color: 19
 
 Because Green is 2, Red is 1, Blue is 8 and repeated.
 
-_NOTE_: Duplicate values should be considered implemention dependent as
-it cannot be guaranteed that all flatbuffer JSON parsers will handle
+__NOTE__: Duplicate values should be considered implemention dependent
+as it cannot be guaranteed that all flatbuffer JSON parsers will handle
 this the same. It may also be that this implementation will change in
-the future, for example to use when all members and target are of
-bit flag type.
+the future, for example to use bitwise or when all members and target
+are of bit flag type.
 
 It is not valid to specify an empty set like:
 
