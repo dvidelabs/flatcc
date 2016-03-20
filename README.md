@@ -550,27 +550,34 @@ where a numeric value is expected:
     `color: MyGame.Example.Color.Green`
     `color: 2`
 
-The symbolic values do not have to be quoted, but can be while numeric
-values cannot be quoted. If no namespace is provided, like `color:
-Green`, the symbol must match the receiving enum type. Any scalar value
-may receive a symbolic value either in a relative namespace like `hp: Color.Green`,
-or an absolute namespace like `hp: MyGame.Example.Color.Green`, but not
+The symbolic values do not have to be quoted (unless required by runtime
+or compile time configuration), but can be while numeric values cannot
+be quoted. If no namespace is provided, like `color: Green`, the symbol
+must match the receiving enum type. Any scalar value may receive a
+symbolic value either in a relative namespace like `hp: Color.Green`, or
+an absolute namespace like `hp: MyGame.Example.Color.Green`, but not
 `hp: Green` (since `hp` in the monster example schema) is not an enum
 type with a `Green` value). A namespace is relative to the namespace of
 the receiving object.
 
-It is also possible to have multiple values:
+It is also possible to have multiple values, but these always have to be
+quoted in order to be compatible with Googles flatc tool for Flatbuffers
+1.1:
 
     `color: "Green Red"`
+
+The following is also accepted in flatc v0.2.0, but future releases will
+require it to be explicitly configured for flac compatibity reasons:
+
     `color: Green Red`
 
-These are originally intended for enums that have the bit flag attribute
-defined (which Color does have), but this is tricky to process, so
-therefore any symblic value can be listed in a sequence with or without
-namespace as appropriate. Because this further causes problems with
-signed symbols the exact definition is that all symbols are first
-coerced to the target type (or fail), then added to the target type if
-not the first this results in:
+These multi value expressions are originally intended for enums that
+have the bit flag attribute defined (which Color does have), but this is
+tricky to process, so therefore any symblic value can be listed in a
+sequence with or without namespace as appropriate. Because this further
+causes problems with signed symbols the exact definition is that all
+symbols are first coerced to the target type (or fail), then added to
+the target type if not the first this results in:
 
 
     `color: Green Blue Red Blue`
