@@ -1021,20 +1021,28 @@ To initialize and run the build:
     scripts/build.sh
 
 The `bin` and `lib` folders will be created with debug and release
-builds.
+build products.
 
-The build depends on CMake and by default the Ninja build tool to be
-installed along with Python.
+The build depends on `CMake`. By default the `Ninja` build tool is also required,
+but alternatively `make` can be used.
 
-To use `make` instead run `scripts/initbuild.sh make`. This will clean
-the build and remember `make` is the build option. Calls to
-`initbuild.sh` without argument will remember last setting and not wipe
-the existing build. Other generators can be created by adding
-`scripts/build.cfg.X` and then use that configuration by calling
-`scripts/initbuild.sh X` where `X` is a custom name. Currently `ninja`
-and `make` are provided out of the box. All builds are made in the same
-build/Debug and build/Release folders rather then separate per build
-type because it simplifies test scripts.
+To switch between build tools use:
+
+    scripts/initbuild.sh X
+
+where X is the name of the build tool, for example:
+
+    scripts/initbuild.sh make
+    scripts/initbuild.sh make-concurrent
+    scripts/initbuild.sh ninja
+
+where `ninja` is the default. A custom build configuration `X` can be
+added by adding a `scripts/build.cfg.X' file.
+
+`scripts/initbuild.sh` cleans the build if a specific build
+configuration is given as argument. Without arguments it only ensures
+that CMake is initialized and is therefore fast to run on subsequent
+calls. This is used by all test scripts.
 
 To install build tools on OS-X:
 
@@ -1050,11 +1058,10 @@ To install build tools on Centos (which does not have a ninja build package):
 
     sudo yum group install "Development Tools"
     sudo yum install cmake
-    # choose make as build tool
     scripts/initbuild.sh make
 
 
-### Building for different targets than host
+### Building for a target different than the host
 
 If the `flatcc` compiler is built on a target host like OS-X or Ubuntu,
 but the final generated files are needed elsewhere like ARM
@@ -1074,7 +1081,7 @@ header files only:
 
 Grisu3 is only needed for flatcc json support and can be disabled by a
 build configuration option. It is however, very significanlty faster for
-floating point handling
+floating point handling.
 
 
 ## Testing
