@@ -153,11 +153,11 @@ excluding header files. Readers do not need to link with a library.
 
 In earlier releases it was attempted to generate all code needed for
 read-only buffer access. Now a library of include files is always
-required (`inlcude/flatcc`, `include/portable`) because the origianal
+required (`include/flatcc`, `include/portable`) because the original
 approach lead to excessive code duplication. The generated code for
-building flatbuffers, and for parsing and printing flatbuffers all need
+building flatbuffers, and for parsing and printing flatbuffers, all need
 to link with the runtime library `libflatccrt.a`, but they are
-independent of each other, except the builder depends on the generated
+independent of each other, except that the builder depends on the generated
 reader files.
 
 The reader and builder rely on generated common reader and builder
