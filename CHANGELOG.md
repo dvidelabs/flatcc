@@ -5,7 +5,7 @@
 - Remove PRIVATE flags from CMake build files to support older CMake versions.
 - Simplify switching between ninja and make build tools.
 - Fix incorrectly named unaligned read macros - impacts non-x86 targets.
-- Mirror grisu3 headers in portable library for simplified end user compilation.
+- Mirror grisu3 headers in portable library to avoid dependency on external/grisu3.
 - Use correct grisu3 header for parsing, improving json parsing times.
 
 ## [0.2.0]
