@@ -151,20 +151,22 @@ excluding header files. Readers do not need to link with a library.
 
 ## Generated Files
 
-In earlier releases it was attempted to read-only code self-sufficient
-in a few geenrated header files. It is still possible to not rely on a
-runtime library. Other generated files depend on the same headers and a
-runtime library. The builder also depends on the generated reader, but
-other generated files such as the verifier, json parser and json printer
-are self sufficient and only depend on the fixed library code.
+In earlier releases it was attempted to generate all code needed for
+read-only buffer access. Now a library of include files is always
+required (`inlcude/flatcc`, `include/portable`) because the origianal
+approach lead to excessive code duplication. The generated code for
+building flatbuffers, and for parsing and printing flatbuffers all need
+to link with the runtime library `libflatccrt.a`, but they are
+independent of each other, except the builder depends on the generated
+reader files.
 
-The reader and builder rely on generated common reader and builder code.
-This common file makes it possible to change global namespace and
-redefine basic types (`uoffset_t` etc.). In the future this _might_ move
-into library code and use macros for these abstractions and eventually
-have a set of predefined files for types beyond the standard 32-bit
-unsigned offset (`uoffset_t`). The runtime library is specific to on set
-of type definitions.
+The reader and builder rely on generated common reader and builder
+header files. These common file makes it possible to change the global
+namespace and redefine basic types (`uoffset_t` etc.). In the future
+this _might_ move into library code and use macros for these
+abstractions and eventually have a set of predefined files for types
+beyond the standard 32-bit unsigned offset (`uoffset_t`). The runtime
+library is specific to one set of type definitions.
 
 Reader code is reasonably straight forward and the generated code is
 more readable than the builder code because the generated functions
@@ -188,6 +190,10 @@ alignment of all buffer levels.
 For verifying flatbuffers, a `myschema_verifier.h` is generated. It
 depends on the runtime library but is completely independent of the
 the generated reader, builder, and common files.
+
+Json parsers and printers generate one file per schema file and included
+schema will have their own parsers and printers which including parsers
+and printers will depend upon, rather similar to how builders work.
 
 Low level note: the builder generates all vtables at the end of the
 buffer instead of ad-hoc in front of each table but otherwise does the
