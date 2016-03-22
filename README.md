@@ -249,12 +249,6 @@ appear large, but only the parts actually used will take space up the
 the final executable or object file. Modern compilers inline and include
 only necessary parts of the statically linked builder library.
 
-The generated C builder headers normally do require the builder library.
-But in reality it is possible to use them without for some purposes. The
-main reason is to use `mystruct_assign/copy_from/to_pe` for general
-endian handling of structs - eventually also with native big endian for
-other network protocols.
-
 JSON printer and parser can be generated using the --json flag or
 --json-printer or json-parser if only one of them is required. There are
 some certain runtime library compile time flags that can optimize out
