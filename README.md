@@ -48,8 +48,11 @@ See also:
 
 ## Status
 
-The project is still young but test cases cover most functionality
-and has been run on OS-X 10.11 with clang and Ubuntu 14.04 with gcc.
+The project is still young but test cases cover most functionality and
+has been run on OS-X 10.11 with clang and Ubuntu 14.04 with gcc on the
+x86-64 platform. Centos 7.1 has also passed tests after build updates
+post flatcc-v0.2.0, but Centos is not part of regular procedures. The
+only external dependencies are the build and compiler tools.
 
 Buffer verification was introduced in v0.1.1 which verifies boundaries
 and alignment. Please note that verification does not ensure that it is
@@ -78,9 +81,9 @@ endian encoding.
 The portability layer has some features that are generally important for
 things like endian handling, and others to provide compatiblity for
 non-C11 compliant compilers. Together this should support most C
-compilers around. However, support for non-mainstream compilers like
-clang and recent gcc have not been well tested and relies on community
-feedback. 
+compilers around. However, support for compiler other than recent
+versions of clang and gcc have not been well tested and relies on
+community feedback. 
 
 `flatcc` is able encode and decode complex flatbuffer structures as is,
 and there are no big known issues apart from the above. The structure of
