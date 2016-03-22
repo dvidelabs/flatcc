@@ -385,8 +385,9 @@ This produces:
     monster_test_builder.h
     monster_test_verifier.h
 
-Note: we wouldn't actually do the readonly generation shown earlier unless we only intend to
-read buffers - the builder generation always generates read acces too.
+Note: we wouldn't actually do the readonly generation shown earlier
+unless we only intend to read buffers - the builder generation always
+generates read acces too.
 
 By including `"monster_test_builder.h"` all other files are included
 automatically. The C compiler needs the -I include directive to access
@@ -395,16 +396,18 @@ automatically. The C compiler needs the -I include directive to access
 The verifiers are not required and just created because we lazily chose
 the -a option.
 
-The builder must be initialized first to set up the runtime environment we need
-for building buffers efficiently - the builder depends on an emitter object to
-construct the actual buffer - here we implicitly use the default. Once we have
-that, we can just consider the builder a handle and focus on the FlatBuffers
-generated API until we finalize the buffer (i.e. access the result).
-For non-trivial uses it is recommended to provide a custom emitter and
-for example emit pages over the network as soon as they complete rather than
-merging all pages into a single buffer using `flatcc_builder_finalize_buffer`,
-or the simplistic direct buffer access shown below. See also
-`flatcc_builder.h` and `flatcc_emitter.h`.
+The builder must be initialized first to set up the runtime environment
+we need for building buffers efficiently - the builder depends on an
+emitter object to construct the actual buffer - here we implicitly use
+the default. Once we have that, we can just consider the builder a
+handle and focus on the FlatBuffers generated API until we finalize the
+buffer (i.e. access the result).  For non-trivial uses it is recommended
+to provide a custom emitter and for example emit pages over the network
+as soon as they complete rather than merging all pages into a single
+buffer using `flatcc_builder_finalize_buffer`, or the simplistic
+`flatcc_builder_get_direct_buffer` which returns null if the buffer is
+too large. See also documentation comments in `flatcc_builder.h` and
+`flatcc_emitter.h`.
 
 
     #include "monster_test_builder.h"
@@ -465,7 +468,7 @@ Compile the example project:
     cc --std=c11 -I include monster_example.c lib/libflatccrt.a -o monster_example
 
 Note that here the include directive is required even without the portability
-layer so that `flatbuffers/flatcc_builder.h` can be found.
+layer so that `flatcc/flatcc_builder.h` can be found.
 
 
 ## Verifying a Buffer
@@ -1037,7 +1040,7 @@ where X is the name of the build tool, for example:
     scripts/initbuild.sh ninja
 
 where `ninja` is the default. A custom build configuration `X` can be
-added by adding a `scripts/build.cfg.X' file.
+added by adding a `scripts/build.cfg.X` file.
 
 `scripts/initbuild.sh` cleans the build if a specific build
 configuration is given as argument. Without arguments it only ensures
@@ -1061,7 +1064,7 @@ To install build tools on Centos (which does not have a ninja build package):
     scripts/initbuild.sh make
 
 
-### Building for a target different than the host
+### Build Targets Different from the Host
 
 If the `flatcc` compiler is built on a target host like OS-X or Ubuntu,
 but the final generated files are needed elsewhere like ARM
