@@ -1064,6 +1064,7 @@ To install build tools on Centos (which does not have a ninja build package):
 
 OS-X also has a homebrew package:
 
+    brew update
     brew install flatcc
 
 
