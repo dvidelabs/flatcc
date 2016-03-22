@@ -656,10 +656,6 @@ For detailed usage, please refer to
     test/json_test/json_test.c
     test/benchmark/benchflatccjson
 
-Be sure to have external/grisu3, `include/portable` and `include/flatcc`
-visible when compiling with default configuration. Do this by adding
-`external` and `include` to the include path, or copy grisu3 from
-external to include directory and just add `inlcude`.
 
 ### Performance Notes
 
@@ -667,17 +663,20 @@ Note that json parsing and printing is very fast reaching 500MB/s for
 printing and about 300 MB/s for parsing. Floating point parsing can
 signficantly skew these numbers. The integer and floating point
 parsing and printing are handled via support functions in the portable
-library. In addition the floating point `external/grisu3` library is
-expected to be available, but can be disabled. Disabling `grisu3` will
-revert to `sprintf` and `strtod`. Grisu3 will fall back to `strtod` and
-`grisu3` in some rare special cases. Due to the reliance on `strtod` and
-because `strtod` cannot efficiently handle non-zero-terminated buffers,
-it is recommended to zero terminate buffers. Alternatively, grisu3 can
-be compiled with a flag that allows errors in conversion. These errors
-are very small and still correct, but may break some checksums. Allowing
-for these errors can significantly improve parsing speed and moves the
-benchmark from below half a million parses to above half a million
-parses per second on 700 byte json string, on a 2.2 GHz core-i7.
+library. In addition the floating point `portable/pgrisu3` library is
+used unless explicitly disable by a compile time flag. Disabling
+`grisu3` will revert to `sprintf` and `strtod`. Grisu3 will fall back to
+`strtod` and `grisu3` in some rare special cases. Due to the reliance on
+`strtod` and because `strtod` cannot efficiently handle
+non-zero-terminated buffers, it is recommended to zero terminate
+buffers. Alternatively, grisu3 can be compiled with a flag that allows
+errors in conversion. These errors are very small and still correct, but
+may break some checksums. Allowing for these errors can significantly
+improve parsing speed and moves the benchmark from below half a million
+parses to above half a million parses per second on 700 byte json
+string, on a 2.2 GHz core-i7. The `portable/pgrisu3` library is an
+extraction of the `external/grisu3` project where test cases are also
+available.
 
 While unquoted strings may sound more efficient due to the compact size,
 it is actually slower to process. Furthermore, large flatbuffer
@@ -1080,11 +1079,6 @@ header files only:
 
     `include/portable`
     `include/flatcc`
-    `external/grisu3`
-
-Grisu3 is only needed for flatcc json support and can be disabled by a
-build configuration option. It is however, very significanlty faster for
-floating point handling.
 
 
 ## Testing
@@ -1097,7 +1091,11 @@ It will also initialize the build if needed. Several sub-tests have
 shell scripts that can be run in isolation. A large dataset test is part
 of the test, but a separate benchmark is not. See benchmark section.
 
-The script must end with `TEST PASSED`, or it didn't.
+The script must end with `TEST PASSED`, or it didn't pass.
+
+To make sure everything works, also run the benchmarks:
+
+    scripts/benchmark.sh
 
 
 ## Limited Windows Support

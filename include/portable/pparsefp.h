@@ -14,17 +14,15 @@
  * - buffer start if first character does start a number,
  * - or end of parse on success.
  *
- * Grisu3 is not part of the portable lib per se, it must be in the
- * include path. Grisu3 provides much faster printing and parsing in the
- * typical case with fallback to sprintf for printing and strod for
- * parsing.
- *
- * Either define PORTABLE_USE_GRISU3, or include the grisu3 header first.
  */
 #include <math.h> /* for HUGE_VAL */
 
+#ifndef PORTABLE_USE_GRISU3
+#define PORTABLE_USE_GRISU3 1
+#endif
+
 #if PORTABLE_USE_GRISU3
-#include "grisu3/grisu3_parse.h"
+#include "pgrisu3/grisu3_parse.h"
 #endif
 
 #ifdef grisu3_parse_double_is_defined
