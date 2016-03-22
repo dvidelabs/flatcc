@@ -51,8 +51,9 @@ See also:
 The project is still young but test cases cover most functionality and
 has been run on OS-X 10.11 with clang and Ubuntu 14.04 with gcc on the
 x86-64 platform. Centos 7.1 has also passed tests after build updates
-post flatcc-v0.2.0, but Centos is not part of regular procedures. The
-only external dependencies are the build and compiler tools.
+post flatcc-v0.2.0, but Centos is not part of regular pre-release test
+procedures. The only external dependencies are the build and compiler
+tools.
 
 Buffer verification was introduced in v0.1.1 which verifies boundaries
 and alignment. Please note that verification does not ensure that it is
