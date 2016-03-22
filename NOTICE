@@ -14,8 +14,8 @@ in the interest of interoperability: `reflection/reflection.fbs` and
 in the `doc` These are covered by the Apache 2.0 license, copyright
 Google Inc.
 
-`test/benchmark/flatbench.fbs` and the test data set are unpublished by
-Google but distributed here with minor changes by authors permission.
+`test/benchmark/flatbench.fbs` and the test data set is based on Googles
+FlatBuffers benchmark code by authors permission.
 
 The name `flatcc` which non-coincidentally resembles the `flatc` tool
 in the Google FlatBuffers project is used with authors permission.
