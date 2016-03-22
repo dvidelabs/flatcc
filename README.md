@@ -158,7 +158,7 @@ approach lead to excessive code duplication. The generated code for
 building flatbuffers, and for parsing and printing flatbuffers, all need
 to link with the runtime library `libflatccrt.a`, but they are
 independent of each other, except that the builder depends on the generated
-reader files.
+reader files. The generated reader only depends on library header files.
 
 The reader and builder rely on generated common reader and builder
 header files. These common file makes it possible to change the global
