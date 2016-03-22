@@ -1021,8 +1021,7 @@ for other users.
 
 ## Building
 
-To initialize and run the build:
-
+To initialize and run the build (see required build tools below):
 
     scripts/build.sh
 
@@ -1032,18 +1031,15 @@ build products.
 The build depends on `CMake`. By default the `Ninja` build tool is also required,
 but alternatively `make` can be used.
 
-To switch between build tools use:
-
-    scripts/initbuild.sh X
-
-where X is the name of the build tool, for example:
+Optionally switch to a different build tool by choosing one of:
 
     scripts/initbuild.sh make
     scripts/initbuild.sh make-concurrent
     scripts/initbuild.sh ninja
 
-where `ninja` is the default. A custom build configuration `X` can be
-added by adding a `scripts/build.cfg.X` file.
+where `ninja` is the default and make-concurrent is `make` with the `-j`
+flag. A custom build configuration `X` can be added by adding a
+`scripts/build.cfg.X` file.
 
 `scripts/initbuild.sh` cleans the build if a specific build
 configuration is given as argument. Without arguments it only ensures
@@ -1065,6 +1061,10 @@ To install build tools on Centos (which does not have a ninja build package):
     sudo yum group install "Development Tools"
     sudo yum install cmake
     scripts/initbuild.sh make
+
+OS-X also has a homebrew package:
+
+    brew install flatcc
 
 
 ### Build Targets Different from the Host
