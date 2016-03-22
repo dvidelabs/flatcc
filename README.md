@@ -1037,7 +1037,7 @@ Optionally switch to a different build tool by choosing one of:
     scripts/initbuild.sh make-concurrent
     scripts/initbuild.sh ninja
 
-where `ninja` is the default and make-concurrent is `make` with the `-j`
+where `ninja` is the default and `make-concurrent` is `make` with the `-j`
 flag. A custom build configuration `X` can be added by adding a
 `scripts/build.cfg.X` file.
 
