@@ -678,9 +678,7 @@ errors in conversion. These errors are very small and still correct, but
 may break some checksums. Allowing for these errors can significantly
 improve parsing speed and moves the benchmark from below half a million
 parses to above half a million parses per second on 700 byte json
-string, on a 2.2 GHz core-i7. The `portable/pgrisu3` library is an
-extraction of the `external/grisu3` project where test cases are also
-available.
+string, on a 2.2 GHz core-i7.
 
 While unquoted strings may sound more efficient due to the compact size,
 it is actually slower to process. Furthermore, large flatbuffer
