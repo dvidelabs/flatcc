@@ -26,7 +26,7 @@
  * A simple way to ensure all of the above for most platforms is
  * to include the portable endian support file:
  *
- *     #include "portable/pendian.h"
+ *     #include "flatcc/portable/pendian.h"
  *
  * It is also necessary to include
  *

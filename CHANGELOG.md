@@ -2,11 +2,15 @@
 
 ## [Unreleased]
 
-- Remove PRIVATE flags from CMake build files to support older CMake versions.
+- Remove PRIVATE flags from CMake build files to support older CMake
+  versions.
 - Simplify switching between ninja and make build tools.
 - Fix incorrectly named unaligned read macros - impacts non-x86 targets.
-- Mirror grisu3 headers in portable library to avoid dependency on external/grisu3.
+- Mirror grisu3 headers in portable library to avoid dependency on
+  `external/grisu3`.
 - Use correct grisu3 header for parsing, improving json parsing times.
+- Move `include/portable` to `include/flatcc/portable` to simplify runtime
+  distribution and to prevent potential name and versioning conflicts.
 
 ## [0.2.0]
 

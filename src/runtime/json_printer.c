@@ -20,8 +20,8 @@
 #include "flatcc/flatcc_flatbuffers.h"
 #include "flatcc/flatcc_json_printer.h"
 
-#include "portable/pprintint.h"
-#include "portable/pprintfp.h"
+#include "flatcc/portable/pprintint.h"
+#include "flatcc/portable/pprintfp.h"
 
 #define RAISE_ERROR(err) flatcc_json_printer_set_error(ctx, flatcc_json_printer_error_##err)
 

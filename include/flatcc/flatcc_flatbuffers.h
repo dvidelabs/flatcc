@@ -17,7 +17,7 @@
  * "flatcc_endian.h" requires the preceeding include files,
  * or compatible definitions.
  */
-#include "portable/pendian.h"
+#include "flatcc/portable/pendian.h"
 #include "flatcc/flatcc_types.h"
 #include "flatcc/flatcc_endian.h"
 
@@ -32,7 +32,7 @@
  * following may be removed as <assert.h> will include the definition
  * where relevant.
  */
-#include "portable/pstatic_assert.h"
+#include "flatcc/portable/pstatic_assert.h"
 
 #ifndef FLATBUFFERS_WRAP_NAMESPACE
 #define FLATBUFFERS_WRAP_NAMESPACE(ns, x) ns ## _ ## x

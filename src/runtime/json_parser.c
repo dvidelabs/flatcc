@@ -4,7 +4,7 @@
 #if FLATCC_USE_GRISU3 && !defined(PORTABLE_USE_GRISU3)
 #define PORTABLE_USE_GRISU3 1
 #endif
-#include "portable/pparsefp.h"
+#include "flatcc/portable/pparsefp.h"
 
 #if FLATCC_USE_SSE4_2
 #ifdef __SSE4_2__

@@ -10,7 +10,7 @@ The project includes:
   It may also be useful for other language interfaces. The library
   maintains a stack state to make it easy to build buffers from a parser
   or similar.
-- a small `portable` header only library for non-C11 compliant
+- a small `flatcc/portable` header only library for non-C11 compliant
   compilers, and small helpers for all compilers including endian
   handling and numeric printing and parsing.
 
@@ -153,12 +153,12 @@ excluding header files. Readers do not need to link with a library.
 
 In earlier releases it was attempted to generate all code needed for
 read-only buffer access. Now a library of include files is always
-required (`include/flatcc`, `include/portable`) because the original
-approach lead to excessive code duplication. The generated code for
-building flatbuffers, and for parsing and printing flatbuffers, all need
-to link with the runtime library `libflatccrt.a`, but they are
-independent of each other, except that the builder depends on the generated
-reader files. The generated reader only depends on library header files.
+required (`include/flatcc`) because the original approach lead to
+excessive code duplication. The generated code for building flatbuffers,
+and for parsing and printing flatbuffers, all need to link with the
+runtime library `libflatccrt.a`, but they are independent of each other,
+except that the builder depends on the generated reader files. The
+generated reader only depends on library header files.
 
 The reader and builder rely on generated common reader and builder
 header files. These common file makes it possible to change the global
@@ -665,10 +665,10 @@ For detailed usage, please refer to
 
 Note that json parsing and printing is very fast reaching 500MB/s for
 printing and about 300 MB/s for parsing. Floating point parsing can
-signficantly skew these numbers. The integer and floating point
-parsing and printing are handled via support functions in the portable
-library. In addition the floating point `portable/pgrisu3` library is
-used unless explicitly disable by a compile time flag. Disabling
+signficantly skew these numbers. The integer and floating point parsing
+and printing are handled via support functions in the portable library.
+In addition the floating point `include/flatcc/portable/pgrisu3` library
+is used unless explicitly disable by a compile time flag. Disabling
 `grisu3` will revert to `sprintf` and `strtod`. Grisu3 will fall back to
 `strtod` and `grisu3` in some rare special cases. Due to the reliance on
 `strtod` and because `strtod` cannot efficiently handle
@@ -831,9 +831,9 @@ emulate `<stdbool.h>` where `sizeof(bool)` is implementation dependent.
 Therefore `flatbuffers_bool_t` is defined as `uint8_t` and used to
 represent FlatBuffers boolean values and the constants of same type:
 `flatbuffers_true = 1` and `flatbuffers_false = 0`. Even so,
-`pstdbool.h` is available in the `include/portable` directory if `bool`,
-`true`, and `false` are desired in user code and `<stdbool.h>` is
-unavailable.
+`pstdbool.h` is available in the `include/flatcc/portable` directory if
+`bool`, `true`, and `false` are desired in user code and `<stdbool.h>`
+is unavailable.
 
 `flatbuffers_string_t` is `const char *` but imply the returned pointer
 has a length prefix just before the pointer. `flatbuffers_string_vec_t`
@@ -1079,10 +1079,8 @@ is merely adding `builder.c` and `emitter.c` to the end user build if
 only build and read support is needed. See also `src/runtime/CMakeLists.txt`
 for the list of files to include.
 
-The following directories are required for end users, but they are
-header files only:
+The following header-only folder is required for end users:
 
-    `include/portable`
     `include/flatcc`
 
 
@@ -1155,6 +1153,21 @@ the same applies to generic JSON, XML or similar parsers. Of course,
 some schema is eventually required to understand the generated output
 but even that might be generated on the fly by a parser or language
 interface.
+
+## The Portable Library
+
+The portable library is placed under `include/flatcc/portable` and is
+required by flatcc, but isn't strictly part of the `flatcc` project. It
+is intended as an independent lightweight standalone library to deal
+with compiler and platform variations. It is placed under the flatcc
+include path to simplify distribution and to avoid versioning conflicts
+if is used in other projects.
+
+The portably library includes the essential parts of the grisu3 library
+found in `external/grisu3`, but excludes the test cases.
+
+The license of portable is different from `flatcc`. It is mostly MIT or
+Apache depending on the original source of the various parts.
 
 
 ## Benchmark
