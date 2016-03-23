@@ -1158,10 +1158,10 @@ interface.
 
 The portable library is placed under `include/flatcc/portable` and is
 required by flatcc, but isn't strictly part of the `flatcc` project. It
-is intended as an independent lightweight standalone library to deal
+is intended as an independent light-weight header-only library to deal
 with compiler and platform variations. It is placed under the flatcc
-include path to simplify distribution and to avoid versioning conflicts
-if is used in other projects.
+include path to simplify flatcc runtime distribution and to avoid
+name and versioning conflicts if used by other projects.
 
 The portably library includes the essential parts of the grisu3 library
 found in `external/grisu3`, but excludes the test cases.
