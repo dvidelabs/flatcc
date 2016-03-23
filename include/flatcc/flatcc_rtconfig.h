@@ -99,6 +99,18 @@
 #define FLATCC_JSON_PARSE_ALLOW_UNQUOTED 1
 #endif
 
+/*
+ * Multiple enum values are by default not permitted unless
+ * quoted like `color: "Red Green" as per Googles flatc JSON
+ * parser while a single value like `color: Red` can be
+ * unquoted.  Enabling this setting will allow `color: Red
+ * Green`, but only if FLATCC_JSON_PARSE_ALLOW_UNQUOTED is
+ * also enabled.
+ */
+#ifndef FLATCC_JSON_PARSE_ALLOW_UNQUOTED_LIST
+#define FLATCC_JSON_PARSE_ALLOW_UNQUOTED_LIST 0
+#endif
+
 #ifndef FLATCC_JSON_PARSE_ALLOW_UNKNOWN_FIELD
 #define FLATCC_JSON_PARSE_ALLOW_UNKNOWN_FIELD 1
 #endif

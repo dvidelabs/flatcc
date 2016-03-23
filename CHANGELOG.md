@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Disallow unquoted symbolic list in JSON parser by default for Google
+  flatc compatibility.
 - Remove PRIVATE flags from CMake build files to support older CMake
   versions.
 - Simplify switching between ninja and make build tools.
@@ -9,8 +11,9 @@
 - Mirror grisu3 headers in portable library to avoid dependency on
   `external/grisu3`.
 - Use correct grisu3 header for parsing, improving json parsing times.
-- Move `include/portable` to `include/flatcc/portable` to simplify runtime
-  distribution and to prevent potential name and versioning conflicts.
+- Move `include/portable` to `include/flatcc/portable` to simplify
+  runtime distribution and to prevent potential name and versioning
+  conflicts.
 - Fix `is_union` in bfbs2json.c example.
 
 ## [0.2.0]

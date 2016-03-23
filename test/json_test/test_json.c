@@ -76,13 +76,14 @@ int edge_case_tests()
  * more complicated parser or restrict the places where symbols are
  * allowed.
  */
-#if 0
-    TEST(   "{ name: \"Monster\", color: Green Blue Red Blue}",
+#if 0 
+    TEST(   "{ name: \"Monster\", color: \"Green Blue Red Blue\"}",
             "{\"name\":\"Monster\",\"color\":\"Red Green Blue\"}");
 #else
-    TEST(   "{ name: \"Monster\", color: Green Blue Red Blue}",
+    TEST(   "{ name: \"Monster\", color: \"Green Blue Red Blue\"}",
             "{\"name\":\"Monster\",\"color\":19}");
 #endif
+
 
 /*
  * If a value is stored, even if default, it is also printed.
@@ -195,9 +196,12 @@ int main()
     TEST(   "{ name: \"Monster\", color: 8}",
             "{\"name\":\"Monster\"}");
 
+#if FLATCC_JSON_PARSE_ALLOW_UNQUOTED_LIST 
     TEST(   "{ name: \"Monster\", color: Green Red }",
             "{\"name\":\"Monster\",\"color\":\"Red Green\"}");
+#endif
 
+#if FLATCC_JSON_PARSE_ALLOW_UNQUOTED_LIST 
     /* No leading space in unquoted flag. */
     TEST(   "{ name: \"Monster\", color:Green Red }",
             "{\"name\":\"Monster\",\"color\":\"Red Green\"}");
@@ -207,6 +211,7 @@ int main()
 
     TEST(   "{ name: \"Monster\", color:Green   Blue Red   }",
             "{\"name\":\"Monster\",\"color\":\"Red Green Blue\"}");
+#endif
 
     TEST(   "{ name: \"Monster\", color: 1}",
             "{\"name\":\"Monster\",\"color\":\"Red\"}");
@@ -259,12 +264,14 @@ int main()
     TEST(   "{ name: \"Monster\", test_type: 0 }",
             "{\"name\":\"Monster\"}");
 
+#if FLATCC_JSON_PARSE_ALLOW_UNQUOTED_LIST
     /*
      * Test that generic parsing handles multiple flags correctly during
      * first pass before backtracking.
      */
     TEST(   "{ name: \"Monster\", test: { name: \"second Monster\", color: Red Green }, test_type: Monster  }",
             "{\"name\":\"Monster\",\"test_type\":\"Monster\",\"test\":{\"name\":\"second Monster\",\"color\":\"Red Green\"}}");
+#endif
 
     /* Ditto quoted flags. */
     TEST(   "{ name: \"Monster\", test: { name: \"second Monster\", color: \" Red Green \" }, test_type: Monster  }",

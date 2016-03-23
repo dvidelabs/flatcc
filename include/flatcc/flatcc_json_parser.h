@@ -42,6 +42,7 @@ enum flatcc_json_parser_flags {
     XX(precision_loss,          "precision loss")                           \
     XX(float_unexpected,        "float unexpected")                         \
     XX(unknown_symbol,          "unknown symbol")                           \
+    XX(unquoted_symbolic_list,  "unquoted list of symbols")                 \
     XX(unknown_union,           "unknown union type")                       \
     XX(expected_string,         "expected string")                          \
     XX(invalid_character,       "invalid character")                        \
@@ -658,6 +659,25 @@ static inline const char *flatcc_json_parser_bool(flatcc_json_parser_t *ctx, con
 typedef const char *flatcc_json_parser_integral_symbol_f(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, int *value_sign, uint64_t *value, int *aggregate);
 
+/*
+ * Raise an error if a syntax like `color: Red Green` is seen unless
+ * explicitly permitted. `color: "Red Green"` or `"color": "Red Green"
+ * or `color: Red` is permitted if unquoted is permitted but not
+ * unquoted list. Googles flatc JSON parser does not allow multiple
+ * symbolic values unless quoted, so this is the default.
+ */
+#if !FLATCC_JSON_PARSE_ALLOW_UNQUOTED || FLATCC_JSON_PARSE_ALLOW_UNQUOTED_LIST
+#define __flatcc_json_parser_init_check_unquoted_list()
+#define __flatcc_json_parser_check_unquoted_list()
+#else
+#define __flatcc_json_parser_init_check_unquoted_list() int list_count = 0;
+#define __flatcc_json_parser_check_unquoted_list()                          \
+    if (list_count++ && ctx->unquoted) {                                    \
+        return flatcc_json_parser_set_error(ctx, buf, end,                  \
+            flatcc_json_parser_error_unquoted_symbolic_list);               \
+    }
+#endif
+
 #define __flatcc_json_parser_define_symbolic_integral_parser(type, basetype)\
 static const char *flatcc_json_parser_symbolic_ ## type(                    \
         flatcc_json_parser_t *ctx,                                          \
@@ -670,6 +690,7 @@ static const char *flatcc_json_parser_symbolic_ ## type(                    \
     basetype tmp;                                                           \
     uint64_t value;                                                         \
     int value_sign, aggregate;                                              \
+    __flatcc_json_parser_init_check_unquoted_list()                         \
                                                                             \
     *v = 0;                                                                 \
     buf = flatcc_json_parser_constant_start(ctx, buf, end);                 \
@@ -679,6 +700,7 @@ static const char *flatcc_json_parser_symbolic_ ## type(                    \
     do {                                                                    \
         p = parsers;                                                        \
         do {                                                                \
+            /* call parser function */                                      \
             buf = (*p)(ctx, (mark = buf), end,                              \
                     &value_sign, &value, &aggregate);                       \
             if (buf == end) {                                               \
@@ -689,6 +711,7 @@ static const char *flatcc_json_parser_symbolic_ ## type(                    \
             return flatcc_json_parser_set_error(ctx, buf, end,              \
                     flatcc_json_parser_error_expected_scalar);              \
         }                                                                   \
+        __flatcc_json_parser_check_unquoted_list()                          \
         if (end == flatcc_json_parser_coerce_ ## type(ctx,                  \
                     buf, end, value_sign, value, &tmp)) {                   \
             return end;                                                     \
