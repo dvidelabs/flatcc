@@ -573,8 +573,8 @@ quoted in order to be compatible with Googles flatc tool for Flatbuffers
 
     color: "Green Red"
 
-The following is also accepted in flatc v0.2.0, but future releases will
-require it to be explicitly configured for flatc compatibity reasons:
+The following is also accepted in flatc v0.2.0, but subsequent releases
+only permits it if explicitly enabled at compile time.
 
     color: Green Red
 
@@ -1118,6 +1118,33 @@ shell, but this is also available on Windows.
 
 The file logic in the compiler may fail on Windows paths as this hasn't
 been tested, but at least it has been implemented with Windows in mind.
+
+
+## Configuration
+
+The configuration
+
+    config/config.h
+
+drives the permitted syntax and semantics of the schema compiler and
+code generator. These generally default to be compatible with
+Googles `flatc` compiler. It also sets things like permitted nesting
+depth of structs and tables.
+
+The runtime library has a separate configuration file
+
+    include/flatcc/flatcc_rtconfig.h
+
+This file can modify certain aspects of JSON parsing and printing such
+as disabling the Grisu3 library or requiring that all names in JSON are
+quoted.
+
+For most users, it should not be relevant to modify these configuration
+settings. If changes are required, they can be given in the build
+system - it is not necessary to edit the config files, for example
+to disable trailing comma in the JSON parser:
+
+    FLATCC_JSON_PARSE_ALLOW_TRAILING_COMMA 0
 
 
 ## Using the Compiler and Builder library
