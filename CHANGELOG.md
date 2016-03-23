@@ -11,6 +11,7 @@
 - Use correct grisu3 header for parsing, improving json parsing times.
 - Move `include/portable` to `include/flatcc/portable` to simplify runtime
   distribution and to prevent potential name and versioning conflicts.
+- Fix `is_union` in bfbs2json.c example.
 
 ## [0.2.0]
 

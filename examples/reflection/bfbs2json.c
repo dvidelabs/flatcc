@@ -108,7 +108,7 @@ void print_enum(reflection_Enum_table_t E)
     }
     printf("]");
     if (reflection_Enum_is_union_is_present(E)) {
-        printf(",\"is_union\":%s", reflection_Enum_is_union ? "true" : "false");
+        printf(",\"is_union\":%s", reflection_Enum_is_union(E) ? "true" : "false");
     }
     printf(",\"underlying_type\":");
     print_type(reflection_Enum_underlying_type(E));
