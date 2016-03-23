@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.2.1]
 
 - Disallow unquoted symbolic list in JSON parser by default for Google
   flatc compatibility.
