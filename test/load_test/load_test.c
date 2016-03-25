@@ -29,12 +29,12 @@ static ns(Monster_ref_t) create_monster(flatcc_builder_t *B)
     int i;
 
     ns(Monster_start(B));
-    ns(Monster_name_start(B, 0));
+    ns(Monster_name_start(B));
     for (i = 0; i < NAME_REP; ++i) {
         nsc(string_append(B, "Monster", 7));
     }
     ns(Monster_name_end(B));
-    ns(Monster_inventory_start(B, 0));
+    ns(Monster_inventory_start(B));
     for (i = 0; i < INVENTORY_REP; ++i) {
         nsc(uint8_vec_append(B, invdata, c_vec_len(invdata)));
     }
@@ -47,7 +47,7 @@ static ns(Monster_vec_ref_t) create_monsters(flatcc_builder_t *B)
     int i;
     ns(Monster_ref_t) m;
 
-    ns(Monster_vec_start(B, 0));
+    ns(Monster_vec_start(B));
     for (i = 0; i < MONSTER_REP; ++i) {
         m = create_monster(B);
         assert(m);

@@ -56,10 +56,7 @@ void create_monster_bottom_up(flatcc_builder_t *B, int flexible)
     // Here we use a top-down approach locally to build a Weapons vector
     // in-place instead of creating a temporary external vector to use
     // as argument like we did with the `inventory` earlier on.
-    // 0 indicates we do not wish to pre-allocate vector.
-    //
-    // TODO: future versions may remove the length argument to start
-    ns(Weapon_vec_start(B, 0));
+    ns(Weapon_vec_start(B));
     ns(Weapon_vec_push(B, sword));
     ns(Weapon_vec_push(B, axe));
     ns(Weapon_vec_ref_t) weapons = ns(Weapon_vec_end(B));
@@ -169,9 +166,7 @@ void create_monster_top_down(flatcc_builder_t *B)
     ns(Monster_inventory_create(B, treasure, treasure_count));
     ns(Monster_color_add(B, ns(Color_Red)));
     if (1) {
-        // TODO: in the future we likely remove the reserve argument
-        // ns(Monster_weapons_start(B));
-        ns(Monster_weapons_start(B, 0));
+        ns(Monster_weapons_start(B));
         ns(Monster_weapons_push_create(B, nsc(string_create_str(B, "Sword")), 3));
         // We reuse the axe object later. Note that we dereference a pointer
         // because push always returns a short-term pointer to the stored element.
@@ -181,9 +176,7 @@ void create_monster_top_down(flatcc_builder_t *B)
     } else {
         // We can have more control with the table elements added to a vector:
         //
-        // TODO: in the future we likely remove the reserve argument
-        // ns(Monster_weapons_start(B));
-        ns(Monster_weapons_start(B, 0));
+        ns(Monster_weapons_start(B));
         ns(Monster_weapons_push_start(B));
         ns(Weapon_name_create_str(B, "Sword"));
         ns(Weapon_damage_add(B, 3));

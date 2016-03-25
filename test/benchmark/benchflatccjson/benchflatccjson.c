@@ -54,7 +54,7 @@ int flatcc_jsonbench_init(flatcc_jsonbench_t *bench)
 
     /* Generate the data needed to print from, just once. */
     C(start_as_root(B));
-    C(list_start(B, 0));
+    C(list_start(B));
     for (i = 0; i < veclen; ++i) {
         /*
          * By using push_start instead of push_create we can construct

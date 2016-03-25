@@ -1202,23 +1202,21 @@ flatcc_builder_ref_t flatcc_builder_create_vector(flatcc_builder_t *B,
         const void *data, size_t count, size_t elem_size, uint16_t align, size_t max_count);
 
 /**
- * Starts a vector on the stack. Subsequently the vector is grown
- * by optionally calling `extend_vector` before `end_vector`.
+ * Starts a vector on the stack.
  *
  * Do not use these calls for string or offset vectors, but do store
  * scalars, enums and structs, always in little endian encoding.
  *
- * `count` extends the vector to `count` zero initialized elements. May
- * be zero, for example if used with push. May also be used to
- * over-allocate the vector and later truncate it before the end.
+ * Use `extend_vector` subseequentlu to add zero, one or more elements
+ * at time.
  *
  * See `create_vector` for `max_count` argument (strings and offset
  * vectors have a fixed element size and does not need this argument).
  *
- * Returns 0 on failure, or pointer to first element (or a non-zero
- * pointer if the count is 0).
+ * Returns 0 on success.
  */
-void *flatcc_builder_start_vector(flatcc_builder_t *B, size_t elem_size, uint16_t align, size_t count, size_t max_count);
+int flatcc_builder_start_vector(flatcc_builder_t *B, size_t elem_size,
+        uint16_t align, size_t max_count);
 
 /**
  * Emits the vector constructed on the stack by start_vector.
@@ -1327,7 +1325,7 @@ flatcc_builder_ref_t flatcc_builder_create_offset_vector_direct(flatcc_builder_t
  * offset is not known until the vector start location is known, which
  * depends to the final size, which for parsers is generally unknown.
  */
-flatcc_builder_ref_t *flatcc_builder_start_offset_vector(flatcc_builder_t *B, size_t count);
+int flatcc_builder_start_offset_vector(flatcc_builder_t *B);
 
 /**
  * Similar to `extend_vector` but returns a buffer indexable as
@@ -1386,15 +1384,16 @@ flatcc_builder_ref_t flatcc_builder_create_string_str(flatcc_builder_t *B,
 flatcc_builder_ref_t flatcc_builder_create_string_strn(flatcc_builder_t *B, const char *s, size_t max_len);
 
 /**
- * Creates a zero filled string. `len` may be 0 if used with operations
- * like `append` or `extend`, or it the string is simply empty.
+ * Starts an empty string that can be extended subsequently.
  *
  * While the string is being created, it is guaranteed that there is
  * always a null character after the end of the current string length.
  * This also holds after `extend` and `append` operations. It is not
  * allowed to modify the null character.
+ *
+ * Returns 0 on success.
  */
-char *flatcc_builder_start_string(flatcc_builder_t *B, size_t len);
+int flatcc_builder_start_string(flatcc_builder_t *B);
 
 /**
  * Similar to `extend_vector` except for the buffer return type and a

@@ -935,31 +935,30 @@ int flatcc_builder_truncate_string(flatcc_builder_t *B, size_t len)
     return 0;
 }
 
-void *flatcc_builder_start_vector(flatcc_builder_t *B, size_t elem_size, uint16_t align, size_t count, size_t max_count)
+int flatcc_builder_start_vector(flatcc_builder_t *B, size_t elem_size, uint16_t align, size_t max_count)
 {
     get_min_align(&align, field_size);
     if (enter_frame(B, align)) {
-        return 0;
+        return -1;
     }
     frame(vector.elem_size) = elem_size;
     frame(vector.count) = 0;
     frame(vector.max_count) = max_count;
     frame(type) = flatcc_builder_vector;
     refresh_ds(B, data_limit);
-
-    return flatcc_builder_extend_vector(B, count);
+    return 0;
 }
 
-flatcc_builder_ref_t *flatcc_builder_start_offset_vector(flatcc_builder_t *B, size_t count)
+int flatcc_builder_start_offset_vector(flatcc_builder_t *B)
 {
     if (enter_frame(B, field_size)) {
-        return 0;
+        return -1;
     }
     frame(vector.elem_size) = field_size;
     frame(vector.count) = 0;
     frame(type) = flatcc_builder_offset_vector;
     refresh_ds(B, data_limit);
-    return flatcc_builder_extend_offset_vector(B, count);
+    return 0;
 }
 
 flatcc_builder_ref_t flatcc_builder_create_offset_vector(flatcc_builder_t *B,
@@ -967,23 +966,26 @@ flatcc_builder_ref_t flatcc_builder_create_offset_vector(flatcc_builder_t *B,
 {
     flatcc_builder_ref_t *_vec;
 
-    if (!(_vec = flatcc_builder_start_offset_vector(B, count))) {
+    if (flatcc_builder_start_offset_vector(B)) {
+        return 0;
+    }
+    if (!(_vec = flatcc_builder_extend_offset_vector(B, count))) {
         return 0;
     }
     memcpy(_vec, vec, count * field_size);
     return flatcc_builder_end_offset_vector(B);
 }
 
-char *flatcc_builder_start_string(flatcc_builder_t *B, size_t len)
+int flatcc_builder_start_string(flatcc_builder_t *B)
 {
     if (enter_frame(B, 1)) {
-        return 0;
+        return -1;
     }
     frame(vector.elem_size) = 1;
     frame(vector.count) = 0;
     frame(type) = flatcc_builder_string;
     refresh_ds(B, data_limit);
-    return flatcc_builder_extend_string(B, len);
+    return 0;
 }
 
 int flatcc_builder_reserve_table(flatcc_builder_t *B, int count)

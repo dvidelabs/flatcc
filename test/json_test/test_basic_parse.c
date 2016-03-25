@@ -213,7 +213,8 @@ t1_again:
                     ref = flatcc_builder_create_string(B, k, buf - k);
                 } else {
                     /* Start string with enough space for what we have. */
-                    s = flatcc_builder_start_string(B, buf - k);
+                    flatcc_builder_start_string(B);
+                    s = flatcc_builder_extend_string(B, buf - k);
                     if (!s) { goto fail; }
                     memcpy(s, k, buf - k);
                     do {

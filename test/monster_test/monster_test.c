@@ -542,7 +542,8 @@ int gen_monster(flatcc_builder_t *B)
     ns(Monster_inventory_create(B, inv, c_vec_len(inv)));
 
     /* The vector is built in native endian format. */
-    test = ns(Monster_test4_start(B, 1));
+    ns(Monster_test4_start(B));
+    test = ns(Monster_test4_extend(B, 1));
     test->a = 0x10;
     test->b = 0x20;
     test = ns(Monster_test4_extend(B, 2));
@@ -581,7 +582,8 @@ int gen_monster(flatcc_builder_t *B)
      * Here we create several monsters with only a name - this also
      * tests reuse of vtables.
      */
-    aoft = ns(Monster_testarrayoftables_start(B, 2));
+    ns(Monster_testarrayoftables_start(B));
+    aoft = ns(Monster_testarrayoftables_extend(B, 2));
     /*
      * It is usually not ideal to update reference vectors directly and
      * there must not be any unassigned elements (null) when the array
@@ -632,7 +634,7 @@ int gen_monster(flatcc_builder_t *B)
     ns(Monster_testarrayofstring_create(B, strings, 3));
 
     assert(c_vec_len(bools) == 4);
-    ns(Monster_testarrayofbools_start(B, 0));
+    ns(Monster_testarrayofbools_start(B));
     ns(Monster_testarrayofbools_append(B, bools, 1));
     ns(Monster_testarrayofbools_append(B, bools + 1, 3));
     ns(Monster_testarrayofbools_end(B));
@@ -652,7 +654,7 @@ int gen_monster(flatcc_builder_t *B)
     ns(Monster_name_create_str(B, "the enemy"));
 
     /* Create array of monsters to test various union constructors. */
-    ns(Monster_testarrayoftables_start(B, 0));
+    ns(Monster_testarrayoftables_start(B));
 
     ns(Monster_vec_push_start(B));
     /* Same as using Any_as_Monster used earlier, but here explicit. */
@@ -722,7 +724,7 @@ int test_string(flatcc_builder_t *B)
 
     flatcc_builder_reset(B);
     ns(Monster_start_as_root(B));
-    ns(Monster_name_start(B, 0));
+    ns(Monster_name_start(B));
     s = ns(Monster_name_extend(B, 3));
     s[0] = '1';
     s[1] = '2';
@@ -764,7 +766,7 @@ int test_sort_find(flatcc_builder_t *B)
     ns(Monster_start_as_root(B));
     ns(Monster_name_create_str(B, "MyMonster"));
 
-    ns(Monster_testarrayoftables_start(B, 0));
+    ns(Monster_testarrayoftables_start(B));
 
     ns(Monster_testarrayoftables_push_start(B));
     ns(Monster_name_create_str(B, "TwoFace"));
@@ -949,7 +951,8 @@ int test_clone_slice(flatcc_builder_t *B)
     ns(Monster_name_create_str(B, "The Source"));
     ns(Monster_testarrayofbools_create(B, booldata, c_vec_len(booldata)));
 
-    t = ns(Monster_test4_start(B, 2));
+    ns(Monster_test4_start(B));
+    t = ns(Monster_test4_extend(B, 2));
     t[0].a = 22;
     t[1].a = 44;
     ns(Monster_test4_end(B));
@@ -972,7 +975,7 @@ int test_clone_slice(flatcc_builder_t *B)
     assert(test4);
 
     ns(Monster_name_clone(B, name));
-    ns(Monster_testarrayofstring_start(B, 0));
+    ns(Monster_testarrayofstring_start(B));
     ns(Monster_testarrayofstring_push_clone(B, name));
     ns(Monster_testarrayofstring_push_slice(B, name, 4, 20));
     ns(Monster_testarrayofstring_push_slice(B, name, 0, 3));
@@ -1292,7 +1295,8 @@ int gen_monster_benchmark(flatcc_builder_t *B)
     ns(Monster_pos_end(B));
     ns(Monster_name_create_str(B, "MyMonster"));
     ns(Monster_inventory_create(B, inv, c_vec_len(inv)));
-    test = ns(Monster_test4_start(B, 1));
+    ns(Monster_test4_start(B));
+    test = ns(Monster_test4_extend(B, 1));
     test->a = 0x10;
     test->b = 0x20;
     test = ns(Monster_test4_extend(B, 2));

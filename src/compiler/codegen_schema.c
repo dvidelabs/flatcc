@@ -120,8 +120,8 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
         deprecated = (member->metadata_flags & fb_f_deprecated) != 0;
 
         if (member->type.type == vt_compound_type_ref && member->type.ct->symbol.kind == fb_is_union) {
-            reflection_Field_push_start(B);
-            reflection_Field_name_start(B, 0);
+            reflection_Field_vec_push_start(B);
+            reflection_Field_name_start(B);
             reflection_Field_name_append(B, member->symbol.ident->text, member->symbol.ident->len);
             reflection_Field_name_append(B, "_type", 5);
             reflection_Field_name_end(B);
@@ -129,9 +129,9 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
             reflection_Field_offset_add(B, (member->id - 1 + 2) * sizeof(flatbuffers_voffset_t));
             reflection_Field_id_add(B, member->id - 1);
             reflection_Field_deprecated_add(B, deprecated);
-            reflection_Field_push_end(B);
+            reflection_Field_vec_push_end(B);
         }
-        reflection_Field_push_start(B);
+        reflection_Field_vec_push_start(B);
         reflection_Field_name_create(B, member->symbol.ident->text, member->symbol.ident->len);
         reflection_Field_type_add(B, export_type(B, member->type));
         switch (ct->symbol.kind) {
@@ -164,7 +164,7 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
         }
         /* Deprecated struct fields not supported by `flatc` but is here as an option. */
         reflection_Field_deprecated_add(B, deprecated);
-        reflection_Field_push_end(B);
+        reflection_Field_vec_push_end(B);
         key_processed |= has_key;
     }
 }
@@ -184,7 +184,7 @@ static void export_objects(flatcc_builder_t *B, object_entry_t *objects, int nob
          * We can post sort-fields because the index is not used, unlike
          * objects and enums.
          */
-        reflection_Object_fields_start(B, 0);
+        reflection_Object_fields_start(B);
         export_fields(B, ct);
         reflection_Object_fields_end(B);
         is_struct = ct->symbol.kind == fb_is_struct;
@@ -200,13 +200,13 @@ static void export_objects(flatcc_builder_t *B, object_entry_t *objects, int nob
 
 static void export_enumval(flatcc_builder_t *B, fb_member_t *member, reflection_Object_ref_t *object_map)
 {
-    reflection_EnumVal_push_start(B);
+    reflection_EnumVal_vec_push_start(B);
     reflection_EnumVal_name_create(B, member->symbol.ident->text, member->symbol.ident->len);
     if (object_map && member->type.type == vt_compound_type_ref) {
         reflection_EnumVal_object_add(B, object_map[member->type.ct->export_index]);
     }
     reflection_EnumVal_value_add(B, member->value.u);
-    reflection_EnumVal_push_end(B);
+    reflection_EnumVal_vec_push_end(B);
 }
 
 static void export_enums(flatcc_builder_t *B, enum_entry_t *enums, int nenums,
@@ -217,13 +217,14 @@ static void export_enums(flatcc_builder_t *B, enum_entry_t *enums, int nenums,
     fb_symbol_t *sym;
     reflection_Enum_ref_t *vec;
 
-    vec = reflection_Schema_enums_start(B, nenums);
+    reflection_Schema_enums_start(B);
+    vec = reflection_Schema_enums_extend(B, nenums);
     for (i = 0; i < nenums; ++i) {
         ct = enums[i].ct;
         is_union = ct->symbol.kind == fb_is_union;
         reflection_Enum_start(B);
         reflection_Enum_name_create_str(B, enums[i].name);
-        reflection_Enum_values_start(B, 0);
+        reflection_Enum_values_start(B);
         for (sym = ct->members; sym; sym = sym->link) {
             export_enumval(B, (fb_member_t *)sym, is_union ? object_map : 0);
         }

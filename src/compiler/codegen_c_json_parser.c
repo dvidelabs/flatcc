@@ -448,10 +448,10 @@ repeat_nested:
     /* Other types can also be vector, so we wrap. */
     if (is_vector) {
         if (is_offset) {
-            println(out, "if (!flatcc_builder_start_offset_vector(ctx->ctx, 0)) goto failed;");
+            println(out, "if (flatcc_builder_start_offset_vector(ctx->ctx)) goto failed;");
         } else {
             println(out,
-                "if (!flatcc_builder_start_vector(ctx->ctx, %zu, %hu, 0, %zu)) goto failed;",
+                "if (flatcc_builder_start_vector(ctx->ctx, %zu, %hu, %zu)) goto failed;",
                 (size_t)member->size, (short)member->align,
                 (size_t)FLATBUFFERS_COUNT_MAX(member->size));
         }
@@ -549,7 +549,7 @@ repeat_nested:
              /* This is fast because it bypasses the builder stack. */
         println(out, "ref = flatcc_builder_create_string(ctx->ctx, mark, buf - mark);");
         unindent(); println(out, "} else {"); indent();
-        println(out, "if (0 == flatcc_builder_start_string(ctx->ctx, 0) ||");
+        println(out, "if (flatcc_builder_start_string(ctx->ctx) ||");
         indent(); indent(); println(out, "0 == flatcc_builder_append_string(ctx->ctx, mark, buf - mark)) goto failed;"); unindent(); unindent();
         println(out, "while (buf != end && *buf != '\\\"') {"); indent();
         println(out, "buf = flatcc_json_parser_string_escape(ctx, buf, end, code);");

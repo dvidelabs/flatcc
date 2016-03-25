@@ -882,11 +882,9 @@ without being concerned with the underlying integer type, for example:
 ## Vectors
 
 Vectors can be created independently, or directly when updating a table - the
-end result is the same. The start operation takes a size argument which
-can be 0 if we use the push interface:
+end result is the same.
 
-
-    Monster_inv_start(B, 0);
+    Monster_inv_start(B);
     flatbuffers_uint8_vec_push(B, 1);
     flatbuffers_uint8_vec_push(B, 2);
     flatbuffers_uint8_vec_push(B, 3);
@@ -907,7 +905,7 @@ type, and because the operations are not type safe (any kind of push
 would be accepted), some vector operations are also mapped to the field
 name:
 
-    Monster_inv_start(B, 0);
+    Monster_inv_start(B);
     Monster_inv_push(B, 1);
     Monster_inv_push(B, 2);
     Monster_inv_push(B, 3);
@@ -922,7 +920,8 @@ infix because it is not a type name, for example `Monster_inv_push`.
 A slightly faster operation preallocates the vector:
 
     uint8_t *v;
-    v = Monster_inv_start(B, 3);
+    Monster_inv_start(B);
+    v = Monster_inv_extend(B, 3);
     v[0] = 1, v[1] = 2, v[2] = 3;
     v = Monster_inv_extend(B, 2);
     v[0] = 4, v[1] = 5;
@@ -934,7 +933,7 @@ with `edit` and `reserved_len` between `start/end` (recalling that pointers
 cannot be reused across buffer calls):
 
     uint8_t *v, i;
-    Monster_inv_start(B, 0);
+    Monster_inv_start(B);
     Monster_inv_push(B, 1);
     Monster_inv_push(B, 2);
     v = Monster_inv_edit(B);
@@ -950,14 +949,14 @@ size since it may change with `truncate/extend`.
 A vector can also contain structs. Let us extend the Monster example
 with a vector of positions, so we can have a breadcrumb trail:
 
-    Monster_breadcrumbs_start(B, 0);
+    Monster_breadcrumbs_start(B);
     Vec3_vec_push_create(B, 1, 2, 3);
     Vec3_vec_push_create(B, 3, 4, 5);
     Monster_breadcrumbs_end(B);
 
 or
 
-    Monster_breadcrumbs_start(B, 0);
+    Monster_breadcrumbs_start(B);
     Monster_breadcrumbs_push_create(B, 1, 2, 3);
     Monster_breadcrumbs_push_create(B, 3, 4, 5);
     Monster_breadcrumbs_end(B);
@@ -965,15 +964,16 @@ or
 or
 
     Vec3_t *trails[2];
-    trails = Monster_breadcrumbs_start(B, 2);
+    Monster_breadcrumbs_start(B);
+    trails = Monster_breadcrumbs_extend(B, 2);
     Vec3_create(&trails[0], 1, 2, 3);
     Vec3_create(&trails[1], 4, 5, 6);
     Monster_breadcrumbs_end(B);
 
-The `vec_start/end/end_pe/create/create_pe/clone/slice` are translated
-into similar calls prefixed with the field name instead of `vector` and
-except for `start`, the calls also add the vector to the table if
-successful, for example:
+The `vec_start/exttend/end/end_pe/create/create_pe/clone/slice` are
+translated into similar calls prefixed with the field name instead of
+`vector` and except for `start`, the calls also add the vector to the
+table if successful, for example:
 
     uint8_t data[] = [1, 2, 3];
     Monster_inv_create(B, data, 3);
@@ -1000,7 +1000,7 @@ and this is what is going on under the surface in the other calls:
 
     /* Clear any padding in `x` because it is not allocated by builder. */
     Vec3_assign(Vec3_clear(&x), 3, 4, 5);
-    Vec3_vec_start(B, 0);
+    Vec3_vec_start(B);
     Vec3_vec_push_create(B, 1, 2, 3);
     Vec3_vec_push(B, &v);
     inv = Vec3_vec_end(B);
@@ -1058,11 +1058,11 @@ or
 
     Monster_inv_slice(B, v, 2, 4);
 
-A vector of strings an be constructed as (assuming friends a string
-vector):
+A vector of strings an be constructed as (`friends` is a string
+vector field that we just invented for the occasion):
 
     flatbuffers_string_ref_t friend, *p;
-    Monster_friends_start(B, 0);
+    Monster_friends_start(B);
       friend = flatbuffer_string_create_str(B, "Peter Pan");
       Monster_friends_push_create_str(B, "Shrek");
       Monster_friends_push_create_str(B, "Pinnochio");
@@ -1071,7 +1071,7 @@ vector):
       Monster_friends_push(friend);
       p = Monster_friends_extend(B, 1);
       *p = flatbuffers_string_create_str("Cindarella");
-      Monster_friends_push_start(B, 0);
+      Monster_friends_push_start(B);
         flatbuffers_string_append("The Little");
         flatbuffers_string_append("Mermaid");
       Monster_friends_push_end(B);
@@ -1085,7 +1085,7 @@ vectors just like string vectors. `push_start` pushes a new table and
 allows for updates until `push_end`. If we have a spawn vector of monsters in
 the Monster table, we can populate it like this:
 
-    Monster_spawn_start(B, 0);
+    Monster_spawn_start(B);
       Monster_vec_push_start(B);
         Monster_Hp_add(B, 27);
       Monster_vec_push_end(B);
@@ -1107,15 +1107,17 @@ same as the parent, but using the field specific `push_start` ensures we
 get the right table element type.
 
 `Monster_spawn_push_start(B)` takes no length argument because it is a
-table element, while `Monster_friends_push_start(B, 0)` because it is a
+table element, while `Monster_friends_push_start(B)` because it is a
 string element (similar to a vector).
 
-`Monster_spawn_start(B, 0)` should normally just take a 0 length because
-it is simpler to push a table at a time. Preallocating the vector risks
-unused references which is bad. But it is possible to do it with care:
+`Monster_spawn_start(B)` should just be followed by push operations
+rather than following up with `Monster_spawn_extend(B, n)` because we
+risk loose references that can lead to crashes. But handled carefully
+it is possible:
 
     Monster_vec_ref_t mvec;
-    mvec = Monster_spawn_start(B, 2);
+    Monster_spawn_start(B);
+    mvec = Monster_spawn_extend(B, 2);
     mvec[0] = Monster_create(B, ...);
     mvec[1] = Monster_create(B, ...);
     Monster_spawn_end(B);

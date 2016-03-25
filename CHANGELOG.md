@@ -6,6 +6,10 @@
 - Add samples/monster example.
 - BREAKING: added missing `_vec` infix on some operations related to
   building vectors. For example `Weapon_push` -> `Weapon_vec_push`.
+- BREAKING: vector and string start functions no longer takes a
+  count/len argument as it proved tedious and not very useful.
+  The return value is now 0 on success rather than a buffer pointer.
+  Use `_extend` call after start when the length argument is non-zero.
 
 ## [0.2.1]
 
