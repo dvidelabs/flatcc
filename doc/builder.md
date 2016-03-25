@@ -884,11 +884,11 @@ without being concerned with the underlying integer type, for example:
 Vectors can be created independently, or directly when updating a table - the
 end result is the same.
 
-    Monster_inv_start(B);
+    Monster_inventory_start(B);
     flatbuffers_uint8_vec_push(B, 1);
     flatbuffers_uint8_vec_push(B, 2);
     flatbuffers_uint8_vec_push(B, 3);
-    Monster_inv_end(B);
+    Monster_inventory_end(B);
 
 or
 
@@ -898,34 +898,34 @@ or
     flatbuffers_uint8_push(B, 2);
     flatbuffers_uint8_push(B, 3);
     inv = flatbuffers_uint8_vec_end(B);
-    Monster_inv_add(B, inv);
+    Monster_inventory_add(B, inv);
 
 Because it can be tedious and error-prone to recall the exact field
 type, and because the operations are not type safe (any kind of push
 would be accepted), some vector operations are also mapped to the field
 name:
 
-    Monster_inv_start(B);
-    Monster_inv_push(B, 1);
-    Monster_inv_push(B, 2);
-    Monster_inv_push(B, 3);
-    Monster_inv_end(B);
+    Monster_inventory_start(B);
+    Monster_inventory_push(B, 1);
+    Monster_inventory_push(B, 2);
+    Monster_inventory_push(B, 3);
+    Monster_inventory_end(B);
 
 Note: vector operations on a type uses the `_vec_<operation>` syntax,
 for example `uint8_vec_push` or `Monster_vec_push` while operations that
 are mapped onto table field names of vector type do not use the `_vec`
-infix because it is not a type name, for example `Monster_inv_push`.
+infix because it is not a type name, for example `Monster_inventory_push`.
 
 
 A slightly faster operation preallocates the vector:
 
     uint8_t *v;
-    Monster_inv_start(B);
-    v = Monster_inv_extend(B, 3);
+    Monster_inventory_start(B);
+    v = Monster_inventory_extend(B, 3);
     v[0] = 1, v[1] = 2, v[2] = 3;
-    v = Monster_inv_extend(B, 2);
+    v = Monster_inventory_extend(B, 2);
     v[0] = 4, v[1] = 5;
-    Monster_inv_end(B);
+    Monster_inventory_end(B);
 
 Push just extends one element at time.  Note that `extend` returns the
 pointer to the extended vector segment. The full vector can be accessed
@@ -933,14 +933,14 @@ with `edit` and `reserved_len` between `start/end` (recalling that pointers
 cannot be reused across buffer calls):
 
     uint8_t *v, i;
-    Monster_inv_start(B);
-    Monster_inv_push(B, 1);
-    Monster_inv_push(B, 2);
-    v = Monster_inv_edit(B);
-    for (i = 1; i < Monster_inv_reserved_len(B); ++i) {
+    Monster_inventory_start(B);
+    Monster_inventory_push(B, 1);
+    Monster_inventory_push(B, 2);
+    v = Monster_inventory_edit(B);
+    for (i = 1; i < Monster_inventory_reserved_len(B); ++i) {
         v[i] = v[i - 1] + v[i];
     }
-    Monster_inv_end(B);
+    Monster_inventory_end(B);
 
 Note that the name `reserved_len` is to avoid confusion with
 `_vec_len` read operation. It also indicates that it is not the final
@@ -976,7 +976,7 @@ translated into similar calls prefixed with the field name instead of
 table if successful, for example:
 
     uint8_t data[] = [1, 2, 3];
-    Monster_inv_create(B, data, 3);
+    Monster_inventory_create(B, data, 3);
     Monster_breadcrumbs_slice(B, some_other_breadcrumbs, 0, 10);
 
 Vector operations that are allowed between `vec_start` and
@@ -1024,7 +1024,7 @@ on all platforms if `vec_end_pe` is used at the end.
 A vector may also be created from an existing array:
 
     uint8_t data[] = {1, 2, 3};
-    Monster_inv_add(B, flatbuffers_uint8_vec_create(B, data, 3));
+    Monster_inventory_add(B, flatbuffers_uint8_vec_create(B, data, 3));
 
 This also applies to arrays of structs as long as they are properly zero
 padded. `create_pe` is similar but does not do any endian conversion,
@@ -1044,19 +1044,19 @@ aligned (like any flatbuffer vector). `slice` takes a base-0 index and
 a vector length where the result is truncated if the source is not
 large enough.
 
-    Monster_inv_clone(B, v);
+    Monster_inventory_clone(B, v);
 
 or
 
-    Monster_inv_add(flatbuffers_int8_clone(B, v);
+    Monster_inventory_add(flatbuffers_int8_clone(B, v);
 
 or
 
-    Monster_inv_add(flatbuffers_int8_slice(B, v, 2, 4);
+    Monster_inventory_add(flatbuffers_int8_slice(B, v, 2, 4);
 
 or
 
-    Monster_inv_slice(B, v, 2, 4);
+    Monster_inventory_slice(B, v, 2, 4);
 
 A vector of strings an be constructed as (`friends` is a string
 vector field that we just invented for the occasion):
