@@ -45,11 +45,12 @@ and writers.
 
 See also:
 
+
 - [Google FPL FlatBuffers](http://google.github.io/flatbuffers/)
 
-- [Build Instructions](https://github.com/dvidelabs/flatcc#building)
-
 - [Online Forum](https://groups.google.com/forum/#!forum/flatbuffers)
+
+- [Build Instructions](https://github.com/dvidelabs/flatcc#building)
 
 
 ## Status
@@ -77,6 +78,9 @@ codes in the runtime library. This makes it possible to return
 meaningful errors without loss of performance, e.g. that a buffer failed
 due to a string that was not zero terminated, or a vector was aligned to
 its element size.
+
+Version 0.3.0 introduced breaking changes related to vector API, see
+[CHANGELOG for 0.3.0](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030)
 
 Big endian platforms have not been tested at all. While care has been
 taken to handle endian encoding, there are bound to be some issues. The
@@ -260,6 +264,12 @@ JSON printer and parser can be generated using the --json flag or
 some certain runtime library compile time flags that can optimize out
 printing symbolic enums, but these can also be disabled at runtime.
 
+## Quickstart
+
+You may jump directly to example source for the [monster
+sample](https://github.com/dvidelabs/flatcc/tree/master/samples/monster)
+here, or follow the following quickstart which is shorter and based
+on earlier test code.
 
 ## Quickstart - reading a buffer
 
@@ -1150,7 +1160,7 @@ settings. If changes are required, they can be given in the build
 system - it is not necessary to edit the config files, for example
 to disable trailing comma in the JSON parser:
 
-    FLATCC_JSON_PARSE_ALLOW_TRAILING_COMMA 0
+    cc -DFLATCC_JSON_PARSE_ALLOW_TRAILING_COMMA=0 ...
 
 
 ## Using the Compiler and Builder library
