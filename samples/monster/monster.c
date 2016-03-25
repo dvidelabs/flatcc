@@ -257,8 +257,6 @@ void access_monster_buffer(const uint8_t *buffer)
     assert(inv_len == 10);
     // Index 0 is the first, index 2 is the third.
     // NOTE: C++ uses the `Get` terminology for vector elemetns, C use `at`.
-    //
-    // TODO: future version may use vec_get and deprecate vec_at.
     uint8_t third_item = nsc(uint8_vec_at(inv, 2));
     assert(third_item == 2);
 
