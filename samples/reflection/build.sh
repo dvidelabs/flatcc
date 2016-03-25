@@ -3,7 +3,7 @@
 set -e
 cd `dirname $0`/../..
 ROOT=`pwd`
-TMP=${ROOT}/build/tmp/examples/reflection
+TMP=${ROOT}/build/tmp/samples/reflection
 
 CC=${CC:-cc}
 ${ROOT}/scripts/build.sh
@@ -12,7 +12,7 @@ rm -rf ${TMP}/*
 #bin/flatcc --schema --schema-length=yes -o ${TMP} test/monster_test/monster_test.fbs
 bin/flatcc --schema -o ${TMP} test/monster_test/monster_test.fbs
 
-cp examples/reflection/*.c ${TMP}
+cp samples/reflection/*.c ${TMP}
 cd ${TMP}
 # We don't need debug version, but it is always useful to have if we get
 # assertions in the interface code.

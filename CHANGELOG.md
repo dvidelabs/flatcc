@@ -1,5 +1,10 @@
 # Change Log
 
+## [Unreleased]
+
+- Rename examples folder to samples folder.
+- Add samples/monster example.
+
 ## [0.2.1]
 
 - Disallow unquoted symbolic list in JSON parser by default for Google

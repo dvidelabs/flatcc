@@ -77,13 +77,15 @@ echo "running optimized version of main monster test"
 ./monster_test
 
 if [ -e ${ROOT}/build/reflection_enabled ]; then
-    # TODO: temporarily disabled reflection test
     echo "running reflection test"
     ${ROOT}/test/reflection_test//reflection_test.sh
 
-    echo "running reflection example"
-    ${ROOT}/examples/reflection/build.sh
+    echo "running reflection sample"
+    ${ROOT}/samples/reflection/build.sh
 fi
+
+echo "running monster sample"
+${ROOT}/samples/monster/build.sh
 
 echo "running json test"
 ${ROOT}/test/json_test/json_test.sh
