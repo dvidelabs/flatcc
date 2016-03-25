@@ -68,9 +68,9 @@ void create_monster_bottom_up(flatcc_builder_t *B, int flexible)
 
 
     // Set his hit points to 300 and his mana to 150.
-    uint32_t hp = 300;
+    uint16_t hp = 300;
     // The default value is 150, so we will never store this field.
-    uint32_t mana = 150;
+    uint16_t mana = 150;
 
     // Create the equipment union. In the C++ language API this is given
     // as two arguments to the create call, or as two separate add
@@ -156,7 +156,7 @@ void create_monster_top_down(flatcc_builder_t *B)
     ns(Monster_start_as_root(B));
     ns(Monster_pos_create(B, 1.0f, 2.0f, 3.0f));
     ns(Monster_hp_add(B, 300));
-    ns(Monster_mana_add(B, 150));
+    //ns(Monster_mana_add(B, 150));
     // We use create_str instead of add because we have no existing string reference.
     ns(Monster_name_create_str(B, "Orc"));
     // Again we use create because we no existing vector object, only a C-array.
@@ -221,6 +221,11 @@ void access_monster_buffer(const uint8_t *buffer)
     assert(mana == 150);
     assert(0 == strcmp(name, "Orc"));
     assert(name_len == strlen("Orc"));
+
+    int hp_present = ns(Monster_hp_is_present(monster)); // 1
+    int mana_present = ns(Monster_mana_is_present(monster)); // 0
+    assert(hp_present);
+    assert(!mana_present);
 
     ns(Vec3_struct_t) pos = ns(Monster_pos(monster));
     // Make sure pos has been set.
@@ -302,13 +307,12 @@ int main(int argc, char *argv[])
     // We now have a FlatBuffer we can store on disk or send over a network.
     // ** file/network code goes here :) **
     // Instead, we're going to access it right away (as if we just received it).
-    access_monster_buffer(buf);
+    //access_monster_buffer(buf);
     free(buf);
     // The builder object can optionally be reused after a reset which
     // is faster than creating a new builder. Subsequent use might
     // entirely avoid temporary allocations until finalizing the buffer.
     flatcc_builder_reset(&builder);
-
     create_monster_bottom_up(&builder, 1);
     buf = flatcc_builder_finalize_buffer(&builder, &size);
     access_monster_buffer(buf);
