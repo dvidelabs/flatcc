@@ -71,4 +71,4 @@ echo "running json printer test optimimized"
 echo "running json test optimized"
 ./test_json
 
-echo "JSON TESTS PASSED"
+echo "json tests passed"
