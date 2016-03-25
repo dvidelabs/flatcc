@@ -59,10 +59,9 @@ void create_monster_bottom_up(flatcc_builder_t *B, int flexible)
     // 0 indicates we do not wish to pre-allocate vector.
     //
     // TODO: future versions may remove the length argument to start
-    // and use the syntax Weapon_vec_push.
     ns(Weapon_vec_start(B, 0));
-    ns(Weapon_push(B, sword));
-    ns(Weapon_push(B, axe));
+    ns(Weapon_vec_push(B, sword));
+    ns(Weapon_vec_push(B, axe));
     ns(Weapon_vec_ref_t) weapons = ns(Weapon_vec_end(B));
 
 

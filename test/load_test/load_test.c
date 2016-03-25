@@ -51,7 +51,7 @@ static ns(Monster_vec_ref_t) create_monsters(flatcc_builder_t *B)
     for (i = 0; i < MONSTER_REP; ++i) {
         m = create_monster(B);
         assert(m);
-        ns(Monster_push(B, m));
+        ns(Monster_vec_push(B, m));
     }
     return ns(Monster_vec_end(B));
 }

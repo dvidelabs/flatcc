@@ -1,5 +1,11 @@
 # FlatCC FlatBuffers interface for C
 
+NOTE: see
+[CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md),
+there are occassionally breaking changes. In case of trouble, make sure
+the `flatcc` tool is same version as the `include/flatcc` path.
+
+
 The project includes:
 
 - an executable `flatcc` FlatBuffers schema compiler for C and a

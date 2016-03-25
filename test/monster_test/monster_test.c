@@ -556,7 +556,7 @@ int gen_monster(flatcc_builder_t *B)
     ns(Monster_test4_push(B, &x));
     ns(Monster_test4_push(B, &x));
     /* We can use either field mapped push or push on the type. */
-    ns(Test_push(B, &x));
+    ns(Test_vec_push(B, &x));
     /*
      * `_reserved_len` is similar to the `_vec_len` function in the
      * reader interface but `_vec_len` would not work here.
@@ -654,7 +654,7 @@ int gen_monster(flatcc_builder_t *B)
     /* Create array of monsters to test various union constructors. */
     ns(Monster_testarrayoftables_start(B, 0));
 
-    ns(Monster_push_start(B));
+    ns(Monster_vec_push_start(B));
     /* Same as using Any_as_Monster used earlier, but here explicit. */
     ns(Monster_test_add)(B,(ns(Any_union_ref_t)){ ns(Any_Monster), mon });
     /* Name is required. */
@@ -664,7 +664,7 @@ int gen_monster(flatcc_builder_t *B)
     ns(Monster_testarrayoftables_push_start(B));
     ns(Monster_test_Monster_add(B, mon));
     ns(Monster_name_create_str(B, "any name"));
-    ns(Monster_push_end(B));
+    ns(Monster_vec_push_end(B));
     /*
      * `push_start`: We can use the field specific method, or the type specific method
      * that the field maps to.

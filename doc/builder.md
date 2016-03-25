@@ -430,7 +430,7 @@ builder is willing to allocate enough stack space.
 between `start/end` - don't do that. It is a tradeoff between usability
 and type safety.
 
-Note that vectors, strings and structs maps several standard operations
+Note that vectors, strings and structs map several standard operations
 to a field name, for example `mytable_myfield_push(B, x)`. This is not the
 case with table fields which only map `start/end/create` in part because it
 would never terminate for recursive types and in part because each table
@@ -887,9 +887,9 @@ can be 0 if we use the push interface:
 
 
     Monster_inv_start(B, 0);
-    flatbuffers_uint8_push(B, 1);
-    flatbuffers_uint8_push(B, 2);
-    flatbuffers_uint8_push(B, 3);
+    flatbuffers_uint8_vec_push(B, 1);
+    flatbuffers_uint8_vec_push(B, 2);
+    flatbuffers_uint8_vec_push(B, 3);
     Monster_inv_end(B);
 
 or
@@ -912,6 +912,12 @@ name:
     Monster_inv_push(B, 2);
     Monster_inv_push(B, 3);
     Monster_inv_end(B);
+
+Note: vector operations on a type uses the `_vec_<operation>` syntax,
+for example `uint8_vec_push` or `Monster_vec_push` while operations that
+are mapped onto table field names of vector type do not use the `_vec`
+infix because it is not a type name, for example `Monster_inv_push`.
+
 
 A slightly faster operation preallocates the vector:
 
@@ -945,8 +951,8 @@ A vector can also contain structs. Let us extend the Monster example
 with a vector of positions, so we can have a breadcrumb trail:
 
     Monster_breadcrumbs_start(B, 0);
-    Vec3_push_create(B, 1, 2, 3);
-    Vec3_push_create(B, 3, 4, 5);
+    Vec3_vec_push_create(B, 1, 2, 3);
+    Vec3_vec_push_create(B, 3, 4, 5);
     Monster_breadcrumbs_end(B);
 
 or
@@ -995,8 +1001,8 @@ and this is what is going on under the surface in the other calls:
     /* Clear any padding in `x` because it is not allocated by builder. */
     Vec3_assign(Vec3_clear(&x), 3, 4, 5);
     Vec3_vec_start(B, 0);
-    Vec3_push_create(B, 1, 2, 3);
-    Vec3_push(B, &v);
+    Vec3_vec_push_create(B, 1, 2, 3);
+    Vec3_vec_push(B, &v);
     inv = Vec3_vec_end(B);
 
     Monster_breadcrumbs_add(B, inv);
@@ -1004,7 +1010,7 @@ and this is what is going on under the surface in the other calls:
 As always, a reference such as `inv` may only be used at most once, and
 should be used once to avoid garbage.
 
-Note that `Vec3_start` would create an independent struct instead of a
+Note that `Vec3_vec_start` would create an independent struct instead of a
 vector of structs. Also note that `vec_ref_t` is a builder specific
 temporary type while `vec_t` is intended as a const pointer to the first
 element in an existing buffer in little endian encoding with a size
@@ -1080,10 +1086,10 @@ allows for updates until `push_end`. If we have a spawn vector of monsters in
 the Monster table, we can populate it like this:
 
     Monster_spawn_start(B, 0);
-      Monster_push_start(B);
+      Monster_vec_push_start(B);
         Monster_Hp_add(B, 27);
-      Monster_push_end(B);
-      Monster_push_create(B,
+      Monster_vec_push_end(B);
+      Monster_vec_push_create(B,
         /* Approximate argument list for illustration only. */
         &vec, 150, 80, name, inventory, Color_Red, Any_as_None());
     Monster_spawn_end(B);
@@ -1095,7 +1101,7 @@ struct, and string elements. String elements also have
 `push_end` the operations valid for the given table or string element can be
 used (typically `add` for tables, and `append` for strings).
 
-Instead of `Monster_push_start` we can also uses
+Instead of `Monster_vec_push_start` we can also uses
 `Monster_spawn_push_start` etc. - in this case the child type is the
 same as the parent, but using the field specific `push_start` ensures we
 get the right table element type.

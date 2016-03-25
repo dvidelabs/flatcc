@@ -4,6 +4,8 @@
 
 - Rename examples folder to samples folder.
 - Add samples/monster example.
+- BREAKING: added missing `_vec` infix on some operations related to
+  building vectors. For example `Weapon_push` -> `Weapon_vec_push`.
 
 ## [0.2.1]
 

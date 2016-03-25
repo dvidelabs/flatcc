@@ -63,7 +63,7 @@ int fb_gen_common_c_builder_header(output_t *out)
 
     fprintf(out->fp,
         "#define __%sbuild_table_prolog(NS, N, FID)\\\n"
-        "__%sbuild_table_vector_ops(NS, N, N)\\\n"
+        "__%sbuild_table_vector_ops(NS, N ## _vec, N)\\\n"
         "__%sbuild_table_root(NS, N, FID)\n"
         "\n",
         nsc, nsc, nsc);
@@ -126,11 +126,11 @@ int fb_gen_common_c_builder_header(output_t *out)
         "{ return flatcc_builder_vector_edit(B); }\\\n"
         "static inline size_t V ## _reserved_len(NS ## builder_t *B)\\\n"
         "{ return flatcc_builder_vector_count(B); }\\\n"
-        "static inline T *N ## _push(NS ## builder_t *B, const T *p)\\\n"
+        "static inline T *V ## _push(NS ## builder_t *B, const T *p)\\\n"
         "{ T *_p; return (_p = flatcc_builder_extend_vector(B, 1)) ? ((*_p = *p), _p) : 0; }\\\n"
-        "static inline T *N ## _push_copy(NS ## builder_t *B, const T *p)\\\n"
+        "static inline T *V ## _push_copy(NS ## builder_t *B, const T *p)\\\n"
         "{ T *_p; return (_p = flatcc_builder_extend_vector(B, 1)) ? TN ## _copy(_p, p) : 0; }\\\n"
-        "static inline T *N ## _push_create(NS ## builder_t *B __ ## TN ## _formal_args)\\\n"
+        "static inline T *V ## _push_create(NS ## builder_t *B __ ## TN ## _formal_args)\\\n"
         "{ T *_p; return (_p = flatcc_builder_extend_vector(B, 1)) ? TN ## _assign(_p __ ## TN ## _call_args) : 0; }\n"
         "\n",
         nsc);
@@ -168,17 +168,17 @@ int fb_gen_common_c_builder_header(output_t *out)
         "static inline char *N ## _push_start(NS ## builder_t *B, size_t len)\\\n"
         "{ return NS ## string_start(B, len); }\\\n"
         "static inline NS ## string_ref_t *N ## _push_end(NS ## builder_t *B)\\\n"
-        "{ return NS ## string_push(B, NS ## string_end(B)); }\\\n"
+        "{ return NS ## string_vec_push(B, NS ## string_end(B)); }\\\n"
         "static inline NS ## string_ref_t *N ## _push_create(NS ## builder_t *B, const char *s, size_t len)\\\n"
-        "{ return NS ## string_push(B, NS ## string_create(B, s, len)); }\\\n"
+        "{ return NS ## string_vec_push(B, NS ## string_create(B, s, len)); }\\\n"
         "static inline NS ## string_ref_t *N ## _push_create_str(NS ## builder_t *B, const char *s)\\\n"
-        "{ return NS ## string_push(B, NS ## string_create_str(B, s)); }\\\n"
+        "{ return NS ## string_vec_push(B, NS ## string_create_str(B, s)); }\\\n"
         "static inline NS ## string_ref_t *N ## _push_create_strn(NS ## builder_t *B, const char *s, size_t max_len)\\\n"
-        "{ return NS ## string_push(B, NS ## string_create_strn(B, s, max_len)); }\\\n"
+        "{ return NS ## string_vec_push(B, NS ## string_create_strn(B, s, max_len)); }\\\n"
         "static inline NS ## string_ref_t *N ## _push_clone(NS ## builder_t *B, NS ## string_t string)\\\n"
-        "{ return NS ## string_push(B, NS ## string_clone(B, string)); }\\\n"
+        "{ return NS ## string_vec_push(B, NS ## string_clone(B, string)); }\\\n"
         "static inline NS ## string_ref_t *N ## _push_slice(NS ## builder_t *B, NS ## string_t string, size_t index, size_t len)\\\n"
-        "{ return NS ## string_push(B, NS ## string_slice(B, string, index, len)); }\n"
+        "{ return NS ## string_vec_push(B, NS ## string_slice(B, string, index, len)); }\n"
         "\n",
         nsc);
 
@@ -206,7 +206,7 @@ int fb_gen_common_c_builder_header(output_t *out)
         "{ return flatcc_builder_offset_vector_edit(B); }\\\n"
         "static inline size_t V ## _reserved_len(NS ## builder_t *B)\\\n"
         "{ return flatcc_builder_offset_vector_count(B); }\\\n"
-        "static inline TN ## _ref_t *N ## _push(NS ## builder_t *B, const TN ## _ref_t ref)\\\n"
+        "static inline TN ## _ref_t *V ## _push(NS ## builder_t *B, const TN ## _ref_t ref)\\\n"
         "{ return ref ? flatcc_builder_offset_vector_push(B, ref) : 0; }\n"
         "\n",
         nsc);
@@ -1185,25 +1185,25 @@ static int gen_builder_table_fields(output_t *out, fb_compound_type_t *ct)
             case vt_uint:
                 fprintf(out->fp,
                     "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %llu)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname, 
+                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
                     llu(member->size), member->align, llu(member->value.u));
                 break;
             case vt_int:
                 fprintf(out->fp,
                     "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %lld)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname, 
+                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
                     llu(member->size), member->align, lld(member->value.i));
                 break;
             case vt_bool:
                 fprintf(out->fp,
                     "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %u)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname, 
+                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
                     llu(member->size), member->align, (unsigned)member->value.b);
                 break;
             case vt_float:
                 fprintf(out->fp,
                     "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %.17g)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname, 
+                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
                     llu(member->size), member->align, member->value.f);
                 break;
             default:
