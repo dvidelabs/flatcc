@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.3.0]
 
 - Rename examples folder to samples folder.
 - Add samples/monster example.
