@@ -518,8 +518,9 @@ for a given target, source files may be used instead. Each feature has
 its own source file, so not all runtime files are needed for building a
 buffer:
 
-    cc --std=c11 -I include monster_example.c src/runtime/builder.c \
-        emitter.c -o monster_example
+    cc --std=c11 -I include monster_example.c \
+        src/runtime/emitter.c src/runtime/builder.c \
+        -o monster_example
 
 Other features such as the verifier and the JSON printer and parser
 would each need a different file in src/runtime. Which file should be
