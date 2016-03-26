@@ -1133,34 +1133,20 @@ required:
     bin/flatcc              (command line interface to schema compiler)
     lib/libflatcc.a         (optional, for linking with schema compiler)
 
-    include/flatcc          (runtime header files)
+    include/flatcc/**       (runtime header files)
     lib/libflatccrt.a       (runtime library)
     lib/libflatccrt_d.a     (debug version of runtime library)
 
 
-In addition runtime library source files may be used instead of
-`libflatccrt.a`, but would not be used in a system installation:
+In addition the runtime library source files may be used instead of
+`libflatccrt.a`. This may be handy when distributing the runtime library
+along with schema generated files for a foreign host that is not binary
+compatible.
 
     src/runtime/*.c
 
 Note that `include/support` should not be included in a system
 installation. It is only used by test and sample code.
-
-
-### Build Targets Different from the Host
-
-If the `flatcc` compiler is built on a target host like OS-X or Ubuntu,
-but the final generated files are needed elsewhere like ARM
-cross-compilation, then the runtime library `libflatccrt.a` must be
-compiled for that target or alternatively the `C` files in that library
-must be otherwise added to the end user project. In its simplest form it
-is merely adding `builder.c` and `emitter.c` to the end user build if
-only build and read support is needed. See also `src/runtime/CMakeLists.txt`
-for the list of files to include.
-
-The following header-only folder is required for end users:
-
-    `include/flatcc`
 
 
 ## Testing
