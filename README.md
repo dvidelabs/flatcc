@@ -94,7 +94,7 @@ things like endian handling, and others to provide compatiblity for
 non-C11 compliant compilers. Together this should support most C
 compilers around. However, support for compiler other than recent
 versions of clang and gcc have not been well tested and relies on
-community feedback. 
+community feedback.
 
 `flatcc` is able encode and decode complex flatbuffer structures as is,
 and there are no big known issues apart from the above. The structure of
@@ -271,6 +271,10 @@ sample](https://github.com/dvidelabs/flatcc/tree/master/samples/monster)
 here, or follow the following quickstart which is shorter and based
 on earlier test code.
 
+After building the `flatcc tool` (see below), it is located in the `bin`
+folder of the `flatcc` project root and libraries are found in the `lib`
+folder.
+
 ## Quickstart - reading a buffer
 
 Here we provide a quick example of read-only access to Monster flatbuffer
@@ -279,17 +283,26 @@ Here we provide a quick example of read-only access to Monster flatbuffer
 First we compile the schema read-only with common (-c) support header and we
 add the recursion because `monster_test.fbs` includes other files.
 
-    flatcc -cr monster_test.fbs
+    flatcc -cr samples/monster/monster.fbs
 
-we get:
+For simplicity we assume you build an example project in the project
+root folder, but in praxis you would want to change some paths, for
+example:
+
+    mkdir -p build/example
+    flatcc -cr -o build/example samples/monster/monster.fbs
+    cd build/example
+
+
+We get:
 
     flatbuffers_common_reader.h
     include_test1_reader.h
     include_test2_reader.h
     monster_test_reader.h
 
-Namespaces can be long so we use a macro to manage this.
 
+Namespaces can be long so we use a macro to manage this.
 
     #include "monster_test_reader.h"
 
@@ -349,15 +362,23 @@ read only buffer access see [the bfbs2json
 example](https://github.com/dvidelabs/flatcc/blob/master/samples/reflection/bfbs2json.c)
 which converts a binary FlatBuffers schema into a JSON file.
 
-Assuming our above file is `monster_test.c` the following are a few ways to compile the project:
+
+## Quickstart - compiling for read-only
+
+Assuming our above file is `monster_example.c` the following are a few
+ways to compile the project for read-only - compilation with runtime
+library is shown later on.
 
     cc -I include monster_example.c -o monster_example
 
-    cc --std=c11 -I include monster_test.c -o monster_test
+    cc --std=c11 -I include monster_example.c -o monster_example
 
-    cc -D FLATCC_PORTABLE -I include monster_test.c -o monster_test
+    cc -D FLATCC_PORTABLE -I include monster_example.c -o monster_example
 
-Some files in `/include/flatcc/portable` are always used, but the `-D FLATCC_PORTABLE` flag includes additional files to support compilers lacking c11 features.
+The include path or source path is likely different. Some files in
+`include/flatcc/portable` are always used, but the `-D FLATCC_PORTABLE`
+flag includes additional files to support compilers lacking c11
+features.
 
 
 ## Quickstart - wrapping type names
@@ -486,8 +507,19 @@ Compile the example project:
 
     cc --std=c11 -I include monster_example.c lib/libflatccrt.a -o monster_example
 
-Note that here the include directive is required even without the portability
-layer so that `flatcc/flatcc_builder.h` can be found.
+Note that the runtime library is required for building buffers, but not
+for reading them. If it is incovenient to distribute the runtime library
+for a given target, source files may be used instead. Each feature has
+its own source file, so not all runtime files are needed for building a
+buffer:
+
+    cc --std=c11 -I include monster_example.c src/runtime/builder.c \
+        emitter.c -o monster_example
+
+Other features such as the verifier and the JSON printer and parser
+would each need a different file in src/runtime. Which file should be
+obvious from the filenames except that JSON parsing also requires the
+builder and emitter source files.
 
 
 ## Verifying a Buffer
@@ -537,21 +569,33 @@ See also `include/flatcc/flatcc_verifier.h`.
 
 ## JSON Parsing and Printing
 
+JSON support files are generated with `flatcc --json`.
+
+This section is not a tutorial on JSON printing and parsing, it merely
+covers some non-obvious aspects. The best source to get started quickly
+is the test file:
+
+    test/json_test/json_test.c
+
+For detailed usage, please refer to:
+
+    test/json_test/test_json_printer.c
+    test/json_test/test_json_parser.c
+    test/json_test/json_test.c
+    test/benchmark/benchflatccjson
+
+See also JSON parsing section in the Googles FlatBuffers [schema
+documentation](https://google.github.io/flatbuffers/flatbuffers_guide_writing_schema.html).
+
 By using the flatbuffer schema it is possible to generate schema
 specific JSON printers and parsers. This differs for better and worse
 from Googles `flatc` tool which takes a binary schema as input and
-processes json input and output. Here that parser and printer only rely
+processes JSON input and output. Here that parser and printer only rely
 on the `flatcc` runtime library, is faster (probably significantly so),
-but requires recompilition when new json formats are to be supported -
+but requires recompilition when new JSON formats are to be supported -
 this is not as bad as it sounds - it would for example not be difficult
 to create a Docker container to process a specific schema in a web
 server context.
-
-The json printer and parser are assymtric in the sense that the printer
-is a self-contained object with its own print context object that
-operates on a binary flatbuffer, while the parser has only a lightweight
-context for error messages and really rely on the flatcc builder object
-for its context.
 
 The parser always takes a text buffer as input and produces output
 according to how the builder object is initialized. The printer has
@@ -562,7 +606,7 @@ reused between prints via the reset function. See `flatcc_json_parser.h`
 for details.
 
 The parser will accept unquoted names (not strings) and trailing commas,
-i.e. non-strict json and also allows for hex `\x03` in strings. Strict
+i.e. non-strict JSON and also allows for hex `\x03` in strings. Strict
 mode must be enabled by a compile time flag. In addition the parser
 schema specific symbolic enum values that can optionally be unquoted
 where a numeric value is expected:
@@ -667,13 +711,6 @@ for nested unions this can still expand). Needless to say this slows down
 parsing. It is an error to provide only the table field or the type
 field alone, except if the type is `NONE` or `0` in which case the table
 is not allowed to be present.
-
-For detailed usage, please refer to
-
-    test/json_test/test_json_printer.c
-    test/json_test/test_json_parser.c
-    test/json_test/json_test.c
-    test/benchmark/benchflatccjson
 
 
 ### Performance Notes
