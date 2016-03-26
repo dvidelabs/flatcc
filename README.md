@@ -479,7 +479,7 @@ too large. See also documentation comments in `flatcc_builder.h` and
         ns(Monster_end_as_root(B));
     }
 
-    #include "test/support/hexdump.h"
+    #include "support/hexdump.h"
 
     int main(int argc, char *argv[])
     {
