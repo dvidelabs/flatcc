@@ -276,7 +276,12 @@ folder of the `flatcc` project root and libraries are found in the `lib`
 folder.
 
 To write your own schema files please follow the main FlatBuffers
-project documentation, here we use the standard monster example.
+project documentation on [writing schema
+files](https://google.github.io/flatbuffers/flatbuffers_guide_writing_schema.html).
+
+The [builder interface
+reference](https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md)
+may be useful after studying the monster sample and quickstart below.
 
 
 ## Quickstart - reading a buffer
