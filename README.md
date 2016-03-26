@@ -1124,6 +1124,29 @@ OS-X also has a homebrew package:
     brew install flatcc
 
 
+## Distribution
+
+To distribute compiled binaries the following files are
+required:
+
+
+    bin/flatcc              (command line interface to schema compiler)
+    lib/libflatcc.a         (optional, for linking with schema compiler)
+
+    include/flatcc          (runtime header files)
+    lib/libflatccrt.a       (runtime library)
+    lib/libflatccrt_d.a     (debug version of runtime library)
+
+
+In addition runtime library source files may be used instead of
+`libflatccrt.a`, but would not be used in a system installation:
+
+    src/runtime/*.c
+
+Note that `include/support` should not be included in a system
+installation. It is only used by test and sample code.
+
+
 ### Build Targets Different from the Host
 
 If the `flatcc` compiler is built on a target host like OS-X or Ubuntu,
