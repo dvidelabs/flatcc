@@ -275,6 +275,10 @@ After building the `flatcc tool` (see below), it is located in the `bin`
 folder of the `flatcc` project root and libraries are found in the `lib`
 folder.
 
+To write your own schema files please follow the main FlatBuffers
+project documentation, here we use the stander monster example.
+
+
 ## Quickstart - reading a buffer
 
 Here we provide a quick example of read-only access to Monster flatbuffer
@@ -283,7 +287,7 @@ Here we provide a quick example of read-only access to Monster flatbuffer
 First we compile the schema read-only with common (-c) support header and we
 add the recursion because `monster_test.fbs` includes other files.
 
-    flatcc -cr samples/monster/monster.fbs
+    flatcc -cr test/monster_test/monster_test.fbs
 
 For simplicity we assume you build an example project in the project
 root folder, but in praxis you would want to change some paths, for
@@ -293,7 +297,6 @@ example:
     flatcc -cr -o build/example samples/monster/monster.fbs
     cd build/example
 
-
 We get:
 
     flatbuffers_common_reader.h
@@ -301,6 +304,8 @@ We get:
     include_test2_reader.h
     monster_test_reader.h
 
+(There is also the simpler `samples/monster/monster.fbs` but then you won't get
+included schema files).
 
 Namespaces can be long so we use a macro to manage this.
 
