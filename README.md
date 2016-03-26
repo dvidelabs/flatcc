@@ -351,14 +351,13 @@ which converts a binary FlatBuffers schema into a JSON file.
 
 Assuming our above file is `monster_test.c` the following are a few ways to compile the project:
 
-    cc monster_example.c -o monster_example
+    cc -I include monster_example.c -o monster_example
 
-    cc --std=c11 monster_test.c -o monster_test
+    cc --std=c11 -I include monster_test.c -o monster_test
 
     cc -D FLATCC_PORTABLE -I include monster_test.c -o monster_test
 
-The portability layer requires the include directive to find the support files - these
-are all header files.
+Some files in `/include/flatcc/portable` are always used, but the `-D FLATCC_PORTABLE` flag includes additional files to support compilers lacking c11 features.
 
 
 ## Quickstart - wrapping type names
