@@ -276,7 +276,7 @@ folder of the `flatcc` project root and libraries are found in the `lib`
 folder.
 
 To write your own schema files please follow the main FlatBuffers
-project documentation, here we use the stander monster example.
+project documentation, here we use the standard monster example.
 
 
 ## Quickstart - reading a buffer
