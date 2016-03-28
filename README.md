@@ -1360,7 +1360,10 @@ and Linux.
     throughput in 1M ops per sec: 34.902
     time per op: 28.652 (ns)
 
-## JSON benchmark only available for flatcc for C with exact same data set as above
+## JSON benchmark
+
+*Note: this benchmark is only available for `flatcc`. It uses the exact
+same data set as above.*
 
 The benchmark uses Grisu3 floating point parsing and printing algorithm
 with exact fallback to strtod/sprintf when the algorithm fails to be
