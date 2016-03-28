@@ -1131,27 +1131,31 @@ OS-X also has a homebrew package:
 
 ## Distribution
 
-To distribute compiled binaries the following files are
+To distribute the compiled binaries the following files are
 required:
 
+Compiler:
 
     bin/flatcc              (command line interface to schema compiler)
     lib/libflatcc.a         (optional, for linking with schema compiler)
+    include/flatcc/flatcc.h (optional, header and doc for libflatcc.a)
+
+Runtime:
 
     include/flatcc/**       (runtime header files)
     lib/libflatccrt.a       (runtime library)
-    lib/libflatccrt_d.a     (debug version of runtime library)
-
 
 In addition the runtime library source files may be used instead of
-`libflatccrt.a`. This may be handy when distributing the runtime library
-along with schema generated files for a foreign host that is not binary
-compatible.
+`libflatccrt.a`. This may be handy when packaging the runtime library
+along with schema specific generated files for a foreign target that is
+not binary compatible with the host system:
 
     src/runtime/*.c
 
 Note that `include/support` should not be included in a system
-installation. It is only used by test and sample code.
+installation. It is only used by test and sample code, but may be
+packaged with end user source that chooses to rely upon it, such as
+benchmark code.
 
 
 ## Testing
