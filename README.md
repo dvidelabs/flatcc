@@ -120,7 +120,7 @@ buffers per second from a rough estimate.
 
 For 100MB buffers with 1000 monsters, dynamically extended monster
 names, monster vector, and inventory vector, the bandwidth reaches about
-2.2GB/s and 45ms/buffer on 2.2GHz Haswell Core i7 CPU. This inlcudes
+2.2GB/s and 45ms/buffer on 2.2GHz Haswell Core i7 CPU. This includes
 reading back and validating all data. Reading only a few key fields
 increases bandwidth to 2.7GB/s and 37ms/op. For 10MB buffers bandwidth
 may be higher but eventually smaller buffers will be hit by call
@@ -211,7 +211,7 @@ same deduplication of vtables. This makes it possible to cluster vtables
 in hot cache or to make sure all vtables are available when partially
 transmitting a buffer. This behavior can be disabled by a runtime flag.
 
-Because some use cases may inlclude very constrained embedded devices,
+Because some use cases may include very constrained embedded devices,
 the builder library can be customized with an allocator object and a
 buffer emitter object. The separate emitter ensures a buffer can be
 constructed without requiring a full buffer to be present in memory at
@@ -249,7 +249,7 @@ The binary schema can also have a non-standard size field prefixed so
 multiple schema can be concatenated in a single file if so desired (see
 also the bfbs2json example).
 
-Files can be generated to stout using (--stdout). C headers will be
+Files can be generated to stdout using (--stdout). C headers will be
 ordered and concatenated, but otherwise identical to the separate file
 output. Each include statement is guarded so this will not lead to
 missing include files. When including builder logic.
