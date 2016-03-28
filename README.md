@@ -312,7 +312,7 @@ We get:
 (There is also the simpler `samples/monster/monster.fbs` but then you won't get
 included schema files).
 
-Namespaces can be long so we use a macro to manage this.
+Namespaces can be long so we optionally use a macro to manage this.
 
     #include "monster_test_reader.h"
 
@@ -368,9 +368,13 @@ Namespaces can be long so we use a macro to manage this.
     /* main() {...} */
 
 The above example is not very elegant. For a more complete example of
-read only buffer access see [the bfbs2json
+read only buffer access see [the reflection bfbs2json
 example](https://github.com/dvidelabs/flatcc/blob/master/samples/reflection/bfbs2json.c)
 which converts a binary FlatBuffers schema into a JSON file.
+
+Note: the reflection example also shows how to work without name
+prefixes instead of a namespace macro. It also shows how to sort buffers
+in-place (advanced).
 
 
 ## Quickstart - compiling for read-only
@@ -389,25 +393,6 @@ The include path or source path is likely different. Some files in
 `include/flatcc/portable` are always used, but the `-D FLATCC_PORTABLE`
 flag includes additional files to support compilers lacking c11
 features.
-
-
-## Quickstart - wrapping type names
-
-We can also create a type specific namespace wrapper - which also works
-with the builder below:
-
-
-    #define Monster(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Example_Monster, x)
-    ...
-    assert(Monster(hp(monster)) == 80);
-
-or for even easer read access if we assume monster is stored in `monster`.
-
-    #define MonsterGet(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Example_Monster, x(monster))
-    ...
-    assert(MonsterGet(hp) == 80);
-
-all without loosing type safety.
 
 
 ## Quickstart - building a buffer
@@ -911,27 +896,6 @@ replaced by `_vec_at` and `_vec_len`. For example
 or `_vec_len` will be 0 if the vector is missing whereas `_vec_at` will
 assert in debug or behave undefined in release builds following out of
 bounds access. This also applies to related string operations.
-
-To be consistent with a user define namespace ns, the common namespace
-can also be wrapped in a macro in exactly the same way:
-
-    #undef nsc
-    #define nsc(x) FLATBUFFERS_WRAP_NAMESPACE(flatbuffers, x)
-
-    nsc(uint8_vec_t) vec;
-
-The common namespace can also be redefined using the `flatcc
---common-prefx myprefix` argument to change `flatbuffers_` to something
-else. In that case the macro above becomes:
-
-
-    #undef nsc
-    #define nsc MYPREFIX_WRAPNAMESPACE(myprefix, x)
-
-One reason to change the common namespace is if the flatbuffer
-offset types are changed, for example to handle large 64-bit binary
-chunks. Note however that the builder library can currently only be
-compiled with one specific set of types.
 
 
 ## Endianness

@@ -5,19 +5,8 @@
 // Convenient namespace macro to manage long namespace prefix.
 // The ns macro makes it possible to write `ns(Monster_create(...))`
 // instead of `MyGame_Sample_Monster_create(...)`
+#undef ns
 #define ns(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Sample, x) // Specified in the schema.
-
-// Convenient common namespace macro. The nsc macro makes it possible
-// to write (nsc(uint_vec_t It makes it possible to write
-// `nsc(string_create_str(...))` instead of
-// `flatbuffers_string_create_str(...), and makes it possible to change
-// namespace, for example for building flatbuffers with larger internal
-// uoffset_t size.
-//
-// The details around handling different types of buffers have not been
-// fully specified yet, so for now just assume it is always standard
-// flatbuffers.
-#define nsc(x) FLATBUFFERS_WRAP_NAMESPACE(flatbuffers, x)
 
 // A helper to simplify creating vectors from C-arrays.
 #define c_vec_len(V) (sizeof(V)/sizeof((V)[0]))
@@ -27,10 +16,10 @@
 // these references.
 void create_monster_bottom_up(flatcc_builder_t *B, int flexible)
 {
-    ns(Weapon_ref_t) weapon_one_name = nsc(string_create_str(B, "Sword"));
+    ns(Weapon_ref_t) weapon_one_name = flatbuffers_string_create_str(B, "Sword");
     uint16_t weapon_one_damage = 3;
 
-    ns(Weapon_ref_t) weapon_two_name = nsc(string_create_str(B, "Axe"));
+    ns(Weapon_ref_t) weapon_two_name = flatbuffers_string_create_str(B, "Axe");
     uint16_t weapon_two_damage = 5;
 
     // Use the `MyGame_Sample_Weapon_create` shortcut to create Weapons
@@ -44,14 +33,14 @@ void create_monster_bottom_up(flatcc_builder_t *B, int flexible)
 
     // Serialize a name for our monster, called "Orc".
     // The _str suffix indicates the source is an ascii-z string.
-    nsc(string_ref_t) name = nsc(string_create_str(B, "Orc"));
+    flatbuffers_string_ref_t name = flatbuffers_string_create_str(B, "Orc");
 
     // Create a `vector` representing the inventory of the Orc. Each number
     // could correspond to an item that can be claimed after he is slain.
     uint8_t treasure[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    nsc(uint8_vec_ref_t) inventory;
+    flatbuffers_uint8_vec_ref_t inventory;
     // `c_vec_len` is the convenience macro we defined earlier.
-    inventory = nsc(uint8_vec_create(B, treasure, c_vec_len(treasure)));
+    inventory = flatbuffers_uint8_vec_create(B, treasure, c_vec_len(treasure));
 
     // Here we use a top-down approach locally to build a Weapons vector
     // in-place instead of creating a temporary external vector to use
@@ -164,11 +153,11 @@ void create_monster_top_down(flatcc_builder_t *B)
     ns(Monster_color_add(B, ns(Color_Red)));
     if (1) {
         ns(Monster_weapons_start(B));
-        ns(Monster_weapons_push_create(B, nsc(string_create_str(B, "Sword")), 3));
+        ns(Monster_weapons_push_create(B, flatbuffers_string_create_str(B, "Sword"), 3));
         // We reuse the axe object later. Note that we dereference a pointer
         // because push always returns a short-term pointer to the stored element.
         // We could also have created the axe object first and simply pushed it.
-        axe = *ns(Monster_weapons_push_create(B, nsc(string_create_str(B, "Axe")), 5));
+        axe = *ns(Monster_weapons_push_create(B, flatbuffers_string_create_str(B, "Axe"), 5));
         ns(Monster_weapons_end(B));
     } else {
         // We can have more control with the table elements added to a vector:
@@ -195,6 +184,9 @@ void create_monster_top_down(flatcc_builder_t *B)
 // but we would need it if our reader were in a separate file.
 #include "monster_reader.h"
 
+#undef ns
+#define ns(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Sample, x) // Specified in the schema.
+
 #include <assert.h>
 #include <string.h> // strcmp
 
@@ -213,8 +205,8 @@ void access_monster_buffer(const uint8_t *buffer)
     uint16_t hp = ns(Monster_hp(monster));
     uint16_t mana = ns(Monster_mana(monster));
     // This is just a const char *, but it also supports a fast length operation.
-    nsc(string_t) name = ns(Monster_name(monster));
-    size_t name_len = nsc(string_len(name));
+    flatbuffers_string_t name = ns(Monster_name(monster));
+    size_t name_len = flatbuffers_string_len(name);
 
     assert(hp == 300);
     // Since 150 is the default, we are reading a value that wasn't stored.
@@ -255,21 +247,21 @@ void access_monster_buffer(const uint8_t *buffer)
     // to ensure proper endian conversion. However, uint8 (ubyte) are
     // not sensitive endianness, so we *could* have accessed it directly.
     // The compiler likely optimizes this so that it doesn't matter.
-    nsc(uint8_vec_t) inv = ns(Monster_inventory(monster));
-    size_t inv_len = nsc(uint8_vec_len(inv));
+    flatbuffers_uint8_vec_t inv = ns(Monster_inventory(monster));
+    size_t inv_len = flatbuffers_uint8_vec_len(inv);
     // Make sure the inventory has been set.
     assert(inv != 0);
     // If `inv` were absent, the length would 0, so the above test is redundant.
     assert(inv_len == 10);
     // Index 0 is the first, index 2 is the third.
     // NOTE: C++ uses the `Get` terminology for vector elemetns, C use `at`.
-    uint8_t third_item = nsc(uint8_vec_at(inv, 2));
+    uint8_t third_item = flatbuffers_uint8_vec_at(inv, 2);
     assert(third_item == 2);
 
     ns(Weapon_vec_t) weapons = ns(Monster_weapons(monster));
     size_t weapons_len = ns(Weapon_vec_len(weapons));
     assert(weapons_len == 2);
-    // We don't have to use `nsc(string_t)` as type if we don't need fast length access.
+    // We can use `const char *` instead of `flatbuffers_string_t`.
     const char *second_weapon_name = ns(Weapon_name(ns(Weapon_vec_at(weapons, 1))));
     uint16_t second_weapon_damage =  ns(Weapon_damage(ns(Weapon_vec_at(weapons, 1))));
 
