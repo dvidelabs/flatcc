@@ -23,7 +23,7 @@ static inline size_t ht_default_hash_function(const void *key, size_t len)
 static inline size_t ht_ptr_hash_function(const void *key, size_t len)
 {
     /* MurmurHash3 64-bit finalizer */
-    size_t x;
+    uint64_t x;
 
     (void)len;
 
