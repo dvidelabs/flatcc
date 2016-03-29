@@ -83,7 +83,7 @@ Version 0.3.0 introduced breaking changes related to vector API, see
 [CHANGELOG for 0.3.0](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030)
 
 Post 0.3.0 basic support for compiling on Windows has been added, but
-not tests.
+no tests.
 
 Big endian platforms have not been tested at all. While care has been
 taken to handle endian encoding, there are bound to be some issues. The
@@ -1098,10 +1098,8 @@ OS-X also has a homebrew package:
 
 ### Limited Windows Support
 
-Post flatcc 0.3.0 a fix fixes were made to enable a Windows build.
-
-Windows has been built in a limited form, with warnings, and relatively
-untested:
+Windows compiles without warnings but has no test ported and should be
+used with care.
 
 Install cmake, MSVC, and git (tested with MSVC 14 2015).
 
@@ -1113,30 +1111,17 @@ In PowerShell:
 
 In Visual Studio:
 
-   open flatcc\build\MSVC\FlatCC.sln
-   build solution
-   choose Release build configuration menu
-   rebuild solution
+    open flatcc\build\MSVC\FlatCC.sln
+    build solution
+    choose Release build configuration menu
+    rebuild solution
 
-
-The build products are placed in the bin and lib subdirectories:
-
-    flatcc\bin\Debug\flatcc.exe
-    flatcc\lib\Debug\flatcc_d.lib
-    flatcc\lib\Debug\flatccrt_d.lib
-    flatcc\bin\Release\flatcc.exe
-    flatcc\lib\Release\flatcc.lib
-    flatcc\lib\Release\flatccrt.lib
-
-Runtime `include\flatcc` directory is distributed like other platforms.
-
-Note that the `flatcc\CMakeList.txt` sets the `-DFLATCC_PORTABLE` flag.
-
-*Note: All test scripts are written and bash shell and have not been ported to
-Windows, so use with care.* 
+Note that `flatcc\CMakeList.txt` sets the `-DFLATCC_PORTABLE` flag.
 
 
 ## Distribution
+
+### Unix Files
 
 To distribute the compiled binaries the following files are
 required:
@@ -1163,6 +1148,19 @@ Note that `include/support` should not be included in a system
 installation. It is only used by test and sample code, but may be
 packaged with end user source that chooses to rely upon it, such as
 benchmark code.
+
+### Windows Files
+
+The build products from MSVC are placed in the bin and lib subdirectories:
+
+    flatcc\bin\Debug\flatcc.exe
+    flatcc\lib\Debug\flatcc_d.lib
+    flatcc\lib\Debug\flatccrt_d.lib
+    flatcc\bin\Release\flatcc.exe
+    flatcc\lib\Release\flatcc.lib
+    flatcc\lib\Release\flatccrt.lib
+
+Runtime `include\flatcc` directory is distributed like other platforms.
 
 
 ## Testing
