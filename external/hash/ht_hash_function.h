@@ -3,8 +3,13 @@
 
 #include <stddef.h>
 
+#ifdef _MSC_VER
+/* `inline` only advisory anyway. */
+#pragma warning(disable: 4710) /* function not inlined */
+#endif
+
 #ifndef HT_HASH_SEED
-#define HT_HASH_SEED 0x2f693b52L
+#define HT_HASH_SEED 0x2f693b52UL
 #endif
 
 #ifndef HT_HASH_32
@@ -27,12 +32,12 @@ static inline size_t ht_ptr_hash_function(const void *key, size_t len)
 
     (void)len;
 
-    x= (size_t)key ^ (HT_HASH_SEED);
+    x = ((uint64_t)(size_t)key) ^ (HT_HASH_SEED);
 
     x ^= x >> 33;
-    x *= 0xff51afd7ed558ccdLL;
+    x *= 0xff51afd7ed558ccdULL;
     x ^= x >> 33;
-    x *= 0xc4ceb9fe1a85ec53LL;
+    x *= 0xc4ceb9fe1a85ec53ULL;
     x ^= x >> 33;
     return (size_t)x;
 }
@@ -54,8 +59,8 @@ static inline size_t ht_ptr_hash_function(const void *key, size_t len)
 
     x = (size_t)key ^ (HT_HASH_SEED);
 
-    x = ((x >> 16) ^ x) * 0x45d9f3bL;
-    x = ((x >> 16) ^ x) * 0x45d9f3bL;
+    x = ((x >> 16) ^ x) * 0x45d9f3bUL;
+    x = ((x >> 16) ^ x) * 0x45d9f3bUL;
     x = ((x >> 16) ^ x);
     return x;
 }
@@ -66,7 +71,7 @@ static inline size_t ht_ptr_hash_function(const void *key, size_t len)
 static inline size_t ht_int_hash_function(const void *key, size_t len)
 {
     (void)len;
-    return ((size_t)key ^ (HT_HASH_SEED)) * 2654435761;
+    return ((size_t)key ^ (HT_HASH_SEED)) * 2654435761UL;
 }
 
 /* Bernsteins hash function, assumes string is zero terminated, len is ignored. */
