@@ -6,12 +6,12 @@
 #ifndef __cplusplus
 
 /* this whole header only works in C11 or with compiler extensions */
-#if __STDC_VERSION__ < 201112L
+#if !defined (__STD_VERSION) || __STDC_VERSION__ < 201112L
 
 #if defined(__GNUC__) || defined (__IBMC__) || defined(__clang__)
 #define _Alignas(t) __attribute__((__aligned__(t)))
 #define _Alignof(t) __alignof__(t)
-#elif defined(__MSC_VER)
+#elif defined(_MSC_VER)
 #define _Alignas(t) __declspec (align(t))
 #define _Alignof(t) __alignof(t)
 #else
