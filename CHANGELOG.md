@@ -5,7 +5,9 @@
 - Fix a few problems in the include/flatcc/portable library which
   were breaking MSVC Windows builds.
 - Add dedicated MSVC CFLAGS for Windows in CMake build configuration.
-- Fix bug in json printer unicode escape.
+- Fix bug in json printer unicode escape and hash table bug in
+  compiler.
+- Remove warnings for 32-bit builds.
 
 ## [0.3.0]
 
