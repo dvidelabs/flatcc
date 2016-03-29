@@ -393,7 +393,8 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
     fb_compound_type_t *type;
     fb_member_t *member;
     int ret = 0;
-    uint64_t size, align;
+    uint64_t size;
+    uint16_t align;
     fb_token_t *t;
 
     assert(ct->symbol.kind == fb_is_struct);
@@ -421,7 +422,7 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
                 error_sym_tok(P, sym, "unexpected type", t);
                 return -1;
             }
-            member->align = size;
+            member->align = (uint16_t)size;
             member->size = size;
             break;
         case vt_compound_type_ref:
@@ -429,7 +430,7 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
             if (member->type.ct->symbol.kind == fb_is_enum) {
                 type = member->type.ct;
                 size = type->size;
-                member->align = size;
+                member->align = (uint16_t)size;
                 member->size = size;
                 break;
             } else if (member->type.ct->symbol.kind == fb_is_struct) {
@@ -697,7 +698,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         if (m && count == 0) {
             need_id = 1;
             field_marker = P->tmp_field_marker;
-            memset(field_marker, 0, P->opts.vt_max_count);
+            memset(field_marker, 0, (size_t)P->opts.vt_max_count);
         }
         if (!id_failed) {
             if (count >= P->opts.vt_max_count) {
@@ -732,11 +733,11 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                 continue;
             }
             member->size = sizeof_scalar_type(member->type.st);
-            member->align = member->size;
+            member->align = (uint16_t)member->size;
             break;
         case vt_vector_type:
             member->size = sizeof_scalar_type(member->type.st);
-            member->align = member->size;
+            member->align =(uint16_t) member->size;
             if (member->value.type) {
                 error_sym(P, sym, "scalar vectors cannot have an initializer");
                 member->type.type = vt_invalid;
@@ -994,7 +995,7 @@ static int process_enum(fb_parser_t *P, fb_compound_type_t *ct)
             return -1;
         }
         ct->size = sizeof_scalar_type(ct->type.st);
-        ct->align = ct->size;
+        ct->align = (uint16_t)ct->size;
     } else {
         if (ct->type.type) {
             error_sym(P, &ct->symbol, "unions cannot have a type, they are always enumerated as ubyte");
@@ -1013,7 +1014,7 @@ static int process_enum(fb_parser_t *P, fb_compound_type_t *ct)
          * to define its size because type.type is scalar.
          */
         ct->size = sizeof_scalar_type(fb_ubyte);
-        ct->align = ct->size;
+        ct->align = (uint16_t)ct->size;
     }
 
     ct->metadata_flags = process_metadata(P, ct->metadata, fb_f_bit_flags, knowns);

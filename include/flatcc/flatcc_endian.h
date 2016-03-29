@@ -98,6 +98,7 @@
 #define FLATBUFFERS_LITTLEENDIAN 0
 #define flatbuffers_is_native_pe() (FLATBUFFERS_PROTOCOL_IS_BE)
 #else
+//TODO: windows macro issue
 #define flatbuffers_is_native_pe() (flatbuffers_endian ## 16toh(1) == 1)
 #endif
 #endif

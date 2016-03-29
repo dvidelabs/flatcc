@@ -75,7 +75,7 @@ struct dict_entry {
 };
 
 /* Returns length of name that reminds after tag at current position. */
-static uint64_t get_dict_suffix_len(dict_entry_t *de, int pos)
+static int get_dict_suffix_len(dict_entry_t *de, int pos)
 {
     int n;
 
@@ -91,7 +91,7 @@ static uint64_t get_dict_suffix_len(dict_entry_t *de, int pos)
  * endian encoding with first char always at msb, zero padded at lsb.
  * Returns length of tag [0;8].
  */
-static uint64_t get_dict_tag(dict_entry_t *de, int pos, uint64_t *tag, uint64_t *mask,
+static int get_dict_tag(dict_entry_t *de, int pos, uint64_t *tag, uint64_t *mask,
         const char **tag_name, int *tag_len)
 {
     int i, n = 0;

@@ -299,7 +299,7 @@ static int gen_json_printer_table(output_t *out, fb_compound_type_t *ct)
      * NOTE: due to unions, not all entries will be non-zero because the
      * type field is not stored as a member so calloc is important.
      */
-    map = calloc(ct->count, sizeof(*map));
+    map = calloc((size_t)ct->count, sizeof(*map));
     if (!map) {
         gen_panic(out, "internal error: memory allocation failure");
         return -1;

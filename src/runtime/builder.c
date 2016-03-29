@@ -286,7 +286,7 @@ static inline void *push_ds_offset_field(flatcc_builder_t *B, voffset_t id)
     if (id >= B->id_end) {
         B->id_end = id + 1;
     }
-    *B->pl++ = offset;
+    *B->pl++ = (flatbuffers_voffset_t)offset;
     return B->ds + offset;
 }
 

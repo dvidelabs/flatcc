@@ -86,8 +86,10 @@ set(dist_targets
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -pedantic -Wextra")
 
 if (MSVC)
-    # We may have to up warning level again, but MSVC warns on fopen, so...
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W2 -DFLATCC_PORTABLE")
+    # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W2 -DFLATCC_PORTABLE")
+    # Highest warning level that is reasonable
+	# - see include/flatcc/portable/pwarnings.h for disabled warnings.
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W3 -D_CRT_SECURE_NO_WARNINGS -DFLATCC_PORTABLE")
 else()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
 endif()

@@ -556,12 +556,12 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
         print_doc(out, "    ", member->doc);
         symbol_name(sym, &n, &s);
         align = offset == 0 ? ct->align : member->align;
-        if (do_pad && (pad = member->offset - offset)) {
+        if (do_pad && (pad = (unsigned)(member->offset - offset))) {
             fprintf(out->fp, "    uint8_t __padding%u[%u];\n",
                     pad_index++, pad);
         }
         if (member->metadata_flags & fb_f_deprecated) {
-            pad = member->size;
+            pad = (unsigned)member->size;
             if (do_pad) {
                 fprintf(out->fp, "    uint8_t __deprecated%u[%u]; /* was: '%.*s' */\n",
                         deprecated_index++, pad, n, s);
@@ -569,7 +569,7 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
                 fprintf(out->fp, "    alignas(%u) uint8_t __deprecated%u[%u]; /* was: '%.*s' */\n",
                         align, deprecated_index++, pad, n, s);
             }
-            offset = member->offset + member->size;
+            offset = (unsigned)(member->offset + member->size);
             continue;
         }
         switch (member->type.type) {
@@ -598,9 +598,9 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
             break;
         }
         fprintf(out->fp, "%.*s;\n", n, s);
-        offset = member->offset + member->size;
+        offset = (unsigned)(member->offset + member->size);
     }
-    if (do_pad && (pad = ct->size - offset)) {
+    if (do_pad && (pad = (unsigned)(ct->size - offset))) {
         fprintf(out->fp, "    uint8_t __padding%u[%u];\n",
                 pad_index, pad);
     }
@@ -762,7 +762,7 @@ static void gen_enum(output_t *out, fb_compound_type_t *ct)
     tname = scalar_type_name(ct->type.st);
     suffix = scalar_suffix(ct->type.st);
 
-    w = ct->size * 8;
+    w = (int)ct->size * 8;
 
     is_union = ct->symbol.kind != fb_is_enum;
     kind = is_union ? "union_type" : "enum";

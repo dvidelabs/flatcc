@@ -1231,7 +1231,7 @@ int fb_parse(fb_parser_t *P, const char *input, int len, int own_buffer)
     P->te = P->token;
     P->token = P->ts;
     /* Only used while processing table id's. */
-    checkmem((P->tmp_field_marker = malloc(P->opts.vt_max_count)));
+    checkmem((P->tmp_field_marker = malloc((size_t)P->opts.vt_max_count)));
     if (P->token->id == tok_kw_doc_comment) {
         next(P);
     }

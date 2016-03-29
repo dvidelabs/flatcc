@@ -126,8 +126,8 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
             reflection_Field_name_append(B, "_type", 5);
             reflection_Field_name_end(B);
             reflection_Field_type_create(B, BaseType(UType), BaseType(None), -1);
-            reflection_Field_offset_add(B, (member->id - 1 + 2) * sizeof(flatbuffers_voffset_t));
-            reflection_Field_id_add(B, member->id - 1);
+            reflection_Field_offset_add(B, (uint16_t)(member->id - 1 + 2) * sizeof(flatbuffers_voffset_t));
+            reflection_Field_id_add(B, (uint16_t)(member->id - 1));
             reflection_Field_deprecated_add(B, deprecated);
             reflection_Field_vec_push_end(B);
         }
@@ -152,13 +152,13 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
             }
             reflection_Field_default_integer_add(B, default_integer);
             reflection_Field_default_real_add(B, default_real);
-            reflection_Field_id_add(B, member->id);
-            reflection_Field_offset_add(B, (member->id + 2) * sizeof(flatbuffers_voffset_t));
+            reflection_Field_id_add(B, (uint16_t)member->id);
+            reflection_Field_offset_add(B, (uint16_t)(member->id + 2) * sizeof(flatbuffers_voffset_t));
             reflection_Field_key_add(B, has_key);
             reflection_Field_required_add(B, required);
             break;
         case fb_is_struct:
-            reflection_Field_offset_add(B, member->offset);
+            reflection_Field_offset_add(B, (uint16_t)member->offset);
             break;
         default: break;
         }
@@ -189,7 +189,7 @@ static void export_objects(flatcc_builder_t *B, object_entry_t *objects, int nob
         reflection_Object_fields_end(B);
         is_struct = ct->symbol.kind == fb_is_struct;
         if (is_struct) {
-            reflection_Object_bytesize_add(B, ct->size);
+            reflection_Object_bytesize_add(B, (uint32_t)ct->size);
         }
         reflection_Object_is_struct_add(B, is_struct);
         reflection_Object_minalign_add(B, ct->align);
