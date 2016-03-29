@@ -1,6 +1,7 @@
 #ifndef PORTABLE_H
 #define PORTABLE_H
 
+#include "pwarnings.h"
 #include <assert.h>
 #if (!defined(__STDC_VERSION__) || __STDC_VERSION__ < 201112L) && !defined (PORTABLE_STANDALONE)
 #include "pinttypes.h"

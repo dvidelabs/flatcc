@@ -37,10 +37,7 @@
 
 #if defined(_MSC_VER)
 #if _MSC_VER >= 1300
-#include <intrin.h>
-#pragma intrinsic(_byteswap_ushort)
-#pragma intrinsic(_byteswap_ulong)
-#pragma intrinsic(_byteswap_uint64)
+#include <stdlib.h>
 #define bswap16 _byteswap_ushort
 #define bswap32 _byteswap_ulong
 #define bswap64 _byteswap_uint64
