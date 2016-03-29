@@ -9,6 +9,7 @@ static size_t value_hash_function(const void *key, size_t key_len)
     (void)key_len;
 
     switch (value->type) {
+    case vt_int:
         return ht_int_hash_function((void *)(size_t)(value->i ^ value->type), sizeof(value->i));
     case vt_uint:
         return ht_int_hash_function((void *)(size_t)(value->u ^ value->type), sizeof(value->u));
