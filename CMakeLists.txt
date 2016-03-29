@@ -85,8 +85,12 @@ set(dist_targets
 # Clang is fine.
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -pedantic -Wextra")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
-
+if (MSVC)
+    # We may have to up warning level again, but MSVC warns on fopen, so...
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W2 -DFLATCC_PORTABLE")
+else()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+endif()
 # As of gcc 4.8 it is not possible to suppress this warning using 
 # #pragma GCC diagnostic ignored "-Wunused-function"
 if(CMAKE_COMPILER_IS_GNUCC)

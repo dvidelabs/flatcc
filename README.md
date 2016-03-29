@@ -82,6 +82,9 @@ its element size.
 Version 0.3.0 introduced breaking changes related to vector API, see
 [CHANGELOG for 0.3.0](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030)
 
+Post 0.3.0 basic support for compiling on Windows has been added, but
+not tests.
+
 Big endian platforms have not been tested at all. While care has been
 taken to handle endian encoding, there are bound to be some issues. The
 approach taken is to make it work on little endian - then it can always
@@ -1093,6 +1096,46 @@ OS-X also has a homebrew package:
     brew install flatcc
 
 
+### Limited Windows Support
+
+Post flatcc 0.3.0 a fix fixes were made to enable a Windows build.
+
+Windows has been built in a limited form, with warnings, and relatively
+untested:
+
+Install cmake, MSVC, and git (tested with MSVC 14 2015).
+
+In PowerShell:
+
+    mkdir -p build\MSVC
+    cd flatcc\build\MSVC
+    cmake -G "Visual Studio 14 2015" ..
+
+In Visual Studio:
+
+   open flatcc\build\MSVC\FlatCC.sln
+   build solution
+   choose Release build configuration menu
+   rebuild solution
+
+
+The build products are placed in the bin and lib subdirectories:
+
+    flatcc\bin\Debug\flatcc.exe
+    flatcc\lib\Debug\flatcc_d.lib
+    flatcc\lib\Debug\flatccrt_d.lib
+    flatcc\bin\Release\flatcc.exe
+    flatcc\lib\Release\flatcc.lib
+    flatcc\lib\Release\flatccrt.lib
+
+Runtime `include\flatcc` directory is distributed like other platforms.
+
+Note that the `flatcc\CMakeList.txt` sets the `-DFLATCC_PORTABLE` flag.
+
+*Note: All test scripts are written and bash shell and have not been ported to
+Windows, so use with care.* 
+
+
 ## Distribution
 
 To distribute the compiled binaries the following files are
@@ -1138,26 +1181,6 @@ To make sure everything works, also run the benchmarks:
 
     scripts/benchmark.sh
 
-
-## Limited Windows Support
-
-Windows hasn't been tested but the portability layer does include
-abstractions to support the Windows platform, such as defining inline as
-`__inline` and providing `<endian.h>` abstractions. However, the Windows
-Visual Studio platform is fairly focused on C++ so it wouldn't be the
-primary target.
-
-With clang being ported to Windows there shouldn't be much reason for
-any portablitiy issues using that tool chain - although clangs runtime
-libraries do depend on the platform affecting the degree to which C11 is
-supported.
-
-The build scripts are shell scripts wrapping CMake, but CMake can also
-be used directly. The test scripts are more involved and expect a bash
-shell, but this is also available on Windows.
-
-The file logic in the compiler may fail on Windows paths as this hasn't
-been tested, but at least it has been implemented with Windows in mind.
 
 
 ## Configuration

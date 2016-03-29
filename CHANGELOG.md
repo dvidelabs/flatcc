@@ -1,5 +1,11 @@
 # Change Log
 
+## [Unreleased]
+
+- Fix a few problems in the include/flatcc/portable library which
+  were breaking MSVC Windows builds.
+- Add dedicated MSVC CFLAGS for Windows in CMake build configuration.
+
 ## [0.3.0]
 
 - Rename examples folder to samples folder.
