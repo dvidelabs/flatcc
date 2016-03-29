@@ -1049,6 +1049,8 @@ for other users.
 
 ## Building
 
+### Unix Build (OS-X, Linux, related)
+
 To initialize and run the build (see required build tools below):
 
     scripts/build.sh
@@ -1088,15 +1090,18 @@ To install build tools on Centos (which does not have a ninja build package):
 
     sudo yum group install "Development Tools"
     sudo yum install cmake
+    git clone https://github.com/dvidelabs/flatcc.git
+    cd flatcc
     scripts/initbuild.sh make
+    scripts/build.sh
 
-OS-X also has a homebrew package:
+OS-X also has a HomeBrew package:
 
     brew update
     brew install flatcc
 
 
-### Limited Windows Support
+### Windows Build (MSVC)
 
 Windows compiles without warnings but has no test ported and should be
 used with care.
@@ -1105,8 +1110,10 @@ Install cmake, MSVC, and git (tested with MSVC 14 2015).
 
 In PowerShell:
 
+    git clone https://github.com/dvidelabs/flatcc.git
+    cd flatcc
     mkdir -p build\MSVC
-    cd flatcc\build\MSVC
+    cd build\MSVC
     cmake -G "Visual Studio 14 2015" ..
 
 In Visual Studio:
@@ -1163,7 +1170,7 @@ The build products from MSVC are placed in the bin and lib subdirectories:
 Runtime `include\flatcc` directory is distributed like other platforms.
 
 
-## Testing
+## Testing (Unix)
 
 Run
 
