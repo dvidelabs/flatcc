@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 
+#include "config.h"
 #include "lex/tokens.h"
 #include "hash/hash_table.h"
 #include "hash/ptr_set.h"

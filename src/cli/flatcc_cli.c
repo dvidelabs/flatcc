@@ -351,6 +351,6 @@ done:
     if (status) {
         fprintf(stderr, "output failed\n");
     }
-    free(opts.inpaths);
+    free((void *)opts.inpaths);
     return status ? -1 : 0;
 }

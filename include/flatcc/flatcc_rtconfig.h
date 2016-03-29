@@ -2,6 +2,11 @@
 #define FLATCC_RTCONFIG_H
 
 
+/* Include portability layer here since all other files depend on it. */
+#ifdef FLATCC_PORTABLE
+#include "flatcc/portable/portable.h"
+#endif
+
 /*
  * Fast printing and parsing of double.
  *

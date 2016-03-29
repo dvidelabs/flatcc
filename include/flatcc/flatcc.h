@@ -16,6 +16,11 @@
 #include <stdint.h>
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4820) /* x bytes padding added in struct */
+#endif
+
 typedef struct flatcc_options flatcc_options_t;
 typedef void (*flatcc_error_fun) (void *err_ctx, const char *buf, int len);
 
@@ -232,5 +237,9 @@ int flatcc_generate_binary_schema_to_buffer(flatcc_context_t ctx, void *buf, siz
 /* Must be called to deallocate resources eventually - it valid but
  * without effect to call with a null context. */
 void flatcc_destroy_context(flatcc_context_t ctx);
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif /* FLATCC_H */

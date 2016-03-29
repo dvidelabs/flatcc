@@ -1,4 +1,6 @@
 #include <stdlib.h>
+
+#include "flatcc/flatcc_rtconfig.h"
 #include "flatcc/flatcc_emitter.h"
 
 static int advance_front(flatcc_emitter_t *E)
