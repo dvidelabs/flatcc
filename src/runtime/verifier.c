@@ -380,7 +380,7 @@ int flatcc_verify_struct_as_root(const void *buf, size_t bufsiz, const char *fid
     return verify_struct((uoffset_t)bufsiz, read_uoffset(buf, 0), align, size);
 }
 
-int flatcc_verify_table_as_root(const void *buf, size_t bufsiz, const char *fid, flatcc_table_verifier_f tvf)
+int flatcc_verify_table_as_root(const void *buf, size_t bufsiz, const char *fid, flatcc_table_verifier_f *tvf)
 {
     check_result(flatcc_verify_buffer_header(buf, bufsiz, fid));
     return verify_table(buf, bufsiz, 0, read_uoffset(buf, 0), FLATCC_VERIFIER_MAX_LEVELS, tvf);
