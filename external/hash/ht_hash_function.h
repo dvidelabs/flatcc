@@ -34,7 +34,7 @@ static inline size_t ht_ptr_hash_function(const void *key, size_t len)
     x ^= x >> 33;
     x *= 0xc4ceb9fe1a85ec53LL;
     x ^= x >> 33;
-    return x;
+    return (size_t)x;
 }
 
 #else
