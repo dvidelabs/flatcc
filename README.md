@@ -1076,24 +1076,31 @@ configuration is given as argument. Without arguments it only ensures
 that CMake is initialized and is therefore fast to run on subsequent
 calls. This is used by all test scripts.
 
-To install build tools on OS-X:
+To install build tools on OS-X, and build:
 
     brew update
     brew install cmake ninja
+    git clone https://github.com/dvidelabs/flatcc.git
+    cd flatcc
+    scripts/build.sh
 
-To install build tools on Ubuntu:
+To install build tools on Ubuntu, and build:
 
     sudo apt-get update
     sudo apt-get install cmake ninja-build
+    git clone https://github.com/dvidelabs/flatcc.git
+    cd flatcc
+    scripts/build.sh
 
-To install build tools on Centos (which does not have a ninja build package):
+To install build tools on Centos, and build:
 
     sudo yum group install "Development Tools"
     sudo yum install cmake
     git clone https://github.com/dvidelabs/flatcc.git
     cd flatcc
-    scripts/initbuild.sh make
+    scripts/initbuild.sh make # there is no ninja build tool
     scripts/build.sh
+
 
 OS-X also has a HomeBrew package:
 
@@ -1103,10 +1110,10 @@ OS-X also has a HomeBrew package:
 
 ### Windows Build (MSVC)
 
-Windows compiles without warnings but has no test ported and should be
-used with care.
+**The Windows compiles with only a few warnings, but should be used with care.
+No tests have been ported, and remaining warnings may be significant.**
 
-Install cmake, MSVC, and git (tested with MSVC 14 2015).
+Install CMake, MSVC, and git (tested with MSVC 14 2015).
 
 In PowerShell:
 
@@ -1123,7 +1130,7 @@ In Visual Studio:
     choose Release build configuration menu
     rebuild solution
 
-Note that `flatcc\CMakeList.txt` sets the `-DFLATCC_PORTABLE` flag.
+*Note that `flatcc\CMakeList.txt` sets the `-DFLATCC_PORTABLE` flag.*
 
 
 ## Distribution
