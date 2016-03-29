@@ -39,6 +39,10 @@
 /* Open Addressing */
 #define HT_OA
 
+#if defined(_MSC_VER)
+#pragma warning(disable: 4127) /* conditional expression is constant */
+#endif
+
 #include <stdlib.h>
 #include <memory.h>
 #include <assert.h>
