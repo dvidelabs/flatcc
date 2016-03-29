@@ -1110,8 +1110,9 @@ OS-X also has a HomeBrew package:
 
 ### Windows Build (MSVC)
 
-**The Windows compiles with only a few warnings, but should be used with care.
-No tests have been ported, and remaining warnings may be significant.**
+**The Windows build compiles with only a few warnings, but should be
+used with care. No tests have been ported and remaining warnings may
+be significant.**
 
 Install CMake, MSVC, and git (tested with MSVC 14 2015).
 
