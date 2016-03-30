@@ -6,11 +6,14 @@
  * and also defines
  *
  * __BYTE_ORDER__ to either __ORDER_LITTLE_ENDIAN__ or
- * __ORDER_BIG_ENDIAN if not already defined
+ * __ORDER_BIG_ENDIAN__ if not already defined
  *
  * If none of these could be set, __UNKNOWN_ENDIAN__ is defined,
  * which is not a known flag. If __BYTE_ORDER__ is defined but
  * not big or little endian, __UNKNOWN_ENDIAN__ is also defined.
+ *
+ * Note: Some systems define __BYTE_ORDER without __ at the end -
+ * we detect this and map it to __BYTE_ORDER__.
  */
 
 #ifndef PENDIAN_DETECT
@@ -26,20 +29,31 @@
 
 #ifdef __BYTE_ORDER__
 
-#if defined(__LITTLE_ENDIAN__) && __BYTE_ORDER != __ORDER_BIG_ENDIAN
+#if defined(__LITTLE_ENDIAN__) && __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
 #error __LITTLE_ENDIAN__ inconsistent with __BYTE_ORDER__
 #endif
 
-#if defined(__BIG_ENDIAN__) && __BYTE_ORDER != __ORDER_BIG_ENDIAN
+#if defined(__BIG_ENDIAN__) && __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__
 #error __BIG_ENDIAN__ inconsistent with __BYTE_ORDER__
 #endif
 
 #else /* __BYTE_ORDER__ */
 
+
 #if                                                                         \
-  defined (__LITTLE_ENDIAN__) ||                                            \
-  defined(__ARMEL__) || defined(THUMBEL__) || defined (__AARCH64EL__) ||    \
-  defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)
+  defined(__LITTLE_ENDIAN__) ||                                             \
+  (defined(__BYTE_ORDER) && __BYTE_ORDER == __ORDER_LITTLE_ENDIAN)          \
+  defined(__ARMEL__) || defined(__THUMBEL__) ||                             \
+  defined(__AARCH64EL__) ||                                                 \
+  (defined(_MSC_VER) && defined(_M_ARM)) ||                                 \
+  defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)              \
+  defined(_M_X64) || defined(_M_IX86) || defined(_M_I86) ||                 \
+  defined(__i386__) || defined(__alpha__) ||                                \
+  defined(__ia64) || defined(__ia64__) ||                                   \
+  defined(_M_IA64) || defined(_M_ALPHA) ||                                  \
+  defined(__amd64) || defined(__amd64__) || defined(_M_AMD64) ||            \
+  defined(__x86_64) || defined(__x86_64__) || defined(_M_X64) ||            \
+  defined(__bfin__)
 
 #define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 
@@ -47,8 +61,12 @@
 
 #if                                                                         \
   defined (__BIG_ENDIAN__) ||                                               \
+  (defined(__BYTE_ORDER) && __BYTE_ORDER == __ORDER_BIG_ENDIAN)             \
   defined(__ARMEB__) || defined(THUMBEB__) || defined (__AARCH64EB__) ||    \
-  defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__)
+  defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__) ||           \
+  defined(__sparc) || defined(__sparc__) ||                                 \
+  defined(_POWER) || defined(__powerpc__) || defined(__ppc__) ||            \
+  defined(__hpux) || defined(__hppa) || defined(__s390__)
 
 #define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 
