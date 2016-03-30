@@ -10,8 +10,9 @@
 - Remove warnings for 32-bit builds.
 - Fix endian handling when endianness is detected at runtime and
   support more platforms without runtime detection.
-- Generated enums and types now use type cast defines instead of
-  const integer variables to avoid non-standard use in switch.
+- Generated enums and union types now use type cast defines instead of
+  const integer variables to avoid non-standard use in switch
+  statements.
 
 ## [0.3.0]
 
