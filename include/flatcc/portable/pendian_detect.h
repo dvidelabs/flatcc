@@ -42,11 +42,11 @@
 
 #if                                                                         \
   defined(__LITTLE_ENDIAN__) ||                                             \
-  (defined(__BYTE_ORDER) && __BYTE_ORDER == __ORDER_LITTLE_ENDIAN)          \
+  (defined(__BYTE_ORDER) && __BYTE_ORDER == __ORDER_LITTLE_ENDIAN) ||       \
   defined(__ARMEL__) || defined(__THUMBEL__) ||                             \
   defined(__AARCH64EL__) ||                                                 \
   (defined(_MSC_VER) && defined(_M_ARM)) ||                                 \
-  defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)              \
+  defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__) ||           \
   defined(_M_X64) || defined(_M_IX86) || defined(_M_I86) ||                 \
   defined(__i386__) || defined(__alpha__) ||                                \
   defined(__ia64) || defined(__ia64__) ||                                   \
@@ -61,7 +61,7 @@
 
 #if                                                                         \
   defined (__BIG_ENDIAN__) ||                                               \
-  (defined(__BYTE_ORDER) && __BYTE_ORDER == __ORDER_BIG_ENDIAN)             \
+  (defined(__BYTE_ORDER) && __BYTE_ORDER == __ORDER_BIG_ENDIAN) ||          \
   defined(__ARMEB__) || defined(THUMBEB__) || defined (__AARCH64EB__) ||    \
   defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__) ||           \
   defined(__sparc) || defined(__sparc__) ||                                 \
