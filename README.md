@@ -1110,9 +1110,9 @@ OS-X also has a HomeBrew package:
 
 ### Windows Build (MSVC)
 
-**The Windows build compiles with only a few warnings, but should be
-used with care. No tests have been ported and remaining warnings may
-be significant.**
+**The Windows build compiles without warnings but requires
+`-DFLATCC_PORTABLE` as seen in the top-level `CMakeLists.txt` file.
+No tests have been run yet as these rely on shell scripts.**
 
 Install CMake, MSVC, and git (tested with MSVC 14 2015).
 
