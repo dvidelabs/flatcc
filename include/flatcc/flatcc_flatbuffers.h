@@ -13,6 +13,10 @@
 #include "flatcc/flatcc_portable.h"
 #endif
 
+#define __FLATBUFFERS_PASTE2(a, b) a ## b
+#define __FLATBUFFERS_PASTE3(a, b, c) a ## b ## c
+#define __FLATBUFFERS_CONCAT(a, b) __FLATBUFFERS_PASTE2(a, b)
+
 /*
  * "flatcc_endian.h" requires the preceeding include files,
  * or compatible definitions.

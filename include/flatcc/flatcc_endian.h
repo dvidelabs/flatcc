@@ -87,7 +87,7 @@
  __flatcc_define_integer_accessors(__flatbuffers_utype, flatbuffers_utype_t,
          FLATBUFFERS_UTYPE_WIDTH, flatbuffers_endian)
 
-/* Portable/pendian.h sets LITTLE/BIG flags if possible, and always defines le16toh. */
+/* flatcc/portable/pendian.h sets LITTLE/BIG flags if possible, and always defines le16toh. */
 #ifndef flatbuffers_is_native_pe
 #if defined(__LITTLE_ENDIAN__) || FLATBUFFERS_LITTLEENDIAN
 #undef FLATBUFFERS_LITTLEENDIAN
@@ -98,8 +98,7 @@
 #define FLATBUFFERS_LITTLEENDIAN 0
 #define flatbuffers_is_native_pe() (FLATBUFFERS_PROTOCOL_IS_BE)
 #else
-//TODO: windows macro issue
-#define flatbuffers_is_native_pe() (flatbuffers_endian ## 16toh(1) == 1)
+#define flatbuffers_is_native_pe() (__FLATBUFFERS_CONCAT(flatbuffers_endian, 16toh)(1) == 1)
 #endif
 #endif
 

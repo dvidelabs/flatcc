@@ -8,6 +8,7 @@
 - Fix bug in json printer unicode escape and hash table bug in
   compiler.
 - Remove warnings for 32-bit builds.
+- Fix endian handling when endianness is detected at runtime.
 
 ## [0.3.0]
 
