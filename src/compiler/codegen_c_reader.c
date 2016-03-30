@@ -778,21 +778,25 @@ static void gen_enum(output_t *out, fb_compound_type_t *ct)
         member = (fb_member_t *)sym;
         print_doc(out, "", member->doc);
         symbol_name(&member->symbol, &n, &s);
+        /* 
+         * This must be a define, not a static const integer, otherwise it
+         * won't work in switch statements - except with GNU extensions.
+         */
         switch (member->value.type) {
         case vt_uint:
             fprintf(out->fp,
-                    "static const %s_%s_t %s_%.*s = %llu%s;\n",
-                    snt.text, kind, snt.text, n, s, llu(member->value.u), suffix);
+                    "#define %s_%.*s ((%s_%s_t)%llu%s)\n",
+                    snt.text, n, s, snt.text, kind, llu(member->value.u), suffix);
             break;
         case vt_int:
             fprintf(out->fp,
-                    "static const %s_%s_t %s_%.*s = %lld%s;\n",
-                    snt.text, kind, snt.text, n, s, lld(member->value.i), suffix);
+                    "#define %s_%.*s ((%s_%s_t)%lld%s)\n",
+                    snt.text, n, s, snt.text, kind, llu(member->value.i), suffix);
             break;
         case vt_bool:
             fprintf(out->fp,
-                    "static const %s_%s_t %s_%.*s = %u;\n",
-                    snt.text, kind, snt.text, n, s, member->value.b);
+                    "#define %s_%.*s ((%s_%s_t)%u)\n",
+                    snt.text, n, s, snt.text, kind, member->value.b);
             break;
         default:
             gen_panic(out, "internal error: unexpected value type in enum");
@@ -820,45 +824,13 @@ static void gen_enum(output_t *out, fb_compound_type_t *ct)
         member = (fb_member_t *)sym;
         symbol_name(&member->symbol, &n, &s);
         if (sym->flags & fb_duplicate) {
-            /*
-             * Won't happen with ascending enums, but we can enable
-             * these with a flag.
-             */
-            switch (member->value.type) {
-            case vt_uint:
-                fprintf(out->fp, "    /* case %llu: return \"%.*s\"; (duplicate) */\n",
-                        llu(member->value.u), n, s);
-                continue;
-            case vt_int:
-                fprintf(out->fp, "    /* case %lld: return \"%.*s\"; (duplicate) */\n",
-                        lld(member->value.i), n, s);
-                continue;
-            case vt_bool:
-                fprintf(out->fp, "    /* case %u: return \"%.*s\"; (duplicate) */\n",
-                        member->value.b, n, s);
-                continue;
-            default:
-                continue;
-            }
-        }
-        switch (member->value.type) {
-        case vt_uint:
             fprintf(out->fp,
-                    "    case %llu: return \"%.*s\";\n",
-                    llu(member->value.u), n, s);
-            break;
-        case vt_int:
+                    "    /* case %s_%.*s: return \"%.*s\"; (duplicate) */\n",
+                    snt.text, n, s, n, s);
+        } else {
             fprintf(out->fp,
-                    "    case %lld: return \"%.*s\";\n",
-                    lld(member->value.i), n, s);
-            break;
-        case vt_bool:
-            fprintf(out->fp,
-                    "    case %u: return \"%.*s\";\n",
-                    member->value.b, n, s);
-            break;
-        default:
-            break;
+                    "    case %s_%.*s: return \"%.*s\";\n",
+                    snt.text, n, s, n, s);
         }
     }
     fprintf(out->fp,

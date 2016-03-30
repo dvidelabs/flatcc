@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.3.0.x]
 
 - Fix a few problems in the include/flatcc/portable library which
   were breaking MSVC Windows builds.
@@ -10,6 +10,8 @@
 - Remove warnings for 32-bit builds.
 - Fix endian handling when endianness is detected at runtime and
   support more platforms without runtime detection.
+- Generated enums and types now use type cast defines instead of
+  const integer variables to avoid non-standard use in switch.
 
 ## [0.3.0]
 
