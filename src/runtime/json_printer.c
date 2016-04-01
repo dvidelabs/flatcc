@@ -36,7 +36,7 @@ const char *flatcc_json_printer_error_string(int err)
     default:
         return "unknown";
     }
-};
+}
 
 #define uoffset_t flatbuffers_uoffset_t
 #define soffset_t flatbuffers_soffset_t
