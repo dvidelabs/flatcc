@@ -9,6 +9,8 @@ project (FlatCC)
 #   scripts/cleanall.sh
 #
 
+option (FLATCC_PORTABLE
+    "include extra headers for compilers that do not support certain C11 features" OFF)
 
 # Affects the flatbuffer verify operation. Normally a verify should just
 # quickly reject invalid buffers but for troubleshooting, assertions can
@@ -75,33 +77,33 @@ set(dist_targets
 # and constants should be turned off - those are plentiful. They are
 # silenced for Clang automaitically.
 
-# -DFLATCC_PORTABLE can help with stdint.h and implementing endian
-# swapping in generated code. Most most recent systems should compile
-# without C11 and without -DFLATCC_PORTABLE
+if (FLATCC_PORTABLE OR MSVC)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_PORTABLE")
+endif()
 
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -DFLATCC_PORTABLE")
-
-# Note:GNUC -pendantic without -std=c11 yields many warnings we don't care about.
-# Clang is fine.
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -pedantic -Wextra")
-
-if (MSVC)
+if ("${CMAKE_C_COMPILER_ID}" MATCHES "Clang")
+    # Clang or AppleClang
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Werror -Wall -Wextra")
+    # To get assembly output
+    # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -save-temps")
+elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
+    # In gcc 4.8 it is not possible to suppress this warning using
+    # #pragma GCC diagnostic ignored "-Wunused-function"
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-function")
+    # -pendantic in gcc without C11 yields too many warnings
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std-c11 -pedantic")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra")
+elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -Wextra")
+elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
     # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W2 -DFLATCC_PORTABLE")
-    # Highest warning level that is reasonable
-	# - see include/flatcc/portable/pwarnings.h for disabled warnings.
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W3 -D_CRT_SECURE_NO_WARNINGS -DFLATCC_PORTABLE")
+    # -W3 is the highest warning level that is reasonable.
+    # See include/flatcc/portable/pwarnings.h for disabled warnings.
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W3 -D_CRT_SECURE_NO_WARNINGS")
 else()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+    # Best effort
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 endif()
-# As of gcc 4.8 it is not possible to suppress this warning using 
-# #pragma GCC diagnostic ignored "-Wunused-function"
-if(CMAKE_COMPILER_IS_GNUCC)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-function")
-endif()
-
-# To get assembly output
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -save-temps")
-
 
 # If enabled the runtime librarys verifier will print an error message
 # before asserting on error, otherwise it will just return an error code
