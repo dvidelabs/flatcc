@@ -891,7 +891,7 @@ static void parse_include(fb_parser_t *P)
             return;
         }
         if (!match(P, LEX_TOK_STRING_BEGIN,
-                    "include expexted a string literal as filename")) {
+                    "include expected a string literal as filename")) {
             recover(P, ';', 1);
         }
         parse_string_literal(P, &fb_add_include(P)->name);
@@ -987,8 +987,11 @@ static void parse_schema_decl(fb_parser_t *P)
         next(P);
         parse_union_decl(P, fb_add_union(P));
         break;
+    case tok_kw_include:
+        error_tok(P, P->token, "include statements must be placed first in the the schema");
+        break;
     case '{':
-        error_tok(P, P->token, "JSON objects are not supported by this implementation");
+        error_tok(P, P->token, "JSON objects in schema file is not supported - but a schema specific JSON parser can be generated");
         break;
     default:
         error_tok(P, P->token, "unexpected token in schema definition");
