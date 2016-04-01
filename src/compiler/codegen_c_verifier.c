@@ -42,7 +42,7 @@ static int gen_union_verifier(output_t *out, fb_compound_type_t *ct)
     fb_compound_name(ct, &snt);
 
     fprintf(out->fp,
-            "int __%s_union_verifier(flatcc_table_verifier_descriptor_t *td, flatbuffers_voffset_t id, uint8_t type)\n{\n    switch(type) {\n",
+            "static int __%s_union_verifier(flatcc_table_verifier_descriptor_t *td, flatbuffers_voffset_t id, uint8_t type)\n{\n    switch(type) {\n",
             snt.text);
     for (sym = ct->members; sym; sym = sym->link) {
         member = (fb_member_t *)sym;

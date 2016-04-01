@@ -14,6 +14,7 @@
   const integer variables to avoid non-standard use in switch
   statements.
 - Fix global scope error for included schema files.
+- Add missing `static` for generated union verifiers.
 
 ## [0.3.0]
 
