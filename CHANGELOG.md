@@ -13,6 +13,7 @@
 - Generated enums and union types now use type cast defines instead of
   const integer variables to avoid non-standard use in switch
   statements.
+- Fix global scope error for included schema files.
 
 ## [0.3.0]
 

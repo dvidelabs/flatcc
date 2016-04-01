@@ -67,7 +67,22 @@ flatcc_context_t flatcc_create_context(flatcc_options_t *opts, const char *name,
     if (!(P = malloc(sizeof(*P)))) {
         return 0;
     }
-    if (fb_init_parser(P, opts, name, error_out, error_ctx)) {
+    if (fb_init_parser(P, opts, name, error_out, error_ctx, 0)) {
+        free(P);
+        return 0;
+    }
+    return P;
+}
+
+flatcc_context_t __flatcc_create_child_context(flatcc_options_t *opts, const char *name,
+        fb_parser_t *P_parent)
+{
+    fb_parser_t *P;
+
+    if (!(P = malloc(sizeof(*P)))) {
+        return 0;
+    }
+    if (fb_init_parser(P, opts, name, P_parent->error_out, P_parent->error_ctx, P_parent->schema.root_schema)) {
         free(P);
         return 0;
     }
@@ -121,7 +136,7 @@ static int __parse_include_file(fb_parser_t *P_parent, const char *filename)
         fb_print_error(P_parent, "include count limit exceeded\n");
         return -1;
     }
-    if (!(ctx = flatcc_create_context(opts, filename, P_parent->error_out, P_parent->error_ctx))) {
+    if (!(ctx = __flatcc_create_child_context(opts, filename, P_parent))) {
         return -1;
     }
     P = (fb_parser_t *)ctx;
@@ -135,7 +150,6 @@ static int __parse_include_file(fb_parser_t *P_parent, const char *filename)
     P_parent->dependencies = P;
     P->referer_path = P_parent->path;
     /* Each parser has a root schema instance, but only the root parsers instance is used. */
-    P->schema.root_schema = rs;
     rs->include_depth++;
     rs->include_count++;
     if (flatcc_parse_file(ctx, filename)) {

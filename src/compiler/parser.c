@@ -1134,8 +1134,9 @@ static void inject_token(fb_token_t *t, const char *lex, long id)
 
 #include "keywords.h"
 
+/* Root schema `rs` is null for top level parser. */
 int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
-        fb_error_fun error_out, void *error_ctx)
+        fb_error_fun error_out, void *error_ctx, fb_root_schema_t *rs)
 {
     int i, n, name_len;
     char *s;
@@ -1153,6 +1154,7 @@ int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
     } else {
         flatcc_init_options(&P->opts);
     }
+    P->schema.root_schema = rs ? rs : &P->schema.root_schema_instance;
     switch (P->opts.offset_size) {
     case 2:
     case 4:
@@ -1189,7 +1191,6 @@ int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
     P->schema.name.name.s.s = s;
     P->schema.name.name.s.len = n;
     checkmem((P->schema.errorname = fb_create_basename(name, name_len, "")));
-    P->schema.root_schema = &P->schema.root_schema_instance;
     if (opts->ns) {
         P->schema.prefix.s = (char *)opts->ns;
         P->schema.prefix.len = strlen(opts->ns);
