@@ -78,13 +78,13 @@ show a simple complete example we use a very simple schema (`myschema.fbs`):
         flatcc_builder_clear(B);
     }
 
-Note that a compiled schema generates a `myschema.h` file and optionally
-a `myschema_builder.h` and some common support files. When building a
-buffer the `myschema_builder.h` must be used but when only reading the
-`myschema.h` file should be used instead. Here we are only concerned
-with building. When building, it is necessary to link with
-`libflatccrt.a` runtime library but when reading, all nesessary code is
-contained in the generated header files.
+Note that a compiled schema generates a `myschema_reader.h` file and
+optionally a `myschema_builder.h` and some common support files. When
+building a buffer the `myschema_builder.h` must be used but when only
+reading then the `myschema_reader.h` file should be used instead. Here
+we are only concerned with building. When building, it is necessary to
+link with `libflatccrt.a` runtime library but when reading, all
+nesessary code is contained in the generated header files.
 
 The builder object only manages a stack of currently active objects and
 does not store an object that is complete. Instead it calls an emitter
