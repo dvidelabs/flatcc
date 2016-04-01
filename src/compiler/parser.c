@@ -988,7 +988,7 @@ static void parse_schema_decl(fb_parser_t *P)
         parse_union_decl(P, fb_add_union(P));
         break;
     case tok_kw_include:
-        error_tok(P, P->token, "include statements must be placed first in the the schema");
+        error_tok(P, P->token, "include statements must be placed first in the schema");
         break;
     case '{':
         error_tok(P, P->token, "JSON objects in schema file is not supported - but a schema specific JSON parser can be generated");
