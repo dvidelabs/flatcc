@@ -3,7 +3,7 @@
  *  BSD License:
  ****************************************************************************
  *
- *  Copyright (c) 2005-2014 Paul Hsieh
+ *  Copyright (c) 2005-2016 Paul Hsieh
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,7 @@
  *
  ****************************************************************************
  *
- *  Version 0.1.15+
- *  Patched 2016-03-29, mikkelfj:
- *      MSVC 14 2015 breaks on fast ints, use <stdint.h>
+ *  Version 0.1.15.2
  *
  *  The ANSI C standard committee, for the C99 standard, specified the
  *  inclusion of a new standard include file called stdint.h.  This is
@@ -44,19 +42,17 @@
  *  integer libraries and so on.  But for most developers its likely
  *  useful just for programming sanity.
  *
- *  The problem is that most compiler vendors have decided not to
- *  implement the C99 standard, and the next C++ language standard
- *  (which has a lot more mindshare these days) will be a long time in
- *  coming and its unknown whether or not it will include stdint.h or
- *  how much adoption it will have.  Either way, it will be a long time
- *  before all compilers come with a stdint.h and it also does nothing
- *  for the extremely large number of compilers available today which
- *  do not include this file, or anything comparable to it.
+ *  The problem is that some compiler vendors chose to ignore the C99
+ *  standard and some older compilers have no opportunity to be updated.
+ *  Because of this situation, simply including stdint.h in your code
+ *  makes it unportable.
  *
  *  So that's what this file is all about.  Its an attempt to build a
  *  single universal include file that works on as many platforms as
- *  possible to deliver what stdint.h is supposed to.  A few things
- *  that should be noted about this file:
+ *  possible to deliver what stdint.h is supposed to.  Even compilers
+ *  that already come with stdint.h can use this file instead without
+ *  any loss of functionality.  A few things that should be noted about
+ *  this file:
  *
  *    1) It is not guaranteed to be portable and/or present an identical
  *       interface on all platforms.  The extreme variability of the
@@ -797,8 +793,8 @@ typedef uint_least32_t uint_fast32_t;
 #if defined (__TEST_PSTDINT_FOR_CORRECTNESS)
 
 /*
- *  Please compile with the maximum warning settings to make sure macros are not
- *  defined more than once.
+ *  Please compile with the maximum warning settings to make sure macros are
+ *  not defined more than once.
  */
 
 #include <stdlib.h>
