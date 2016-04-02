@@ -894,9 +894,9 @@ or
 
     flatbuffers_uint8_vec_ref_t inv;
     flatbuffers_uint8_vec_start(B);
-    flatbuffers_uint8_push(B, 1);
-    flatbuffers_uint8_push(B, 2);
-    flatbuffers_uint8_push(B, 3);
+    flatbuffers_uint8_vec_push(B, 1);
+    flatbuffers_uint8_vec_push(B, 2);
+    flatbuffers_uint8_vec_push(B, 3);
     inv = flatbuffers_uint8_vec_end(B);
     Monster_inventory_add(B, inv);
 
