@@ -1120,9 +1120,9 @@ In PowerShell:
 
     git clone https://github.com/dvidelabs/flatcc.git
     cd flatcc
-    mkdir -p build\MSVC
+    mkdir build\MSVC
     cd build\MSVC
-    cmake -G "Visual Studio 14 2015" ..
+    cmake -G "Visual Studio 14 2015" ..\..
 
 In Visual Studio:
 
