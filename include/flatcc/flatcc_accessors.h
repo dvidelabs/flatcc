@@ -6,6 +6,12 @@
 #endif
 
 #define __flatcc_basic_scalar_accessors_impl(N, T, W, E)                    \
+static inline size_t N ## __size()                                          \
+{ return sizeof(T); }                                                       \
+static inline T *N ## __ptr_add(T *p, size_t i)                             \
+{ return p + i; }                                                           \
+static inline const T *N ## __const_ptr_add(const T *p, size_t i)           \
+{ return p + i; }                                                           \
 static inline T N ## _read_from_pe(const void *p)                           \
 { return N ## _cast_from_pe(*(T *)p); }                                     \
 static inline T N ## _read_to_pe(const void *p)                             \

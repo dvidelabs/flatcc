@@ -3,11 +3,6 @@
 /* Only needed for verification. */
 #include "monster_test_json_printer.h"
 #include "support/readfile.h"
-#include "support/elapsed.h"
-
-#define FLATCC_BENCHMARK 0
-
-#define BENCH_TITLE "monsterdata_test.mon/json-printer"
 
 #ifdef NDEBUG
 #define COMPILE_TYPE "(optimized)"

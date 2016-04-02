@@ -459,15 +459,20 @@ static void gen_forward_decl(output_t *out, fb_compound_type_t *ct)
 
     fb_compound_name(ct, &snt);
     if (ct->symbol.kind == fb_is_struct) {
-        fprintf(out->fp, "typedef struct %s %s_t;\n",
+        if (ct->size == 0) {
+            fprintf(out->fp, "typedef void %s_t; /* empty struct */\n",
+                    snt.text);
+        } else {
+            fprintf(out->fp, "typedef struct %s %s_t;\n",
+                    snt.text, snt.text);
+        }
+        fprintf(out->fp, "typedef const %s_t *%s_struct_t;\n",
                 snt.text, snt.text);
-        fprintf(out->fp, "typedef const struct %s *%s_struct_t;\n",
+        fprintf(out->fp, "typedef %s_t *%s_mutable_struct_t;\n",
                 snt.text, snt.text);
-        fprintf(out->fp, "typedef struct %s *%s_mutable_struct_t;\n",
+        fprintf(out->fp, "typedef const %s_t *%s_vec_t;\n",
                 snt.text, snt.text);
-        fprintf(out->fp, "typedef const struct %s *%s_vec_t;\n",
-                snt.text, snt.text);
-        fprintf(out->fp, "typedef struct %s *%s_mutable_vec_t;\n",
+        fprintf(out->fp, "typedef %s_t *%s_mutable_vec_t;\n",
                 snt.text, snt.text);
     } else {
         fprintf(out->fp, "typedef const struct %s_table *%s_table_t;\n",
@@ -529,87 +534,121 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
 
     fb_compound_name(ct, &snt);
     print_doc(out, "", ct->doc);
-    if (do_pad) {
-        fprintf(out->fp, "#pragma pack(1)\n");
-    }
-    /*
-     * Unfortunately the following is not valid in C11:
-     *
-     *      struct alignas(4) mystruct { ... };
-     *
-     * we can only use alignas on members (unlike C++, and unlike
-     * non-portable C compiler variants).
-     *
-     * By padding the first element to the struct size we get around
-     * this problem. It shouldn't strictly be necessary to add padding
-     * fields, but compilers might not support padding above 16 bytes,
-     * so we do that as a precaution with an optional compiler flag.
-     *
-     * It is unclear how to align empty structs without padding but it
-     * shouldn't really matter since not field is accessed then.
-     */
-    fprintf(out->fp, "struct %s {\n", snt.text);
-    already_has_key = 0;
-    for (sym = ct->members; sym; sym = sym->link) {
-        current_key_processed = 0;
-        member = (fb_member_t *)sym;
-        print_doc(out, "    ", member->doc);
-        symbol_name(sym, &n, &s);
-        align = offset == 0 ? ct->align : member->align;
-        if (do_pad && (pad = (unsigned)(member->offset - offset))) {
-            fprintf(out->fp, "    uint8_t __padding%u[%u];\n",
-                    pad_index++, pad);
+    if (ct->size == 0) {
+        /*
+         * This implies that sizeof(typename) is not valid, where
+         * non-std gcc extension might return 0, or 1 of an empty
+         * struct. All copy_from/to etc. operations on this type
+         * just returns a pointer without using sizeof.
+         *
+         * We ought to define size as a define so it can be used in a
+         * switch, but that does not mesth with flatcc_accessors.h
+         * macros, so we use an inline function. Users would normally
+         * use sizeof which will break for empty which is ok, and
+         * internal operations can use size() where generic behavior is
+         * required. 
+         */
+        fprintf(out->fp, "/* empty struct already typedef'ed as void since this not permitted in std. C: struct %s {}; */\n", snt.text);
+        fprintf(out->fp,
+                "static inline const %s_t *%s__const_ptr_add(const %s_t *p, %suoffset_t i) { return p; }\n", snt.text, snt.text, snt.text, nsc);
+        fprintf(out->fp,
+                "static inline %s_t *%s__ptr_add(%s_t *p, %suoffset_t i) { return p; }\n", snt.text, snt.text, snt.text, nsc);
+        fprintf(out->fp,
+                "static inline %s_struct_t %s_vec_at(%s_vec_t vec, %suoffset_t i) { return vec; }\n", snt.text, snt.text, snt.text, nsc);
+    } else {
+        if (do_pad) {
+            fprintf(out->fp, "#pragma pack(1)\n");
         }
-        if (member->metadata_flags & fb_f_deprecated) {
-            pad = (unsigned)member->size;
-            if (do_pad) {
-                fprintf(out->fp, "    uint8_t __deprecated%u[%u]; /* was: '%.*s' */\n",
-                        deprecated_index++, pad, n, s);
-            } else {
-                fprintf(out->fp, "    alignas(%u) uint8_t __deprecated%u[%u]; /* was: '%.*s' */\n",
-                        align, deprecated_index++, pad, n, s);
+        /*
+         * Unfortunately the following is not valid in C11:
+         *
+         *      struct alignas(4) mystruct { ... };
+         *
+         * we can only use alignas on members (unlike C++, and unlike
+         * non-portable C compiler variants).
+         *
+         * By padding the first element to the struct size we get around
+         * this problem. It shouldn't strictly be necessary to add padding
+         * fields, but compilers might not support padding above 16 bytes,
+         * so we do that as a precaution with an optional compiler flag.
+         *
+         * It is unclear how to align empty structs without padding but it
+         * shouldn't really matter since not field is accessed then.
+         */
+        fprintf(out->fp, "struct %s {\n", snt.text);
+        already_has_key = 0;
+        for (sym = ct->members; sym; sym = sym->link) {
+            current_key_processed = 0;
+            member = (fb_member_t *)sym;
+            print_doc(out, "    ", member->doc);
+            symbol_name(sym, &n, &s);
+            align = offset == 0 ? ct->align : member->align;
+            if (do_pad && (pad = (unsigned)(member->offset - offset))) {
+                fprintf(out->fp, "    uint8_t __padding%u[%u];\n",
+                        pad_index++, pad);
             }
+            if (member->metadata_flags & fb_f_deprecated) {
+                pad = (unsigned)member->size;
+                if (do_pad) {
+                    fprintf(out->fp, "    uint8_t __deprecated%u[%u]; /* was: '%.*s' */\n",
+                            deprecated_index++, pad, n, s);
+                } else {
+                    fprintf(out->fp, "    alignas(%u) uint8_t __deprecated%u[%u]; /* was: '%.*s' */\n",
+                            align, deprecated_index++, pad, n, s);
+                }
+                offset = (unsigned)(member->offset + member->size);
+                continue;
+            }
+            switch (member->type.type) {
+            case vt_scalar_type:
+                tname_ns = scalar_type_ns(member->type.st, nsc);
+                tname = scalar_type_name(member->type.st);
+                if (do_pad) {
+                    fprintf(out->fp, "    %s%s ", tname_ns, tname);
+                } else {
+                    fprintf(out->fp, "    alignas(%u) %s%s ", align, tname_ns, tname);
+                }
+                break;
+            case vt_compound_type_ref:
+                assert(member->type.ct->symbol.kind == fb_is_struct || member->type.ct->symbol.kind == fb_is_enum);
+                kind = member->type.ct->symbol.kind == fb_is_struct ? "" : "enum_";
+                fb_compound_name(member->type.ct, &snref);
+                if (do_pad) {
+                    fprintf(out->fp, "    %s_%st ", snref.text, kind);
+                } else {
+                    fprintf(out->fp, "    alignas(%u) %s_%st ", align, snref.text, kind);
+                }
+                break;
+            default:
+                fprintf(out->fp, "    %s ", __FLATCC_ERROR_TYPE);
+                gen_panic(out, "internal error: unexpected type during code generation");
+                break;
+            }
+            fprintf(out->fp, "%.*s;\n", n, s);
             offset = (unsigned)(member->offset + member->size);
-            continue;
         }
-        switch (member->type.type) {
-        case vt_scalar_type:
-            tname_ns = scalar_type_ns(member->type.st, nsc);
-            tname = scalar_type_name(member->type.st);
-            if (do_pad) {
-                fprintf(out->fp, "    %s%s ", tname_ns, tname);
-            } else {
-                fprintf(out->fp, "    alignas(%u) %s%s ", align, tname_ns, tname);
-            }
-            break;
-        case vt_compound_type_ref:
-            assert(member->type.ct->symbol.kind == fb_is_struct || member->type.ct->symbol.kind == fb_is_enum);
-            kind = member->type.ct->symbol.kind == fb_is_struct ? "" : "enum_";
-            fb_compound_name(member->type.ct, &snref);
-            if (do_pad) {
-                fprintf(out->fp, "    %s_%st ", snref.text, kind);
-            } else {
-                fprintf(out->fp, "    alignas(%u) %s_%st ", align, snref.text, kind);
-            }
-            break;
-        default:
-            fprintf(out->fp, "    %s ", __FLATCC_ERROR_TYPE);
-            gen_panic(out, "internal error: unexpected type during code generation");
-            break;
+        if (do_pad && (pad = (unsigned)(ct->size - offset))) {
+            fprintf(out->fp, "    uint8_t __padding%u[%u];\n",
+                    pad_index, pad);
         }
-        fprintf(out->fp, "%.*s;\n", n, s);
-        offset = (unsigned)(member->offset + member->size);
+        fprintf(out->fp, "};\n");
+        if (do_pad) {
+            fprintf(out->fp, "#pragma pack()\n");
+        }
+        fprintf(out->fp,
+                "static_assert(sizeof(%s_t) == %llu, \"struct size mismatch\");\n\n",
+                snt.text, llu(ct->size));
+        fprintf(out->fp,
+                "static inline const %s_t *%s__const_ptr_add(const %s_t *p, %suoffset_t i) { return p + i; }\n", snt.text, snt.text, snt.text, nsc);
+        fprintf(out->fp,
+                "static inline %s_t *%s__ptr_add(%s_t *p, %suoffset_t i) { return p + i; }\n", snt.text, snt.text, snt.text, nsc);
+        fprintf(out->fp,
+                "static inline %s_struct_t %s_vec_at(%s_vec_t vec, %suoffset_t i)\n"
+                "__%sstruct_vec_at(vec, i)\n",
+                snt.text, snt.text, snt.text, nsc,
+                nsc);
     }
-    if (do_pad && (pad = (unsigned)(ct->size - offset))) {
-        fprintf(out->fp, "    uint8_t __padding%u[%u];\n",
-                pad_index, pad);
-    }
-    fprintf(out->fp, "};\n");
-    if (do_pad) {
-        fprintf(out->fp, "#pragma pack()\n");
-    }
-    fprintf(out->fp,
-            "static_assert(sizeof(%s_t) == %llu, \"struct size mismatch\");\n\n",
+    fprintf(out->fp, "static inline size_t %s__size() { return %llu; }\n",
             snt.text, llu(ct->size));
     fprintf(out->fp,
             "#ifndef %s_identifier\n"
@@ -620,11 +659,6 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
             "static inline %suoffset_t %s_vec_len(%s_vec_t vec)\n"
             "__%svec_len(vec)\n",
             nsc, snt.text, snt.text,
-            nsc);
-    fprintf(out->fp,
-            "static inline %s_struct_t %s_vec_at(%s_vec_t vec, %suoffset_t i)\n"
-            "__%sstruct_vec_at(vec, i)\n",
-            snt.text, snt.text, snt.text, nsc,
             nsc);
     fprintf(out->fp,
             "__%sstruct_as_root(%s)\n",
@@ -645,7 +679,7 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
             tname_prefix = scalar_type_prefix(member->type.st);
             fprintf(out->fp,
                 "static inline %s%s %s_%.*s(%s_struct_t t)\n"
-                "__%sstruct_scalar_field(t, %.*s, %s%s);\n",
+                "__%sstruct_scalar_field(t, %.*s, %s%s)\n",
                 tname_ns, tname, snt.text, n, s, snt.text,
                 nsc, n, s, nsc, tname_prefix);
             if (member->metadata_flags & fb_f_key) {
@@ -682,7 +716,7 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
                 tname_prefix = scalar_type_prefix(member->type.ct->type.st);
                 fprintf(out->fp,
                     "static inline %s_enum_t %s_%.*s(%s_struct_t t)\n"
-                    "__%sstruct_scalar_field(t, %.*s, %s%s);\n",
+                    "__%sstruct_scalar_field(t, %.*s, %s%s)\n",
                     snref.text, snt.text, n, s, snt.text,
                     nsc, n, s, nsc, tname_prefix);
                 if (member->metadata_flags & fb_f_key) {
@@ -719,7 +753,7 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
                  */
                 fprintf(out->fp,
                     "static inline %s_struct_t %s_%.*s(%s_struct_t t)\n"
-                    "__%sstruct_struct_field(t, %.*s);\n",
+                    "__%sstruct_struct_field(t, %.*s)\n",
                     snref.text, snt.text, n, s, snt.text,
                     nsc, n, s);
                 break;

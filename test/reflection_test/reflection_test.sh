@@ -7,9 +7,9 @@ TMP=${ROOT}/build/tmp/test/reflection_test
 
 CC=${CC:-cc}
 ${ROOT}/scripts/build.sh
-mkdir -p ${TMP}
-rm -rf ${TMP}/*
-bin/flatcc --schema -o ${TMP} test/monster_test/monster_test.fbs
+mkdir -p ${TMP}/generated
+rm -rf ${TMP}/generated/*
+bin/flatcc --schema -o ${TMP}/generated test/monster_test/monster_test.fbs
 
 cp test/reflection_test/*.c ${TMP}
 cd ${TMP}

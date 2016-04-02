@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+
+echo "This is the old test script replaced by CMake's ctest"
+echo "driven by scritps/test.sh"
+echo "pausing 5 seconds - press ctrl+C to quit"
+
+sleep 5
+
 set -e
 cd `dirname $0`/..
 ROOT=`pwd`

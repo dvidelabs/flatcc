@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include "monster_test_builder.h"
-#include "support/hexdump.h"
 #include "support/elapsed.h"
 
 #define ns(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Example, x)
@@ -14,19 +13,9 @@
 
 static uint8_t invdata[1000];
 
-static int init_data()
-{
-    int i;
-
-    for (i = 0; i < c_vec_len(invdata); ++i) {
-        invdata[i] = (uint8_t)i;
-    }
-    return 0;
-}
-
 static ns(Monster_ref_t) create_monster(flatcc_builder_t *B)
 {
-    int i;
+    size_t i;
 
     ns(Monster_start(B));
     ns(Monster_name_start(B));
@@ -44,7 +33,7 @@ static ns(Monster_ref_t) create_monster(flatcc_builder_t *B)
 
 static ns(Monster_vec_ref_t) create_monsters(flatcc_builder_t *B)
 {
-    int i;
+    size_t i;
     ns(Monster_ref_t) m;
 
     ns(Monster_vec_start(B));
@@ -73,7 +62,7 @@ static int create_root_monster(flatcc_builder_t *B)
 #if MEASURE_DECODE
 static int verify_monster(const char *base, ns(Monster_table_t) mon)
 {
-    int i;
+    size_t i;
     nsc(string_t) s = ns(Monster_name(mon));
     /*
      * This only works because it is a byte, otherwise
@@ -91,7 +80,7 @@ static int verify_monster(const char *base, ns(Monster_table_t) mon)
     }
     for (i = 0; i < NAME_REP; ++i) {
         if (memcmp(s + i * 7, "Monster", 7)) {
-            printf("failed monster name at %d: %s\n", i, s ? s : "NULL");
+            printf("failed monster name at %zu: %s\n", i, s ? s : "NULL");
             printf("offset: %ld\n", s + i * 7 - base);
             assert(0);
             return -1;
@@ -115,12 +104,15 @@ int main(int argc, char *argv[])
     flatcc_builder_t builder, *B;
     ns(Monster_table_t) mon;
     ns(Monster_vec_t) mv;
-    double t1, t2, tdiff;
+    double t1, t2;
     int rep = 10, i, ret = 0;
 
 #if MEASURE_DECODE
     int j;
 #endif
+
+    (void)argc;
+    (void)argv;
 
     B = &builder;
     flatcc_builder_init(B);

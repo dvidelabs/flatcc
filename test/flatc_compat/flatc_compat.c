@@ -17,7 +17,6 @@ int verify_monster(void *buffer)
     ns(Test_vec_t) testvec;
     ns(Any_union_type_t) mini_type;
     flatbuffers_string_t name;
-    ns(Vec3_t) v;
     size_t offset;
     flatbuffers_uint8_vec_t inv;
     flatbuffers_string_vec_t aofs;
@@ -156,6 +155,9 @@ int main(int argc, char *argv[])
 {
     int ret;
     size_t size;
+
+    (void)argc;
+    (void)argv;
 
     void *buffer = read_file("monsterdata_test.mon", 1024, &size);
 

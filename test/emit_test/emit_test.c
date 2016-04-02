@@ -1,13 +1,17 @@
 #include <stdio.h>
+#include <assert.h>
 #include "emit_test_builder.h"
 #include "support/hexdump.h"
+
+#define test_assert(x) do { assert(x); if (!(x)) return -1; } while(0)
 
 int dbg_emitter(void *emit_context,
         const flatcc_iovec_t *iov, int iov_count,
         flatbuffers_soffset_t offset, size_t len)
 {
-
     int i;
+    (void)emit_context;
+
     printf("dbg: emit: iov_count: %d, offset: %ld, len: %ld\n",
             (int)iov_count, (long)offset, (long)len);
 
@@ -57,11 +61,12 @@ int emit_test()
 
     size_t size;
     uint8_t *buf;
-    flatcc_emitter_t emitter, *E;
+    flatcc_emitter_t *E;
     flatcc_builder_t builder, *B;
     flatbuffers_float_vec_ref_t vref;
     float data[4] = { 1.0f, 1.1f, 1.2f, 1.3f };
 
+    (void)expect;
     main_table_t mt;
     long time;
 
@@ -84,23 +89,23 @@ int emit_test()
     if (!buf) {
         return -1;
     }
-    assert(size == flatcc_emitter_get_buffer_size(E));
-    assert(size == flatcc_builder_get_buffer_size(B));
+    test_assert(size == flatcc_emitter_get_buffer_size(E));
+    test_assert(size == flatcc_builder_get_buffer_size(B));
     flatcc_builder_clear(B);
 
     fprintf(stderr, "buffer size: %d\n", (int)size);
     hexdump("emit_test", buf, size, stderr);
 
-    assert(size == 58);
-    assert(sizeof(expect) - 1 == size);
-    assert(0 == memcmp(buf, expect, size));
+    test_assert(size == 58);
+    test_assert(sizeof(expect) - 1 == size);
+    test_assert(0 == memcmp(buf, expect, size));
 
     mt = main_as_root(buf);
     time = main_time(mt);
-    assert(time == 42);
-    assert(main_device(mt) == 1);
-    assert(flatbuffers_float_vec_len(main_samples(mt)) == 4);
-    assert(flatbuffers_float_vec_at(main_samples(mt), 2) == 1.2f);
+    test_assert(time == 42);
+    test_assert(main_device(mt) == 1);
+    test_assert(flatbuffers_float_vec_len(main_samples(mt)) == 4);
+    test_assert(flatbuffers_float_vec_at(main_samples(mt), 2) == 1.2f);
 
     return 0;
 }
@@ -108,6 +113,8 @@ int emit_test()
 int main(int argc, char *argv[])
 {
     int ret = 0;
+    (void)argc;
+    (void)argv;
 
     ret |= debug_test();
     ret |= emit_test();

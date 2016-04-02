@@ -24,7 +24,7 @@ int test_schema(const char *monster_bfbs)
     }
     S = reflection_Schema_as_root(buffer);
     Objs = reflection_Schema_objects(S);
-    for (k = 0; k < reflection_Object_vec_len(Objs); ++k) {
+    for (k = 0; k < (int)reflection_Object_vec_len(Objs); ++k) {
         printf("dbg: obj #%d : %s\n", k,
                 reflection_Object_name(reflection_Object_vec_at(Objs, k)));
     }
@@ -100,5 +100,7 @@ done:
 
 int main(int argc, char *argv[])
 {
-    return test_schema("monster_test.bfbs");
+    (void)argc;
+    (void)argv;
+    return test_schema("generated/monster_test.bfbs");
 }

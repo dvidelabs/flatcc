@@ -137,6 +137,17 @@ done:
     return ret;
 }
 
+/*
+ * C standard does not provide support for empty structs,
+ * but they do exist in FlatBuffers. We can use most operations
+ * but we cannot declare an instance of not can we take the size of.
+ * The mytype_size() funciton is provided and returns 0 for empty
+ * structs.
+ *
+ * GCC provides support for empty structs, but it isn't portable,
+ * and compilers may define sizeof such structs differently.
+ */
+
 int verify_table_with_emptystruct(void *buffer)
 {
     ns(with_emptystruct_table_t) withempty;
@@ -152,7 +163,9 @@ int verify_table_with_emptystruct(void *buffer)
         printf("empty member not available\n");
         return -1;
     }
-    if (sizeof(*empty)) {
+    // sizeof empty won't compile since it is a void.
+    //if (sizeof(*empty)) {
+    if (ns(emptystruct__size())) {
         printf("empty isn't really empty\n");
         return -1;
     }
@@ -162,22 +175,13 @@ int verify_table_with_emptystruct(void *buffer)
 int test_table_with_emptystruct(flatcc_builder_t *B)
 {
     int ret;
-    ns(with_emptystruct_ref_t) root;
-    ns(emptystruct_t) empty = {};
+    ns(emptystruct_t) *empty = 0; /* empty structs cannot instantiated. */
     void *buffer;
     size_t size;
 
     flatcc_builder_reset(B);
 
-/*
- * Null is also valid for empty struct arguments, but it always
- * has a place in the argument list.
- */
-#if 1
-    ns(with_emptystruct_create_as_root)(B, &empty);
-#else
-    ns(with_emptystruct_create_as_root)(B, 0);
-#endif
+    ns(with_emptystruct_create_as_root)(B, empty);
 
     buffer = flatcc_builder_finalize_buffer(B, &size);
 
@@ -208,7 +212,7 @@ int verify_monster(void *buffer)
     ns(Vec3_t) v;
     ns(Test_vec_t) testvec;
     ns(Test_t) testvec_data[] = {
-        {0x10, 0x20}, {0x30, 0x40}, {0x50, 0x60}, {0x70, 0x80}, {0x191, 0x91}
+        {0x10, 0x20}, {0x30, 0x40}, {0x50, 0x60}, {0x70, (int8_t)0x80}, {0x191, (int8_t)0x91}
     };
     ns(Test_struct_t) test;
     nsc(string_vec_t) strings;
@@ -310,11 +314,11 @@ int verify_monster(void *buffer)
         return -1;
     }
     inv = ns(Monster_inventory(monster));
-    if (nsc(uint8_vec_len(inv)) != 10) {
+    if ((nsc(uint8_vec_len(inv))) != 10) {
         printf("Inventory length unexpected\n");
         return -1;
     }
-    for (i = 0; i < nsc(uint8_vec_len(inv)); ++i) {
+    for (i = 0; i < (int)nsc(uint8_vec_len(inv)); ++i) {
         if (nsc(uint8_vec_at(inv, i)) != i) {
             printf("inventory item #%d is wrong\n", i);
             return -1;
@@ -551,9 +555,9 @@ int gen_monster(flatcc_builder_t *B)
     test->b = 0x40;
     test[1].a = 0x50;
     test[1].b = 0x60;
-    ns(Monster_test4_push_create(B, 0x70, 0x80));
+    ns(Monster_test4_push_create(B, 0x70, (int8_t)0x80));
     x.a = 0x190; /* This is a short. */
-    x.b = 0x91; /* This is a byte. */
+    x.b = (int8_t)0x91; /* This is a byte. */
     ns(Monster_test4_push(B, &x));
     ns(Monster_test4_push(B, &x));
     /* We can use either field mapped push or push on the type. */
@@ -658,7 +662,7 @@ int gen_monster(flatcc_builder_t *B)
 
     ns(Monster_vec_push_start(B));
     /* Same as using Any_as_Monster used earlier, but here explicit. */
-    ns(Monster_test_add)(B,(ns(Any_union_ref_t)){ ns(Any_Monster), mon });
+    ns(Monster_test_add)(B,(ns(Any_union_ref_t)){ ns(Any_Monster), { mon }});
     /* Name is required. */
     ns(Monster_name_create_str(B, "any name"));
     ns(Monster_testarrayoftables_push_end(B));
@@ -711,7 +715,7 @@ int test_monster(flatcc_builder_t *B)
         return -1;
     }
     ret = verify_monster(buffer);
-done:
+
     free(buffer);
     return ret;
 }
@@ -942,7 +946,6 @@ int test_clone_slice(flatcc_builder_t *B)
     ns(Test_struct_t) test4;
     void *buffer, *buf2;
     size_t size;
-    char *s;
     int ret = -1;
     uint8_t booldata[] = { 0, 1, 0, 0, 1, 0, 0 };
 
@@ -1304,9 +1307,9 @@ int gen_monster_benchmark(flatcc_builder_t *B)
     test->b = 0x40;
     test[1].a = 0x50;
     test[1].b = 0x60;
-    ns(Monster_test4_push_create(B, 0x70, 0x80));
+    ns(Monster_test4_push_create(B, 0x70, (int8_t)0x80));
     x.a = 0x191; /* This is a short. */
-    x.b = 0x91; /* This is a byte. */
+    x.b = (int8_t)0x91; /* This is a byte. */
     ns(Monster_test4_push(B, &x));
     ns(Monster_test4_end(B));
     ns(Monster_end_as_root(B));
@@ -1383,6 +1386,9 @@ int time_struct_buffer(flatcc_builder_t *B)
 
 int main(int argc, char *argv[])
 {
+    (void)argc;
+    (void)argv;
+
     flatcc_builder_t builder, *B;
     B = &builder;
     flatcc_builder_init(B);

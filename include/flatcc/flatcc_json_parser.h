@@ -687,7 +687,7 @@ static const char *flatcc_json_parser_symbolic_ ## type(                    \
 {                                                                           \
     flatcc_json_parser_integral_symbol_f **p;                               \
     const char *mark;                                                       \
-    basetype tmp;                                                           \
+    basetype tmp = 0;                                                       \
     uint64_t value;                                                         \
     int value_sign, aggregate;                                              \
     __flatcc_json_parser_init_check_unquoted_list()                         \

@@ -309,7 +309,7 @@ static inline TN ## _t *N ## _start(NS ## builder_t *B)\
 { return flatcc_builder_table_add(B, ID, S, A); }\
 static inline int N ## _end(NS ## builder_t *B)\
 { if (!NS ## is_native_pe()) { TN ## _to_pe(flatcc_builder_table_edit(B, S)); } return 0; }\
-static inline int N ## _end_pe(NS ## builder_t *B) { return 0; };\
+static inline int N ## _end_pe(NS ## builder_t *B) { (void)B; return 0; };\
 static inline int N ## _create(NS ## builder_t *B __ ## TN ## _formal_args)\
 { TN ## _t *_p = N ## _start(B); if (!_p) return 0; TN ##_assign_to_pe(_p __ ## TN ## _call_args);\
  return 0; }\

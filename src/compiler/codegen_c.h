@@ -258,10 +258,12 @@ static inline int gen_pragma_push(output_t *out)
                 "#pragma clang diagnostic push\n"
                 "#pragma clang diagnostic ignored \"-Wunused-function\"\n"
                 "#pragma clang diagnostic ignored \"-Wunused-variable\"\n"
+                "#pragma clang diagnostic ignored \"-Wunused-parameter\"\n"
                 "#elif defined __GNUC__\n"
                 "#pragma GCC diagnostic push\n"
                 "#pragma GCC diagnostic ignored \"-Wunused-function\"\n"
                 "#pragma GCC diagnostic ignored \"-Wunused-variable\"\n"
+                "#pragma GCC diagnostic ignored \"-Wunused-parameter\"\n"
                 "#endif\n");
     }
     return 0;

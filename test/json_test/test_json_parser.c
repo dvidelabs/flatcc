@@ -1,13 +1,18 @@
 #include <stdio.h>
 
+#ifndef FLATCC_BENCHMARK 
+#define FLATCC_BENCHMARK 0
+#endif
+
 /* Only needed for verification. */
 #include "monster_test_reader.h"
 #include "monster_test_json_parser.h"
 #include "support/hexdump.h"
 #include "support/readfile.h"
-#include "support/elapsed.h"
 
-#define FLATCC_BENCHMARK 0
+#if FLATCC_BENCHMARK
+#include "support/elapsed.h"
+#endif
 
 #define BENCH_TITLE "monsterdata_test.golden"
 
@@ -22,6 +27,8 @@
 #undef ns
 #define ns(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Example, x)
 
+#define test_assert(x) do { assert(x); if (!(x)) return -1; } while(0)
+
 /* A helper to simplify creating buffers vectors from C-arrays. */
 #define c_vec_len(V) (sizeof(V)/sizeof((V)[0]))
 
@@ -32,16 +39,16 @@ int verify_parse(void *buffer)
     ns(Monster_table_t) monster = ns(Monster_as_root_with_identifier)(buffer, ns(Monster_identifier));
 
     pos = ns(Monster_pos(monster));
-    assert(pos);
-    assert(ns(Vec3_x(pos) == 1));
-    assert(ns(Vec3_y(pos) == 2));
-    assert(ns(Vec3_z(pos) == 3));
-    assert(ns(Vec3_test1(pos) == 3.0));
-    assert(ns(Vec3_test2(pos) == ns(Color_Green)));
+    test_assert(pos);
+    test_assert(ns(Vec3_x(pos) == 1));
+    test_assert(ns(Vec3_y(pos) == 2));
+    test_assert(ns(Vec3_z(pos) == 3));
+    test_assert(ns(Vec3_test1(pos) == 3.0));
+    test_assert(ns(Vec3_test2(pos) == ns(Color_Green)));
     test = ns(Vec3_test3(pos));
-    assert(test);
-    assert(ns(Test_a(test)) == 5);
-    assert(ns(Test_b(test)) == 6);
+    test_assert(test);
+    test_assert(ns(Test_a(test)) == 5);
+    test_assert(ns(Test_b(test)) == 6);
 
     // TODO: hp and further fields
 
@@ -56,17 +63,20 @@ int verify_parse(void *buffer)
 // bytes, and the output size is 288 bytes.
 int test_parse()
 {
+#if FLATCC_BENCHMARK
     double t1, t2;
+    int i;
+    int rep = 1000000;
+    int warmup_rep = 1000000;
+#endif
 
     const char *buf;
-    void *flatbuffer;
+    void *flatbuffer = 0;
     size_t in_size, out_size;
     flatcc_json_parser_t ctx;
     flatcc_builder_t builder;
     flatcc_builder_t *B = &builder;
     int ret = -1;
-    int i, rep = 1000000;
-    int warmup_rep = 1000000;
     int flags = 0;
     const char *filename = "monsterdata_test.golden";
 
@@ -91,7 +101,7 @@ int test_parse()
 #if FLATCC_BENCHMARK
     fprintf(stderr, "Now warming up\n");
     for (i = 0; i < warmup_rep; ++i) {
-        if (monster_test_parse_json_root(B, &ctx, buf, in_size, flags)) {
+        if (monster_test_parse_json(B, &ctx, buf, in_size, flags)) {
             goto failed;
         }
         flatcc_builder_reset(B);
@@ -100,7 +110,7 @@ int test_parse()
     fprintf(stderr, "Now benchmarking\n");
     t1 = elapsed_realtime();
     for (i = 0; i < rep; ++i) {
-        if (monster_test_parse_json_root(B, &ctx, buf, in_size, flags)) {
+        if (monster_test_parse_json(B, &ctx, buf, in_size, flags)) {
             goto failed;
         }
         flatcc_builder_reset(B);

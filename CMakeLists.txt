@@ -1,5 +1,4 @@
-#cmake_minimum_required (VERSION 3.0.2)
-cmake_minimum_required (VERSION 2.8.0)
+cmake_minimum_required (VERSION 2.8.12.2)
 
 project (FlatCC)
 
@@ -8,6 +7,8 @@ project (FlatCC)
 #
 #   scripts/cleanall.sh
 #
+
+option(FLATCC_TEST "enable tests" ON)
 
 option (FLATCC_PORTABLE
     "include extra headers for compilers that do not support certain C11 features" OFF)
@@ -37,6 +38,9 @@ option (FLATCC_NATIVE_OPTIM
 option (FLATCC_FAST_DOUBLE
     "faster but slightly incorrect floating point parser (json)" OFF)
 
+if (FLATCC_TEST)
+    enable_testing()
+endif()
 
 if (FLATCC_DEBUG_VERIFY)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_DEBUG_VERIFY=1")
@@ -83,7 +87,9 @@ endif()
 
 if ("${CMAKE_C_COMPILER_ID}" MATCHES "Clang")
     # Clang or AppleClang
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Werror -Wall -Wextra")
+
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
     # To get assembly output
     # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -save-temps")
 elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
@@ -126,6 +132,7 @@ add_subdirectory(test)
 add_subdirectory(src/compiler)
 add_subdirectory(src/runtime)
 add_subdirectory(src/cli)
+add_subdirectory(samples)
 
 set_target_properties(${dist_targets}
     PROPERTIES
@@ -133,3 +140,4 @@ set_target_properties(${dist_targets}
     LIBRARY_OUTPUT_DIRECTORY "${dist_dir}/lib"
     RUNTIME_OUTPUT_DIRECTORY "${dist_dir}/bin"
 )
+

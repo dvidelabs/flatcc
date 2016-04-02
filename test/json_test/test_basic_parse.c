@@ -278,13 +278,12 @@ fail:
 
 int main()
 {
-    int ret;
-    const char *tail;
+    int ret = -1;
     flatcc_builder_t builder;
 
     flatcc_builder_init(&builder);
 
-    tail = test(&builder, g_data, g_data + sizeof(g_data) - 1, &ret);
+    test(&builder, g_data, g_data + sizeof(g_data) - 1, &ret);
 
     flatcc_builder_clear(&builder);
     return ret;
