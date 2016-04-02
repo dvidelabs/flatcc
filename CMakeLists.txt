@@ -91,7 +91,7 @@ elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
     # #pragma GCC diagnostic ignored "-Wunused-function"
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-function")
     # -pendantic in gcc without C11 yields too many warnings
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std-c11 -pedantic")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra")
 elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -Wextra")
