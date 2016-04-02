@@ -1,4 +1,8 @@
-cmake_minimum_required (VERSION 2.8.12.2)
+
+# Ubuntu 14.04 (Trusty)
+#cmake_minimum_required (VERSION 2.8.12.2)
+# Centos 7
+cmake_minimum_required (VERSION 2.8.11)
 
 project (FlatCC)
 
