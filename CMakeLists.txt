@@ -89,23 +89,23 @@ if (FLATCC_PORTABLE OR MSVC)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_PORTABLE")
 endif()
 
-if ("${CMAKE_C_COMPILER_ID}" MATCHES "Clang")
+if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     # Clang or AppleClang
 
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
     # To get assembly output
     # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -save-temps")
-elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
+elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     # In gcc 4.8 it is not possible to suppress this warning using
     # #pragma GCC diagnostic ignored "-Wunused-function"
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-function")
     # -pendantic in gcc without C11 yields too many warnings
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra")
-elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
+elseif (CMAKE_C_COMPILER_ID STREQUAL "Intel")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -Wextra")
-elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
+elseif (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
     # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W2 -DFLATCC_PORTABLE")
     # -W3 is the highest warning level that is reasonable.
     # See include/flatcc/portable/pwarnings.h for disabled warnings.
