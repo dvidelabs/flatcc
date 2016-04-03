@@ -20,6 +20,15 @@ The project includes:
   compilers, and small helpers for all compilers including endian
   handling and numeric printing and parsing.
 
+See also:
+
+- [Google FPL FlatBuffers](http://google.github.io/flatbuffers/)
+
+- [Online Forum](https://groups.google.com/forum/#!forum/flatbuffers)
+
+- [Build Instructions](https://github.com/dvidelabs/flatcc#building)
+
+
 The `flatcc` compiler is implemented as a standalone tool instead of
 extending Googles `flatc` compiler in order to have a pure portable C
 library implementation of the schema compiler that is designed to fail
@@ -37,35 +46,33 @@ also does not preserve the order of structs. The option is controlled by
 a flag in `config.h` The generated source supports both bottom-up and
 top-down construction mixed freely.
 
-JSON is supported as of v0.2.0, but unlike Googles `flatc` compiler,
-JSON is not supported in the schema input file. Instead, a schema is
-used to generated JSON parser and printers similar to flatbuffer readers
-and writers.
+Supported FlatBuffer features are code geration for building, verifying,
+and reading FlatBuffers, incl. basic support for reflection via reading
+and writing binary (.bfbs) files, excluding support mutations. There is
+also code generation for printing and parsing FlatBuffers to and from
+JSON which is compatible with Googles `flatc` tool.
 
+The JSON format is compatible with Googles `flatc` tool which parses
+JSON based on an input schema which `flatcc` does not - it relies on
+generated code instead which is faster, but not always as flexible.
 
-See also:
+`flatcc` has no external dependencies except for build and compiler
+tools, and the C runtime library.
 
-
-- [Google FPL FlatBuffers](http://google.github.io/flatbuffers/)
-
-- [Online Forum](https://groups.google.com/forum/#!forum/flatbuffers)
-
-- [Build Instructions](https://github.com/dvidelabs/flatcc#building)
+**NOTE: Big-endian platforms are untested but supported in principle.**
 
 
 ## Status
 
 The project is still young but test cases cover most functionality and
 has been run on OS-X 10.11 with clang and Ubuntu 14.04 with gcc on the
-x86-64 platform. Centos 7.1 has also passed tests after build updates
-post flatcc-v0.2.0, but Centos is not part of regular pre-release test
-procedures. The only external dependencies are the build and compiler
-tools.
+x86-64 platform and MSVC 14 2015 on Win32. Centos 7.1 is not reguarly
+tested but is known to work in flatcc 0.3.1 with CMake 0.2.11.
 
-Buffer verification was introduced in v0.1.1 which verifies boundaries
-and alignment. Please note that verification does not ensure that it is
-safe to mutate buffers because an attacker may still overlap objects
-within the buffer.
+Buffer verification was introduced in flatcc 0.1.1 which verifies
+boundaries and alignment. Please note that verification does not ensure
+that it is safe to mutate buffers because an attacker may still overlap
+objects within the buffer.
 
 Native code generation for FlatBuffer JSON printing and parsing added in
 0.2.0. This is a very fast json processor that can parse or print a 700
@@ -79,11 +86,11 @@ meaningful errors without loss of performance, e.g. that a buffer failed
 due to a string that was not zero terminated, or a vector was aligned to
 its element size.
 
-Version 0.3.0 introduced breaking changes related to vector API, see
+Version 0.3.0 introduced breaking changes related to vector operators, see
 [CHANGELOG for 0.3.0](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030)
 
-Windows 32-bit builds with MSVC 14 2015 are supported post 0.3.0 and
-pass all tests.
+Centos support was added in flatcc 0.2.1 and Windows support in flatcc
+0.3.1.
 
 Big endian platforms have not been tested at all. While care has been
 taken to handle endian encoding, there are bound to be some issues. The
@@ -631,7 +638,7 @@ quoted in order to be compatible with Googles flatc tool for Flatbuffers
 
     color: "Green Red"
 
-The following is also accepted in flatc v0.2.0, but subsequent releases
+The following is also accepted in flatcc 0.2.0, but subsequent releases
 only permits it if explicitly enabled at compile time.
 
     color: Green Red

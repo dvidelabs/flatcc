@@ -1,14 +1,14 @@
 # Change Log
 
-## [0.3.0.x]
+## [0.3.1]
 
-- Support Windows build and tests.
+- Add support for MSVC on Windows.
 - Allow FlatBuffer enums to be used in switch statements without warnings.
 - Remove warnings for 32-bit builds.
-- Fix endian handling when endianness is detected at runtime and
-  support more platforms without runtime detection.
+- Fix runtime detection of endianness and add support for more
+  platforms with compile time detection of endianness.
 - Fix scope bug where global namespace symbols from included schema
-  would be invisible to parent.
+  would be invisible in parent schema.
 - Add missing `static` for generated union verifiers.
 - Fix bug in json printer unicode escape and hash table bug in
   compiler.

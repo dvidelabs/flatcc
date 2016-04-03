@@ -7,7 +7,7 @@
 # headers based on config/config.h.
 # and finally, remember to tag git, e.g.: git tag v0.0.1
 
-VER=0.3.0.x
+VER=0.3.1
 
 echo "archiving tagged version ${VER} to release folder"
 
