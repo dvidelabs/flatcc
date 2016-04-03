@@ -264,6 +264,9 @@ static inline int gen_pragma_push(output_t *out)
                 "#pragma GCC diagnostic ignored \"-Wunused-function\"\n"
                 "#pragma GCC diagnostic ignored \"-Wunused-variable\"\n"
                 "#pragma GCC diagnostic ignored \"-Wunused-parameter\"\n"
+                "#elif defined _MSC_VER\n"
+                "#pragma warning( push )\n"
+                "#pragma warning(disable: 4101) /* unused local variable */\n"
                 "#endif\n");
     }
     return 0;
@@ -277,6 +280,8 @@ static inline int gen_pragma_pop(output_t *out)
                 "#pragma clang diagnostic pop\n"
                 "#elif defined __GNUC__\n"
                 "#pragma GCC diagnostic pop\n"
+                "#elif defined _MSC_VER\n"
+                "#pragma warning( pop )\n"
                 "#endif\n");
     }
     return 0;
