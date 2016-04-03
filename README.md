@@ -46,15 +46,18 @@ also does not preserve the order of structs. The option is controlled by
 a flag in `config.h` The generated source supports both bottom-up and
 top-down construction mixed freely.
 
-Supported FlatBuffer features are code geration for building, verifying,
+Supported FlatBuffer features are code generation for building, verifying,
 and reading FlatBuffers, incl. basic support for reflection via reading
-and writing binary (.bfbs) files, excluding support mutations. There is
-also code generation for printing and parsing FlatBuffers to and from
-JSON which is compatible with Googles `flatc` tool.
+and writing binary (.bfbs) files but no support for mutations. There is
+also code generation for printing and parsing FlatBuffers.
 
-The JSON format is compatible with Googles `flatc` tool which parses
-JSON based on an input schema which `flatcc` does not - it relies on
-generated code instead which is faster, but not always as flexible.
+The JSON format is compatible with Googles `flatc` tool but there are
+differences: `flatcc` generates printer and parser code from a schema,
+while `flatc` takes a schema as input and prints or parses JSON without
+any code generation. The `flatcc` approach is likely much faster and
+easier to deploy for known schema but `flatc` easier adapts to new
+schema and provides a command line interface for conversion, so both
+tools have their place.
 
 `flatcc` has no external dependencies except for build and compiler
 tools, and the C runtime library.
