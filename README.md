@@ -70,7 +70,8 @@ tools, and the C runtime library.
 The project is still young but test cases cover most functionality and
 has been run on OS-X 10.11 with clang and Ubuntu 14.04 with gcc on the
 x86-64 platform and MSVC 14 2015 on Win32. Centos 7.1 is not reguarly
-tested but is known to work in flatcc 0.3.1 with CMake 0.2.11.
+tested but is known to work in flatcc 0.3.1 with CMake 2.8.11 and GNU
+Make.
 
 Buffer verification was introduced in flatcc 0.1.1 which verifies
 boundaries and alignment. Please note that verification does not ensure
