@@ -82,8 +82,8 @@ its element size.
 Version 0.3.0 introduced breaking changes related to vector API, see
 [CHANGELOG for 0.3.0](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030)
 
-Post 0.3.0 basic support for compiling on Windows has been added, but
-no tests.
+Post 0.3.0 Windows is supported, but some some non-essential features
+such as JSON parsing and custom emitters currently do no pass tests.
 
 Big endian platforms have not been tested at all. While care has been
 taken to handle endian encoding, there are bound to be some issues. The
@@ -1110,9 +1110,13 @@ OS-X also has a HomeBrew package:
 
 ### Windows Build (MSVC)
 
-**The Windows build compiles without warnings but requires
-`-DFLATCC_PORTABLE` as seen in the top-level `CMakeLists.txt` file.
-No tests have been run yet as these rely on shell scripts.**
+The Windows build support is very recent. JSON and custom emitters do
+not pass tests and these have been disabled, and benchmarks have not
+been ported. Essential features such as constructing, verifying and
+deconstructing buffers do pass.
+
+Make sure to use the `-DFLATCC_PORTABLE` flag as is done in the
+top-level `CMakeLists.txt` file.
 
 Install CMake, MSVC, and git (tested with MSVC 14 2015).
 
@@ -1123,6 +1127,11 @@ In PowerShell:
     mkdir build\MSVC
     cd build\MSVC
     cmake -G "Visual Studio 14 2015" ..\..
+
+Optionally also build from the command line (in build\MSVC):
+
+    cmake --build . --target --config Debug
+    cmake --build . --target --config Release
 
 In Visual Studio:
 
@@ -1194,6 +1203,27 @@ To make sure everything works, also run the benchmarks:
 
     scripts/benchmark.sh
 
+
+## Testing (Windows)
+
+In Visual Studio the test can be run as follows: first build the main
+project, the right click the `RUN_TESTS` target and chose build. See
+the output window for test results.
+
+It is also possible to run tests from the command line after the project has
+been built:
+
+    cd build\MSVC
+    ctest
+
+Note that some tests have been disabled in:
+
+    `test\CMakeLists.txt`
+
+The disabled tests are not working on Windows. These affect custom
+emitters and JSON printers and parsers, not ordinary FlatBuffer usage.
+
+Benchmarks have not been ported to Windows.
 
 
 ## Configuration
