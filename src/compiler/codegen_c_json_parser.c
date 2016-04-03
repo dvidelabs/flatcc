@@ -216,7 +216,7 @@ static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
                 && member->type.ct->symbol.kind == fb_is_union;
         if (is_union) {
             ++n;
-            strbufsiz += member->symbol.ident->len + 1;
+            strbufsiz += member->symbol.ident->len + 6;
         }
         ++n;
     }
