@@ -4,8 +4,7 @@
 #include <stdio.h>
 
 /* Based on http://stackoverflow.com/a/8583395 */
-
-#ifndef __CYGWIN32__
+#if !defined(_WINDOWS)
 #include <sys/time.h>
 static double elapsed_realtime(void) { // returns 0 seconds first time called
     static struct timeval t0;
@@ -17,8 +16,11 @@ static double elapsed_realtime(void) { // returns 0 seconds first time called
 }
 #else
 #include <windows.h>
+#ifndef FatalError
+#define FatalError(s) do { perror(s); exit(-1); } while(0)
+#endif
 static double elapsed_realtime(void) { // granularity about 50 microsecs on my machine
-    static LARGE_INTEGER freq, start;
+	static LARGE_INTEGER freq, start;
     LARGE_INTEGER count;
     if (!QueryPerformanceCounter(&count))
         FatalError("QueryPerformanceCounter");
