@@ -1,0 +1,2 @@
+# We do a binary comparison test, so we need it to be unchanged on Windows.
+monsterdata_test.golden -text
