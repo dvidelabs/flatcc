@@ -82,8 +82,8 @@ its element size.
 Version 0.3.0 introduced breaking changes related to vector API, see
 [CHANGELOG for 0.3.0](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030)
 
-Post 0.3.0 Windows is supported, but some some non-essential features
-such as JSON parsing and custom emitters currently do no pass tests.
+Windows 32-bit builds with MSVC 14 2015 are supported post 0.3.0 and
+pass all tests.
 
 Big endian platforms have not been tested at all. While care has been
 taken to handle endian encoding, there are bound to be some issues. The
@@ -1110,14 +1110,6 @@ OS-X also has a HomeBrew package:
 
 ### Windows Build (MSVC)
 
-The Windows build support is very recent. JSON and custom emitters do
-not pass tests and these have been disabled, and benchmarks have not
-been ported. Essential features such as constructing, verifying and
-deconstructing buffers do pass.
-
-Make sure to use the `-DFLATCC_PORTABLE` flag as is done in the
-top-level `CMakeLists.txt` file.
-
 Install CMake, MSVC, and git (tested with MSVC 14 2015).
 
 In PowerShell:
@@ -1140,7 +1132,9 @@ In Visual Studio:
     choose Release build configuration menu
     rebuild solution
 
-*Note that `flatcc\CMakeList.txt` sets the `-DFLATCC_PORTABLE` flag.*
+*Note that `flatcc\CMakeList.txt` sets the `-DFLATCC_PORTABLE` flag and
+that `include\flatcc\portable\pwarnings.h` disable certain warnings for
+warning level -W3.*
 
 
 ## Distribution
@@ -1187,15 +1181,15 @@ The build products from MSVC are placed in the bin and lib subdirectories:
 Runtime `include\flatcc` directory is distributed like other platforms.
 
 
-## Testing (Unix)
+## Running Tests on Unix
 
 Run
 
-    scripts/test.sh
+    scripts/test.sh [--no-clean]
 
-It will also initialize the build if needed. Several sub-tests have
-shell scripts that can be run in isolation. A large dataset test is part
-of the test, but a separate benchmark is not. See benchmark section.
+**NOTE:** The test script will clean everything in the build directy before
+initializing CMake with the chosen or default build configuration, then
+build Debug and Release builds, and run tests for both.
 
 The script must end with `TEST PASSED`, or it didn't pass.
 
@@ -1204,7 +1198,7 @@ To make sure everything works, also run the benchmarks:
     scripts/benchmark.sh
 
 
-## Testing (Windows)
+## Running Tests on Windows
 
 In Visual Studio the test can be run as follows: first build the main
 project, the right click the `RUN_TESTS` target and chose build. See
@@ -1223,7 +1217,17 @@ Note that some tests have been disabled in:
 The disabled tests are not working on Windows. These affect custom
 emitters and JSON printers and parsers, not ordinary FlatBuffer usage.
 
-Benchmarks have not been ported to Windows.
+Be aware that tests copy and generate certain files which are not
+automatically cleaned by Visual Studio. Close the solution and wipe the
+`MSVC` directory, and start over to get a guaranteed clean build.
+
+Please also observe that the file `.gitattributes` is used to prevent
+certain files from getting Windows line endings. Using another source
+control systems might break tests, notably
+`test/flatc_compat/monsterdata_test.golden`.
+
+
+*Note: Benchmarks have not been ported to Windows.*
 
 
 ## Configuration

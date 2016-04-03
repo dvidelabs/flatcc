@@ -2,16 +2,18 @@
 
 ## [0.3.0.x]
 
-- Support Windows build (essential features pass tests, but not yet JSON).
+- Support Windows build and tests.
+- Allow FlatBuffer enums to be used in switch statements without warnings.
 - Remove warnings for 32-bit builds.
 - Fix endian handling when endianness is detected at runtime and
   support more platforms without runtime detection.
-- Allow FlatBuffer enums to be used in switch statements without warnings.
 - Fix scope bug where global namespace symbols from included schema
   would be invisible to parent.
 - Add missing `static` for generated union verifiers.
 - Fix bug in json printer unicode escape and hash table bug in
   compiler.
+- Fix json parser under allocation bug.
+- Fix `emit_test` early dealloc bug.
 
 ## [0.3.0]
 

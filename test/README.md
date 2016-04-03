@@ -1,6 +1,5 @@
-Run ./test.sh for testing that sane schemas compile and that the output
-is accepted by a C compiler. It is not full check of the generated code.
-the code is automatically built in debug and release versions.
+NOTE: shell scripts driven by flatcc/test/test.sh have been ported to CMake.
+use flatcc/scripts/test.sh to drive CMake tests.
 
 Run `leakcheck.sh` and `leakcheck-full.sh` for memory checks.
 
