@@ -2,19 +2,16 @@
 
 ## [0.3.0.x]
 
-- Fix a few problems in the include/flatcc/portable library which
-  were breaking MSVC Windows builds.
-- Add dedicated MSVC CFLAGS for Windows in CMake build configuration.
-- Fix bug in json printer unicode escape and hash table bug in
-  compiler.
+- Support Windows build (essential features pass tests, but not yet JSON).
 - Remove warnings for 32-bit builds.
 - Fix endian handling when endianness is detected at runtime and
   support more platforms without runtime detection.
-- Generated enums and union types now use type cast defines instead of
-  const integer variables to avoid non-standard use in switch
-  statements.
-- Fix global scope error for included schema files.
+- Allow FlatBuffer enums to be used in switch statements without warnings.
+- Fix scope bug where global namespace symbols from included schema
+  would be invisible to parent.
 - Add missing `static` for generated union verifiers.
+- Fix bug in json printer unicode escape and hash table bug in
+  compiler.
 
 ## [0.3.0]
 
