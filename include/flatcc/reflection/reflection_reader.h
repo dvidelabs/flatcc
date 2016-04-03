@@ -13,10 +13,15 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wunused-parameter"
 #elif defined __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif defined _MSC_VER
+#pragma warning( push )
+#pragma warning(disable: 4101) /* unused local variable */
 #endif
 #undef flatbuffers_identifier
 #define flatbuffers_identifier "BFBS"
@@ -342,5 +347,7 @@ __flatbuffers_field_present(4, t)
 #pragma clang diagnostic pop
 #elif defined __GNUC__
 #pragma GCC diagnostic pop
+#elif defined _MSC_VER
+#pragma warning( pop )
 #endif
 #endif /* REFLECTION_H */

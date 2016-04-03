@@ -9,10 +9,15 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wunused-parameter"
 #elif defined __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif defined _MSC_VER
+#pragma warning( push )
+#pragma warning(disable: 4101) /* unused local variable */
 #endif
 #ifndef FLATBUILDER_H
 #include "flatcc/flatcc_builder.h"
@@ -94,7 +99,7 @@ static inline T *V ## _edit(NS ## builder_t *B)\
 static inline size_t V ## _reserved_len(NS ## builder_t *B)\
 { return flatcc_builder_vector_count(B); }\
 static inline T *V ## _push(NS ## builder_t *B, const T *p)\
-{ T *_p; return (_p = flatcc_builder_extend_vector(B, 1)) ? ((*_p = *p), _p) : 0; }\
+{ T *_p; return (_p = flatcc_builder_extend_vector(B, 1)) ? (memcpy(_p, p, TN ## __size()), _p) : 0; }\
 static inline T *V ## _push_copy(NS ## builder_t *B, const T *p)\
 { T *_p; return (_p = flatcc_builder_extend_vector(B, 1)) ? TN ## _copy(_p, p) : 0; }\
 static inline T *V ## _push_create(NS ## builder_t *B __ ## TN ## _formal_args)\
@@ -108,19 +113,20 @@ static inline N ## _vec_ref_t N ## _vec_end_pe(NS ## builder_t *B)\
 { return flatcc_builder_end_vector(B); }\
 static inline N ## _vec_ref_t N ## _vec_end(NS ## builder_t *B)\
 { if (!NS ## is_native_pe()) { size_t i, n; T *p = flatcc_builder_vector_edit(B);\
-    for (i = 0, n = flatcc_builder_vector_count(B); i < n; ++i, ++p) { N ## _to_pe(p); }}\
-  return flatcc_builder_end_vector(B); }\
+    for (i = 0, n = flatcc_builder_vector_count(B); i < n; ++i)\
+    { N ## _to_pe(N ## __ptr_add(p, i)); }} return flatcc_builder_end_vector(B); }\
 static inline N ## _vec_ref_t N ## _vec_create_pe(NS ## builder_t *B, const T *data, size_t len)\
 { return flatcc_builder_create_vector(B, data, len, S, A, FLATBUFFERS_COUNT_MAX(S)); }\
 static inline N ## _vec_ref_t N ## _vec_create(NS ## builder_t *B, const T *data, size_t len)\
 { if (!NS ## is_native_pe()) { size_t i; T *p; int ret = flatcc_builder_start_vector(B, S, A, FLATBUFFERS_COUNT_MAX(S)); if (ret) { return ret; }\
-  p = flatcc_builder_extend_vector(B, len); if (!p) return 0; for (i = 0; i < len; ++i) { N ## _copy_to_pe(p + i, data + i); }\
+  p = flatcc_builder_extend_vector(B, len); if (!p) return 0;\
+  for (i = 0; i < len; ++i) { N ## _copy_to_pe(N ## __ptr_add(p, i), N ## __const_ptr_add(data, i)); }\
   return flatcc_builder_end_vector(B); } else return flatcc_builder_create_vector(B, data, len, S, A, FLATBUFFERS_COUNT_MAX(S)); }\
 static inline N ## _vec_ref_t N ## _vec_clone(NS ## builder_t *B, N ##_vec_t vec)\
 { return flatcc_builder_create_vector(B, vec, N ## _vec_len(vec), S, A, FLATBUFFERS_COUNT_MAX(S)); }\
 static inline N ## _vec_ref_t N ## _vec_slice(NS ## builder_t *B, N ##_vec_t vec, size_t index, size_t len)\
 { size_t n = N ## _vec_len(vec); if (index >= n) index = n; n -= index; if (len > n) len = n;\
-  return flatcc_builder_create_vector(B, vec + index, len, S, A, FLATBUFFERS_COUNT_MAX(S)); }\
+  return flatcc_builder_create_vector(B, N ## __const_ptr_add(vec, index), len, S, A, FLATBUFFERS_COUNT_MAX(S)); }\
 __flatbuffers_build_vector_ops(NS, N ## _vec, N, N, T)
 
 #define __flatbuffers_build_string_vector_ops(NS, N)\
@@ -233,7 +239,7 @@ static inline N ## _t *N ##_to_pe(N ## _t *p)\
 { if (!NS ## is_native_pe()) { N ## _copy_to_pe(p, p); }; return p; }\
 static inline N ## _t *N ##_from_pe(N ## _t *p)\
 { if (!NS ## is_native_pe()) { N ## _copy_from_pe(p, p); }; return p; }\
-static inline N ## _t *N ## _clear(N ## _t *p) { return memset(p, 0, sizeof(*p)); }\
+static inline N ## _t *N ## _clear(N ## _t *p) { return memset(p, 0, N ## __size()); }
 
 /* Depends on generated copy/assign_to/from_pe functions, and the type. */
 #define __flatbuffers_build_struct(NS, N, S, A, FID)\
@@ -309,7 +315,7 @@ static inline TN ## _t *N ## _start(NS ## builder_t *B)\
 { return flatcc_builder_table_add(B, ID, S, A); }\
 static inline int N ## _end(NS ## builder_t *B)\
 { if (!NS ## is_native_pe()) { TN ## _to_pe(flatcc_builder_table_edit(B, S)); } return 0; }\
-static inline int N ## _end_pe(NS ## builder_t *B) { (void)B; return 0; };\
+static inline int N ## _end_pe(NS ## builder_t *B) { return 0; }\
 static inline int N ## _create(NS ## builder_t *B __ ## TN ## _formal_args)\
 { TN ## _t *_p = N ## _start(B); if (!_p) return 0; TN ##_assign_to_pe(_p __ ## TN ## _call_args);\
  return 0; }\
@@ -417,5 +423,7 @@ __flatbuffers_build_buffer(flatbuffers_)
 #pragma clang diagnostic pop
 #elif defined __GNUC__
 #pragma GCC diagnostic pop
+#elif defined _MSC_VER
+#pragma warning( pop )
 #endif
 #endif /* FLATBUFFERS_COMMON_BUILDER_H */
