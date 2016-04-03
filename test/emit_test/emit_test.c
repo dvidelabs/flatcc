@@ -3,7 +3,7 @@
 #include "emit_test_builder.h"
 #include "support/hexdump.h"
 
-#define test_assert(x) do { assert(x); if (!(x)) return -1; } while(0)
+#define test_assert(x) do { if (!(x)) { assert(0); return -1; }} while(0)
 
 int dbg_emitter(void *emit_context,
         const flatcc_iovec_t *iov, int iov_count,
@@ -68,7 +68,7 @@ int emit_test()
 
     (void)expect;
     main_table_t mt;
-    long time;
+    uint64_t time;
 
     B = &builder;
 
@@ -91,7 +91,6 @@ int emit_test()
     }
     test_assert(size == flatcc_emitter_get_buffer_size(E));
     test_assert(size == flatcc_builder_get_buffer_size(B));
-    flatcc_builder_clear(B);
 
     fprintf(stderr, "buffer size: %d\n", (int)size);
     hexdump("emit_test", buf, size, stderr);
@@ -107,6 +106,8 @@ int emit_test()
     test_assert(flatbuffers_float_vec_len(main_samples(mt)) == 4);
     test_assert(flatbuffers_float_vec_at(main_samples(mt), 2) == 1.2f);
 
+    /* We use get_direct_buffer, so we can't clear the builder until last. */
+    flatcc_builder_clear(B);
     return 0;
 }
 

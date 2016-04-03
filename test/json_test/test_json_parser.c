@@ -27,7 +27,7 @@
 #undef ns
 #define ns(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Example, x)
 
-#define test_assert(x) do { assert(x); if (!(x)) return -1; } while(0)
+#define test_assert(x) do { if (!(x)) { assert(0); return -1; }} while(0)
 
 /* A helper to simplify creating buffers vectors from C-arrays. */
 #define c_vec_len(V) (sizeof(V)/sizeof((V)[0]))
