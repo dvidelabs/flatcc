@@ -13,7 +13,7 @@
 #define c_vec_len(V) (sizeof(V)/sizeof((V)[0]))
 
 // This allows us to verify result in optimized builds.
-#define test_assert(x) do { assert(x); if (!(x)) return -1; } while(0)
+#define test_assert(x) do { if (!(x)) { assert(0); return -1; }} while(0)
 
 // Bottom-up approach where we create child objects and store these
 // in temporary references before a parent object is created with
