@@ -43,7 +43,7 @@ static int show_benchmark(const char *descr, double t1, double t2, size_t size, 
     printf("operation: %s\n", descr);
     printf("elapsed time: %.3f (s)\n", tdiff);
     printf("iterations: %d\n", rep);
-    printf("size: %ld (bytes)\n", size);
+    printf("size: %zu (bytes)\n", size);
     printf("bandwidth: %.3f (MB/s)\n", (double)rep * size / 1e6 / tdiff);
     printf("throughput in ops per sec: %.3f\n", rep / tdiff);
     if (reptext && rep != 1) {
