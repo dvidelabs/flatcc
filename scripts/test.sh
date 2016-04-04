@@ -7,7 +7,7 @@ cd $HERE/..
 ROOT=`pwd`
 
 DBGDIR=$ROOT/build/Debug
-RELDIR=$ROOT/build/Releae
+RELDIR=$ROOT/build/Release
 
 if [ "$1" != "--no-clean" ]; then
 echo "cleaning build before tests ..."
@@ -21,7 +21,7 @@ echo "running test in debug build ..."
 cd $DBGDIR && ctest $ROOT
 
 echo "running test in release build ..."
-cd $DBGDIR && ctest $ROOT
+cd $RELDIR && ctest $ROOT
 
 echo "TEST PASSED"
 
