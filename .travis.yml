@@ -1,0 +1,29 @@
+language: c
+
+sudo: required
+dist: trusty
+
+os:
+  - linux
+  - osx
+
+compiler:
+  - gcc
+  - clang
+
+addons:
+  apt:
+    packages:
+      - ninja-build
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+
+install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ninja; fi
+
+script:
+  - scripts/initbuild.sh ninja
+  - scripts/test.sh
+  - scripts/initbuild.sh make-concurrent
+  - scripts/test.sh
