@@ -508,7 +508,7 @@ static const char *__flatcc_json_parser_number(flatcc_json_parser_t *ctx, const 
 const char *flatcc_json_parser_double(flatcc_json_parser_t *ctx, const char *buf, const char *end, double *v)
 {
     *v = 0.0;
-    buf = parse_double(buf, end - buf, v);
+    buf = parse_double(buf, (int)(end - buf), v);
     if (buf == 0) {
         if (isinf(*v)) {
             if (*v >= 0.0) {
@@ -527,7 +527,7 @@ const char *flatcc_json_parser_double(flatcc_json_parser_t *ctx, const char *buf
 const char *flatcc_json_parser_float(flatcc_json_parser_t *ctx, const char *buf, const char *end, float *v)
 {
     *v = 0.0;
-    buf = parse_float(buf, end - buf, v);
+    buf = parse_float(buf, (int)(end - buf), v);
     if (buf == 0) {
         if (isinf(*v)) {
             if (*v >= 0.0) {

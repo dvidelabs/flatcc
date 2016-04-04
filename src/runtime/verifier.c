@@ -150,7 +150,7 @@ static inline const void *get_field_ptr(flatcc_table_verifier_descriptor_t *td, 
 }
 
 static int verify_field(flatcc_table_verifier_descriptor_t *td,
-        voffset_t id, int required, uint16_t align, size_t size)
+        voffset_t id, int required, uint16_t align, uoffset_t size)
 {
     uoffset_t k, k2;
     voffset_t vte;
@@ -308,7 +308,7 @@ static inline int verify_table_vector(const void *buf, uoffset_t end, uoffset_t 
 int flatcc_verify_field(flatcc_table_verifier_descriptor_t *td,
         voffset_t id, uint16_t align, size_t size)
 {
-    check_result(verify_field(td, id, 0, align, size));
+    check_result(verify_field(td, id, 0, align, (uoffset_t)size));
     return flatcc_verify_ok;
 }
 
@@ -328,7 +328,7 @@ int flatcc_verify_vector_field(flatcc_table_verifier_descriptor_t *td,
 
     check_field(td, id, required, base);
     return verify_vector(td->buf, td->end, base, read_uoffset(td->buf, base),
-        align, elem_size, max_count);
+        align, (uoffset_t)elem_size, (uoffset_t)max_count);
 }
 
 int flatcc_verify_string_vector_field(flatcc_table_verifier_descriptor_t *td,
@@ -377,13 +377,13 @@ int flatcc_verify_buffer_header(const void *buf, size_t bufsiz, const char *fid)
 int flatcc_verify_struct_as_root(const void *buf, size_t bufsiz, const char *fid, uint16_t align, size_t size)
 {
     check_result(flatcc_verify_buffer_header(buf, bufsiz, fid));
-    return verify_struct((uoffset_t)bufsiz, read_uoffset(buf, 0), align, size);
+    return verify_struct((uoffset_t)bufsiz, read_uoffset(buf, 0), align, (uoffset_t)size);
 }
 
 int flatcc_verify_table_as_root(const void *buf, size_t bufsiz, const char *fid, flatcc_table_verifier_f *tvf)
 {
-    check_result(flatcc_verify_buffer_header(buf, bufsiz, fid));
-    return verify_table(buf, bufsiz, 0, read_uoffset(buf, 0), FLATCC_VERIFIER_MAX_LEVELS, tvf);
+    check_result(flatcc_verify_buffer_header(buf, (uoffset_t)bufsiz, fid));
+    return verify_table(buf, (uoffset_t)bufsiz, 0, read_uoffset(buf, 0), FLATCC_VERIFIER_MAX_LEVELS, tvf);
 }
 
 int flatcc_verify_struct_as_nested_root(flatcc_table_verifier_descriptor_t *td,

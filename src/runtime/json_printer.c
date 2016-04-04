@@ -138,7 +138,7 @@ int flatcc_json_printer_fmt_bool(char *buf, int n)
     return 5;
 }
 
-static void print_string_part(flatcc_json_printer_t *ctx, const char *name, int len)
+static void print_string_part(flatcc_json_printer_t *ctx, const char *name, size_t len)
 {
     size_t k;
 
