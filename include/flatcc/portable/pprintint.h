@@ -412,17 +412,17 @@ static int UNAME(UT n, char *buf)                                           \
                                                                             \
     while (n >= 100) {                                                      \
         p -= 2;                                                             \
-        m = (n % 100) * 2;                                                  \
+        m = (unsigned int)(n % 100) * 2;                                    \
         n /= 100;                                                           \
         __print_unaligned_copy_16(p, __print_digit_pairs + m);              \
     }                                                                       \
     p -= 2;                                                                 \
-    m = n * 2;                                                              \
+    m = (unsigned int)n * 2;                                                \
     __print_unaligned_copy_16(p, __print_digit_pairs + m);                  \
     if (n < 10) {                                                           \
         ++p;                                                                \
     }                                                                       \
-    k = q - p;                                                              \
+    k = (unsigned int)(q - p);                                              \
     while (p != q) {                                                        \
         *buf++ = *p++;                                                      \
     }                                                                       \

@@ -470,7 +470,7 @@ static const char *grisu3_parse_double(const char *buf, int len, double *result)
         }
         fraction = fraction * 10 + *buf++ - '0';
     }
-    fraction_exp = buf - k;
+    fraction_exp = (int)(buf - k);
     /* Skip surplus digits. Trailing zero does not introduce error. */
     while (buf != end && *buf == '0') {
         ++exponent;
@@ -503,7 +503,7 @@ static const char *grisu3_parse_double(const char *buf, int len, double *result)
             fraction = fraction * 10 + *buf++ - '0';
             --exponent;
         }
-        fraction_exp += buf - k;
+        fraction_exp += (int)(buf - k);
         while (buf != end && *buf == '0') {
             ++exponent;
             ++buf;
