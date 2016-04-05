@@ -1,6 +1,8 @@
 #include <string.h>
 #include <stdio.h>
 
+/* Ensures portable headers are included such as inline. */
+#include "config.h"
 #include "fileio.h"
 
 /* `strnlen` not widely supported. */
