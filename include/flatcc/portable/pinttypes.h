@@ -42,6 +42,8 @@
 #define PRIx16 PRINTF_INT16_MODIFIER "x"
 #endif
 
+# endif /* __STDC__ */
+
 #ifndef PRIszu
 #ifdef _MSC_VER
   #define PRIszd "Id"
@@ -60,6 +62,5 @@
 #endif
 #endif
 
-# endif /* __STDC__ */
 
 #endif /* PINTTYPES */
