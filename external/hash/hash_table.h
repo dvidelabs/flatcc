@@ -25,6 +25,7 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
 
+#include "ht_portable.h"
 #include <stddef.h>
 
 /*

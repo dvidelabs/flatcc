@@ -29,6 +29,7 @@
 #ifndef CMETROHASH_METROHASH_H
 #define CMETROHASH_METROHASH_H
 
+#include "ht_portable.h"
 #include "unaligned.h"
 
 #pragma once
