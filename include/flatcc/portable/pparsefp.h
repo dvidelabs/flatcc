@@ -17,6 +17,12 @@
  */
 #include <math.h> /* for HUGE_VAL */
 
+#if defined(_MSC_VER) && !defined(isinf)
+#include <float.h>
+#define isnan _isnan
+#define isinf(x) (!_finite(x))
+#endif
+
 #ifndef PORTABLE_USE_GRISU3
 #define PORTABLE_USE_GRISU3 1
 #endif
