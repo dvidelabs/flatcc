@@ -264,7 +264,7 @@ static const char *grisu3_encode_double(const char *buf, const char *end, int si
 {
     const int max_d_exp = GRISU3_D64_MAX_DEC_EXP;
     const int min_d_exp = GRISU3_D64_MIN_DEC_EXP;
-    const double infinity = GRISU3_D64_INF;
+    const double infinity = (double)GRISU3_D64_INF;
 
     char *v_end;
 
