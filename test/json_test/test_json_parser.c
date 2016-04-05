@@ -94,7 +94,8 @@ int test_parse()
     fprintf(stderr, "%s: successfully parsed %d lines\n", filename, ctx.line);
     flatbuffer = flatcc_builder_finalize_buffer(B, &out_size);
     hexdump("parsed monsterdata_test.golden", flatbuffer, out_size, stdout);
-    fprintf(stderr, "input size: %zu, output size: %zu\n", in_size, out_size);
+    fprintf(stderr, "input size: %lu, output size: %lu\n",
+            (unsigned long)in_size, (unsigned long)out_size);
     verify_parse(flatbuffer);
 
     flatcc_builder_reset(B);

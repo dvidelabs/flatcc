@@ -80,7 +80,7 @@ static int verify_monster(const char *base, ns(Monster_table_t) mon)
     }
     for (i = 0; i < NAME_REP; ++i) {
         if (memcmp(s + i * 7, "Monster", 7)) {
-            printf("failed monster name at %zu: %s\n", i, s ? s : "NULL");
+            printf("failed monster name at %lu: %s\n", (unsigned long)i, s ? s : "NULL");
             printf("offset: %ld\n", s + i * 7 - base);
             assert(0);
             return -1;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
     if (ret) {
         goto done;
     }
-    printf("buffer size: %zu\n", size);
+    printf("buffer size: %lu\n", (unsigned long)size);
     printf("start timing ...\n");
     t1 = elapsed_realtime();
     for (i = 0; i < rep; ++i) {
