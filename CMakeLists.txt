@@ -112,9 +112,9 @@ elseif (MSVC) # using STREQUAL here conflicts with string interpretation changes
     # MSVC 2013 (1800) supports inline variable declations
     # while MSVC 2010 (1600) does not.
     if (MSVC_VERSION STRLESS "1800")
+    # This disables periferal features such as the monster sample
+    # where we don't want C89 style code.
     set (FLATCC_NEED_C89_VAR_DECLS true)
-    MESSAGE( STATUS "MSVC: " ${MSVC} )
-    MESSAGE( STATUS "Disabling features requiring C99 style inline variable declarations")
     endif()
 else()
     # Best effort
