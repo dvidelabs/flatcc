@@ -146,16 +146,16 @@ static void gen_helpers(output_t *out)
     fprintf(out->fp,
         "#define __%sread_vt(ID, offset, t)\\\n"
         "%svoffset_t offset = 0;\\\n"
-        "{\\\n"
+        "{   %svoffset_t id, *vt;\\\n"
         "    assert(t != 0 && \"null pointer table access\");\\\n"
-        "    %svoffset_t id = ID;\\\n"
-        "    %svoffset_t *vt = (%svoffset_t *)((uint8_t *)(t) -\\\n"
+        "    id = ID;\\\n"
+        "    vt = (%svoffset_t *)((uint8_t *)(t) -\\\n"
         "        __%ssoffset_read_from_pe(t));\\\n"
         "    if (__%svoffset_read_from_pe(vt) >= sizeof(vt[0]) * (id + 3)) {\\\n"
         "        offset = __%svoffset_read_from_pe(vt + id + 2);\\\n"
         "    }\\\n"
         "}\n",
-        nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+        nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "#define __%sfield_present(ID, t) { __%sread_vt(ID, offset, t) return offset != 0; }\n",
             nsc, nsc);
@@ -1311,9 +1311,9 @@ int fb_gen_c_reader(output_t *out)
 int fb_codegen_common_c(fb_options_t *opts)
 {
     output_t output, *out;
-    out = &output;
     int ret, nsc_len;
 
+    out = &output;
     if (fb_init_output(out, opts)) {
         return -1;
     }

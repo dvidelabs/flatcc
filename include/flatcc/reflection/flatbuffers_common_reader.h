@@ -26,10 +26,10 @@
 #define __flatbuffers_read_scalar(N, p) N ## _read_from_pe(p)
 #define __flatbuffers_read_vt(ID, offset, t)\
 flatbuffers_voffset_t offset = 0;\
-{\
+{   flatbuffers_voffset_t id, *vt;\
     assert(t != 0 && "null pointer table access");\
-    flatbuffers_voffset_t id = ID;\
-    flatbuffers_voffset_t *vt = (flatbuffers_voffset_t *)((uint8_t *)(t) -\
+    id = ID;\
+    vt = (flatbuffers_voffset_t *)((uint8_t *)(t) -\
         __flatbuffers_soffset_read_from_pe(t));\
     if (__flatbuffers_voffset_read_from_pe(vt) >= sizeof(vt[0]) * (id + 3)) {\
         offset = __flatbuffers_voffset_read_from_pe(vt + id + 2);\
