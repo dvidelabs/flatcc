@@ -167,8 +167,6 @@ static const char lex_alnum[256] = {
 #define lex_isalnum(c) (lex_alnum[(unsigned char)(c)])
 #endif
 
-#include <ctype.h>
-
 #ifndef lex_isbindigit
 #define lex_isbindigit(c) ((c) == '0' || (c) == '1')
 #endif
@@ -178,20 +176,20 @@ static const char lex_alnum[256] = {
 #endif
 
 #ifndef lex_isdigit
-#define lex_isdigit(c) isdigit(c)
+#define lex_isdigit(c) ((c) >= '0' && (c) <= '9')
 #endif
 
 #ifndef lex_ishexdigit
-#define lex_ishexdigit(c) isxdigit(c)
+#define lex_ishexdigit(c) (((c) >= '0' && (c) <= '9') || ((c | 0x20) >= 'a' && (c | 0x20) <= 'f'))
 #endif
 
 #ifndef lex_isctrl
 #include <ctype.h>
-#define lex_isctrl(c) iscntrl(c)
+#define lex_isctrl(c) ((c) < 0x20)
 #endif
 
 #ifndef lex_isblank
-#define lex_isblank(c) isblank(c)
+#define lex_isblank(c) ((c) == ' ' || (c) == '\t')
 #endif
 
 #ifndef lex_iszterm
