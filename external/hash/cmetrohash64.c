@@ -64,8 +64,9 @@ void cmetrohash64_1(const uint8_t * key, uint64_t len, uint32_t seed, uint8_t * 
     
     if ((end - ptr) >= 16)
     {
-        uint64_t v0 = hash + (cread_u64(ptr) * k0); ptr += 8; v0 = crotate_right(v0,33) * k1;
-        uint64_t v1 = hash + (cread_u64(ptr) * k1); ptr += 8; v1 = crotate_right(v1,33) * k2;
+        uint64_t v0, v1;
+        v0 = hash + (cread_u64(ptr) * k0); ptr += 8; v0 = crotate_right(v0,33) * k1;
+        v1 = hash + (cread_u64(ptr) * k1); ptr += 8; v1 = crotate_right(v1,33) * k2;
         v0 ^= crotate_right(v0 * k0, 35) + v1;
         v1 ^= crotate_right(v1 * k3, 35) + v0;
         hash += v1;
@@ -142,8 +143,9 @@ void cmetrohash64_2(const uint8_t * key, uint64_t len, uint32_t seed, uint8_t * 
     
     if ((end - ptr) >= 16)
     {
-        uint64_t v0 = hash + (cread_u64(ptr) * k2); ptr += 8; v0 = crotate_right(v0,29) * k3;
-        uint64_t v1 = hash + (cread_u64(ptr) * k2); ptr += 8; v1 = crotate_right(v1,29) * k3;
+        uint64_t v0, v1;
+        v0 = hash + (cread_u64(ptr) * k2); ptr += 8; v0 = crotate_right(v0,29) * k3;
+        v1 = hash + (cread_u64(ptr) * k2); ptr += 8; v1 = crotate_right(v1,29) * k3;
         v0 ^= crotate_right(v0 * k0, 34) + v1;
         v1 ^= crotate_right(v1 * k3, 34) + v0;
         hash += v1;
