@@ -17,6 +17,7 @@ doc * FlatBuffers IDL parser.
 #include "semantics.h"
 #include "codegen.h"
 #include "fileio.h"
+#include "flatcc/portable/pparseint.h"
 
 void fb_default_error_out(void *err_ctx, const char *buf, int len)
 {
@@ -412,11 +413,12 @@ static fb_token_t *advance(fb_parser_t *P, long id, const char *msg, fb_token_t 
 
 static void read_integer_value(fb_parser_t *P, fb_token_t *t, fb_value_t *v, int sign)
 {
-    char *end;
+    int status;
 
     v->type = vt_uint;
-    v->u = strtoull(t->text, &end, 0);
-    if (end && end != t->text + t->len) {
+    /* The token does not store the sign internally. */
+    parse_integer(t->text, t->len, &v->u, &status);
+    if (status != PARSE_INTEGER_UNSIGNED) {
         v->type = vt_invalid;
         error_tok(P, t, "invalid integer format");
     }
