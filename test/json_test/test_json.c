@@ -15,9 +15,9 @@ int test_json(char *json, char *expect, int parse_flags, int print_flags, int li
     flatcc_builder_t builder, *B;
     flatcc_json_parser_t parser;
     flatcc_json_printer_t printer;
-    B = &builder;
     int i;
 
+    B = &builder;
     flatcc_builder_init(B);
     flatcc_json_printer_init_dynamic_buffer(&printer, 0);
     flatcc_json_printer_set_flags(&printer, print_flags);

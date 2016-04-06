@@ -3,12 +3,12 @@
 
 int main(int argc, char *argv[])
 {
-    (void)argc;
-    (void)argv;
-
     int ret;
     void *buf;
     size_t size;
+
+    (void)argc;
+    (void)argv;
 
     flatcc_builder_t builder, *B;
     B = &builder;
