@@ -6,11 +6,11 @@ int main(int argc, char *argv[])
     int ret;
     void *buf;
     size_t size;
+    flatcc_builder_t builder, *B;
 
     (void)argc;
     (void)argv;
 
-    flatcc_builder_t builder, *B;
     B = &builder;
     flatcc_builder_init(B);
 
