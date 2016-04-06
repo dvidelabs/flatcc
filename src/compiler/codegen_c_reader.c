@@ -219,8 +219,8 @@ static void gen_helpers(output_t *out)
     fprintf(out->fp,
         "/* `adjust` skips past the header for string vectors. */\n"
         "#define __%soffset_vec_at(T, vec, i, adjust)\\\n"
-        "{ assert(%svec_len(vec) > (i) && \"index out of range\");\\\n"
-        "  const %suoffset_t *elem = (vec) + (i);\\\n"
+        "{ const %suoffset_t *elem = (vec) + (i);\\\n"
+        "  assert(%svec_len(vec) > (i) && \"index out of range\");\\\n"
         "  return (T)((uint8_t *)(elem) + __%suoffset_read_from_pe(elem) + adjust); }\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
@@ -516,7 +516,7 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
     const char *tname, *tname_ns, *tname_prefix;
     int n;
     const char *s;
-    unsigned pad_index = 0, deprecated_index = 0, pad;;
+    unsigned pad_index = 0, deprecated_index = 0, pad;
     const char *kind;
     int do_pad = out->opts->cgen_pad;
     int current_key_processed, already_has_key;

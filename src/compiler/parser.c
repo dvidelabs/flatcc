@@ -1220,10 +1220,11 @@ int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
  */
 int fb_parse(fb_parser_t *P, const char *input, int len, int own_buffer)
 {
-    P->line = input;
-    P->linenum = 1;
     static const char *id_none = "NONE";
     static const char *id_ubyte = "ubyte";
+
+    P->line = input;
+    P->linenum = 1;
 
     /* Used with union defaults. */
     inject_token(&P->t_none, id_none, LEX_TOK_ID);

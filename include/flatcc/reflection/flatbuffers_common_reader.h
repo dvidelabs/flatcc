@@ -77,8 +77,8 @@ __flatbuffers_vec_len(vec)
 { assert(flatbuffers_vec_len(vec) > (i) && "index out of range"); return (vec) + (i); }
 /* `adjust` skips past the header for string vectors. */
 #define __flatbuffers_offset_vec_at(T, vec, i, adjust)\
-{ assert(flatbuffers_vec_len(vec) > (i) && "index out of range");\
-  const flatbuffers_uoffset_t *elem = (vec) + (i);\
+{ const flatbuffers_uoffset_t *elem = (vec) + (i);\
+  assert(flatbuffers_vec_len(vec) > (i) && "index out of range");\
   return (T)((uint8_t *)(elem) + __flatbuffers_uoffset_read_from_pe(elem) + adjust); }
 #define __flatbuffers_define_scalar_vec_len(N) \
 static inline flatbuffers_uoffset_t N ## _vec_len(N ##_vec_t vec)\

@@ -624,6 +624,7 @@ static void gen_field_match(output_t *out, fb_compound_type_t *ct, void *data, i
 static void gen_enum_match_handler(output_t *out, fb_compound_type_t *ct, void *data, int unused_hint)
 {
     fb_member_t *member = data;
+
     (void)unused_hint;
 
     /*
@@ -666,12 +667,11 @@ static void gen_enum_match(output_t *out, fb_compound_type_t *ct, void *data, in
 static void gen_scope_match_handler(output_t *out, fb_compound_type_t *unused_ct, void *data, int unused_hint)
 {
     fb_compound_type_t *ct = data;
+    fb_scoped_name_t snt;
+
     (void)unused_ct;
     (void)unused_hint;
-
     assert(ct->symbol.kind == fb_is_enum || ct->symbol.kind == fb_is_union);
-
-    fb_scoped_name_t snt;
 
     fb_clear(snt);
     fb_compound_name(ct, &snt);

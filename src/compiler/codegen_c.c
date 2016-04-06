@@ -169,9 +169,9 @@ void fb_scoped_symbol_name(fb_scope_t *scope, fb_symbol_t *sym, fb_scoped_name_t
 int fb_codegen_c(fb_options_t *opts, fb_schema_t *S)
 {
     output_t output, *out;
-    out = &output;
     int ret, basename_len;
 
+    out = &output;
     if (fb_init_output(out, opts)) {
         return -1;
     }
