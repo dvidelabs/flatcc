@@ -109,6 +109,13 @@ elseif (MSVC) # using STREQUAL here conflicts with string interpretation changes
     # -W3 is the highest warning level that is reasonable.
     # See include/flatcc/portable/pwarnings.h for disabled warnings.
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W3 -D_CRT_SECURE_NO_WARNINGS")
+    # MSVC 2013 (1800) supports inline variable declations
+    # while MSVC 2010 (1600) does not.
+    if (MSVC_VERSION STRLESS "1800")
+    set (FLATCC_NEED_C89_VAR_DECLS true)
+    MESSAGE( STATUS "MSVC: " ${MSVC} )
+    MESSAGE( STATUS "Disabling features requiring C99 style inline variable declarations")
+    endif()
 else()
     # Best effort
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
