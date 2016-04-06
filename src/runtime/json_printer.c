@@ -986,12 +986,10 @@ int flatcc_json_printer_init_buffer(flatcc_json_printer_t *ctx, char *buffer, si
 
 static void __flatcc_json_printer_flush_dynamic_buffer(flatcc_json_printer_t *ctx, int all)
 {
-    (void)all;
-
     size_t len = ctx->p - ctx->buf;
-
     char *p = realloc(ctx->buf, ctx->size * 2);
 
+    (void)all;
     ctx->total += len;
     if (!p) {
         RAISE_ERROR(overflow);
