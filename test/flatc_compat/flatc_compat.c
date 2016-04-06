@@ -155,11 +155,12 @@ int main(int argc, char *argv[])
 {
     int ret;
     size_t size;
+    void *buffer;
 
     (void)argc;
     (void)argv;
 
-    void *buffer = read_file("monsterdata_test.mon", 1024, &size);
+    buffer = read_file("monsterdata_test.mon", 1024, &size);
 
     if (!buffer) {
         fprintf(stderr, "could not read binary test file\n");

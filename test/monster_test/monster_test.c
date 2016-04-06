@@ -661,8 +661,7 @@ int gen_monster(flatcc_builder_t *B)
     ns(Monster_testarrayoftables_start(B));
 
     ns(Monster_vec_push_start(B));
-    /* Same as using Any_as_Monster used earlier, but here explicit. */
-    ns(Monster_test_add)(B,(ns(Any_union_ref_t)){ ns(Any_Monster), { mon }});
+    ns(Monster_test_add)(B, ns(Any_as_Monster(mon)));
     /* Name is required. */
     ns(Monster_name_create_str(B, "any name"));
     ns(Monster_testarrayoftables_push_end(B));
@@ -1133,6 +1132,7 @@ int test_add_set_defaults(flatcc_builder_t *B)
     void *buffer;
     size_t size;
     ns(Monster_table_t) mon;
+
     flatcc_builder_reset(B);
 
     ns(Monster_start_as_root(B));
@@ -1386,10 +1386,11 @@ int time_struct_buffer(flatcc_builder_t *B)
 
 int main(int argc, char *argv[])
 {
+    flatcc_builder_t builder, *B;
+
     (void)argc;
     (void)argv;
 
-    flatcc_builder_t builder, *B;
     B = &builder;
     flatcc_builder_init(B);
 
