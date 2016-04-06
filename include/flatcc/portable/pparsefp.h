@@ -11,7 +11,7 @@
  *
  * May return:
  * - null on error,
- * - buffer start if first character does start a number,
+ * - buffer start if first character does not start a number,
  * - or end of parse on success.
  *
  */
