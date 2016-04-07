@@ -76,9 +76,15 @@ matrix:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
           packages: ['clang-3.5']
 
+    # Sanity check
+    - os: osx
+      compiler: clang
+
+    - os: osx
+      compiler: gcc
+
     # Older clang fails because clang-3.4 is not linked, but it might
     # work if we bothered to find the compiler.
-
 
 script:
   - scripts/initbuild.sh make-concurrent

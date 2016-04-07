@@ -20,8 +20,8 @@ environment:
   matrix:
     - generator: "Visual Studio 12 2013"
     - generator: "Visual Studio 10 2010"
-    - generator: "Visual Studio 12 2015"
-    - generator: "Visual Studio 12 2015 Win64"
+    - generator: "Visual Studio 14 2015"
+    - generator: "Visual Studio 14 2015 Win64"
 
 skip_tags: true
 
