@@ -1,7 +1,8 @@
 # Ubuntu 14.04 (Trusty)
 #cmake_minimum_required (VERSION 2.8.12.2)
 # Centos 7
-cmake_minimum_required (VERSION 2.8.11)
+#cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 2.8)
 
 project (FlatCC)
 
@@ -40,6 +41,14 @@ option (FLATCC_NATIVE_OPTIM
 
 option (FLATCC_FAST_DOUBLE
     "faster but slightly incorrect floating point parser (json)" OFF)
+
+option (FLATCC_IGNORE_CONST_COND "silence const condition warnings" OFF)
+
+# -Werror is only set for some compiler versions that are believed to
+# to not generate any warnings. If the assumption breaks, disable
+# this option if the warning is not significant.
+option (FLATCC_ALLOW_WERROR "allow -Werror to be configured" ON)
+
 
 if (FLATCC_TEST)
     enable_testing()
@@ -82,26 +91,45 @@ set(dist_targets
 
 # Note: for compiling generated C code, warnings of unused functions
 # and constants should be turned off - those are plentiful. They are
-# silenced for Clang automatically.
-
-if (FLATCC_PORTABLE OR MSVC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_PORTABLE")
-endif()
+# silenced for Clang, GCC and MSVC in generated headers.headers.
 
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     # Clang or AppleClang
 
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+    if (FLATCC_ALLOW_WERROR)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+    endif()
+    if (FLATCC_IGNORE_CONST_COND)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-constant-out-of-range-compare")
+    endif()
+
     # To get assembly output
     # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -save-temps")
+
 elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
+                    OUTPUT_VARIABLE GCC_VERSION)
+    if (GCC_VERSION VERSION_LESS 4.7)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+        # We need stdalign.h
+        set(FLATCC_PORTABLE true)
+    else()
+        # -std=c11 only available as of 4.7
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
+        if (FLATCC_ALLOW_WERROR)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+        endif()
+    endif()
+    if (FLATCC_IGNORE_CONST_COND)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-type-limits")
+    endif()
+
     # In gcc 4.8 it is not possible to suppress this warning using
     # #pragma GCC diagnostic ignored "-Wunused-function"
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-function")
-    # -pendantic in gcc without C11 yields too many warnings
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra")
+    #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-type-limits")
+
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Intel")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -Wextra")
 elseif (MSVC) # using STREQUAL here conflicts with string interpretation changes in CMake
@@ -112,14 +140,27 @@ elseif (MSVC) # using STREQUAL here conflicts with string interpretation changes
     # MSVC 2013 (1800) supports inline variable declations
     # while MSVC 2010 (1600) does not.
     if (MSVC_VERSION STRLESS "1800")
-    # This disables periferal features such as the monster sample
-    # where we don't want C89 style code.
-    set (FLATCC_NEED_C89_VAR_DECLS true)
+        # Disables monster sample build which uses C99 style variable decls.
+        set (FLATCC_NEED_C89_VAR_DECLS true)
     endif()
+    set(FLATCC_PORTABLE true)
 else()
     # Best effort
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+    set(FLATCC_PORTABLE true)
 endif()
+
+if (FLATCC_PORTABLE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_PORTABLE")
+endif()
+
+if (CLANG_VERSION)
+    message(STATUS "CLANG_VERSION: ${CLANG_VERSION}")
+endif()
+if (GCC_VERSION)
+    message(STATUS "GCC_VERSION: ${GCC_VERSION}")
+endif()
+message(STATUS "Configured C_FLAGS: ${CMAKE_C_FLAGS}")
 
 # If enabled the runtime librarys verifier will print an error message
 # before asserting on error, otherwise it will just return an error code
