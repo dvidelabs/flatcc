@@ -9,20 +9,8 @@
 #ifndef FLATBUFFERS_COMMON_BUILDER_H
 #include "flatbuffers_common_builder.h"
 #endif
-#if defined __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#elif defined __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#elif defined _MSC_VER
-#pragma warning( push )
-#pragma warning(disable: 4101) /* unused local variable */
-#endif
+#define PDIAGNOSTIC_IGNORE_UNUSED
+#include "flatcc/portable/pdiagnostic_push.h"
 #undef flatbuffers_identifier
 #define flatbuffers_identifier "BFBS"
 #undef flatbuffers_extension
@@ -193,11 +181,5 @@ static inline reflection_Schema_ref_t reflection_Schema_create(flatbuffers_build
 }
 __flatbuffers_build_table_prolog(flatbuffers_, reflection_Schema, reflection_Schema_identifier)
 
-#if defined __clang__
-#pragma clang diagnostic pop
-#elif defined __GNUC__
-#pragma GCC diagnostic pop
-#elif defined _MSC_VER
-#pragma warning( pop )
-#endif
+#include "flatcc/portable/pdiagnostic_pop.h"
 #endif /* REFLECTION_BUILDER_H */

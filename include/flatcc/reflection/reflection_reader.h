@@ -9,20 +9,8 @@
 #ifndef alignas
 #include <stdalign.h>
 #endif
-#if defined __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#elif defined __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#elif defined _MSC_VER
-#pragma warning( push )
-#pragma warning(disable: 4101) /* unused local variable */
-#endif
+#define PDIAGNOSTIC_IGNORE_UNUSED
+#include "flatcc/portable/pdiagnostic_push.h"
 #undef flatbuffers_identifier
 #define flatbuffers_identifier "BFBS"
 #undef flatbuffers_extension
@@ -343,11 +331,5 @@ static inline int reflection_Schema_root_table_is_present(reflection_Schema_tabl
 __flatbuffers_field_present(4, t)
 
 
-#if defined __clang__
-#pragma clang diagnostic pop
-#elif defined __GNUC__
-#pragma GCC diagnostic pop
-#elif defined _MSC_VER
-#pragma warning( pop )
-#endif
+#include "flatcc/portable/pdiagnostic_pop.h"
 #endif /* REFLECTION_H */

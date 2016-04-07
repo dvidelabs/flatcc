@@ -5,20 +5,8 @@
 
 /* Common FlatBuffers read functionality for C. */
 
-#if defined __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#elif defined __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#elif defined _MSC_VER
-#pragma warning( push )
-#pragma warning(disable: 4101) /* unused local variable */
-#endif
+#define PDIAGNOSTIC_IGNORE_UNUSED
+#include "flatcc/portable/pdiagnostic_push.h"
 #include "flatcc/flatcc_flatbuffers.h"
 
 
@@ -246,11 +234,5 @@ static inline N ## _ ## K ## t N ## _as_root(const void *buffer)\
 #define __flatbuffers_struct_as_root(N) __flatbuffers_buffer_as_root(N, struct_)
 #define __flatbuffers_table_as_root(N) __flatbuffers_buffer_as_root(N, table_)
 
-#if defined __clang__
-#pragma clang diagnostic pop
-#elif defined __GNUC__
-#pragma GCC diagnostic pop
-#elif defined _MSC_VER
-#pragma warning( pop )
-#endif
+#include "flatcc/portable/pdiagnostic_pop.h"
 #endif /* FLATBUFFERS_COMMON_H */
