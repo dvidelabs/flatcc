@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.3.2]
+
+- Move compiler warning handling from generated headers to portable
+  library.
+- Clean up warnings and errors for older gcc, clang and MSVC compilers.
+- CI builds.
+- Fix and improve portable version of `static_assert`.
+- Add integer parsing to portable library.
+
 ## [0.3.1]
 
 - Add support for MSVC on Windows.

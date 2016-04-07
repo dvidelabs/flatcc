@@ -70,34 +70,35 @@ tools, and the C runtime library.
 
 ## Status
 
-The project is still young but test cases cover most functionality and
-has been run on OS-X 10.11 with clang and Ubuntu 14.04 with gcc on the
-x86-64 platform and MSVC 14 2015 on Win32. Centos 7.1 is not reguarly
-tested but is known to work in flatcc 0.3.1 with CMake 2.8.11 and GNU
-Make.
+Main features supported as of 0.3.1:
 
-Buffer verification was introduced in flatcc 0.1.1 which verifies
-boundaries and alignment. Please note that verification does not ensure
-that it is safe to mutate buffers because an attacker may still overlap
-objects within the buffer.
+    - generated flatbuffer reader and builder headers for C
+    - generated flatbuffer verifier headers for C
+    - generated flatbuffer JSON parser and printer for C
+    - ability to concatenate all output to one file
+    - binary schema (.bfbs) generation
+    - pre-generated reflection headers for reading .bfbs files
+    - cli schema compiler and library for compiling schema
+    - runtime library for builder, verifier and JSON support
+    - thorough test cases
+    - monster sample project
 
-Native code generation for FlatBuffer JSON printing and parsing added in
-0.2.0. This is a very fast json processor that can parse or print a 700
-byte json message at a rate of ca 1/2 million messages/second (ca. 600MB/s
-print and 400MB/s parse). See benchmarks below.
+Supported platforms:
 
-NOTE: In version 0.2.0 the buffer verifier result code has been inverted
-so non-zero is now indicates an error similar to other integer return
-codes in the runtime library. This makes it possible to return
-meaningful errors without loss of performance, e.g. that a buffer failed
-due to a string that was not zero terminated, or a vector was aligned to
-its element size.
+    - Ubuntu clang 4.4-4.8 and gcc 3.5-3.8
+    - OS-X current clang / gcc
+    - Windows MSVC 2010, 2013, 2015, 2015 Win64 
 
-Version 0.3.0 introduced breaking changes related to vector operators, see
-[CHANGELOG for 0.3.0](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030)
+The monster sample does not work with MSVC 2010 because it intentionally
+uses C99 style code to better follow the C++ version.
 
-Centos support was added in flatcc 0.2.1 and Windows support in flatcc
-0.3.1.
+There is no reason why other or older compilers cannot be supported, but
+it may require some work in the build configuration and possibly
+updates to the portable library. The above is simple what has been
+tested and configured.
+
+Use versions from 0.3.0 and up as there has been some minor breaking
+[interface changes]((https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030).
 
 Big endian platforms have not been tested at all. While care has been
 taken to handle endian encoding, there are bound to be some issues. The
@@ -109,17 +110,7 @@ endian encoding.
 The portability layer has some features that are generally important for
 things like endian handling, and others to provide compatiblity for
 non-C11 compliant compilers. Together this should support most C
-compilers around. However, support for compiler other than recent
-versions of clang and gcc have not been well tested and relies on
-community feedback.
-
-`flatcc` is able encode and decode complex flatbuffer structures as is,
-and there are no big known issues apart from the above. The structure of
-the common header files are subject to change, notably all functions and
-macros prefixed with `__`. The general interface is subject to change
-based on feedback but it does appear functional as is. The typeless
-flatcc runtime library should hopefully not change much - it is mostly
-not user facing but other language exports might want to use it.
+compilers around, but relies on community feedback for maturity.
 
 There are no plans to make frequent updates once the project becomes
 stable, but input from the community will always be welcome and included
