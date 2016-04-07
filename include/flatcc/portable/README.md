@@ -20,6 +20,11 @@ all functionality. If the compiler is C11 compliant, portable.h will not
 include anything, except: it will provide a patch for static assertions
 which clang does not fully support in all versions even with C11 flagged.
 
+The grisu3 header files are the runtime files for the Grisu3 floating
+point conversion to/from text C port. Test coverage is provided separately.
+This library can be used indirectly via pparsefp.h and pprintfp.h.
+
 IMPORTANT NOTE: this library is not widely tested. It is intended to be
 a starting point. Each use case should test on relevant target platforms
 and if relevant send patches upstream.
+

@@ -71,13 +71,8 @@
 #include <stdint.h>
 #endif
 
-#if defined __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#elif defined __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-#endif
+#define PDIAGNOSTIC_IGNORE_UNUSED_FUNCTION
+#include "pdiagnostic_push.h"
 
 static int print_bool(int n, char *p);
 
@@ -596,10 +591,6 @@ int main()
 }
 #endif /* PPRINTINT_TEST */
 
-#if defined __clang__
-#pragma clang diagnostic pop
-#elif defined __GNUC__
-#pragma GCC diagnostic pop
-#endif
+#include "pdiagnostic_pop.h"
 
 #endif /* PPRINTINT_H */

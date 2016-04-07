@@ -1,12 +1,16 @@
 #ifndef PPRINTFP_H
 #define PPRINTFP_H
 
+#define PDIAGNOSTIC_IGNORE_UNUSED_FUNCTION
+#include "pdiagnostic_push.h"
+
 #ifndef PORTABLE_USE_GRISU3
 #define PORTABLE_USE_GRISU3 1
 #endif
 
+
 #if PORTABLE_USE_GRISU3
-#include "pgrisu3/grisu3_print.h"
+#include "grisu3_print.h"
 #endif
 
 #ifdef grisu3_print_double_is_defined
@@ -22,4 +26,5 @@
 #define print_hex_float(n, p) sprintf(p, "%a", (float)(n))
 #define print_hex_double(n, p) sprintf(p, "%a", (double)(n))
 
+#include "pdiagnostic_pop.h"
 #endif /* PPRINTFP_H */

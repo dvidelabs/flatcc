@@ -17,6 +17,9 @@
  */
 #include <math.h> /* for HUGE_VAL */
 
+#define PDIAGNOSTIC_IGNORE_UNUSED_FUNCTION
+#include "pdiagnostic_push.h"
+
 #if defined(_MSC_VER) && !defined(isinf)
 #include <float.h>
 #define isnan _isnan
@@ -28,7 +31,7 @@
 #endif
 
 #if PORTABLE_USE_GRISU3
-#include "pgrisu3/grisu3_parse.h"
+#include "grisu3_parse.h"
 #endif
 
 #ifdef grisu3_parse_double_is_defined
@@ -58,4 +61,5 @@ static inline const char *parse_float(const char *buf, int len, float *result)
     return end;
 }
 
+#include "pdiagnostic_pop.h"
 #endif /* PPARSEFP_H */

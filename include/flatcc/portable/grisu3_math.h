@@ -61,14 +61,6 @@
 #endif
 #include <assert.h> // assert
 
-#if defined __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#elif defined __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-#endif
-
 #ifdef _MSC_VER
 #pragma warning(disable : 4204) // nonstandard extension used : non-constant aggregate initializer
 #endif
@@ -316,11 +308,5 @@ static int grisu3_largest_pow10(uint32_t n, int n_bits, uint32_t *power)
     *power = grisu3_pow10_cache[guess];
     return guess;
 }
-
-#if defined __clang__
-#pragma clang diagnostic pop
-#elif defined __GNUC__
-#pragma GCC diagnostic pop
-#endif
 
 #endif /* GRISU3_MATH_H */

@@ -1,6 +1,15 @@
 #ifndef PWARNINGS_H
 #define PWARNINGS_H
 
+/*
+ * See also pdiagnostics.h headers for per file control of common
+ * warnings.
+ *
+ * This file is intended for global disabling of warnings that shouldn't
+ * be present in C11 or perhaps C99, or a generally just noise where
+ * recent clang / gcc compile cleanly with high warning levels.
+ */
+
 #if defined(_MSC_VER)
 /* Needed when flagging code in or out and more. */
 #pragma warning(disable: 4127) /* conditional expression is constant */
@@ -13,8 +22,14 @@
 /* Well, we don't intend to add the padding manually. */
 #pragma warning(disable: 4820) /* x bytes padding added in struct */
 
-/* Define this in the build as `-D_CRT_SECURE_NO_WARNINGS`, it has no effect here. */
-/* #define _CRT_SECURE_NO_WARNINGS don't warn that fopen etc. are unsafe */
+/*
+ * Don't warn that fopen etc. are unsafe
+ *
+ * Define a compiler flag like `-D_CRT_SECURE_NO_WARNINGS` in the build.
+ * For some reason it doesn't work when defined here.
+ *
+ *     #define _CRT_SECURE_NO_WARNINGS
+ */
 
 /*
  * Anonymous union in struct is valid in C11 and has been supported in
@@ -23,6 +38,7 @@
  * but this is not the place to complain about it.
  */
 #pragma warning(disable: 4201) /* nonstandard extension used: nameless struct/union */
-#endif
+
+#endif /* _MSV_VER */
 
 #endif /* PWARNINGS_H */
