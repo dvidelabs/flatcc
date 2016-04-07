@@ -36,14 +36,6 @@
 
 #include "grisu3_math.h"
 
-#if defined __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#elif defined __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-#endif
-
 /*
  * The maximum number characters a valid number may contain.  The parse
  * fails if the input length is longer but the character after max len
@@ -579,11 +571,5 @@ static const char *grisu3_parse_double(const char *buf, int len, double *result)
     }
     return grisu3_encode_double(mark, buf, sign, fraction, exponent, fraction_exp, ulp_half_error, result);
 }
-
-#if defined __clang__
-#pragma clang diagnostic pop
-#elif defined __GNUC__
-#pragma GCC diagnostic pop
-#endif
 
 #endif /* GRISU3_PARSE_H */

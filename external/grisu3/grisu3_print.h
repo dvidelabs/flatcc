@@ -60,18 +60,6 @@
  */
 #define GRISU3_PRINT_MAX 30
 
-#if defined __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#elif defined __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(disable : 4204) // nonstandard extension used : non-constant aggregate initializer
-#endif
-
 static int grisu3_round_weed(char *buffer, int len, uint64_t wp_W, uint64_t delta, uint64_t rest, uint64_t ten_kappa, uint64_t ulp)
 {
     uint64_t wp_Wup = wp_W - ulp;
@@ -245,11 +233,5 @@ static int grisu3_print_double(double v, char *dst)
     s2[len] = '\0'; // grisu3 doesn't null terminate, so ensure termination.
     return (int)(s2+len-dst);
 }
-
-#if defined __clang__
-#pragma clang diagnostic pop
-#elif defined __GNUC__
-#pragma GCC diagnostic pop
-#endif
 
 #endif /* GRISU3_PRINT_H */
