@@ -1,29 +1,85 @@
 language: c
 
-sudo: required
-dist: trusty
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      compiler: gcc
+    - os: linux
+      dist: trusty
+      compiler: gcc-4.8
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-4.8']
+    - os: linux
+      dist: trusty
+      compiler: gcc-4.7
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-4.7']
+    - os: linux
+      dist: trusty
+      compiler: gcc-4.6
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-4.6']
+    - os: linux
+      dist: trusty
+      compiler: gcc-4.5
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-4.5']
+    - os: linux
+      dist: trusty
+      compiler: gcc-4.4
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-4.4']
 
-os:
-  - linux
-  - osx
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise']
+          packages: ['clang']
+    - os: linux
+      dist: trusty
+      compiler: clang-3.8
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.8']
+          packages: ['clang-3.8']
+    - os: linux
+      dist: trusty
+      compiler: clang-3.7
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
+          packages: ['clang-3.7']
+    - os: linux
+      dist: trusty
+      compiler: clang-3.6
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
+          packages: ['clang-3.6']
+    - os: linux
+      dist: trusty
+      compiler: clang-3.5
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
+          packages: ['clang-3.5']
 
-compiler:
-  - gcc
-  - clang
+    # Older clang fails because clang-3.4 is not linked, but it might
+    # work if we bothered to find the compiler.
 
-addons:
-  apt:
-    packages:
-      - ninja-build
-
-before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-
-install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ninja; fi
 
 script:
-  - scripts/initbuild.sh ninja
-  - scripts/test.sh
   - scripts/initbuild.sh make-concurrent
   - scripts/test.sh

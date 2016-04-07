@@ -1,6 +1,7 @@
 version: "win#{build}"
 
-image: Visual Studio 2015
+# Should have VS2010 Express installed
+os: Visual Studio 2015
 
 init:
   - git config --global core.autocrlf input
@@ -11,13 +12,16 @@ shallow_clone: true
 
 clone_folder: c:\projects\flatcc
 
-platform:
-  - Win32 
-  - x64
-
 configuration:
   - Debug
   - Release
+
+environment:
+  matrix:
+    - generator: "Visual Studio 12 2013"
+    - generator: "Visual Studio 10 2010"
+    - generator: "Visual Studio 12 2015"
+    - generator: "Visual Studio 12 2015 Win64"
 
 skip_tags: true
 
@@ -26,13 +30,13 @@ before_build:
   - cd c:\projects\flatcc
   - mkdir build\MSVC
   - cd build\MSVC
-  - if "%platform%"=="Win32" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..\..
-  - if "%platform%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..\..
+  - cmake -G "%generator%" -DCMAKE_BUILD_TYPE=%configuration% ..\..
 
 build:
-  parallel: true # enable MSBuild parallel builds
   project: c:\projects\flatcc\build\MSVC\FlatCC.sln
 
 test_script:
   - ctest -C "%configuration%" -VV
 
+matrix:
+  fast_finish: true
