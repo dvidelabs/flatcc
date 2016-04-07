@@ -254,20 +254,8 @@ static inline int gen_pragma_push(output_t *out)
 {
     if (out->opts->cgen_pragmas) {
         fprintf(out->fp,
-                "#if defined __clang__\n"
-                "#pragma clang diagnostic push\n"
-                "#pragma clang diagnostic ignored \"-Wunused-function\"\n"
-                "#pragma clang diagnostic ignored \"-Wunused-variable\"\n"
-                "#pragma clang diagnostic ignored \"-Wunused-parameter\"\n"
-                "#elif defined __GNUC__\n"
-                "#pragma GCC diagnostic push\n"
-                "#pragma GCC diagnostic ignored \"-Wunused-function\"\n"
-                "#pragma GCC diagnostic ignored \"-Wunused-variable\"\n"
-                "#pragma GCC diagnostic ignored \"-Wunused-parameter\"\n"
-                "#elif defined _MSC_VER\n"
-                "#pragma warning( push )\n"
-                "#pragma warning(disable: 4101) /* unused local variable */\n"
-                "#endif\n");
+                "#define PDIAGNOSTIC_IGNORE_UNUSED\n"
+                "#include \"flatcc/portable/pdiagnostic_push.h\"\n");
     }
     return 0;
 }
@@ -276,13 +264,7 @@ static inline int gen_pragma_pop(output_t *out)
 {
     if (out->opts->cgen_pragmas) {
         fprintf(out->fp,
-                "#if defined __clang__\n"
-                "#pragma clang diagnostic pop\n"
-                "#elif defined __GNUC__\n"
-                "#pragma GCC diagnostic pop\n"
-                "#elif defined _MSC_VER\n"
-                "#pragma warning( pop )\n"
-                "#endif\n");
+                "#include \"flatcc/portable/pdiagnostic_pop.h\"\n");
     }
     return 0;
 }

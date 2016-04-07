@@ -1279,7 +1279,9 @@ flatcc_builder_ref_t flatcc_builder_create_vector(flatcc_builder_t *B,
      * That can happen on 32 bit systems when uoffset_t is defined as 64-bit.
      * `emit_front/back` captures overflow, but not if our size type wraps first.
      */
-    check_error(sizeof(uoffset_t) <= sizeof(size_t) || vec_size < SIZE_MAX, 0, "vector larger than address space");
+#if FLATBUFFERS_UOFFSET_MAX > SIZE_MAX
+    check_error(vec_size < SIZE_MAX, 0, "vector larger than address space");
+#endif
     length_prefix = store_uoffset((uoffset_t)count);
     /* Alignment is calculated for the first element, not the header. */
     vec_pad = front_pad(B, vec_size, align);

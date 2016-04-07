@@ -12,6 +12,7 @@
 #ifdef FLATCC_PORTABLE
 #include "flatcc/flatcc_portable.h"
 #endif
+#include "flatcc/portable/pwarnings.h"
 
 #define __FLATBUFFERS_PASTE2(a, b) a ## b
 #define __FLATBUFFERS_PASTE3(a, b, c) a ## b ## c

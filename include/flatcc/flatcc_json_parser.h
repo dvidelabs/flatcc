@@ -8,12 +8,6 @@
  * With several flatbuffers specific extensions.
  */
 
-#if __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-variable"
-#endif
-
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -21,6 +15,9 @@
 #include "flatcc/flatcc_rtconfig.h"
 #include "flatcc/flatcc_builder.h"
 #include "flatcc/flatcc_unaligned.h"
+
+#define PDIAGNOSTIC_IGNORE_UNUSED
+#include "flatcc/portable/pdiagnostic_push.h"
 
 enum flatcc_json_parser_flags {
     flatcc_json_parser_f_skip_unknown = 1,
@@ -773,7 +770,5 @@ const char *flatcc_json_parser_union_type(flatcc_json_parser_t *ctx,
         flatcc_json_parser_integral_symbol_f *type_parsers[],
         flatcc_json_parser_union_f *union_parser);
 
-#if __clang__
-#pragma clang diagnostic pop
-#endif
+#include "flatcc/portable/pdiagnostic_pop.h"
 #endif /* FLATCC_JSON_PARSE_H */
