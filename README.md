@@ -23,6 +23,9 @@ The project includes:
   compilers, and small helpers for all compilers including endian
   handling and numeric printing and parsing.
 
+`flatcc` has no external dependencies except for build and compiler
+tools, and the C runtime library.
+
 See also:
 
 - [Google FPL FlatBuffers](http://google.github.io/flatbuffers/)
@@ -52,25 +55,22 @@ top-down construction mixed freely.
 Supported FlatBuffer features are code generation for building, verifying,
 and reading FlatBuffers, incl. basic support for reflection via reading
 and writing binary (.bfbs) files but no support for mutations. There is
-also code generation for printing and parsing FlatBuffers.
+also code generation for JSON printing and parsing FlatBuffers.
 
-The JSON format is compatible with Googles `flatc` tool but there are
-differences: `flatcc` generates printer and parser code from a schema,
-while `flatc` takes a schema as input and prints or parses JSON without
-any code generation. The `flatcc` approach is likely much faster and
-easier to deploy for known schema but `flatc` easier adapts to new
-schema and provides a command line interface for conversion, so both
-tools have their place.
-
-`flatcc` has no external dependencies except for build and compiler
-tools, and the C runtime library.
+The JSON format is compatible with Googles `flatc` tool. The `flatc`
+tool converts JSON from the command line using a schema and a buffer as
+input. `flatcc` generates schema speicific code to read and write JSON
+at runtime. While the `flatcc` approach is likely much faster and also
+easier to deploy, the `flatc` approach is likely more convenient when
+manually working with JSON such as editing game scenes. Both tools have
+their place. 
 
 **NOTE: Big-endian platforms are untested but supported in principle.**
 
 
 ## Status
 
-Main features supported as of 0.3.1:
+Main features supported as of 0.3.2:
 
     - generated flatbuffer reader and builder headers for C
     - generated flatbuffer verifier headers for C
@@ -98,7 +98,7 @@ updates to the portable library. The above is simple what has been
 tested and configured.
 
 Use versions from 0.3.0 and up as there has been some minor breaking
-[interface changes]((https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030).
+[interface changes](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030).
 
 Big endian platforms have not been tested at all. While care has been
 taken to handle endian encoding, there are bound to be some issues. The
