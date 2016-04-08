@@ -1,5 +1,9 @@
 # Change Log
 
+## [Unreleased]
+
+- Added scripts/setup.sh to quickly get started on small user projects.
+
 ## [0.3.2]
 
 - Move compiler warning handling from generated headers to portable
