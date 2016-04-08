@@ -274,14 +274,34 @@ printing symbolic enums, but these can also be disabled at runtime.
 
 ## Quickstart
 
+After building the `flatcc tool` see [build
+instructions](https://github.com/dvidelabs/flatcc#building) below,
+binaries are located in the `bin` and `lib` directories under the
+`flatcc` source tree.
+
 You may jump directly to example source for the [monster
 sample](https://github.com/dvidelabs/flatcc/tree/master/samples/monster)
-here, or follow the following quickstart which is shorter and based
-on earlier test code.
+here, or follow the following quickstart below, which is shorter to show
+the outlines of a project.
 
-After building the `flatcc tool` (see below), it is located in the `bin`
-folder of the `flatcc` project root and libraries are found in the `lib`
-folder.
+If going the way of the monster, you can extract into a local user
+project as follows:
+
+    mkdir -p myprojects
+    cd myprojects
+    git clone https://github.com/dvidelabs/flatcc.git
+    flatcc/scripts/setup.sh -a mymonster
+    cd mymonster
+    # this is a user project build.
+    scripts/build.sh
+    build/mymonster
+
+`scripts/setup.sh -a` will as a minimum link the library and tool into
+a custom directory, but optionally do more to get started, including
+adding sample source. See also `scripts/setup.sh -h`.
+
+The monster sample is documented on Googles FlatBuffers
+[tutorial](https://google.github.io/flatbuffers/flatbuffers_guide_tutorial.html) page.
 
 To write your own schema files please follow the main FlatBuffers
 project documentation on [writing schema
@@ -291,6 +311,8 @@ The [builder interface
 reference](https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md)
 may be useful after studying the monster sample and quickstart below.
 
+We now leave the monster sample and use more basic example to
+illustrate various points around the C specific framework.
 
 ## Quickstart - reading a buffer
 
