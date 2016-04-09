@@ -135,7 +135,7 @@ void error_ref_sym(fb_parser_t *P, fb_ref_t *ref, const char *msg, fb_symbol_t *
 #define LEX_KEYWORDS
 
 /* Note: Googles flatc compiler currently does not support C block comments. */
-//#define LEX_C_BLOCK_COMMENT
+#define LEX_C_BLOCK_COMMENT
 
 /*
  * Flatbuffers also support /// on a single line for documentation but

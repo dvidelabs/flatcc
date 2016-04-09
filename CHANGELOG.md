@@ -4,6 +4,7 @@
 
 - Added scripts/setup.sh to quickly get started on small user projects.
 - Support `namespace ;` for reverting to global namespace in schema.
+- Enable block comments now that they are supported in flatc.
 
 ## [0.3.2]
 
