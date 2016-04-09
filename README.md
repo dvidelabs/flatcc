@@ -34,6 +34,10 @@ See also:
 
 - [Build Instructions](https://github.com/dvidelabs/flatcc#building)
 
+- [Quickstart](https://github.com/dvidelabs/flatcc#https://github.com/dvidelabs/flatcc#quickstart)
+
+- [Status](https://github.com/dvidelabs/flatcc#https://github.com/dvidelabs/flatcc#status)
+
 
 The `flatcc` compiler is implemented as a standalone tool instead of
 extending Googles `flatc` compiler in order to have a pure portable C
@@ -52,11 +56,6 @@ also does not preserve the order of structs. The option is controlled by
 a flag in `config.h` The generated source supports both bottom-up and
 top-down construction mixed freely.
 
-Supported FlatBuffer features are code generation for building, verifying,
-and reading FlatBuffers, incl. basic support for reflection via reading
-and writing binary (.bfbs) files but no support for mutations. There is
-also code generation for JSON printing and parsing FlatBuffers.
-
 The JSON format is compatible with Googles `flatc` tool. The `flatc`
 tool converts JSON from the command line using a schema and a buffer as
 input. `flatcc` generates schema speicific code to read and write JSON
@@ -65,6 +64,10 @@ easier to deploy, the `flatc` approach is likely more convenient when
 manually working with JSON such as editing game scenes. Both tools have
 their place. 
 
+The `flatcc` generated binary schema (`.bfbs`) files are also compatible
+with Googles `flatc` tool, except there is an option store names with or
+without dotted namespace prefixes.
+
 **NOTE: Big-endian platforms are untested but supported in principle.**
 
 
@@ -72,22 +75,22 @@ their place.
 
 Main features supported as of 0.3.2:
 
-    - generated flatbuffer reader and builder headers for C
-    - generated flatbuffer verifier headers for C
-    - generated flatbuffer JSON parser and printer for C
-    - ability to concatenate all output to one file
-    - binary schema (.bfbs) generation
-    - pre-generated reflection headers for reading .bfbs files
-    - cli schema compiler and library for compiling schema
-    - runtime library for builder, verifier and JSON support
-    - thorough test cases
-    - monster sample project
+- generated FlatBuffers reader and builder headers for C
+- generated FlatBuffers verifier headers for C
+- generated FlatBuffers JSON parser and printer for C
+- ability to concatenate all output into one file
+- binary schema (.bfbs) generation
+- pre-generated reflection headers for handling .bfbs files
+- cli schema compiler and library for compiling schema
+- runtime library for builder, verifier and JSON support
+- thorough test cases
+- monster sample project
 
 Supported platforms:
 
-    - Ubuntu clang 4.4-4.8 and gcc 3.5-3.8
-    - OS-X current clang / gcc
-    - Windows MSVC 2010, 2013, 2015, 2015 Win64 
+- Ubuntu clang 4.4-4.8 and gcc 3.5-3.8
+- OS-X current clang / gcc
+- Windows MSVC 2010, 2013, 2015, 2015 Win64 
 
 The monster sample does not work with MSVC 2010 because it intentionally
 uses C99 style code to better follow the C++ version.
@@ -112,11 +115,24 @@ things like endian handling, and others to provide compatiblity for
 non-C11 compliant compilers. Together this should support most C
 compilers around, but relies on community feedback for maturity.
 
+The necessary size of the runtime include files can be reduced
+significantly by using -std=c11 and avoiding JSON (which needs a lot of
+numeric parsing support), and by removing `include/flatcc/reflection`
+which is present to support handling of binary schema files and
+can be generated from `reflection/reflection.fbs`. The exact set of
+required files may change from release to release, and it doesn't really
+matter with respect to the compiled code size.
+
 There are no plans to make frequent updates once the project becomes
 stable, but input from the community will always be welcome and included
 in releases where relevant, especially with respect to testing on
 different target platforms.
 
+Potential upcoming breaking changes:
+
+The `verify_as_root` calls may change to use `verify_as_root` and
+`verify_as_root_with_identifier` for consistency with create calls, but
+this is still an open issue.
 
 ## Time / Space / Usability Tradeoff
 
@@ -274,34 +290,28 @@ printing symbolic enums, but these can also be disabled at runtime.
 
 ## Quickstart
 
-After building the `flatcc tool` see [build
-instructions](https://github.com/dvidelabs/flatcc#building) below,
+After [building](https://github.com/dvidelabs/flatcc#building) the `flatcc tool`,
 binaries are located in the `bin` and `lib` directories under the
 `flatcc` source tree.
 
-You may jump directly to example source for the [monster
-sample](https://github.com/dvidelabs/flatcc/tree/master/samples/monster)
-here, or follow the following quickstart below, which is shorter to show
-the outlines of a project.
+You can either jump directly to the [monster
+example](https://github.com/dvidelabs/flatcc/tree/master/samples/monster)
+that follows
+[Googles FlatBuffers Tutorial](https://google.github.io/flatbuffers/flatbuffers_guide_tutorial.html), or you can read along the the quickstart guide below. If you follow
+the monster tutorial, you may want to clone and build flatcc and copy
+the source to a separate project directory as follows:
 
-If going the way of the monster, you can extract into a local user
-project as follows:
-
-    mkdir -p myprojects
-    cd myprojects
     git clone https://github.com/dvidelabs/flatcc.git
     flatcc/scripts/setup.sh -a mymonster
     cd mymonster
-    # this is a user project build.
     scripts/build.sh
     build/mymonster
 
-`scripts/setup.sh -a` will as a minimum link the library and tool into
-a custom directory, but optionally do more to get started, including
-adding sample source. See also `scripts/setup.sh -h`.
-
-The monster sample is documented on Googles FlatBuffers
-[tutorial](https://google.github.io/flatbuffers/flatbuffers_guide_tutorial.html) page.
+`scripts/setup.sh` will as a minimum link the library and tool into a
+custom directory, here `mymonster`. With (-a) it also adds a simple
+build script, copies the example, and updates `.gitignore` - see
+`scripts/setup.sh -h`. Setup can also build flatcc, but you still have
+to ensure the build enviroment is configured for your system.
 
 To write your own schema files please follow the main FlatBuffers
 project documentation on [writing schema
@@ -311,8 +321,17 @@ The [builder interface
 reference](https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md)
 may be useful after studying the monster sample and quickstart below.
 
-We now leave the monster sample and use more basic example to
-illustrate various points around the C specific framework.
+When looking for advanced examples such as sorting vectors and finding
+elements by a key, you should find these in the
+[`test/monster_test`](https://github.com/dvidelabs/flatcc/tree/master/test/monster_test) project.
+
+The following quickstart guide is a broad simplification of the
+`test/monster_test` project - note that the schema is slightly different
+from the tutorial. Focus is on the C specific framework rather
+than general FlatBuffers concepts.
+
+You can still use the setup tool to create an empty project and
+follow along, but there are no assumptions about that in the text below.
 
 ## Quickstart - reading a buffer
 
@@ -396,15 +415,6 @@ Namespaces can be long so we optionally use a macro to manage this.
         return 0;
     }
     /* main() {...} */
-
-The above example is not very elegant. For a more complete example of
-read only buffer access see [the reflection bfbs2json
-example](https://github.com/dvidelabs/flatcc/blob/master/samples/reflection/bfbs2json.c)
-which converts a binary FlatBuffers schema into a JSON file.
-
-Note: the reflection example also shows how to work without name
-prefixes instead of a namespace macro. It also shows how to sort buffers
-in-place (advanced).
 
 
 ## Quickstart - compiling for read-only
@@ -745,7 +755,7 @@ Note that json parsing and printing is very fast reaching 500MB/s for
 printing and about 300 MB/s for parsing. Floating point parsing can
 signficantly skew these numbers. The integer and floating point parsing
 and printing are handled via support functions in the portable library.
-In addition the floating point `include/flatcc/portable/pgrisu3` library
+In addition the floating point `include/flatcc/portable/grisu3_*` library
 is used unless explicitly disable by a compile time flag. Disabling
 `grisu3` will revert to `sprintf` and `strtod`. Grisu3 will fall back to
 `strtod` and `grisu3` in some rare special cases. Due to the reliance on
@@ -1173,14 +1183,16 @@ required:
 
 Compiler:
 
-    bin/flatcc              (command line interface to schema compiler)
-    lib/libflatcc.a         (optional, for linking with schema compiler)
-    include/flatcc/flatcc.h (optional, header and doc for libflatcc.a)
+    bin/flatcc                 (command line interface to schema compiler)
+    lib/libflatcc.a            (optional, for linking with schema compiler)
+    include/flatcc/flatcc.h    (optional, header and doc for libflatcc.a)
+
 
 Runtime:
 
-    include/flatcc/**       (runtime header files)
-    lib/libflatccrt.a       (runtime library)
+    include/flatcc/**          (runtime header files)
+    include/flatcc/reflection  (optional)
+    lib/libflatccrt.a          (runtime library)
 
 In addition the runtime library source files may be used instead of
 `libflatccrt.a`. This may be handy when packaging the runtime library
@@ -1237,19 +1249,14 @@ been built:
     cd build\MSVC
     ctest
 
-Note that some tests have been disabled in:
-
-    `test\CMakeLists.txt`
-
-The disabled tests are not working on Windows. These affect custom
-emitters and JSON printers and parsers, not ordinary FlatBuffer usage.
+Note that the monster example is disabled for MSVC 2010.
 
 Be aware that tests copy and generate certain files which are not
 automatically cleaned by Visual Studio. Close the solution and wipe the
 `MSVC` directory, and start over to get a guaranteed clean build.
 
 Please also observe that the file `.gitattributes` is used to prevent
-certain files from getting Windows line endings. Using another source
+certain files from getting CRLF line endings. Using another source
 control systems might break tests, notably
 `test/flatc_compat/monsterdata_test.golden`.
 
@@ -1294,27 +1301,23 @@ When given a filename the behavior is similar to the commandline
 `flatcc` interface, but with more options - see `flatcc.h` and
 `config/config.h`.
 
-The binary schema options are named `bgen_...` and can be used to
-choose namespace prefixes or not.
-
-`libflatcc.a` supports functoins named `flatcc_...`. `reflection...` may
+`libflatcc.a` supports functions named `flatcc_...`. `reflection...` may
 also be available which are simple the C generated interface for the
 binary schema. The builder library is also included. These last two
 interfaces are only present because the library supports binary schema
 generation.
 
-The standalone `libflatcc_builder.a` is much smaller and may in fact be
-linked directly as a single `flatcc_builder.c` file, optionally also with
-`flatcc_emitter.c`. The builder libraries primary funciton is to support
-the generated C builder wrappers, but it can do more things: for example
-creating vtables ahead of time and creating tables with a specific
-vtable. This may be used to create high performance applications. The
-library is also typeless as the wrappers provide actual types. Therefore
-dynamic languages can use it to construct flatbuffers on the fly, and
-the same applies to generic JSON, XML or similar parsers. Of course,
-some schema is eventually required to understand the generated output
-but even that might be generated on the fly by a parser or language
-interface.
+The standalone runtime library `libflatccrt.a` is a collection of the
+`src/runtime/*.c` files. This supports the generated C headers for
+various features. It is also possible to distribute and compile with the
+source files directly.  For debugging, it is useful to use the
+`libflatccrt_d.a` version because it catches a lot of incorrect API use
+in assertions.
+
+The runtime library may also be used by other languages. See comments
+in `include/flatcc/flatcc_builder.h`. JSON parsing is on example of an
+alternative use of the builder library so it may help to inspect the
+generated JSON parser source and runtime source.
 
 ## The Portable Library
 
