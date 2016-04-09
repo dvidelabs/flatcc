@@ -34,9 +34,9 @@ See also:
 
 - [Build Instructions](https://github.com/dvidelabs/flatcc#building)
 
-- [Quickstart](https://github.com/dvidelabs/flatcc#https://github.com/dvidelabs/flatcc#quickstart)
+- [Quickstart](https://github.com/dvidelabs/flatcc#quickstart)
 
-- [Status](https://github.com/dvidelabs/flatcc#https://github.com/dvidelabs/flatcc#status)
+- [Status](https://github.com/dvidelabs/flatcc#status)
 
 
 The `flatcc` compiler is implemented as a standalone tool instead of
