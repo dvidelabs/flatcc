@@ -38,8 +38,7 @@ See also:
 
 - [Status](https://github.com/dvidelabs/flatcc#status)
 
-- [Benchmark](https://github.com/dvidelabs/flatcc#benchmark), and
-  [C specific benchmark](https://github.com/dvidelabs/flatcc#operation-flatcc-for-c-encode-optimized).
+- [Benchmark](https://github.com/dvidelabs/flatcc#benchmark)
 
 The `flatcc` compiler is implemented as a standalone tool instead of
 extending Googles `flatc` compiler in order to have a pure portable C
