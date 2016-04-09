@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Added scripts/setup.sh to quickly get started on small user projects.
+- Support `namespace ;` for reverting to global namespace in schema.
 
 ## [0.3.2]
 

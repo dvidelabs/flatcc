@@ -863,6 +863,16 @@ static void parse_namespace(fb_parser_t *P)
     fb_ref_t *ref = 0;
     fb_token_t *t = P->token;
 
+    if (optional(P, ';') && t) {
+        /* Revert to global namespace. */
+        P->current_scope = 0;
+        return;
+    }
+    if (P->token->id != LEX_TOK_ID) {
+        error_tok(P, P->token, "namespace expects an identifier");
+        recover(P, ';', 1);
+        return;
+    }
     parse_ref(P, &ref);
     advance(P, ';', "missing ';' expected by namespace at", t);
     P->current_scope = fb_add_scope(P, ref);
