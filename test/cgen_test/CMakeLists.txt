@@ -1,3 +1,5 @@
+include(CTest)
+
 include_directories (
     "${PROJECT_SOURCE_DIR}/include"
 )
@@ -9,3 +11,5 @@ add_executable(cgen_test
 target_link_libraries(cgen_test
     flatcc
 )
+
+add_test(cgen_test cgen_test${CMAKE_EXECUTABLE_SUFFIX})

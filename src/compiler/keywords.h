@@ -28,6 +28,7 @@ LEX_KW_TABLE_BEGIN
     lex_kw(attribute, '9', 'a', 't', 'e')
     lex_kw(namespace, '9', 'n', 'a', 'e')
     lex_kw(root_type, '9', 'r', 'o', 'e')
+    lex_kw(rpc_service, '0' + 11, 'r', 'p', 'e')
     lex_kw(file_extension, '0' + 14, 'f', 'i', 'n')
     lex_kw(file_identifier, '0' + 15, 'f', 'i', 'r')
 LEX_KW_TABLE_END

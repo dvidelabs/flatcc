@@ -978,7 +978,7 @@ static int gen_builder_table_args(output_t *out, fb_compound_type_t *ct, int arg
                 fprintf(out->fp, "%s_union_ref_t v%llu", snref.text, llu(member->id));
                 break;
             default:
-                gen_panic(out, "internal error: unexpected table table type");
+                gen_panic(out, "internal error: unexpected table field type");
                 continue;
             }
             break;
