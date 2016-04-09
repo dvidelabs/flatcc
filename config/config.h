@@ -307,6 +307,23 @@
 #define FLATCC_DEFAULT_NAMESPACE_COMMON "flatbuffers"
 #endif
 
+/* rpc attributes aren't spec'ed at this point, so we flag the code. */
+/* Similar to attributes after table name (no runtime option). */
+#ifndef FLATCC_ALLOW_RPC_SERVICE_ATTRIBUTES
+#define FLATCC_ALLOW_RPC_ATTRIBUTES 1
+#endif
+ 
+/* Similar to attributes after a tables field name (no runtime option). */
+#ifndef FLATCC_ALLOW_RPC_METHOD_ATTRIBUTES
+#define FLATCC_ALLOW_RPC_METHOD_ATTRIBUTES 1
+#endif
+
+/* Only takes effect if rpc method attributes are allowed (no runtime option). */
+#ifndef FLATCC_ALLOW_DEPRECATED_RPC_METHOD
+#define FLATCC_ALLOW_DEPRECATED_RPC_METHOD 1
+#endif
+
+
 /*
  * This inserts #pragma pack(1) and padding fields instead
  * of using alignas on field members.

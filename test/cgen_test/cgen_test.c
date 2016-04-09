@@ -52,6 +52,7 @@ int main()
         "// as long as the vector is sorted accordingly. The first key gets\n"
         "// gets a shorter find alias method.\n"
         "// (all scalar vectors can also be searched - they have find defined)\n"
+        "/* block comments are also allowed. */\n"
         "table point { x : float (key); y: float; z: float (key); }\n"
         "namespace mystic;\n"
         "table island { lattitude : int; longitude : int; }\n"
@@ -109,8 +110,14 @@ int main()
         "//root_type the.goo;\n"
         "table hop { einhorn: c3 (required); jupiter: c2; names: [string] (required); ehlist: [c3]; k2: the.goo; k2vec: [the.goo]; lunar: the.flags2 = bravo; }\n"
         "table TestOrder { x0 : byte; x1: bool = true; x2: short; x3: the.shade; x4: string; x5 : the.u1; x6 : [string]; x7: double; }\n"
-        "table TestOrder2 (original_order) { x0 : byte; x1: bool = true; x1a : bool = 1; x2: short; x3: the.shade; x4: string; x5: the.u1; x6 : [string]; x7: double; }\n";
-
+        "table TestOrder2 (original_order) { x0 : byte; x1: bool = true; x1a : bool = 1; x2: short; x3: the.shade; x4: string; x5: the.u1; x6 : [string]; x7: double; }\n"
+        "table StoreResponse {}\n"
+        "rpc_service MonsterStorage {\n"
+        "  Store(Monster):StoreResponse;\n"
+        "  Retrieve(MonsterId):Monster;\n"
+        "  RetrieveOne(MonsterId):Monster (deprecated);\n"
+        "}\n"
+        "table Monster {}\ntable MonsterId{ id: int; }\n";
     flatcc_options_t opts;
     flatcc_context_t ctx = 0;
     int ret = -1;

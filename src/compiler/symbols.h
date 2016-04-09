@@ -57,6 +57,7 @@ enum {
     tok_kw_attribute,
     tok_kw_namespace,
     tok_kw_root_type,
+    tok_kw_rpc_service,
     tok_kw_file_extension,
     tok_kw_file_identifier,
     /* Pseudo keywords. */
@@ -131,6 +132,7 @@ struct fb_value {
 enum fb_kind {
     fb_is_table,
     fb_is_struct,
+    fb_is_rpc_service,
     fb_is_enum,
     fb_is_union,
     fb_is_member
@@ -177,7 +179,10 @@ DECLARE_HASH_TABLE(fb_scope_table, fb_scope_t *)
 
 struct fb_member {
     fb_symbol_t symbol;
+    /* Struct or table field type, or method response type. */
     fb_value_t type;
+    /* Method request type only used for methods. */
+    fb_value_t req_type;
     fb_value_t value;
     fb_metadata_t *metadata;
     fb_doc_t *doc;
@@ -373,6 +378,7 @@ static inline fb_compound_type_t *get_compound_if_visible(fb_schema_t *schema, f
     switch (sym->kind) {
     case fb_is_struct:
     case fb_is_table:
+    case fb_is_rpc_service:
     case fb_is_union:
     case fb_is_enum:
         ct = (fb_compound_type_t *)sym;

@@ -546,7 +546,7 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
          * macros, so we use an inline function. Users would normally
          * use sizeof which will break for empty which is ok, and
          * internal operations can use size() where generic behavior is
-         * required. 
+         * required.
          */
         fprintf(out->fp, "/* empty struct already typedef'ed as void since this not permitted in std. C: struct %s {}; */\n", snt.text);
         fprintf(out->fp,
@@ -812,7 +812,7 @@ static void gen_enum(output_t *out, fb_compound_type_t *ct)
         member = (fb_member_t *)sym;
         print_doc(out, "", member->doc);
         symbol_name(&member->symbol, &n, &s);
-        /* 
+        /*
          * This must be a define, not a static const integer, otherwise it
          * won't work in switch statements - except with GNU extensions.
          */
@@ -1297,6 +1297,9 @@ int fb_gen_c_reader(output_t *out)
             break;
         case fb_is_table:
             gen_table(out, (fb_compound_type_t *)sym);
+            break;
+        case fb_is_rpc_service:
+            /* Ignore. */
             break;
         default:
             gen_panic(out, "internal error: unexpected schema component");

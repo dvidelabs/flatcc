@@ -781,6 +781,10 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             case fb_is_struct:
             case fb_is_union:
                 break;
+            case fb_is_rpc_service:
+                error_sym_2(P, sym, "rpc service is not a valid table field type", type_sym);
+                member->type.type = vt_invalid;
+                continue;
             default:
                 error_sym_2(P, sym, "internal error: unexpected field type", type_sym);
                 member->type.type = vt_invalid;
@@ -959,6 +963,110 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         ret = -1;
     }
     return ret;
+}
+
+/*
+ * The parser already makes sure we have exactly one request type,
+ * one response type, and no initializer.
+ *
+ * We are a bit heavy on flagging attributes because their behavior
+ * isn't really specified at this point.
+ */
+static int process_rpc_service(fb_parser_t *P, fb_compound_type_t *ct)
+{
+    fb_symbol_t *sym, *old, *type_sym;
+    fb_member_t *member;
+#if FLATCC_ALLOW_RPC_SERVICE_ATTRIBUTES || FLATCC_ALLOW_RPC_METHOD_ATTRIBUTES
+    fb_metadata_t *knowns[KNOWN_ATTR_COUNT];
+#endif
+
+    assert(ct->symbol.kind == fb_is_rpc_service);
+    assert(!ct->type.type);
+
+    /*
+     * Deprecated is defined for fields - but it is unclear if this also
+     * covers rpc services. Anyway, we accept it since it may be useful,
+     * and does not harm.
+     */
+#if FLATCC_ALLOW_RPC_SERVICE_ATTRIBUTES
+    /* But we have no known attributes to support. */
+    ct->metadata_flags = process_metadata(P, ct->metadata, 0, knowns);
+#else
+    if (ct->metadata) {
+        error_sym(P, &ct->symbol, "rpc services cannot have attributes");
+        /* Non-fatal. */
+    }
+#endif
+
+    /*
+     * `original_order` now lives as a flag, we need not consider it
+     * further until code generation.
+     */
+    for (sym = ct->members; sym; sym = sym->link) {
+        type_sym = 0;
+        if ((old = define_fb_symbol(&ct->index, sym))) {
+            error_sym_2(P, sym, "rpc method already defined here", old);
+            continue;
+        }
+        if (sym->kind != fb_is_member) {
+            error_sym(P, sym, "internal error: member type expected");
+            return -1;
+        }
+        member = (fb_member_t *)sym;
+        if (member->value.type) {
+            error_sym(P, sym, "internal error: initializer should have been rejected by parser");
+        }
+        if (member->type.type == vt_invalid) {
+            continue;
+        }
+        if (member->type.type != vt_type_ref) {
+            error_sym(P, sym, "internal error: request type expected to be a type reference");
+        }
+        type_sym = lookup_type_reference(P, ct->scope, member->req_type.ref);
+        if (!type_sym) {
+            error_ref_sym(P, member->req_type.ref, "unknown type reference used with rpc request type", sym);
+            member->type.type = vt_invalid;
+            continue;
+        } else {
+            if (type_sym->kind != fb_is_table) {
+                error_sym_2(P, sym, "rpc request type must reference a table, defined here", type_sym);
+                member->type.type = vt_invalid;
+                continue;
+            }
+            member->req_type.type = vt_compound_type_ref;
+            member->req_type.ct = (fb_compound_type_t*)type_sym;
+        }
+        type_sym = lookup_type_reference(P, ct->scope, member->type.ref);
+        if (!type_sym) {
+            error_ref_sym(P, member->type.ref, "unknown type reference used with rpc response type", sym);
+            member->type.type = vt_invalid;
+            continue;
+        } else {
+            if (type_sym->kind != fb_is_table) {
+                error_sym_2(P, sym, "rpc response type must reference a table, defined here", type_sym);
+                member->type.type = vt_invalid;
+                continue;
+            }
+            member->type.type = vt_compound_type_ref;
+            member->type.ct = (fb_compound_type_t*)type_sym;
+            /* Symbols have no size. */
+            member->size = 0;
+        }
+#if FLATCC_ALLOW_RPC_METHOD_ATTRIBUTES
+#if FLATCC_ALLOW_DEPRECATED_RPC_METHOD
+        member->metadata_flags = process_metadata(P, member->metadata, fb_f_deprecated, knowns);
+#else
+        member->metadata_flags = process_metadata(P, member->metadata, 0, knowns);
+#endif
+#else
+        if (member->metadata) {
+            error_sym(P, sym, "rpc methods cannot have attributes");
+            /* Non-fatal. */
+            continue;
+        }
+#endif
+    }
+    return 0;
 }
 
 static int process_enum(fb_parser_t *P, fb_compound_type_t *ct)
@@ -1306,6 +1414,7 @@ int fb_build_schema(fb_parser_t *P)
         case fb_is_enum:
         case fb_is_union:
         case fb_is_struct:
+        case fb_is_rpc_service:
             ct = (fb_compound_type_t *)sym;
             ct->schema = &P->schema;
             if (ct->scope && (old_sym = define_fb_symbol(&ct->scope->symbol_index, sym))) {
@@ -1358,6 +1467,12 @@ int fb_build_schema(fb_parser_t *P)
         case fb_is_table:
             /* Handle after structs and enums. */
             continue;
+        case fb_is_rpc_service:
+            /*
+             * Also handle rpc_service later like tables, just in case
+             * we allow non-table types in request/response type.
+             */
+            continue;
         case fb_is_enum:
             if (P->opts.hide_later_enum) {
                 ct = (fb_compound_type_t *)sym;
@@ -1406,6 +1521,13 @@ int fb_build_schema(fb_parser_t *P)
                 continue;
             }
             break;
+        case fb_is_rpc_service:
+            ct = (fb_compound_type_t *)sym;
+            /* Only now is the full struct size available. */
+            if (ct->type.type != vt_invalid && process_rpc_service(P, ct)) {
+                ct->type.type = vt_invalid;
+                continue;
+            }
         }
     }
     revert_order(&P->schema.ordered_structs);

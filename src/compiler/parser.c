@@ -134,13 +134,10 @@ void error_ref_sym(fb_parser_t *P, fb_ref_t *ref, const char *msg, fb_symbol_t *
 /* Flatbuffers reserve keywords. */
 #define LEX_KEYWORDS
 
-/* Note: Googles flatc compiler currently does not support C block comments. */
 #define LEX_C_BLOCK_COMMENT
-
 /*
  * Flatbuffers also support /// on a single line for documentation but
- * we can handle that within the normal line comment parsing logic, if
- * we bother to deal with it.
+ * we can handle that within the normal line comment parsing logic.
  */
 #define LEX_C99_LINE_COMMENT
 /*
@@ -220,6 +217,19 @@ static inline fb_compound_type_t *fb_add_struct(fb_parser_t *P)
     p = new_elem(P, sizeof(*p));
     p->symbol.link = P->schema.symbols;
     p->symbol.kind = fb_is_struct;
+    P->schema.symbols = &p->symbol;
+    p->scope = P->current_scope;
+    fb_assign_doc(P, p);
+    return p;
+}
+
+static inline fb_compound_type_t *fb_add_rpc_service(fb_parser_t *P)
+{
+    fb_compound_type_t *p;
+
+    p = new_elem(P, sizeof(*p));
+    p->symbol.link = P->schema.symbols;
+    p->symbol.kind = fb_is_rpc_service;
     P->schema.symbols = &p->symbol;
     p->scope = P->current_scope;
     fb_assign_doc(P, p);
@@ -712,6 +722,35 @@ fail:
     recover2(P, ';', 1, '}', 0);
 }
 
+static void parse_method(fb_parser_t *P, fb_member_t *fld)
+{
+    fb_token_t *t;
+    if (!(t = match(P, LEX_TOK_ID, "method expected identifier"))) {
+        goto fail;
+    }
+    fld->symbol.ident = t;
+    if (!match(P, '(', "method expected '(' after identifier")) {
+        goto fail;
+    }
+    parse_type(P, &fld->req_type);
+    if (!match(P, ')', "method expected ')' after request type")) {
+        goto fail;
+    }
+    if (!match(P, ':', "method expected ':' before mandatory response type")) {
+        goto fail;
+    }
+    parse_type(P, &fld->type);
+    if ((t = optional(P, '='))) {
+        error_tok(P, t, "method does not accept an initializer");
+        goto fail;
+    }
+    fld->metadata = parse_metadata(P);
+    advance(P, ';', "method must be terminated with ';'", 0);
+    return;
+fail:
+    recover2(P, ';', 1, '}', 0);
+}
+
 /* `enum` must already be matched. */
 static void parse_enum_decl(fb_parser_t *P, fb_compound_type_t *ct)
 {
@@ -822,8 +861,8 @@ fail:
     recover2(P, ';', 1, '}', 0);
 }
 
-/* `struct` or `table` must already be matched. */
-static void parse_compound_type(fb_parser_t *P, fb_compound_type_t *ct)
+/* `struct` , `table`, or 'rpc_service' must already be matched. */
+static void parse_compound_type(fb_parser_t *P, fb_compound_type_t *ct, long token)
 {
     fb_token_t *t = 0;
 
@@ -844,7 +883,11 @@ static void parse_compound_type(fb_parser_t *P, fb_compound_type_t *ct)
     }
 #endif
     while (P->token->id != '}') {
-        parse_field(P, fb_add_member(P, &ct->members));
+        if (token == tok_kw_rpc_service) {
+            parse_method(P, fb_add_member(P, &ct->members));
+        } else {
+            parse_field(P, fb_add_member(P, &ct->members));
+        }
         if (P->failed >= FLATCC_MAX_ERRORS) {
             goto fail;
         }
@@ -889,7 +932,6 @@ static void parse_root_type(fb_parser_t *P, fb_root_type_t *rt)
     rt->scope = P->current_scope;
     advance(P, ';', "missing ';' expected by root_type at", t);
 }
-
 
 static void parse_include(fb_parser_t *P)
 {
@@ -985,11 +1027,15 @@ static void parse_schema_decl(fb_parser_t *P)
         break;
     case tok_kw_struct:
         next(P);
-        parse_compound_type(P, fb_add_struct(P));
+        parse_compound_type(P, fb_add_struct(P), tok_kw_struct);
         break;
     case tok_kw_table:
         next(P);
-        parse_compound_type(P, fb_add_table(P));
+        parse_compound_type(P, fb_add_table(P), tok_kw_table);
+        break;
+    case tok_kw_rpc_service:
+        next(P);
+        parse_compound_type(P, fb_add_rpc_service(P), tok_kw_rpc_service);
         break;
     case tok_kw_enum:
         next(P);
@@ -1273,6 +1319,7 @@ void fb_clear_parser(fb_parser_t *P)
         switch (sym->kind) {
         case fb_is_struct:
         case fb_is_table:
+        case fb_is_rpc_service:
         case fb_is_enum:
         case fb_is_union:
             ct = (fb_compound_type_t *)sym;
