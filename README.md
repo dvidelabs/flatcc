@@ -65,8 +65,9 @@ manually working with JSON such as editing game scenes. Both tools have
 their place. 
 
 The `flatcc` generated binary schema (`.bfbs`) files are also compatible
-with Googles `flatc` tool, except there is an option store names with or
-without dotted namespace prefixes.
+with Googles `flatc` tool, except there is an option to store names with or
+without dotted namespace prefixes where `flatc` always store without a
+namespace.
 
 **NOTE: Big-endian platforms are untested but supported in principle.**
 
@@ -128,11 +129,11 @@ stable, but input from the community will always be welcome and included
 in releases where relevant, especially with respect to testing on
 different target platforms.
 
-Potential upcoming breaking changes:
+**Potential upcoming breaking changes:**
 
-The `verify_as_root` calls may change to use `verify_as_root` and
+_The `verify_as_root` calls may change to use `verify_as_root` and
 `verify_as_root_with_identifier` for consistency with create calls, but
-this is still an open issue.
+this is still an open issue._
 
 ## Time / Space / Usability Tradeoff
 
@@ -297,7 +298,7 @@ binaries are located in the `bin` and `lib` directories under the
 You can either jump directly to the [monster
 example](https://github.com/dvidelabs/flatcc/tree/master/samples/monster)
 that follows
-[Googles FlatBuffers Tutorial](https://google.github.io/flatbuffers/flatbuffers_guide_tutorial.html), or you can read along the the quickstart guide below. If you follow
+[Googles FlatBuffers Tutorial](https://google.github.io/flatbuffers/flatbuffers_guide_tutorial.html), or you can read along the quickstart guide below. If you follow
 the monster tutorial, you may want to clone and build flatcc and copy
 the source to a separate project directory as follows:
 
@@ -311,7 +312,7 @@ the source to a separate project directory as follows:
 custom directory, here `mymonster`. With (-a) it also adds a simple
 build script, copies the example, and updates `.gitignore` - see
 `scripts/setup.sh -h`. Setup can also build flatcc, but you still have
-to ensure the build enviroment is configured for your system.
+to ensure the build environment is configured for your system.
 
 To write your own schema files please follow the main FlatBuffers
 project documentation on [writing schema
