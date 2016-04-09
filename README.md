@@ -38,6 +38,8 @@ See also:
 
 - [Status](https://github.com/dvidelabs/flatcc#status)
 
+- [Benchmark](https://github.com/dvidelabs/flatcc#benchmark), and
+  [C specific benchmark](https://github.com/dvidelabs/flatcc#operation-flatcc-for-c-encode-optimized).
 
 The `flatcc` compiler is implemented as a standalone tool instead of
 extending Googles `flatc` compiler in order to have a pure portable C
@@ -154,7 +156,8 @@ buffers. These numbers are just a rough guideline - they obviously
 depend on hardware, compiler, and data encoded. Measurements are
 excluding an ininitial warmup step.
 
-See also benchmark below.
+See also [benchmark](https://github.com/dvidelabs/flatcc#benchmark)
+below.
 
 The client C code can avoid almost any kind of allocation to build
 buffers as a builder stack provides an extensible arena before
