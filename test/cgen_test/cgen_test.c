@@ -46,13 +46,13 @@ int main()
     const char *name = "../xyzzy.fbs";
 
     char input[] =
-        "// buffers do not support include statements\n"
-        "//include \"foobar.fbs\";\n"
+        "\t//buffers do not support include statements\n"
+        "//\tinclude \"foobar.fbs\";\n"
         "// in flatc, only one field can have a key, but we have no issues\n"
         "// as long as the vector is sorted accordingly. The first key gets\n"
         "// gets a shorter find alias method.\n"
         "// (all scalar vectors can also be searched - they have find defined)\n"
-        "/* block comments are also allowed. */\n"
+        "/* block comments are also allowed.\n */\n"
         "table point { x : float (key); y: float; z: float (key); }\n"
         "namespace mystic;\n"
         "table island { lattitude : int; longitude : int; }\n"
@@ -61,7 +61,7 @@ int main()
         " /// - one in each name space.\n"
         "table point { interest: agent; blank: string; geo: mystic.island; }\n"
         "enum agent:int { lot, pirate, vessel, navy, parrot }\n"
-        "namespace the;\n"
+        "\tnamespace the;\n"
         "//root_type point;\n"
         "attribute \"foo\";\n"
         "//attribute \"\"; // ensure empty strings are accepted.\n"
@@ -117,7 +117,10 @@ int main()
         "  Retrieve(MonsterId):Monster;\n"
         "  RetrieveOne(MonsterId):Monster (deprecated);\n"
         "}\n"
-        "table Monster {}\ntable MonsterId{ id: int; }\n";
+        "/* \n"
+        "*/table Monster {}\ntable MonsterId{ id: int; }\n"
+        "/* \t/ */\n"; /* '\v' would give an error. */
+
     flatcc_options_t opts;
     flatcc_context_t ctx = 0;
     int ret = -1;

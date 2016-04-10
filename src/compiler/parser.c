@@ -150,6 +150,8 @@ void error_ref_sym(fb_parser_t *P, fb_ref_t *ref, const char *msg, fb_symbol_t *
  * notation is supported, and the lexer handles this by default. */
 //#define LEX_C_NUMERIC
 
+#define lex_isblank(c) ((c) == ' ' || (c) == '\t')
+
 #include "parser.h"
 
 #ifdef LEX_DEBUG
@@ -336,14 +338,16 @@ again:
     if (P->token == P->te) {
         /* We keep returning end of token to help binary operators etc., if any. */
         --P->token;
+        assert(0);
         switch (P->token->id) {
         case LEX_TOK_EOS: case LEX_TOK_EOB: case LEX_TOK_EOF:
             P->token->id = LEX_TOK_EOF;
             return P->token;
         }
-        error_tok(P, P->token, "Unexpected end of input");
+        error_tok(P, P->token, "unexpected end of input");
     }
     if (P->token->id == tok_kw_doc_comment) {
+        /* Note: we can have blanks that are control characters here, such as \t. */
         fb_add_doc(P, P->token);
         goto again;
     }
@@ -500,7 +504,7 @@ static void parse_string_literal(fb_parser_t *P, fb_value_t *v)
             break;
         case LEX_TOK_STRING_CTRL:
             v->type = vt_invalid;
-            error_tok(P, t, "control characters not allowed in strings");
+            error_tok_as_string(P, t, "control characters not allowed in strings", "?", 1);
             break;
         case LEX_TOK_STRING_NEWLINE:
             v->type = vt_invalid;
@@ -1051,6 +1055,20 @@ static void parse_schema_decl(fb_parser_t *P)
     case '{':
         error_tok(P, P->token, "JSON objects in schema file is not supported - but a schema specific JSON parser can be generated");
         break;
+    case LEX_TOK_CTRL:
+        error_tok_as_string(P, P->token, "unexpected control character in schema definition", "?", 1);
+        break;
+    case LEX_TOK_COMMENT_CTRL:
+        if (lex_isblank(P->token->text[0])) {
+            /* This also strips tabs in doc comments. */
+            next(P);
+            break;
+        }
+        error_tok_as_string(P, P->token, "unexpected control character in comment", "?", 1);
+        break;
+    case LEX_TOK_COMMENT_UNTERMINATED:
+        error_tok_as_string(P, P->token, "unterminated comment", "<eof>", 5);
+        break;
     default:
         error_tok(P, P->token, "unexpected token in schema definition");
         break;
@@ -1151,11 +1169,20 @@ static void inject_token(fb_token_t *t, const char *lex, long id)
     (ctx(linenum)++, ctx(line) = last,                                  \
     push_token((fb_parser_t*)context, LEX_TOK_STRING_NEWLINE, first, last))
 
-/* Add emtpy comment on comment start - otherwise we miss empty lines. */
+/*
+ * Add emtpy comment on comment start - otherwise we miss empty lines.
+ * Save is_doc becuase comment_part does not remember.
+ */
 #define lex_emit_comment_begin(first, last, is_doc)                     \
     { ctx(doc_mode) = is_doc; push_comment((fb_parser_t*)context, last, last); }
 #define lex_emit_comment_part(first, last) push_comment((fb_parser_t*)context, first, last)
 #define lex_emit_comment_end(first, last) (ctx(doc_mode) = 0)
+
+/* By default emitted as lex_emit_other which would be ignored. */
+#define lex_emit_comment_unterminated(pos)                                  \
+    push_token((fb_parser_t*)context, LEX_TOK_COMMENT_UNTERMINATED, pos, pos)
+#define lex_emit_comment_ctrl(pos)                                          \
+    push_token((fb_parser_t*)context, LEX_TOK_COMMENT_CTRL, pos, pos + 1)
 
 /*
  * Provide hook to lexer for emitting tokens. We can override many
