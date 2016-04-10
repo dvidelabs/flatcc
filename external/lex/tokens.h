@@ -45,13 +45,13 @@ enum {
     /*
      * Any control character that is not newline or blank will be
      * emitted as single character token here. This token is discussed
-     * in several comments below.
-     *
-     * The LEX_TOK_STRING_CTRL is emitted inside strings so error handling
-     * can be different inside strings.
+     * in several comments below. For strings and comments, also
+     * blank control characters will be emitted since they are usually
+     * not desired unexpectd.
      */
     LEX_TOK_CTRL,
     LEX_TOK_STRING_CTRL,
+    LEX_TOK_COMMENT_CTRL,
 
     /*
      * Any printable ASCII character that is not otherwise consumed will
@@ -470,6 +470,7 @@ static const char *lex_describe_token(long token)
     case LEX_TOK_ABORT: return "abort";
     case LEX_TOK_CTRL: return "control";
     case LEX_TOK_STRING_CTRL: return "string control";
+    case LEX_TOK_COMMENT_CTRL: return "comment control";
     case LEX_TOK_SYMBOL: return "symbol";
     case LEX_TOK_ID: return "identifier";
     case LEX_TOK_INT: return "integer";

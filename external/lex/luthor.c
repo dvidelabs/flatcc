@@ -185,7 +185,7 @@ static const char lex_alnum[256] = {
 
 #ifndef lex_isctrl
 #include <ctype.h>
-#define lex_isctrl(c) ((c) < 0x20)
+#define lex_isctrl(c) ((c) < 0x20 || (c) == 0x7f)
 #endif
 
 #ifndef lex_isblank
@@ -320,6 +320,7 @@ lex_mode_c_string:
 
     for (;;) {
         --p;
+        /* We do not allow blanks that are also control characters, such as \t. */
         while (++p != q && *p != '\\' && *p != '\"' && !lex_isctrl(*p)) {
         }
         if (s != p) {
@@ -380,7 +381,7 @@ lex_mode_c_string:
             goto lex_mode_normal;
         }
         ++p;
-        lex_emit_string_ctrl(*s, s, p);
+        lex_emit_string_ctrl(s);
         s = p;
     }
 #endif
@@ -462,7 +463,7 @@ lex_mode_c_string_sq:
             goto lex_mode_normal;
         }
         ++p;
-        lex_emit_string_ctrl(*s, s, p);
+        lex_emit_string_ctrl(s);
         s = p;
     }
 #endif
@@ -529,7 +530,7 @@ lex_mode_python_block_string:
             continue;
         }
         ++p;
-        lex_emit_string_ctrl(*s, s, p);
+        lex_emit_string_ctrl(s);
         s = p;
     }
 #endif
@@ -590,7 +591,7 @@ lex_mode_python_block_string_sq:
             continue;
         }
         ++p;
-        lex_emit_ctrl(*s, s, p);
+        lex_emit_string_ctrl(s);
         s = p;
     }
 #endif
@@ -607,7 +608,7 @@ lex_mode_line_comment:
 
     for (;;) {
         --p;
-        while (++p != q && !lex_isctrl(*p)) {
+        while (++p != q && (!lex_isctrl(*p))) {
         }
         if (s != p) {
             lex_emit_comment_part(s, p);
@@ -631,7 +632,7 @@ lex_mode_line_comment:
             goto lex_mode_normal;
         }
         ++p;
-        lex_emit_ctrl(*s, s, p);
+        lex_emit_comment_ctrl(s);
         s = p;
     }
 #endif
@@ -643,7 +644,7 @@ lex_mode_c_block_comment:
 
     for (;;) {
         --p;
-        while (++p != q && !lex_isctrl(*p)) {
+        while (++p != q && (!lex_isctrl(*p))) {
             if (*p == '/' && p[-1] == '*') {
                 --p;
                 break;
@@ -675,7 +676,7 @@ lex_mode_c_block_comment:
         }
         if (lex_isctrl(*p)) {
             ++p;
-            lex_emit_ctrl(*s, s, p);
+            lex_emit_comment_ctrl(s);
             s = p;
             continue;
         }
@@ -736,7 +737,7 @@ lex_mode_julia_nested_comment:
         }
         if (lex_isctrl(*p)) {
             ++p;
-            lex_emit_ctrl(*s, s, p);
+            lex_emit_comment_ctrl(s);
             s = p;
             continue;
         }
@@ -1481,8 +1482,8 @@ lex_c_octal_to_exponent_part:
 #endif
                 ++p;
                 /* normally 0x7f DEL and 0x00..0x1f incl. */
-                if (lex_isctrl(*s)) {
-                    lex_emit_ctrl(*s, s, p);
+                if (lex_isctrl(*s) && !lex_isblank(*s)) {
+                    lex_emit_ctrl(s);
                 } else {
                     lex_emit_symbol(*s, s, p);
                 }

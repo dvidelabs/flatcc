@@ -82,11 +82,15 @@
  * elements, except \0\r\n which breaks the string up.
  */
 #ifndef lex_emit_ctrl
-#define lex_emit_ctrl(token, first, last) lex_emit(LEX_TOK_CTRL, first, last)
+#define lex_emit_ctrl(pos) lex_emit(LEX_TOK_CTRL, pos, pos + 1)
 #endif
 
 #ifndef lex_emit_string_ctrl
-#define lex_emit_string_ctrl(token, first, last) lex_emit(LEX_TOK_STRING_CTRL, first, last)
+#define lex_emit_string_ctrl(pos) lex_emit(LEX_TOK_STRING_CTRL, pos, pos + 1)
+#endif
+
+#ifndef lex_emit_comment_ctrl
+#define lex_emit_comment_ctrl(pos) lex_emit_other(LEX_TOK_COMMENT_CTRL, pos, pos + 1)
 #endif
 
 /*
