@@ -8,6 +8,58 @@
 #define llu(x) (long long unsigned int)(x)
 #define lld(x) (long long int)(x)
 
+
+/*
+ * Use of file identifiers for undeclared roots is fuzzy, but we need an
+ * identifer for all, so we use the one defined for the current schema
+ * file and allow the user to override. This avoids tedious runtime file
+ * id arguments to all create calls.
+ *
+ * As later addition to FlatBuffers, type hashes may replace file
+ * identifiers when explicitly stated. These are FNV-1a hashes of the
+ * fully qualified type name (dot separated).
+ *
+ * We generate the type hash both as a native integer constants for use
+ * in switch statements, and encoded as a little endian C string for use
+ * as a file identifier.
+ */
+static void print_type_identifier(output_t *out, const char *name, uint32_t type_hash)
+{
+    uint8_t buf[17];
+    uint8_t *p;
+    uint8_t x;
+    int i;
+    const char *nsc = out->nsc;
+
+    fprintf(out->fp,
+            "#ifndef %s_identifier\n"
+            "#define %s_identifier %sidentifier\n"
+            "#endif\n",
+            name, name, nsc);
+    fprintf(out->fp,
+        "#define %s_type_hash ((%sthash_t))0x%lx)\n",
+        name, nsc, (unsigned long)(type_hash));
+    p = buf;
+    i = 4;
+    while (i--) {
+        *p++ = '\\';
+        *p++ = 'x';
+        x = type_hash & 0x0f;
+        x += x > 9 ? 'a' - 10 : '0';
+        type_hash >>= 4;
+        p[1] = x;
+        x = type_hash & 0x0f;
+        x += x > 9 ? 'a' - 10 : '0';
+        type_hash >>= 4;
+        p[0] = x;
+        p += 2;
+    }
+    *p = '\0';
+    fprintf(out->fp,
+        "#define %s_type_identifier \"%s\"\n",
+        name, buf);
+}
+
 /* Finds first occurrence of matching key when vector is sorted on the named field. */
 static void gen_find(output_t *out)
 {
@@ -130,8 +182,10 @@ static void gen_helpers(output_t *out)
                 "__flatcc_define_integer_accessors(__%svoffset, flatbuffers_voffset_t,\n"
                 "        FLATBUFFERS_VOFFSET_WIDTH, flatbuffers_endian)\n"
                 "__flatcc_define_integer_accessors(__%sutype, flatbuffers_utype_t,\n"
-                "        FLATBUFFERS_UTYPE_WIDTH, flatbuffers_endian)\n",
-                nsc, nsc, nsc, nsc);
+                "        FLATBUFFERS_UTYPE_WIDTH, flatbuffers_endian)\n"
+                "__flatcc_define_integer_accessors(__%sthash, flatbuffers_thash_t,\n"
+                "        FLATBUFFERS_THASH_WIDTH, flatbuffers_endian)\n",
+                nsc, nsc, nsc, nsc, nsc);
         fprintf(out->fp,
                 "#ifndef %s_WRAP_NAMESPACE\n"
                 "#define %s_WRAP_NAMESPACE(ns, x) ns ## _ ## x\n"
@@ -311,8 +365,12 @@ static void gen_helpers(output_t *out)
             "{ return fid == 0 || (__%suoffset_read_from_pe((flatbuffers_uoffset_t *)buffer + 1) ==\n"
             "      ((%suoffset_t)fid[0]) + (((%suoffset_t)fid[1]) << 8) +\n"
             "      (((%suoffset_t)fid[2]) << 16) + (((%suoffset_t)fid[3]) << 24)); }\n"
+            "static inline int %shas_type(const void *buffer, %sthash_t type_hash)\n"
+            "{ return type_hash == 0 || (__%sthash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1) == type_hash); }\n\n"
+            "static inline int %sread_type(const void *buffer)\n"
+            "{ return __%sthash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1); }\n\n"
             "#define %sverify_endian() %shas_identifier(\"\\x00\\x00\\x00\\x00\" \"1234\", \"1234\")\n",
-            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
 
     fprintf(out->fp,
             "/* Null file identifier accepts anything, otherwise fid should be 4 characters. */\n"
@@ -325,20 +383,24 @@ static void gen_helpers(output_t *out)
             "#define __%snested_buffer_as_root(C, N, T, K)\\\n"
             "static inline T ## _ ## K ## t C ## _ ## N ## _as_root_with_identifier(C ## _ ## table_t t, const char *fid)\\\n"
             "{ const uint8_t *buffer = C ## _ ## N(t); return __%sread_root(T, K, buffer, fid); }\\\n"
+            "static inline T ## _ ## K ## t C ## _ ## N ## _as_typed_root(C ## _ ## table_t t)\\\n"
+            "{ const uint8_t *buffer = C ## _ ## N(t); return __%sread_root(T, K, buffer, C ## _ ## type_identifier); }\\\n"
             "static inline T ## _ ## K ## t C ## _ ## N ## _as_root(C ## _ ## table_t t)\\\n"
             "{ const char *fid = T ## _identifier;\\\n"
             "  const uint8_t *buffer = C ## _ ## N(t); return __%sread_root(T, K, buffer, fid); }\n",
-            nsc, nsc, nsc);
+            nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "#define __%sbuffer_as_root(N, K)\\\n"
             "static inline N ## _ ## K ## t N ## _as_root_with_identifier(const void *buffer, const char *fid)\\\n"
             "{ return __%sread_root(N, K, buffer, fid); }\\\n"
+            "static inline N ## _ ## K ## t N ## _as_root_with_type(const void *buffer, flatbuffers_thash_t thash)\\\n"
+            "{ __flatbuffers_thash_write_to_pe(&thash, thash); return __%sread_root(N, K, buffer, (const char *)&thash); }\\\n"
             "static inline N ## _ ## K ## t N ## _as_root(const void *buffer)\\\n"
             "{ const char *fid = N ## _identifier;\\\n"
             "  return __%sread_root(N, K, buffer, fid); }\n"
             "#define __%sstruct_as_root(N) __%sbuffer_as_root(N, struct_)\n"
             "#define __%stable_as_root(N) __%sbuffer_as_root(N, table_)\n",
-            nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp, "\n");
 }
 
@@ -650,14 +712,7 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
     }
     fprintf(out->fp, "static inline size_t %s__size() { return %llu; }\n",
             snt.text, llu(ct->size));
-    fprintf(out->fp,
-            "#ifndef %s_identifier\n"
-            "#define %s_identifier %sidentifier\n"
-            "#endif\n",
-            snt.text, snt.text, nsc);
-    fprintf(out->fp,
-        "#define %s_type_hash ((%sthash_t))0x%lx)\n",
-        snt.text, nsc, (unsigned long)(ct->type_hash));
+    print_type_identifier(out, snt.text, ct->type_hash);
     fprintf(out->fp,
             "static inline %suoffset_t %s_vec_len(%s_vec_t vec)\n"
             "__%svec_len(vec)\n",
@@ -942,21 +997,7 @@ static void gen_table(output_t *out, fb_compound_type_t *ct)
             "struct %s_table { uint8_t unused__; };\n"
             "\n",
             snt.text);
-    fprintf(out->fp,
-            /*
-             * Use of file identifiers for undeclared roots is fuzzy,
-             * but we need an identifer for all, so we use the one
-             * defined for the current schema file and allow the user to
-             * override. This avoids tedious runtime file id arguments
-             * to all create calls.
-             */
-            "#ifndef %s_identifier\n"
-            "#define %s_identifier %sidentifier\n"
-            "#endif\n",
-            snt.text, snt.text, nsc);
-    fprintf(out->fp,
-        "#define %s_type_hash ((%sthash_t))0x%lx)\n",
-        snt.text, nsc, (unsigned long)(ct->type_hash));
+    print_type_identifier(out, snt.text, ct->type_hash);
     fprintf(out->fp,
             "static inline %suoffset_t %s_vec_len(%s_vec_t vec)\n"
             "__%svec_len(vec)\n",
