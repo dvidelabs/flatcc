@@ -87,7 +87,7 @@ struct reflection_Type_table { uint8_t unused__; };
 #ifndef reflection_Type_identifier
 #define reflection_Type_identifier flatbuffers_identifier
 #endif
-#define reflection_Type_type ((flatbuffers_thash_t)0x44c8fe5e)
+#define reflection_Type_type_hash ((flatbuffers_thash_t)0x44c8fe5e)
 #define reflection_Type_type_identifier "\x5e\xfe\xc8\x44"
 static inline flatbuffers_uoffset_t reflection_Type_vec_len(reflection_Type_vec_t vec)
 __flatbuffers_vec_len(vec)
@@ -116,7 +116,7 @@ struct reflection_EnumVal_table { uint8_t unused__; };
 #ifndef reflection_EnumVal_identifier
 #define reflection_EnumVal_identifier flatbuffers_identifier
 #endif
-#define reflection_EnumVal_type ((flatbuffers_thash_t)0x9531c946)
+#define reflection_EnumVal_type_hash ((flatbuffers_thash_t)0x9531c946)
 #define reflection_EnumVal_type_identifier "\x46\xc9\x31\x95"
 static inline flatbuffers_uoffset_t reflection_EnumVal_vec_len(reflection_EnumVal_vec_t vec)
 __flatbuffers_vec_len(vec)
@@ -150,7 +150,7 @@ struct reflection_Enum_table { uint8_t unused__; };
 #ifndef reflection_Enum_identifier
 #define reflection_Enum_identifier flatbuffers_identifier
 #endif
-#define reflection_Enum_type ((flatbuffers_thash_t)0xacffa90f)
+#define reflection_Enum_type_hash ((flatbuffers_thash_t)0xacffa90f)
 #define reflection_Enum_type_identifier "\x0f\xa9\xff\xac"
 static inline flatbuffers_uoffset_t reflection_Enum_vec_len(reflection_Enum_vec_t vec)
 __flatbuffers_vec_len(vec)
@@ -193,7 +193,7 @@ struct reflection_Field_table { uint8_t unused__; };
 #ifndef reflection_Field_identifier
 #define reflection_Field_identifier flatbuffers_identifier
 #endif
-#define reflection_Field_type ((flatbuffers_thash_t)0x9f7e408a)
+#define reflection_Field_type_hash ((flatbuffers_thash_t)0x9f7e408a)
 #define reflection_Field_type_identifier "\x8a\x40\x7e\x9f"
 static inline flatbuffers_uoffset_t reflection_Field_vec_len(reflection_Field_vec_t vec)
 __flatbuffers_vec_len(vec)
@@ -261,7 +261,7 @@ struct reflection_Object_table { uint8_t unused__; };
 #ifndef reflection_Object_identifier
 #define reflection_Object_identifier flatbuffers_identifier
 #endif
-#define reflection_Object_type ((flatbuffers_thash_t)0xb09729bd)
+#define reflection_Object_type_hash ((flatbuffers_thash_t)0xb09729bd)
 #define reflection_Object_type_identifier "\xbd\x29\x97\xb0"
 static inline flatbuffers_uoffset_t reflection_Object_vec_len(reflection_Object_vec_t vec)
 __flatbuffers_vec_len(vec)
@@ -309,7 +309,7 @@ struct reflection_Schema_table { uint8_t unused__; };
 #ifndef reflection_Schema_identifier
 #define reflection_Schema_identifier flatbuffers_identifier
 #endif
-#define reflection_Schema_type ((flatbuffers_thash_t)0xfaf93779)
+#define reflection_Schema_type_hash ((flatbuffers_thash_t)0xfaf93779)
 #define reflection_Schema_type_identifier "\x79\x37\xf9\xfa"
 static inline flatbuffers_uoffset_t reflection_Schema_vec_len(reflection_Schema_vec_t vec)
 __flatbuffers_vec_len(vec)

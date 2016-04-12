@@ -613,7 +613,8 @@ See also `include/flatcc/flatcc_verifier.h`.
 There are two ways to identify the content of a FlatBuffer. The first is
 to use file identifiers which are defined in the schema. The second is
 to use `type identifiers` which are calculated hashes based on each tables
-name prefixed with its namespace, if any.
+name prefixed with its namespace, if any. Type identifiers are not to be
+confused with union types.
 
 ### File Identifiers
 
@@ -641,8 +642,8 @@ user, or if included from a schema with a different identifier.
 
 ### Type Identifiers
 
-Type identifier use a type hash which maps the fully qualified name of a
-type to a 4 byte hash. The type hash, or just type, is a 32-bit native
+Type identifier use a type hash which maps a fully qualified type name of a
+into a 4 byte hash. The type has is a 32-bit native
 value and the type identifier is a 4 character little endian encoded
 string of the same value.
 
@@ -658,32 +659,31 @@ identifier in the buffer.
     buffer = flatcc_builder_get_direct_buffer(B);
     monster = MyGame_Example_Monster_as_typed_root(buffer);
 
-    switch (flatbuffers_get_type(buffer)) {
-    case MyGame_Example_Monster_type:
+    switch (flatbuffers_get_type_hash(buffer)) {
+    case MyGame_Example_Monster_type_hash:
         ...
 
     }
     ...
-    if (flatbuffers_get_type(buffer) ==
+    if (flatbuffers_get_type_hash(buffer) ==
         flatbuffers_type_from_name("Some.Old.Buffer")) {
         printf("Buffer is the old version, not supported.\n"); 
     }
 
-The generated code defines three identifiers for type:
+The generated code defines three identifiers for a given table:
 
     #ifndef MyGame_Example_Monster_identifier
     #define MyGame_Example_Monster_identifier flatbuffers_identifier
     #endif
-    #define MyGame_Example_Monster_type ((flatbuffers_thash_t)0x330ef481)
+    #define MyGame_Example_Monster_type_hash ((flatbuffers_thash_t)0x330ef481)
     #define MyGame_Example_Monster_type_identifier "\x81\xf4\x0e\x33"
 
 The values shown are not random - they are given by the standard hash
 function on the schema namespace.
 
 The `type_identifier` can be used anywhere the original 4 character
-identifier would be used, but a buffer must choose which system, if any,
-to identify itself with. The type is a native integer representation of
-the type identifier useful for switch statements.
+file identifier would be used, but a buffer must choose which system, if any,
+to use.
 
 The
 [`flatcc/flatcc_identifier.h`](https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_identifier.h) file contains an implementation of the FNV-1a hash used.

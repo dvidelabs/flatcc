@@ -212,10 +212,10 @@ __flatbuffers_define_string_sort()
 static inline int flatbuffers_has_identifier(const void *buffer, const char *fid)
 { return fid == 0 || memcmp(fid, ((flatbuffers_uoffset_t *)buffer) + 1, FLATBUFFERS_IDENTIFIER_SIZE) == 0; }
 
-static inline int flatbuffers_has_type(const void *buffer, flatbuffers_thash_t type_hash)
+static inline int flatbuffers_has_type_hash(const void *buffer, flatbuffers_thash_t type_hash)
 { return type_hash == 0 || (__flatbuffers_thash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1) == type_hash); }
 
-static inline flatbuffers_thash_t flatbuffers_get_type(const void *buffer)
+static inline flatbuffers_thash_t flatbuffers_get_type_hash(const void *buffer)
 { return __flatbuffers_thash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1); }
 
 #define flatbuffers_verify_endian() flatbuffers_has_identifier("\x00\x00\x00\x00" "1234", "1234")
@@ -235,7 +235,7 @@ static inline T ## _ ## K ## t C ## _ ## N ## _as_root(C ## _ ## table_t t)\
 #define __flatbuffers_buffer_as_root(N, K)\
 static inline N ## _ ## K ## t N ## _as_root_with_identifier(const void *buffer, const char *fid)\
 { return __flatbuffers_read_root(N, K, buffer, fid); }\
-static inline N ## _ ## K ## t N ## _as_root_with_type(const void *buffer, flatbuffers_thash_t thash)\
+static inline N ## _ ## K ## t N ## _as_root_with_type_hash(const void *buffer, flatbuffers_thash_t thash)\
 { __flatbuffers_thash_write_to_pe(&thash, thash); return __flatbuffers_read_root(N, K, buffer, thash ? (const char *)&thash : 0); }\
 static inline N ## _ ## K ## t N ## _as_root(const void *buffer)\
 { const char *fid = N ## _identifier;\

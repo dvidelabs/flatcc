@@ -37,7 +37,7 @@ static void print_type_identifier(output_t *out, const char *name, uint32_t type
             "#endif\n",
             name, name, nsc);
     fprintf(out->fp,
-        "#define %s_type ((%sthash_t)0x%lx)\n",
+        "#define %s_type_hash ((%sthash_t)0x%lx)\n",
         name, nsc, (unsigned long)(type_hash));
     p = buf;
     i = 4;
@@ -364,9 +364,9 @@ static void gen_helpers(output_t *out)
             "/* If fid is null, the function returns true without testing as buffer is not expected to have any id. */\n"
             "static inline int %shas_identifier(const void *buffer, const char *fid)\n"
             "{ return fid == 0 || memcmp(fid, ((%suoffset_t *)buffer) + 1, %s_IDENTIFIER_SIZE) == 0; }\n\n"
-            "static inline int %shas_type(const void *buffer, %sthash_t type_hash)\n"
+            "static inline int %shas_type_hash(const void *buffer, %sthash_t type_hash)\n"
             "{ return type_hash == 0 || (__%sthash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1) == type_hash); }\n\n"
-            "static inline %sthash_t %sget_type(const void *buffer)\n"
+            "static inline %sthash_t %sget_type_hash(const void *buffer)\n"
             "{ return __%sthash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1); }\n\n"
             "#define %sverify_endian() %shas_identifier(\"\\x00\\x00\\x00\\x00\" \"1234\", \"1234\")\n",
             nsc, nsc, nscup, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
@@ -392,7 +392,7 @@ static void gen_helpers(output_t *out)
             "#define __%sbuffer_as_root(N, K)\\\n"
             "static inline N ## _ ## K ## t N ## _as_root_with_identifier(const void *buffer, const char *fid)\\\n"
             "{ return __%sread_root(N, K, buffer, fid); }\\\n"
-            "static inline N ## _ ## K ## t N ## _as_root_with_type(const void *buffer, flatbuffers_thash_t thash)\\\n"
+            "static inline N ## _ ## K ## t N ## _as_root_with_type_hash(const void *buffer, flatbuffers_thash_t thash)\\\n"
             "{ __flatbuffers_thash_write_to_pe(&thash, thash); return __%sread_root(N, K, buffer, thash ? (const char *)&thash : 0); }\\\n"
             "static inline N ## _ ## K ## t N ## _as_root(const void *buffer)\\\n"
             "{ const char *fid = N ## _identifier;\\\n"

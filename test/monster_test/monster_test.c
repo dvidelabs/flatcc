@@ -158,17 +158,17 @@ int test_typed_empty_monster(flatcc_builder_t *B)
 
     hexdump("empty typed monster table", buffer, size, stderr);
 
-    if (flatbuffers_get_type(buffer) != flatbuffers_type_from_name("MyGame.Example.Monster")) {
+    if (flatbuffers_get_type_hash(buffer) != flatbuffers_type_hash_from_name("MyGame.Example.Monster")) {
 
-        printf("Monster does not have the expected type, got %lx\n", (unsigned long)flatbuffers_get_type(buffer));
+        printf("Monster does not have the expected type, got %lx\n", (unsigned long)flatbuffers_get_type_hash(buffer));
         goto done;
     }
 
-    if (!flatbuffers_has_type(buffer, ns(Monster_type))) {
+    if (!flatbuffers_has_type_hash(buffer, ns(Monster_type_hash))) {
         printf("Monster does not have the expected type\n");
         goto done;
     }
-    if (!flatbuffers_has_type(buffer, 0x330ef481)) {
+    if (!flatbuffers_has_type_hash(buffer, 0x330ef481)) {
         printf("Monster does not have the expected type\n");
         goto done;
     }
@@ -183,7 +183,7 @@ int test_typed_empty_monster(flatcc_builder_t *B)
         goto done;
     }
 
-    flatbuffers_identifier_from_type(0x330ef481, fid);
+    flatbuffers_identifier_from_type_hash(0x330ef481, fid);
     if ((ret = ns(Monster_verify_as_root(buffer, size, fid)))) {
         printf("could not verify typed empty monster, got %s\n", flatcc_verify_error_string(ret));
         goto done;
@@ -297,15 +297,15 @@ int test_typed_table_with_emptystruct(flatcc_builder_t *B)
         printf("failed to create buffer\n");
         return -1;
     }
-    if (!flatbuffers_has_type(buffer, ns(with_emptystruct_type))) {
+    if (!flatbuffers_has_type_hash(buffer, ns(with_emptystruct_type_hash))) {
         printf("has_type failed\n");
         return -1;
     }
-    if (!flatbuffers_has_type(buffer, 0)) {
+    if (!flatbuffers_has_type_hash(buffer, 0)) {
         printf("null type failed\n");
         return -1;
     }
-    if (flatbuffers_has_type(buffer, 1)) {
+    if (flatbuffers_has_type_hash(buffer, 1)) {
         printf("wrong has type unexpected succeeed\n");
         return -1;
     }
@@ -321,7 +321,7 @@ int test_typed_table_with_emptystruct(flatcc_builder_t *B)
         printf("as_root unexpctedly succeeded\n");
         return -1;
     }
-    if (ns(with_emptystruct_as_root_with_type(buffer, 1))) {
+    if (ns(with_emptystruct_as_root_with_type_hash(buffer, 1))) {
         printf("with wrong type unexptedly succeeded\n");
         return -1;
     }
@@ -333,7 +333,7 @@ int test_typed_table_with_emptystruct(flatcc_builder_t *B)
         printf("as_typed_root_failed\n");
         return -1;
     }
-    if (!ns(with_emptystruct_as_root_with_type(buffer, 0))) {
+    if (!ns(with_emptystruct_as_root_with_type_hash(buffer, 0))) {
         printf("with ignored type failed\n");
         return -1;
     }
@@ -1454,7 +1454,7 @@ int test_typed_struct_buffer(flatcc_builder_t *B)
         printf("wrong Vec3 identifier (via define)\n");
         return -1;
     }
-    if (!ns(Vec3_as_root_with_type(buffer, ns(Vec3_type)))) {
+    if (!ns(Vec3_as_root_with_type_hash(buffer, ns(Vec3_type_hash)))) {
         printf("wrong Vec3 type identifier (via define)\n");
         return -1;
     }
