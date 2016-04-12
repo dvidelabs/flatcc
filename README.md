@@ -666,7 +666,7 @@ identifier in the buffer.
     }
     ...
     if (flatbuffers_get_type_hash(buffer) ==
-        flatbuffers_type_from_name("Some.Old.Buffer")) {
+        flatbuffers_type_hash_from_name("Some.Old.Buffer")) {
         printf("Buffer is the old version, not supported.\n"); 
     }
 
