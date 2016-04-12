@@ -608,11 +608,18 @@ but it can be very useful when debugging why a buffer is invalid.
 See also `include/flatcc/flatcc_verifier.h`.
 
 
-## File Identifiers and Typed Buffers
+## File and Type Identifiers
+
+There are two ways to identify the content of a FlatBuffer. The first is
+to use file identifiers which are defined in the schema. The second is
+to use `type identifiers` which are calculated hashes based on each tables
+name prefixed with its namespace, if any.
+
+### File Identifiers
 
 The FlatBuffers schema language has the optional `file_identifier`
 statement which accepts a 4 characer ASCII string. It is intended to be
-human readable, and when absent, the buffer potentially becomes 4 bytes
+human readable. When absent, the buffer potentially becomes 4 bytes
 shorter (depending on padding).
 
 The `file_identifier` doesn't really take into account that more than one
@@ -627,14 +634,24 @@ before including generated headers:
     ...
     MyGame_Example_Monster_create_as_root(B, ...);
 
-The `create_as_root` call automatically uses type specific identifier.
+The `create_as_root` call automatically uses the file identifier
+associated with the table in question. Tables normally all use the same
+either null or the schema `file_identifer` unless overridden by the
+user, or if included from a schema with a different identifier.
 
-This file identifier is designed to be human readable.
+### Type Identifiers
 
-An alternative identifier uses a type hash which maps the fully
-qualified name of a type to a 4 byte hash. In this example the hash is
-derived from the string "MyGame.Example.Monster" and is the same for all
-FlatBuffer code generators that supports hash types:
+Type identifier use a type hash which maps the fully qualified name of a
+type to a 4 byte hash. The type hash, or just type, is a 32-bit native
+value and the type identifier is a 4 character little endian encoded
+string of the same value.
+
+In this example the hash is derived from the string
+"MyGame.Example.Monster" and is the same for all FlatBuffer code
+generators that supports hash types.
+
+The value 0 is used to indicate that one does not care about the
+identifier in the buffer. 
 
     ...
     MyGame_Example_Monster_create_as_typed_root(B, ...);
@@ -667,6 +684,9 @@ The `type_identifier` can be used anywhere the original 4 character
 identifier would be used, but a buffer must choose which system, if any,
 to identify itself with. The type is a native integer representation of
 the type identifier useful for switch statements.
+
+The
+[`flatcc/flatcc_identifier.h`](https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_identifier.h) file contains an implementation of the FNV-1a hash used.
 
 _Note: there is a potential for collisions in the type hash values
 because the hash is only 4 bytes._
