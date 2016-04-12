@@ -134,7 +134,9 @@ different target platforms.
 
 _The `verify_as_root` calls may change to use `verify_as_root` and
 `verify_as_root_with_identifier` for consistency with create calls, but
-this is still an open issue._
+this is still an open issue. In addition, the upcoming type identifiers
+need a new verifier call `verify_as_typed_root()`.
+
 
 ## Time / Space / Usability Tradeoff
 
@@ -604,6 +606,70 @@ verifier. This will break debug builds and not usually what is desired,
 but it can be very useful when debugging why a buffer is invalid.
 
 See also `include/flatcc/flatcc_verifier.h`.
+
+
+## File Identifiers and Typed Buffers
+
+The FlatBuffers schema language has the optional `file_identifier`
+statement which accepts a 4 characer ASCII string. It is intended to be
+human readable, and when absent, the buffer potentially becomes 4 bytes
+shorter (depending on padding).
+
+The `file_identifier` doesn't really take into account that more than one
+of the tables can be a buffer root table but in praxis any table can be
+used as root. These tables all use the same file identifer. This
+behaviour can be overriden by defining an identifier for a given table
+before including generated headers:
+
+    #define MyGame_Example_Vec3_identifer "VEC3"
+    #include "monster_test_builder.h"
+
+    ...
+    MyGame_Example_Monster_create_as_root(B, ...);
+
+The `create_as_root` call automatically uses type specific identifier.
+
+This file identifier is designed to be human readable.
+
+An alternative identifier uses a type hash which maps the fully
+qualified name of a type to a 4 byte hash. In this example the hash is
+derived from the string "MyGame.Example.Monster" and is the same for all
+FlatBuffer code generators that supports hash types:
+
+    ...
+    MyGame_Example_Monster_create_as_typed_root(B, ...);
+    buffer = flatcc_builder_get_direct_buffer(B);
+    monster = MyGame_Example_Monster_as_typed_root(buffer);
+
+    switch (flatbuffers_get_type(buffer)) {
+    case MyGame_Example_Monster_type:
+        ...
+
+    }
+    ...
+    if (flatbuffers_get_type(buffer) ==
+        flatbuffers_type_from_name("Some.Old.Buffer")) {
+        printf("Buffer is the old version, not supported.\n"); 
+    }
+
+The generated code defines three identifiers for type:
+
+    #ifndef MyGame_Example_Monster_identifier
+    #define MyGame_Example_Monster_identifier flatbuffers_identifier
+    #endif
+    #define MyGame_Example_Monster_type ((flatbuffers_thash_t)0x330ef481)
+    #define MyGame_Example_Monster_type_identifier "\x81\xf4\x0e\x33"
+
+The values shown are not random - they are given by the standard hash
+function on the schema namespace.
+
+The `type_identifier` can be used anywhere the original 4 character
+identifier would be used, but a buffer must choose which system, if any,
+to identify itself with. The type is a native integer representation of
+the type identifier useful for switch statements.
+
+_Note: there is a potential for collisions in the type hash values
+because the hash is only 4 bytes._
 
 
 ## JSON Parsing and Printing
