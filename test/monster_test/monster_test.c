@@ -137,6 +137,70 @@ done:
     return ret;
 }
 
+int test_typed_empty_monster(flatcc_builder_t *B)
+{
+    int ret = -1;
+    ns(Monster_ref_t) root;
+    void *buffer;
+    size_t size;
+    flatbuffers_fid_t fid = { 0 };
+
+    flatcc_builder_reset(B);
+
+    flatbuffers_buffer_start(B, ns(Monster_type_identifier));
+    ns(Monster_start(B));
+    /* Cannot make monster empty as name is required. */
+    ns(Monster_name_create_str(B, "MyMonster"));
+    root = ns(Monster_end(B));
+    flatbuffers_buffer_end(B, root);
+
+
+    buffer = flatcc_builder_finalize_buffer(B, &size);
+
+    hexdump("empty typed monster table", buffer, size, stderr);
+
+    if (flatbuffers_get_type(buffer) != flatbuffers_type_from_name("MyGame.Example.Monster")) {
+
+        printf("Monster does not have the expected type, got %lx\n", (unsigned long)flatbuffers_get_type(buffer));
+        goto done;
+    }
+
+    if (!flatbuffers_has_type(buffer, ns(Monster_type))) {
+        printf("Monster does not have the expected type\n");
+        goto done;
+    }
+    if (!flatbuffers_has_type(buffer, 0x330ef481)) {
+        printf("Monster does not have the expected type\n");
+        goto done;
+    }
+
+    if (!verify_empty_monster(buffer)) {
+        printf("typed empty monster should not verify with default identifier\n");
+        goto done;
+    }
+
+    if ((ret = ns(Monster_verify_as_root(buffer, size, ns(Monster_type_identifier))))) {
+        printf("could not verify typed empty monster, got %s\n", flatcc_verify_error_string(ret));
+        goto done;
+    }
+
+    flatbuffers_identifier_from_type(0x330ef481, fid);
+    if ((ret = ns(Monster_verify_as_root(buffer, size, fid)))) {
+        printf("could not verify typed empty monster, got %s\n", flatcc_verify_error_string(ret));
+        goto done;
+    }
+
+    if (!ns(Monster_verify_as_root(buffer, size, ns(Monster_identifier)))) {
+        printf("should not have verified with the original identifier since we use types\n");
+        goto done;
+    }
+    ret = 0;
+
+done:
+    free(buffer);
+    return ret;
+}
+
 /*
  * C standard does not provide support for empty structs,
  * but they do exist in FlatBuffers. We can use most operations
@@ -1407,6 +1471,12 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_empty_monster(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_typed_empty_monster(B)) {
         printf("TEST FAILED\n");
         return -1;
     }

@@ -37,7 +37,7 @@ static void print_type_identifier(output_t *out, const char *name, uint32_t type
             "#endif\n",
             name, name, nsc);
     fprintf(out->fp,
-        "#define %s_type_hash ((%sthash_t))0x%lx)\n",
+        "#define %s_type ((%sthash_t)0x%lx)\n",
         name, nsc, (unsigned long)(type_hash));
     p = buf;
     i = 4;
@@ -367,10 +367,10 @@ static void gen_helpers(output_t *out)
             "      (((%suoffset_t)fid[2]) << 16) + (((%suoffset_t)fid[3]) << 24)); }\n"
             "static inline int %shas_type(const void *buffer, %sthash_t type_hash)\n"
             "{ return type_hash == 0 || (__%sthash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1) == type_hash); }\n\n"
-            "static inline int %sread_type(const void *buffer)\n"
+            "static inline %sthash_t %sget_type(const void *buffer)\n"
             "{ return __%sthash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1); }\n\n"
             "#define %sverify_endian() %shas_identifier(\"\\x00\\x00\\x00\\x00\" \"1234\", \"1234\")\n",
-            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
 
     fprintf(out->fp,
             "/* Null file identifier accepts anything, otherwise fid should be 4 characters. */\n"
