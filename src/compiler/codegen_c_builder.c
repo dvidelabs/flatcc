@@ -46,10 +46,14 @@ int fb_gen_common_c_builder_header(output_t *out)
         nsc);
 
     fprintf(out->fp,
-        "#define __%sbuild_table_root(NS, N, FID)\\\n"
+        "#define __%sbuild_table_root(NS, N, FID, TFID)\\\n"
         "static inline int N ## _start_as_root(NS ## builder_t *B)\\\n"
         "{ return NS ## buffer_start(B, FID) ? -1 : N ## _start(B); }\\\n"
+        "static inline int N ## _start_as_typed_root(NS ## builder_t *B)\\\n"
+        "{ return NS ## buffer_start(B, TFID) ? -1 : N ## _start(B); }\\\n"
         "static inline NS ## buffer_ref_t N ## _end_as_root(NS ## builder_t *B)\\\n"
+        "{ return NS ## buffer_end(B, N ## _end(B)); }\\\n"
+        "static inline NS ## buffer_ref_t N ## _end_as_typed_root(NS ## builder_t *B)\\\n"
         "{ return NS ## buffer_end(B, N ## _end(B)); }\\\n"
         /*
          * Unlike structs, we do no use flatcc_builder_create_buffer
@@ -57,58 +61,87 @@ int fb_gen_common_c_builder_header(output_t *out)
          * little because tables require stack allocations in any case.
          */
         "static inline NS ## buffer_ref_t N ## _create_as_root(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
-        "{ if (NS ## buffer_start(B, FID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }\n"
+        "{ if (NS ## buffer_start(B, FID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }\\\n"
+        "static inline NS ## buffer_ref_t N ## _create_as_typed_root(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
+        "{ if (NS ## buffer_start(B, TFID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }\n"
         "\n",
         nsc);
 
     fprintf(out->fp,
-        "#define __%sbuild_table_prolog(NS, N, FID)\\\n"
+        "#define __%sbuild_table_prolog(NS, N, FID, TFID)\\\n"
         "__%sbuild_table_vector_ops(NS, N ## _vec, N)\\\n"
-        "__%sbuild_table_root(NS, N, FID)\n"
+        "__%sbuild_table_root(NS, N, FID, TFID)\n"
         "\n",
         nsc, nsc, nsc);
 
 
     fprintf(out->fp,
-        "#define __%sbuild_struct_root(NS, N, A, FID)\\\n"
+        "#define __%sbuild_struct_root(NS, N, A, FID, TFID)\\\n"
         "static inline N ## _t *N ## _start_as_root(NS ## builder_t *B)\\\n"
         "{ return NS ## buffer_start(B, FID) ? 0 : N ## _start(B); }\\\n"
+        "static inline N ## _t *N ## _start_as_typed_root(NS ## builder_t *B)\\\n"
+        "{ return NS ## buffer_start(B, TFID) ? 0 : N ## _start(B); }\\\n"
         "static inline NS ## buffer_ref_t N ## _end_as_root(NS ## builder_t *B)\\\n"
+        "{ return NS ## buffer_end(B, N ## _end(B)); }\\\n"
+        "static inline NS ## buffer_ref_t N ## _end_as_typed_root(NS ## builder_t *B)\\\n"
         "{ return NS ## buffer_end(B, N ## _end(B)); }\\\n"
         "static inline NS ## buffer_ref_t N ## _end_pe_as_root(NS ## builder_t *B)\\\n"
         "{ return NS ## buffer_end(B, N ## _end_pe(B)); }\\\n"
+        "static inline NS ## buffer_ref_t N ## _end_pe_as_typed_root(NS ## builder_t *B)\\\n"
+        "{ return NS ## buffer_end(B, N ## _end_pe(B)); }\\\n"
         "static inline NS ## buffer_ref_t N ## _create_as_root(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
         "{ return flatcc_builder_create_buffer(B, FID, 0,\\\n"
+        "  N ## _create(B __ ## N ## _call_args), A, 0); }\\\n"
+        "static inline NS ## buffer_ref_t N ## _create_as_typed_root(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
+        "{ return flatcc_builder_create_buffer(B, TFID, 0,\\\n"
         "  N ## _create(B __ ## N ## _call_args), A, 0); }\n"
         "\n",
         nsc);
 
     fprintf(out->fp,
-        "#define __%sbuild_nested_table_root(NS, N, TN, FID)\\\n"
+        "#define __%sbuild_nested_table_root(NS, N, TN, FID, TFID)\\\n"
         "static inline int N ## _start_as_root(NS ## builder_t *B)\\\n"
         "{ return NS ## buffer_start(B, FID) ? -1 : TN ## _start(B); }\\\n"
+        "static inline int N ## _start_as_typed_root(NS ## builder_t *B)\\\n"
+        "{ return NS ## buffer_start(B, TFID) ? -1 : TN ## _start(B); }\\\n"
         "static inline int N ## _end_as_root(NS ## builder_t *B)\\\n"
+        "{ return N ## _add(B, NS ## buffer_end(B, TN ## _end(B))); }\\\n"
+        "static inline int N ## _end_as_typed_root(NS ## builder_t *B)\\\n"
         "{ return N ## _add(B, NS ## buffer_end(B, TN ## _end(B))); }\\\n"
         "static inline int N ## _nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\\\n"
         "{ if (NS ## buffer_start(B, FID)) return -1;\\\n"
+        "  return N ## _add(B, NS ## buffer_end(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
+        "  align ? align : 8, FLATBUFFERS_COUNT_MAX(1)))); }\\\n"
+        "static inline int N ## _typed_nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\\\n"
+        "{ if (NS ## buffer_start(B, TFID)) return -1;\\\n"
         "  return N ## _add(B, NS ## buffer_end(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
         "  align ? align : 8, FLATBUFFERS_COUNT_MAX(1)))); }\n"
         "\n",
         nsc);
 
     fprintf(out->fp,
-        "#define __%sbuild_nested_struct_root(NS, N, TN, A, FID)\\\n"
+        "#define __%sbuild_nested_struct_root(NS, N, TN, A, FID, TFID)\\\n"
         "static inline TN ## _t *N ## _start_as_root(NS ## builder_t *B)\\\n"
         "{ return NS ## buffer_start(B, FID) ? 0 : TN ## _start(B); }\\\n"
+        "static inline TN ## _t *N ## _start_as_typed_root(NS ## builder_t *B)\\\n"
+        "{ return NS ## buffer_start(B, FID) ? 0 : TN ## _start(B); }\\\n"
         "static inline int N ## _end_as_root(NS ## builder_t *B)\\\n"
+        "{ return N ## _add(B, NS ## buffer_end(B, TN ## _end(B))); }\\\n"
+        "static inline int N ## _end_as_typed_root(NS ## builder_t *B)\\\n"
         "{ return N ## _add(B, NS ## buffer_end(B, TN ## _end(B))); }\\\n"
         "static inline int N ## _end_pe_as_root(NS ## builder_t *B)\\\n"
         "{ return N ## _add(B, NS ## buffer_end(B, TN ## _end_pe(B))); }\\\n"
         "static inline int N ## _create_as_root(NS ## builder_t *B __ ## TN ## _formal_args)\\\n"
         "{ return N ## _add(B, flatcc_builder_create_buffer(B, FID, 0,\\\n"
+        "static inline int N ## _create_as_typed_root(NS ## builder_t *B __ ## TN ## _formal_args)\\\n"
+        "{ return N ## _add(B, flatcc_builder_create_buffer(B, TFID, 0,\\\n"
         "  TN ## _create(B __ ## TN ## _call_args), A, 1)); }\\\n"
         "static inline int N ## _nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\\\n"
         "{ if (NS ## buffer_start(B, FID)) return -1;\\\n"
+        "  return N ## _add(B, NS ## buffer_end(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
+        "  align < A ? A : align, FLATBUFFERS_COUNT_MAX(1)))); }\\\n"
+        "static inline int N ## _typed_nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\\\n"
+        "{ if (NS ## buffer_start(B, TFID)) return -1;\\\n"
         "  return N ## _add(B, NS ## buffer_end(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
         "  align < A ? A : align, FLATBUFFERS_COUNT_MAX(1)))); }\n"
         "\n",
@@ -301,7 +334,7 @@ int fb_gen_common_c_builder_header(output_t *out)
         "static inline N ## _t *N ## _clear(N ## _t *p) { return memset(p, 0, N ## __size()); }\n"
         "\n"
         "/* Depends on generated copy/assign_to/from_pe functions, and the type. */\n"
-        "#define __%sbuild_struct(NS, N, S, A, FID)\\\n"
+        "#define __%sbuild_struct(NS, N, S, A, FID, TFID)\\\n"
         "__ ## NS ## define_struct_primitives(NS, N)\\\n"
         "typedef NS ## ref_t N ## _ref_t;\\\n"
         "static inline N ## _t *N ## _start(NS ## builder_t *B)\\\n"
@@ -315,7 +348,7 @@ int fb_gen_common_c_builder_header(output_t *out)
         "{ N ## _t *_p = N ## _start(B); if (!_p) return 0; N ##_assign_to_pe(_p __ ## N ## _call_args);\\\n"
         "  return N ## _end(B); }\\\n"
         "__%sbuild_vector(NS, N, N ## _t, S, A)\\\n"
-        "__%sbuild_struct_root(NS, N, A, FID)\n"
+        "__%sbuild_struct_root(NS, N, A, FID, TFID)\n"
         "\n",
         nsc, nsc, nsc, nsc);
 
@@ -864,8 +897,8 @@ static void gen_builder_struct(output_t *out, fb_compound_type_t *ct)
     fprintf(out->fp, "{ ");
     gen_builder_struct_field_assign(out, ct, 0, arg_count, convert_from_pe, 1);
     fprintf(out->fp, "return p; }\n");
-    fprintf(out->fp, "__%sbuild_struct(%s, %s, %llu, %u, %s_identifier)\n",
-            nsc, nsc, snt.text, llu(ct->size), ct->align, snt.text);
+    fprintf(out->fp, "__%sbuild_struct(%s, %s, %llu, %u, %s_identifier, %s_type_identifier)\n",
+            nsc, nsc, snt.text, llu(ct->size), ct->align, snt.text, snt.text);
 }
 
 static int get_create_table_arg_count(fb_compound_type_t *ct)
@@ -1121,8 +1154,8 @@ static int gen_builder_table_prolog(output_t *out, fb_compound_type_t *ct)
     fb_clear(snt);
     fb_compound_name(ct, &snt);
 
-    fprintf(out->fp, "__%sbuild_table_prolog(%s, %s, %s_identifier)\n",
-            nsc, nsc, snt.text, snt.text);
+    fprintf(out->fp, "__%sbuild_table_prolog(%s, %s, %s_identifier, %s_type_identifier)\n",
+            nsc, nsc, snt.text, snt.text, snt.text);
     return 0;
 }
 
@@ -1224,14 +1257,14 @@ static int gen_builder_table_fields(output_t *out, fb_compound_type_t *ct)
                 switch (member->nest->symbol.kind) {
                 case fb_is_table:
                     fb_compound_name((fb_compound_type_t *)(&member->nest->symbol), &snref);
-                    fprintf(out->fp, "__%sbuild_nested_table_root(%s, %s_%.*s, %s, %s_identifier)\n",
-                        nsc, nsc, snt.text, n, s, snref.text, snref.text);
+                    fprintf(out->fp, "__%sbuild_nested_table_root(%s, %s_%.*s, %s, %s_identifier, %s_type_identifier)\n",
+                        nsc, nsc, snt.text, n, s, snref.text, snref.text, snref.text);
                     break;
                 case fb_is_struct:
                     fb_compound_name((fb_compound_type_t *)(&member->nest->symbol), &snref);
-                    fprintf(out->fp, "__%sbuild_nested_struct_root(%s, %s_%.*s, %s, %u, %s_identifier)\n",
+                    fprintf(out->fp, "__%sbuild_nested_struct_root(%s, %s_%.*s, %s, %u, %s_identifier, %s_type_identifier)\n",
                         nsc, nsc, snt.text, n, s, snref.text,
-                        (unsigned)((fb_compound_type_t *)(member->nest))->align, snref.text);
+                        (unsigned)((fb_compound_type_t *)(member->nest))->align, snref.text, snref.text);
                     break;
                 default:
                     gen_panic(out, "internal error: unexpected nested type");

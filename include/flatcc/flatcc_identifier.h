@@ -50,6 +50,8 @@ static inline flatbuffers_thash_t flatbuffers_type_from_name(const char *name)
 
 /*
  * Type hash encoded as little endian file identifier string.
+ * Note: if type hash is 0, the identifier should be null which
+ * we cannot return in this interface.
  */
 static inline void flatbuffers_identifier_from_type(flatbuffers_thash_t type_hash, flatbuffers_fid_t out_identifier)
 {
@@ -63,11 +65,12 @@ static inline void flatbuffers_identifier_from_type(flatbuffers_thash_t type_has
 }
 
 /* Native integer encoding of file identifier. */
-static inline flatbuffers_thash_t flatbuffers_type_from_identifier(flatbuffers_fid_t identifier)
+static inline flatbuffers_thash_t flatbuffers_type_from_identifier(const flatbuffers_fid_t identifier)
 {
     uint8_t *p = (uint8_t *)identifier;
 
-    return (uint32_t)p[0] + (((uint32_t)p[1]) << 8) + (((uint32_t)p[2]) << 16) + (((uint32_t)p[3]) << 24);
+    return identifier ?
+        (uint32_t)p[0] + (((uint32_t)p[1]) << 8) + (((uint32_t)p[2]) << 16) + (((uint32_t)p[3]) << 24) : 0;
 }
 
 /*

@@ -5,7 +5,12 @@
 - Added scripts/setup.sh to quickly get started on small user projects.
 - Support `namespace ;` for reverting to global namespace in schema.
 - Enable block comments now that they are supported in flatc.
-- Parse and validate new `rpc_service` schema syntax, but provide no other support.
+- Parse and validate new `rpc_service` schema syntax, but with no
+  support for code generation.
+- Add type hash support (`create_as_typed_root` etc.) to optionally
+  store file identifiers based on hashed fully qualified type names.
+- Fix potential issue with detection of valid file identifiers in
+  buffer.
 
 ## [0.3.2]
 

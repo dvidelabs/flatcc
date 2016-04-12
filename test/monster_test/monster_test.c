@@ -125,12 +125,11 @@ int test_empty_monster(flatcc_builder_t *B)
      * invalid, but because we pack vtables tight at the end, we expect
      * failure in this case.
      */
-#if 1
-    if (flatcc_verify_ok == ns(Monster_verify_as_root(buffer, size - 1, ns(Monster_identifier)))) {
+    if (flatcc_verify_ok == ns(Monster_verify_as_root(
+                    buffer, size - 1, ns(Monster_identifier)))) {
         printf("Monster verify failed to detect short buffer\n");
         return -1;
     }
-#endif
 
 done:
     free(buffer);
@@ -260,6 +259,84 @@ int test_table_with_emptystruct(flatcc_builder_t *B)
     ret = verify_table_with_emptystruct(buffer);
     free(buffer);
 
+    return ret;
+}
+
+int test_typed_table_with_emptystruct(flatcc_builder_t *B)
+{
+    int ret = 0;
+    ns(emptystruct_t) *empty = 0; /* empty structs cannot instantiated. */
+    void *buffer;
+    size_t size;
+
+    flatcc_builder_reset(B);
+
+    ns(with_emptystruct_create_as_typed_root(B, empty));
+
+    buffer = flatcc_builder_get_direct_buffer(B, &size);
+
+    /*
+     * We should expect an empty table with a vtable holding
+     * a single entry pointing to the end of the table.
+     * We could also drop the entry from the vtable, but then what
+     * would be the point of having an empty struct at all? Here
+     * we can use it as a cheap presence flag.
+     */
+    hexdump("typed table with empty struct", buffer, size, stderr);
+    if (flatcc_verify_ok != ns(with_emptystruct_verify_as_root(buffer, size, ns(with_emptystruct_type_identifier)))) {
+        printf("typed verify_as_root failed\n");
+        return -1;
+    }
+#if 0
+    flatcc_builder_reset(B);
+    ns(with_emptystruct_start_as_typed_root(B));
+    ns(with_emptystruct_end_as_typed_root(B));
+    buffer = flatcc_builder_get_direct_buffer(B, &size);
+#endif
+    if (!buffer) {
+        printf("failed to create buffer\n");
+        return -1;
+    }
+    if (!flatbuffers_has_type(buffer, ns(with_emptystruct_type))) {
+        printf("has_type failed\n");
+        return -1;
+    }
+    if (!flatbuffers_has_type(buffer, 0)) {
+        printf("null type failed\n");
+        return -1;
+    }
+    if (flatbuffers_has_type(buffer, 1)) {
+        printf("wrong has type unexpected succeeed\n");
+        return -1;
+    }
+    if (!flatbuffers_has_identifier(buffer, 0)) {
+        printf("has identifier failed for null id\n");
+        return -1;
+    }
+    if (!flatbuffers_has_identifier(buffer, "\xb6\x37\xdd\xb0")) {
+        printf("has identifier failed for explicit string\n");
+        return -1;
+    }
+    if (ns(with_emptystruct_as_root(buffer))) {
+        printf("as_root unexpctedly succeeded\n");
+        return -1;
+    }
+    if (ns(with_emptystruct_as_root_with_type(buffer, 1))) {
+        printf("with wrong type unexptedly succeeded\n");
+        return -1;
+    }
+    if (!ns(with_emptystruct_as_root_with_identifier(buffer, ns(with_emptystruct_type_identifier)))) {
+        printf("as_root_with_identifier failed to match type_identifer\n");
+        return -1;
+    }
+    if (!ns(with_emptystruct_as_typed_root(buffer))) {
+        printf("as_typed_root_failed\n");
+        return -1;
+    }
+    if (!ns(with_emptystruct_as_root_with_type(buffer, 0))) {
+        printf("with ignored type failed\n");
+        return -1;
+    }
     return ret;
 }
 
@@ -1346,6 +1423,60 @@ int test_struct_buffer(flatcc_builder_t *B)
     return 0;
 }
 
+int test_typed_struct_buffer(flatcc_builder_t *B)
+{
+    uint8_t buffer[100];
+
+    size_t size;
+    ns(Vec3_t) *v;
+    ns(Vec3_struct_t) vec3;
+
+    flatcc_builder_reset(B);
+    ns(Vec3_create_as_typed_root(B, 1, 2, 3, 4.2, ns(Color_Blue), 2730, -17));
+    size = flatcc_builder_get_buffer_size(B);
+    assert(size == 48);
+    printf("dbg: struct buffer size: %d\n", (int)size);
+    assert(flatcc_emitter_get_buffer_size(flatcc_builder_get_emit_context(B)) == size);
+    if (!flatcc_builder_copy_buffer(B, buffer, 100)) {
+        printf("Copy failed\n");
+        return -1;
+    }
+    hexdump("typed Vec3 struct buffer", buffer, size, stderr);
+    if (!nsc(has_identifier(buffer, "\xd2\x3e\xf5\xa8"))) {
+        printf("wrong Vec3 identifier (explicit)\n");
+        return -1;
+    }
+    if (nsc(has_identifier(buffer, "mons"))) {
+        printf("accepted wrong Vec3 identifier (explicit)\n");
+        return -1;
+    }
+    if (!nsc(has_identifier(buffer, ns(Vec3_type_identifier)))) {
+        printf("wrong Vec3 identifier (via define)\n");
+        return -1;
+    }
+    if (!ns(Vec3_as_root_with_type(buffer, ns(Vec3_type)))) {
+        printf("wrong Vec3 type identifier (via define)\n");
+        return -1;
+    }
+    vec3 = ns(Vec3_as_typed_root(buffer));
+    /* Convert buffer to native in place - a nop on native platform. */
+    v = (ns(Vec3_t) *)vec3;
+    ns(Vec3_from_pe(v));
+    if (v->x != 1.0f || v->y != 2.0f || v->z != 3.0f
+        || v->test1 != 4.2 || v->test2 != ns(Color_Blue)
+        || v->test3.a != 2730 || v->test3.b != -17
+       ) {
+        printf("struct buffer not valid\n");
+        return -1;
+    }
+    assert(ns(Color_Red) == 1 << 0);
+    assert(ns(Color_Green) == 1 << 1);
+    assert(ns(Color_Blue) == 1 << 3);
+    assert(sizeof(ns(Color_Blue) == 1));
+    return 0;
+}
+
+
 /* A stable test snapshot for reference. */
 int gen_monster_benchmark(flatcc_builder_t *B)
 {
@@ -1465,6 +1596,12 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_table_with_emptystruct(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_typed_table_with_emptystruct(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
