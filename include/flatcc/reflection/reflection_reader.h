@@ -87,6 +87,7 @@ struct reflection_Type_table { uint8_t unused__; };
 #ifndef reflection_Type_identifier
 #define reflection_Type_identifier flatbuffers_identifier
 #endif
+#define reflection_Type_type_hash ((flatbuffers_thash_t))0x44c8fe5e)
 static inline flatbuffers_uoffset_t reflection_Type_vec_len(reflection_Type_vec_t vec)
 __flatbuffers_vec_len(vec)
 static inline reflection_Type_table_t reflection_Type_vec_at(reflection_Type_vec_t vec, flatbuffers_uoffset_t i)
@@ -114,6 +115,7 @@ struct reflection_EnumVal_table { uint8_t unused__; };
 #ifndef reflection_EnumVal_identifier
 #define reflection_EnumVal_identifier flatbuffers_identifier
 #endif
+#define reflection_EnumVal_type_hash ((flatbuffers_thash_t))0x9531c946)
 static inline flatbuffers_uoffset_t reflection_EnumVal_vec_len(reflection_EnumVal_vec_t vec)
 __flatbuffers_vec_len(vec)
 static inline reflection_EnumVal_table_t reflection_EnumVal_vec_at(reflection_EnumVal_vec_t vec, flatbuffers_uoffset_t i)
@@ -146,6 +148,7 @@ struct reflection_Enum_table { uint8_t unused__; };
 #ifndef reflection_Enum_identifier
 #define reflection_Enum_identifier flatbuffers_identifier
 #endif
+#define reflection_Enum_type_hash ((flatbuffers_thash_t))0xacffa90f)
 static inline flatbuffers_uoffset_t reflection_Enum_vec_len(reflection_Enum_vec_t vec)
 __flatbuffers_vec_len(vec)
 static inline reflection_Enum_table_t reflection_Enum_vec_at(reflection_Enum_vec_t vec, flatbuffers_uoffset_t i)
@@ -187,6 +190,7 @@ struct reflection_Field_table { uint8_t unused__; };
 #ifndef reflection_Field_identifier
 #define reflection_Field_identifier flatbuffers_identifier
 #endif
+#define reflection_Field_type_hash ((flatbuffers_thash_t))0x9f7e408a)
 static inline flatbuffers_uoffset_t reflection_Field_vec_len(reflection_Field_vec_t vec)
 __flatbuffers_vec_len(vec)
 static inline reflection_Field_table_t reflection_Field_vec_at(reflection_Field_vec_t vec, flatbuffers_uoffset_t i)
@@ -253,6 +257,7 @@ struct reflection_Object_table { uint8_t unused__; };
 #ifndef reflection_Object_identifier
 #define reflection_Object_identifier flatbuffers_identifier
 #endif
+#define reflection_Object_type_hash ((flatbuffers_thash_t))0xb09729bd)
 static inline flatbuffers_uoffset_t reflection_Object_vec_len(reflection_Object_vec_t vec)
 __flatbuffers_vec_len(vec)
 static inline reflection_Object_table_t reflection_Object_vec_at(reflection_Object_vec_t vec, flatbuffers_uoffset_t i)
@@ -299,6 +304,7 @@ struct reflection_Schema_table { uint8_t unused__; };
 #ifndef reflection_Schema_identifier
 #define reflection_Schema_identifier flatbuffers_identifier
 #endif
+#define reflection_Schema_type_hash ((flatbuffers_thash_t))0xfaf93779)
 static inline flatbuffers_uoffset_t reflection_Schema_vec_len(reflection_Schema_vec_t vec)
 __flatbuffers_vec_len(vec)
 static inline reflection_Schema_table_t reflection_Schema_vec_at(reflection_Schema_vec_t vec, flatbuffers_uoffset_t i)

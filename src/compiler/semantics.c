@@ -90,6 +90,32 @@ static inline uint64_t fb_align(uint64_t size, uint64_t align)
     return (size + align - 1) & ~(align - 1);
 }
 
+/*
+ * The FNV-1a 32-bit little endian hash is a FlatBuffers standard for
+ * transmission of type identifiers in a compact form, in particular as
+ * alternative file identifiers. Note that if hash becomes 0, we map it
+ * to hash("").
+ */
+static inline void set_type_hash(fb_compound_type_t *ct)
+{
+    fb_ref_t *name;
+    fb_symbol_t *sym;
+    uint32_t hash;
+
+    hash = fb_hash_fnv1a_32_init();
+    if (ct->scope)
+    for (name = ct->scope->name; name; name = name->link) {
+        hash = fb_hash_fnv1a_32_append(hash, name->ident->text, name->ident->len);
+        hash = fb_hash_fnv1a_32_append(hash, ".", 1);
+    }
+    sym = &ct->symbol;
+    hash = fb_hash_fnv1a_32_append(hash, sym->ident->text, sym->ident->len);
+    if (hash == 0) {
+        hash = fb_hash_fnv1a_32_init();
+    }
+    ct->type_hash = hash;
+}
+
 static inline fb_scope_t *fb_find_scope_by_string(fb_schema_t *S, const char *name, int len)
 {
     if (!S || !S->root_schema) {
@@ -1416,6 +1442,7 @@ int fb_build_schema(fb_parser_t *P)
         case fb_is_struct:
         case fb_is_rpc_service:
             ct = (fb_compound_type_t *)sym;
+            set_type_hash(ct);
             ct->schema = &P->schema;
             if (ct->scope && (old_sym = define_fb_symbol(&ct->scope->symbol_index, sym))) {
                 error_sym_2(P, sym, "symbol already defined here", old_sym);

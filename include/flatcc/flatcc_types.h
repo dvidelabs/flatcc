@@ -43,9 +43,9 @@
 #define FLATBUFFERS_SOFFSET_MAX INT32_MAX
 #define FLATBUFFERS_SOFFSET_MIN INT32_MIN
 #define FLATBUFFERS_VOFFSET_MAX UINT16_MAX
-#define FLATBUFFERS_UTYPE_MAX UINT8_MAX 
+#define FLATBUFFERS_UTYPE_MAX UINT8_MAX
 /* Well - the max of the underlying type. */
-#define FLATBUFFERS_BOOL_MAX UINT8_MAX 
+#define FLATBUFFERS_BOOL_MAX UINT8_MAX
 
 #define FLATBUFFERS_ID_MAX (FLATBUFFERS_VOFFSET_MAX / sizeof(flatbuffers_voffset_t) - 3)
 /* Vectors of empty structs can yield div by zero, so we must guard against this. */
@@ -55,8 +55,8 @@
 #define FLATBUFFERS_COUNT_WIDTH 32
 #define FLATBUFFERS_SOFFSET_WIDTH 32
 #define FLATBUFFERS_VOFFSET_WIDTH 16
-#define FLATBUFFERS_UTYPE_WIDTH 8 
-#define FLATBUFFERS_BOOL_WIDTH 8 
+#define FLATBUFFERS_UTYPE_WIDTH 8
+#define FLATBUFFERS_BOOL_WIDTH 8
 
 #define FLATBUFFERS_TRUE 1
 #define FLATBUFFERS_FALSE 0
@@ -76,6 +76,7 @@ static const flatbuffers_bool_t flatbuffers_false = FLATBUFFERS_FALSE;
 #define FLATBUFFERS_IDENTIFIER_SIZE 4
 
 typedef char flatbuffers_fid_t[FLATBUFFERS_IDENTIFIER_SIZE];
+typedef uint32_t flatbuffers_thash_t;
 
 #endif /* flatbuffers_types_defined */
 

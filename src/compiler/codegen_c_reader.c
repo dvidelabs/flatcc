@@ -656,6 +656,9 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
             "#endif\n",
             snt.text, snt.text, nsc);
     fprintf(out->fp,
+        "#define %s_type_hash ((%sthash_t))0x%lx)\n",
+        snt.text, nsc, (unsigned long)(ct->type_hash));
+    fprintf(out->fp,
             "static inline %suoffset_t %s_vec_len(%s_vec_t vec)\n"
             "__%svec_len(vec)\n",
             nsc, snt.text, snt.text,
@@ -951,6 +954,9 @@ static void gen_table(output_t *out, fb_compound_type_t *ct)
             "#define %s_identifier %sidentifier\n"
             "#endif\n",
             snt.text, snt.text, nsc);
+    fprintf(out->fp,
+        "#define %s_type_hash ((%sthash_t))0x%lx)\n",
+        snt.text, nsc, (unsigned long)(ct->type_hash));
     fprintf(out->fp,
             "static inline %suoffset_t %s_vec_len(%s_vec_t vec)\n"
             "__%svec_len(vec)\n",

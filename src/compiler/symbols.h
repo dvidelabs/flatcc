@@ -233,6 +233,8 @@ struct fb_compound_type {
     fb_symbol_table_t index;
     /* Only for enums. */
     fb_value_set_t value_set;
+    /* FNV-1a 32 bit hash of fully qualified name, accidental 0 maps to hash(""). */
+    uint32_t type_hash;
     uint16_t metadata_flags;
     /* `count` is for tables only. */
     uint64_t count;
@@ -390,6 +392,21 @@ static inline fb_compound_type_t *get_compound_if_visible(fb_schema_t *schema, f
         break;
     }
     return ct;
+}
+
+/* Constants are specific to 32-bit FNV-1a hash. It is important to use unsigned integers. */
+static inline uint32_t fb_hash_fnv1a_32_init()
+{
+    return 2166136261UL;
+}
+
+static inline uint32_t fb_hash_fnv1a_32_append(uint32_t hash, const char *data, int len)
+{
+    while (len--) {
+        hash ^= *(uint8_t *)data++;
+        hash = hash * 16777619UL;
+    }
+    return hash;
 }
 
 #endif /* SYMBOLS_H */
