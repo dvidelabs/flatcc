@@ -643,12 +643,12 @@ user, or if included from a schema with a different identifier.
 
 ### Type Identifiers
 
-Type identifier use a type hash which maps a fully qualified type name of a
+Type identifier use a type hash which maps a fully qualified type name
 into a 4 byte hash. The type hash is a 32-bit native
 value and the type identifier is a 4 character little endian encoded
 string of the same value.
 
-In this example the hash is derived from the string
+In this example the type hash is derived from the string
 "MyGame.Example.Monster" and is the same for all FlatBuffer code
 generators that supports type hashes.
 
@@ -689,9 +689,7 @@ to use.
 The
 [`flatcc/flatcc_identifier.h`](https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_identifier.h)
 file contains an implementation of the FNV-1a hash used. The hash was
-chosen for simplicity and collision resistance. For hash table indexing
-better distribution may be obtained by applying a
-[collision free in integer hash](http://stackoverflow.com/a/12996028) to the type hash.
+chosen for simplicity, availability, and collision resistance.
 
 _Note: there is a potential for collisions in the type hash values
 because the hash is only 4 bytes._
