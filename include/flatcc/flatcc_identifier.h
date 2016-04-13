@@ -85,6 +85,25 @@ static inline void flatbuffers_identifier_from_name(const char *name, flatbuffer
     flatbuffers_identifier_from_type_hash(flatbuffers_type_hash_from_name(name), out_identifier);
 }
 
+/*
+ * This is a collision free hash (a permutation) of the type hash to
+ * provide better distribution for use in hash tables. It is likely not
+ * necessary in praxis, and for uniqueness of identifiers at provides no
+ * advantage over just using the FNV-1a type hash, except when truncating
+ * the identifier to less than 32-bits.
+ */
+static inline uint32_t flatbuffers_disperse_type_hash(flatbuffers_thash_t type_hash)
+{
+    /* http://stackoverflow.com/a/12996028 */
+    uint32_t x = type_hash;
+
+    x = ((x >> 16) ^ x) * 0x45d9f3bUL;
+    x = ((x >> 16) ^ x) * 0x45d9f3bUL;
+    x = ((x >> 16) ^ x);
+    return x;
+}
+
+
 /* We have hardcoded assumptions about identifier size. */
 static_assert(sizeof(flatbuffers_fid_t) == 4, "unexpected file identifier size");
 static_assert(sizeof(flatbuffers_thash_t) == 4, "unexpected type hash size");

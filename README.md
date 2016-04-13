@@ -690,8 +690,8 @@ The
 [`flatcc/flatcc_identifier.h`](https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_identifier.h)
 file contains an implementation of the FNV-1a hash used. The hash was
 chosen for simplicity and collision resistance. For hash table indexing
-better distribution may be obtained by applying the [last round of 32-bit
-MurMur hash](http://stackoverflow.com/a/12996028) to the type hash.
+better distribution may be obtained by applying a
+[collision free in integer hash](http://stackoverflow.com/a/12996028) to the type hash.
 
 _Note: there is a potential for collisions in the type hash values
 because the hash is only 4 bytes._
