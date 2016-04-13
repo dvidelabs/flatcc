@@ -88,9 +88,13 @@ static inline void flatbuffers_identifier_from_name(const char *name, flatbuffer
 /*
  * This is a collision free hash (a permutation) of the type hash to
  * provide better distribution for use in hash tables. It is likely not
- * necessary in praxis, and for uniqueness of identifiers at provides no
+ * necessary in praxis, and for uniqueness of identifiers it provides no
  * advantage over just using the FNV-1a type hash, except when truncating
  * the identifier to less than 32-bits.
+ *
+ * Note: the output should not be used in transmission. It provides no
+ * additional information and just complicates matters. Furthermore, the
+ * unmodified type hash has the benefit that it can seed a child namespace.
  */
 static inline uint32_t flatbuffers_disperse_type_hash(flatbuffers_thash_t type_hash)
 {
