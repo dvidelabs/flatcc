@@ -340,8 +340,8 @@ follow along, but there are no assumptions about that in the text below.
 
 ## Quickstart - reading a buffer
 
-Here we provide a quick example of read-only access to Monster flatbuffer
-- it is an adapted extract of the `monster_test.c` file.
+Here we provide a quick example of read-only access to Monster flatbuffer -
+it is an adapted extract of the `monster_test.c` file.
 
 First we compile the schema read-only with common (-c) support header and we
 add the recursion because `monster_test.fbs` includes other files.
@@ -353,7 +353,7 @@ root folder, but in praxis you would want to change some paths, for
 example:
 
     mkdir -p build/example
-    flatcc -cr -o build/example samples/monster/monster.fbs
+    flatcc -cr -o build/example test/monster_test/monster_test.fbs
     cd build/example
 
 We get:
@@ -612,9 +612,10 @@ See also `include/flatcc/flatcc_verifier.h`.
 
 There are two ways to identify the content of a FlatBuffer. The first is
 to use file identifiers which are defined in the schema. The second is
-to use `type identifiers` which are calculated hashes based on each tables
-name prefixed with its namespace, if any. Type identifiers are not to be
-confused with union types.
+to use `type identifiers` which are calculated hashes based on each
+tables name prefixed with its namespace, if any. In either case the
+identifier is stored at offset 4 in binary FlatBuffers, when present.
+Type identifiers are not to be confused with union types.
 
 ### File Identifiers
 
@@ -633,7 +634,7 @@ before including generated headers:
     #include "monster_test_builder.h"
 
     ...
-    MyGame_Example_Monster_create_as_root(B, ...);
+    MyGame_Example_Vec3_create_as_root(B, ...);
 
 The `create_as_root` call automatically uses the file identifier
 associated with the table in question. Tables normally all use the same
@@ -643,13 +644,13 @@ user, or if included from a schema with a different identifier.
 ### Type Identifiers
 
 Type identifier use a type hash which maps a fully qualified type name of a
-into a 4 byte hash. The type has is a 32-bit native
+into a 4 byte hash. The type hash is a 32-bit native
 value and the type identifier is a 4 character little endian encoded
 string of the same value.
 
 In this example the hash is derived from the string
 "MyGame.Example.Monster" and is the same for all FlatBuffer code
-generators that supports hash types.
+generators that supports type hashes.
 
 The value 0 is used to indicate that one does not care about the
 identifier in the buffer. 
@@ -670,6 +671,9 @@ identifier in the buffer.
         printf("Buffer is the old version, not supported.\n"); 
     }
 
+More API calls are available to naturally extend the existing API. See
+`test/monster_test/monster_test.c` for more.
+
 The generated code defines three identifiers for a given table:
 
     #ifndef MyGame_Example_Monster_identifier
@@ -678,15 +682,16 @@ The generated code defines three identifiers for a given table:
     #define MyGame_Example_Monster_type_hash ((flatbuffers_thash_t)0x330ef481)
     #define MyGame_Example_Monster_type_identifier "\x81\xf4\x0e\x33"
 
-The values shown are not random - they are given by the standard hash
-function on the schema namespace.
-
 The `type_identifier` can be used anywhere the original 4 character
 file identifier would be used, but a buffer must choose which system, if any,
 to use.
 
 The
-[`flatcc/flatcc_identifier.h`](https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_identifier.h) file contains an implementation of the FNV-1a hash used.
+[`flatcc/flatcc_identifier.h`](https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_identifier.h)
+file contains an implementation of the FNV-1a hash used. The hash was
+chosen for simplicity and collision resistance. For hash table indexing
+better distribution may be obtained by applying the [last round of 32-bit
+MurMur hash](http://stackoverflow.com/a/12996028) to the type hash.
 
 _Note: there is a potential for collisions in the type hash values
 because the hash is only 4 bytes._
