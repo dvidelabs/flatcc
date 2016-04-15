@@ -956,10 +956,16 @@ or `myschema_builder.h` all these dependencies are handled correctly.
 
 Note: `libflatcc.a` can only parse a single schema when the schema is
 given as a memory buffer, but can handle the above when given a
-filename. It is almost possible to simply concatenate schema together to
-obtain the same effect in memory, but for this to work each schema must
-be separated by a global scope reset such as an empty `namespace;`. This
-is currently not supported.
+filename. It is possible to concatename schema files, but a `namespace;`
+declaration must be inserted as a separator to revert to global
+namespace at the start of each included file. This can lead to subtle
+errors because if one parent schema includes two child schema `a.fbs`
+and `b.fbs`, then `b.fbs` should not be able to see anything in `a.fbs`
+even if they share namespaces. This would rarely be a problem in praxis,
+but it means that schema compilation from memory buffers cannot
+authoratively validate a schema. The reason the schema must be isolated
+is that otherwise code generation for a given schema could changes with
+how it is being used leading to very strange errors in user code.
 
 
 ## Required Fields and Duplicate Fields
