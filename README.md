@@ -158,6 +158,19 @@ buffers. These numbers are just a rough guideline - they obviously
 depend on hardware, compiler, and data encoded. Measurements are
 excluding an ininitial warmup step.
 
+The generated JSON parsers are roughly 4 times slower than building a
+FlatBuffer directly in C or C++, or about 2200ns vs 600ns for a 700 byte
+JSON message. JSON parsing is thus roughly two orders of magnitude
+faster than reading the equivalent Protocol Buffer, as reported on the
+[Google FlatBuffers Benchmarks](http://google.github.io/flatbuffers/flatbuffers_benchmarks.html)
+page. LZ4 compression would estimated cut the performance of JSON
+parsing in half, which is still fast. JSON printing is faster than
+parsing but not very significantly so. JSON compresses to roughly half
+the size of compressed FlatBuffers on large buffers, but compresses
+worse on small buffers (not to mention when not compressing at all).
+JSON parsers bloats the compiled C binary compared to pure Flatbuffer
+usage, but problably not compared to Protocol Buffer usage.
+
 See also [benchmark](https://github.com/dvidelabs/flatcc#benchmark)
 below.
 
