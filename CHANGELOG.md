@@ -12,8 +12,7 @@
 - Fix potential issue with detection of valid file identifiers in
   buffer.
 - Moved `include/support` into `include/flatcc/support`, renamed
-  `include/support/readfile.h` function `read_file` to readfile for
-  consistency.
+  `include/support/readfile.h` function `read_file` to `readfile`.
 
 ## [0.3.2]
 

@@ -1237,6 +1237,10 @@ OS-X also has a HomeBrew package:
     brew update
     brew install flatcc
 
+or for the bleeding edge:
+
+    brew update
+    brew install flatcc --HEAD
 
 ### Windows Build (MSVC)
 
