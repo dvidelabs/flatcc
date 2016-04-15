@@ -964,7 +964,7 @@ and `b.fbs`, then `b.fbs` should not be able to see anything in `a.fbs`
 even if they share namespaces. This would rarely be a problem in praxis,
 but it means that schema compilation from memory buffers cannot
 authoratively validate a schema. The reason the schema must be isolated
-is that otherwise code generation for a given schema could changes with
+is that otherwise code generation for a given schema could change with
 how it is being used leading to very strange errors in user code.
 
 
