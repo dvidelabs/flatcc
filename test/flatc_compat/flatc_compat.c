@@ -3,8 +3,8 @@
 
 #include "monster_test_reader.h"
 #include "monster_test_verifier.h"
-#include "support/readfile.h"
-#include "support/hexdump.h"
+#include "flatcc/support/readfile.h"
+#include "flatcc/support/hexdump.h"
 
 #undef ns
 #define ns(x) MyGame_Example_ ## x
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
     (void)argc;
     (void)argv;
 
-    buffer = read_file("monsterdata_test.mon", 1024, &size);
+    buffer = readfile("monsterdata_test.mon", 1024, &size);
 
     if (!buffer) {
         fprintf(stderr, "could not read binary test file\n");

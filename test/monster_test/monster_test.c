@@ -3,8 +3,8 @@
 #include "monster_test_builder.h"
 #include "monster_test_verifier.h"
 
-#include "support/hexdump.h"
-#include "support/elapsed.h"
+#include "flatcc/support/hexdump.h"
+#include "flatcc/support/elapsed.h"
 
 /*
  * Convenience macro to deal with long namespace names,

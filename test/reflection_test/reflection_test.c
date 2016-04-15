@@ -1,4 +1,4 @@
-#include "support/readfile.h"
+#include "flatcc/support/readfile.h"
 #include "flatcc/reflection/reflection_reader.h"
 
 #define lld(x) (long long int)(x)
@@ -17,7 +17,7 @@ int test_schema(const char *monster_bfbs)
     reflection_Type_table_t T;
     int k, monster_index;
 
-    buffer = read_file(monster_bfbs, 10000, &size);
+    buffer = readfile(monster_bfbs, 10000, &size);
     if (!buffer) {
         printf("failed to load binary schema\n");
         goto done;

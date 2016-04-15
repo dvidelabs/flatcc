@@ -11,6 +11,9 @@
   store file identifiers based on hashed fully qualified type names.
 - Fix potential issue with detection of valid file identifiers in
   buffer.
+- Moved `include/support` into `include/flatcc/support`, renamed
+  `include/support/readfile.h` function `read_file` to readfile for
+  consistency.
 
 ## [0.3.2]
 

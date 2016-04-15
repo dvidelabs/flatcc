@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "emit_test_builder.h"
-#include "support/hexdump.h"
+#include "flatcc/support/hexdump.h"
 
 #define test_assert(x) do { if (!(x)) { assert(0); return -1; }} while(0)
 

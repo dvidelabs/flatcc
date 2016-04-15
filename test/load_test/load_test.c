@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "monster_test_builder.h"
-#include "support/elapsed.h"
+#include "flatcc/support/elapsed.h"
 
 #define ns(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Example, x)
 #define nsc(x) FLATBUFFERS_WRAP_NAMESPACE(flatbuffers, x)

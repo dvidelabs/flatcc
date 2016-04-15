@@ -120,10 +120,11 @@ compilers around, but relies on community feedback for maturity.
 The necessary size of the runtime include files can be reduced
 significantly by using -std=c11 and avoiding JSON (which needs a lot of
 numeric parsing support), and by removing `include/flatcc/reflection`
-which is present to support handling of binary schema files and
-can be generated from `reflection/reflection.fbs`. The exact set of
-required files may change from release to release, and it doesn't really
-matter with respect to the compiled code size.
+which is present to support handling of binary schema files and can be
+generated from `reflection/reflection.fbs`, and removing
+`include/flatcc/support` which is only used for tests and samples. The
+exact set of required files may change from release to release, and it
+doesn't really matter with respect to the compiled code size.
 
 There are no plans to make frequent updates once the project becomes
 stable, but input from the community will always be welcome and included
@@ -514,7 +515,7 @@ too large. See also documentation comments in `flatcc_builder.h` and
         ns(Monster_end_as_root(B));
     }
 
-    #include "support/hexdump.h"
+    #include "flatcc/support/hexdump.h"
 
     int main(int argc, char *argv[])
     {
@@ -1279,11 +1280,11 @@ Compiler:
     lib/libflatcc.a            (optional, for linking with schema compiler)
     include/flatcc/flatcc.h    (optional, header and doc for libflatcc.a)
 
-
 Runtime:
 
     include/flatcc/**          (runtime header files)
     include/flatcc/reflection  (optional)
+    include/flatcc/support     (optional, only used for test and samples)
     lib/libflatccrt.a          (runtime library)
 
 In addition the runtime library source files may be used instead of
@@ -1292,11 +1293,6 @@ along with schema specific generated files for a foreign target that is
 not binary compatible with the host system:
 
     src/runtime/*.c
-
-Note that `include/support` should not be included in a system
-installation. It is only used by test and sample code, but may be
-packaged with end user source that chooses to rely upon it, such as
-benchmark code.
 
 ### Windows Files
 

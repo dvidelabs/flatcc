@@ -1,4 +1,4 @@
-#include "support/readfile.h"
+#include "flatcc/support/readfile.h"
 #include "flatcc/reflection/reflection_reader.h"
 
 /* Portable way to print 64-bit integers. */
@@ -170,7 +170,7 @@ int load_and_dump_schema(const char *filename)
     int ret = -1;
     reflection_Schema_table_t S;
 
-    buffer = read_file(filename, 10000, &size);
+    buffer = readfile(filename, 10000, &size);
     if (!buffer) {
         fprintf(stderr, "failed to load binary schema file: '%s'\n", filename);
         goto done;
