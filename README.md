@@ -625,11 +625,17 @@ statement which accepts a 4 characer ASCII string. It is intended to be
 human readable. When absent, the buffer potentially becomes 4 bytes
 shorter (depending on padding).
 
-The `file_identifier` doesn't really take into account that more than one
-of the tables can be a buffer root table but in praxis any table can be
-used as root. These tables all use the same file identifer. This
-behaviour can be overriden by defining an identifier for a given table
-before including generated headers:
+The `file_identifier` is intended to match the `root_type` schema
+declaration, but this does not take into account that is convenient to
+create FlatBuffers for other types as well. `flatcc` makes no special
+destinction for the `root_type` while Googles `flatc` JSON parser uses
+it to determine the JSON root object type.
+
+As a consequence, the file identifier is ambigous, and may change for
+included files. To deal with this, `flatc` defines all types to the file
+identifier of the schema they belong to or to null if absent. It is
+possible to override this behaviour:
+
 
     #define MyGame_Example_Vec3_identifer "VEC3"
     #include "monster_test_builder.h"
@@ -642,12 +648,28 @@ associated with the table in question. Tables normally all use the same
 either null or the schema `file_identifer` unless overridden by the
 user, or if included from a schema with a different identifier.
 
+The generated code defines the identifiers for a given table:
+
+    #ifndef MyGame_Example_Monster_identifier
+    #define MyGame_Example_Monster_identifier flatbuffers_identifier
+    #endif
+
+The `file_extension` is handled in a similar manner:
+
+    #ifndef MyGame_Example_Monster_extension
+    #define MyGame_Example_Monster_extension flatbuffers_extension
+    #endif
+
 ### Type Identifiers
 
-Type identifier use a type hash which maps a fully qualified type name
-into a 4 byte hash. The type hash is a 32-bit native
-value and the type identifier is a 4 character little endian encoded
-string of the same value.
+To better deal with the ambigouties of file identifiers, type
+identifiers have been introduced as an alternative 4 byte buffer
+identifier. The hash is standardized on FNV-1a for interoperability.
+
+The type identifier use a type hash which maps a fully qualified type
+name into a 4 byte hash. The type hash is a 32-bit native value and the
+type identifier is a 4 character little endian encoded string of the
+same value.
 
 In this example the type hash is derived from the string
 "MyGame.Example.Monster" and is the same for all FlatBuffer code
@@ -675,22 +697,23 @@ identifier in the buffer.
 More API calls are available to naturally extend the existing API. See
 `test/monster_test/monster_test.c` for more.
 
-The generated code defines three identifiers for a given table:
+The type identifiers are defined like:
 
-    #ifndef MyGame_Example_Monster_identifier
-    #define MyGame_Example_Monster_identifier flatbuffers_identifier
-    #endif
     #define MyGame_Example_Monster_type_hash ((flatbuffers_thash_t)0x330ef481)
     #define MyGame_Example_Monster_type_identifier "\x81\xf4\x0e\x33"
 
 The `type_identifier` can be used anywhere the original 4 character
 file identifier would be used, but a buffer must choose which system, if any,
-to use.
+to use. This will not affect the `file_extension`.
+
 
 The
 [`flatcc/flatcc_identifier.h`](https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_identifier.h)
 file contains an implementation of the FNV-1a hash used. The hash was
-chosen for simplicity, availability, and collision resistance.
+chosen for simplicity, availability, and collision resistance. For
+better distribution, and for internal use only, a dispersion function is
+also provided, mostly to discourage use of alternative hashes in
+transmission since the type hash is normally good enough as is.
 
 _Note: there is a potential for collisions in the type hash values
 because the hash is only 4 bytes._
@@ -882,32 +905,6 @@ The parser is heavily optimized for 64-bit because it implements an
 compilers too, but this hasn't been tested. The large trie does put some
 strain on compile time. Optimizing beyond -O2 leads to too large
 binaries which offsets any speed gains.
-
-
-## Buffer Identifiers and Schema Roots
-
-The FlatBuffers schema is intended to have a single root object and a
-single file identifier and extension - but this mostly makes sense for a
-JSON parser needing to make an automated choice (and `flatcc` does not
-read JSON objecs).
-
-In praxis all objects (tables and structs) can be roots. This makes it
-ambigious as to what identifier an individual object should use as root.
-`flatcc` uses the `file_identifier` last set in the current schema file
-(ignoring included schema). The identifier is frozen by a define
-`myobject_identifer` and `myobject_extension` so it does not change with
-different included include schema. There is also a global
-`file_identifier` representing the last set schema identifier, and ditto
-extension. The binary schema code generator uses this to set the
-identifier and file extension of its output.
-
-Each object created `_as_root` will automatically use the identifier
-from its `myobject_identifier` definition. When an object is read
-`as_root` this identifier is checked and will return null or assert in
-debug. The `_as_root` call is really a wrapper around first opening or
-closing a buffer then reading the first object as the given root type.
-This can be done as two steps and allows detailed control of identifier
-handling - see `builder.md` for more.
 
 
 ## Global Scope and Included Schema
