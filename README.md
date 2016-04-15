@@ -153,23 +153,24 @@ names, monster vector, and inventory vector, the bandwidth reaches about
 reading back and validating all data. Reading only a few key fields
 increases bandwidth to 2.7GB/s and 37ms/op. For 10MB buffers bandwidth
 may be higher but eventually smaller buffers will be hit by call
-overhead and thus we down to 300MB/s at about 150ns/op encoding small
-buffers. These numbers are just a rough guideline - they obviously
+overhead and thus we get down to 300MB/s at about 150ns/op encoding
+small buffers. These numbers are just a rough guideline - they obviously
 depend on hardware, compiler, and data encoded. Measurements are
-excluding an ininitial warmup step.
+excluding an ininitial warmup step. Reading FlatBuffers is more than an
+order of magnitude faster than building them.
 
 The generated JSON parsers are roughly 4 times slower than building a
 FlatBuffer directly in C or C++, or about 2200ns vs 600ns for a 700 byte
 JSON message. JSON parsing is thus roughly two orders of magnitude
 faster than reading the equivalent Protocol Buffer, as reported on the
-[Google FlatBuffers Benchmarks](http://google.github.io/flatbuffers/flatbuffers_benchmarks.html)
-page. LZ4 compression would estimated cut the performance of JSON
-parsing in half, which is still fast. JSON printing is faster than
-parsing but not very significantly so. JSON compresses to roughly half
-the size of compressed FlatBuffers on large buffers, but compresses
-worse on small buffers (not to mention when not compressing at all).
-JSON parsers bloats the compiled C binary compared to pure Flatbuffer
-usage, but problably not compared to Protocol Buffer usage.
+[Google FlatBuffers
+Benchmarks](http://google.github.io/flatbuffers/flatbuffers_benchmarks.html)
+page. LZ4 compression would estimated double the overall processing time
+of JSON parsing. JSON printing is faster than parsing but not very
+significantly so. JSON compresses to roughly half the size of compressed
+FlatBuffers on large buffers, but compresses worse on small buffers (not
+to mention when not compressing at all). JSON parsers bloats the
+compiled C binary compared to pure Flatbuffer usage.
 
 See also [benchmark](https://github.com/dvidelabs/flatcc#benchmark)
 below.
@@ -199,7 +200,9 @@ considering they do less work: The compatibility test reads a
 pre-generated binary `monsterdata_test.golden` monster file and verifies
 that all content is as expected. This results in a 13K optimized binary
 executable or a 6K object file. The source for this check is 5K
-excluding header files. Readers do not need to link with a library.
+excluding header files. Readers do not need to link with a library. JSON
+parsers for a schema like monster.fbs may add about 100K to the binary,
++/- optimization settings.
 
 
 ## Generated Files
