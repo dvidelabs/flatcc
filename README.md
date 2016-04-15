@@ -133,7 +133,7 @@ different target platforms.
 
 **Potential upcoming breaking changes:**
 
-_The `verify_as_root` calls may change to use `verify_as_root` and
+The `verify_as_root` calls may change to use `verify_as_root` and
 `verify_as_root_with_identifier` for consistency with create calls, but
 this is still an open issue. In addition, the upcoming type identifiers
 need a new verifier call `verify_as_typed_root()`.
@@ -646,21 +646,32 @@ Type identifiers are not to be confused with union types.
 ### File Identifiers
 
 The FlatBuffers schema language has the optional `file_identifier`
-statement which accepts a 4 characer ASCII string. It is intended to be
+declaration which accepts a 4 characer ASCII string. It is intended to be
 human readable. When absent, the buffer potentially becomes 4 bytes
 shorter (depending on padding).
 
 The `file_identifier` is intended to match the `root_type` schema
-declaration, but this does not take into account that is convenient to
-create FlatBuffers for other types as well. `flatcc` makes no special
+declaration, but this does not take into account that it is convenient
+to create FlatBuffers for other types as well. `flatcc` makes no special
 destinction for the `root_type` while Googles `flatc` JSON parser uses
 it to determine the JSON root object type.
 
-As a consequence, the file identifier is ambigous, and may change for
-included files. To deal with this, `flatc` defines all types to the file
-identifier of the schema they belong to or to null if absent. It is
-possible to override this behaviour:
+As a consequence, the file identifier is ambigous. Included schema may
+have separate `file_identifier` declarations. To at least make sure each
+type is associated with its own schemas `file_identifier`, a symbol is
+defined for each type. If the schema has such identifier, it will be
+defined as the null identifier.
 
+The generated code defines the identifiers for a given table:
+
+    #ifndef MyGame_Example_Monster_identifier
+    #define MyGame_Example_Monster_identifier flatbuffers_identifier
+    #endif
+
+The `flatbuffers_identifier` is the schema specific `file_identifier`
+and is undefined and redefined for each generated `_reader.h` file.
+
+The user can now override the identifier for a given type, for example:
 
     #define MyGame_Example_Vec3_identifer "VEC3"
     #include "monster_test_builder.h"
@@ -668,16 +679,8 @@ possible to override this behaviour:
     ...
     MyGame_Example_Vec3_create_as_root(B, ...);
 
-The `create_as_root` call automatically uses the file identifier
-associated with the table in question. Tables normally all use the same
-either null or the schema `file_identifer` unless overridden by the
-user, or if included from a schema with a different identifier.
-
-The generated code defines the identifiers for a given table:
-
-    #ifndef MyGame_Example_Monster_identifier
-    #define MyGame_Example_Monster_identifier flatbuffers_identifier
-    #endif
+The `create_as_root` method uses the identifier for the type in question,
+and so does other `_as_root` methods.
 
 The `file_extension` is handled in a similar manner:
 
