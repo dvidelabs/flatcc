@@ -176,7 +176,7 @@ It should be noted that FlatBuffer read performance exclude verification
 which JSON parsers and Protocol Buffers inherently include by their
 nature. Verification has not been benchmarked, but would presumably add
 less than 50% read overhead unless only a fraction of a large buffer is to
-be read).
+be read.
 
 See also [benchmark](https://github.com/dvidelabs/flatcc#benchmark)
 below.
