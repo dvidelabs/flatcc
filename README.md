@@ -1266,6 +1266,7 @@ or for the bleeding edge:
     brew update
     brew install flatcc --HEAD
 
+
 ### Windows Build (MSVC)
 
 Install CMake, MSVC, and git (tested with MSVC 14 2015).
@@ -1293,6 +1294,22 @@ In Visual Studio:
 *Note that `flatcc\CMakeList.txt` sets the `-DFLATCC_PORTABLE` flag and
 that `include\flatcc\portable\pwarnings.h` disable certain warnings for
 warning level -W3.*
+
+
+### Cross-compilation
+
+Users have been reporting some degree of success using cross compiles
+from Linux x86 host to embedded ARM Linux devices.
+
+For this to work, `FLATCC_TEST` option should be disabled in part
+because cross-compilation cannot run the cross-compiled flatcc tool, and
+in part because there appears to be some issues with CMake custom build
+steps needed when building test and sample projects.
+
+Overall, it is probably better to create a separate Makefile and just
+compile the few `src/runtime/*.c` into a library and distribute the
+headers as for other platforms, unless `flatcc` is also required for the
+target.
 
 
 ## Distribution

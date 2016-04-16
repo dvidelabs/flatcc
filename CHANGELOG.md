@@ -18,6 +18,8 @@
   buffer.
 - Moved `include/support` into `include/flatcc/support`, renamed
   `include/support/readfile.h` function `read_file` to `readfile`.
+- Make `FLATCC_TEST` build option skip building samples and test
+  files, as opposed to just skip running the tests.
 
 ## [0.3.2]
 
