@@ -4,9 +4,12 @@ Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/gi
 # FlatCC FlatBuffers in C for C
 
 NOTE: see
-[CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md),
-there are occassionally breaking changes. In case of trouble, make sure
-the `flatcc` tool is same version as the `include/flatcc` path.
+[CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md).
+There are occassionally minor breaking changes as API inconsistencies
+are discovered. Unless clearly stated, breaking changes will not affect
+the compiled runtime library, only the header files. In case of trouble,
+make sure the `flatcc` tool is same version as the `include/flatcc`
+path.
 
 
 The project includes:
