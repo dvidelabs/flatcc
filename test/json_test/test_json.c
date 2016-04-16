@@ -32,7 +32,7 @@ int test_json(char *json, char *expect, int parse_flags, int print_flags, int li
         goto failed;
     }
     flatbuffer = flatcc_builder_finalize_buffer(B, &flatbuffer_size);
-    if ((ret = ns(Monster_verify_as_root(flatbuffer, flatbuffer_size, "MONS")))) {
+    if ((ret = ns(Monster_verify_as_root(flatbuffer, flatbuffer_size)))) {
         fprintf(stderr, "%s:%d: buffer verification failed: %s\n", __FILE__, line, flatcc_verify_error_string(ret));
         goto failed;
     }

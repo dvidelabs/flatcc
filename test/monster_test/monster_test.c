@@ -114,7 +114,7 @@ int test_empty_monster(flatcc_builder_t *B)
         goto done;
     }
 
-    if ((ret = ns(Monster_verify_as_root(buffer, size, ns(Monster_identifier))))) {
+    if ((ret = ns(Monster_verify_as_root_with_identifier(buffer, size, ns(Monster_identifier))))) {
         printf("could not verify empty monster, got %s\n", flatcc_verify_error_string(ret));
         return -1;
     }
@@ -126,7 +126,7 @@ int test_empty_monster(flatcc_builder_t *B)
      * failure in this case.
      */
     if (flatcc_verify_ok == ns(Monster_verify_as_root(
-                    buffer, size - 1, ns(Monster_identifier)))) {
+                    buffer, size - 1))) {
         printf("Monster verify failed to detect short buffer\n");
         return -1;
     }
@@ -178,18 +178,33 @@ int test_typed_empty_monster(flatcc_builder_t *B)
         goto done;
     }
 
-    if ((ret = ns(Monster_verify_as_root(buffer, size, ns(Monster_type_identifier))))) {
+    if ((ret = ns(Monster_verify_as_root_with_identifier(buffer, size, ns(Monster_type_identifier))))) {
         printf("could not verify typed empty monster, got %s\n", flatcc_verify_error_string(ret));
+        goto done;
+    }
+
+    if ((ret = ns(Monster_verify_as_typed_root(buffer, size)))) {
+        printf("could not verify typed empty monster, got %s\n", flatcc_verify_error_string(ret));
+        goto done;
+    }
+
+    if ((ret = ns(Monster_verify_as_root_with_type_hash(buffer, size, ns(Monster_type_hash))))) {
+        printf("could not verify empty monster with type hash, got %s\n", flatcc_verify_error_string(ret));
+        goto done;
+    }
+
+    if ((ret = ns(Monster_verify_as_root_with_type_hash(buffer, size, flatbuffers_type_hash_from_name("MyGame.Example.Monster"))))) {
+        printf("could not verify empty monster with explicit type hash, got %s\n", flatcc_verify_error_string(ret));
         goto done;
     }
 
     flatbuffers_identifier_from_type_hash(0x330ef481, fid);
-    if ((ret = ns(Monster_verify_as_root(buffer, size, fid)))) {
+    if ((ret = ns(Monster_verify_as_root_with_identifier(buffer, size, fid)))) {
         printf("could not verify typed empty monster, got %s\n", flatcc_verify_error_string(ret));
         goto done;
     }
 
-    if (!ns(Monster_verify_as_root(buffer, size, ns(Monster_identifier)))) {
+    if (!ns(Monster_verify_as_root(buffer, size))) {
         printf("should not have verified with the original identifier since we use types\n");
         goto done;
     }
@@ -283,8 +298,16 @@ int test_typed_table_with_emptystruct(flatcc_builder_t *B)
      * we can use it as a cheap presence flag.
      */
     hexdump("typed table with empty struct", buffer, size, stderr);
-    if (flatcc_verify_ok != ns(with_emptystruct_verify_as_root(buffer, size, ns(with_emptystruct_type_identifier)))) {
+    if (flatcc_verify_ok != ns(with_emptystruct_verify_as_root_with_identifier(buffer, size, ns(with_emptystruct_type_identifier)))) {
+        printf("explicit verify_as_root failed\n");
+        return -1;
+    }
+    if (flatcc_verify_ok != ns(with_emptystruct_verify_as_typed_root(buffer, size))) {
         printf("typed verify_as_root failed\n");
+        return -1;
+    }
+    if (flatcc_verify_ok != ns(with_emptystruct_verify_as_root_with_type_hash(buffer, size, ns(with_emptystruct_type_hash)))) {
+        printf("verify_as_root_with_type_hash failed\n");
         return -1;
     }
 #if 0
@@ -326,7 +349,7 @@ int test_typed_table_with_emptystruct(flatcc_builder_t *B)
         return -1;
     }
     if (!ns(with_emptystruct_as_root_with_identifier(buffer, ns(with_emptystruct_type_identifier)))) {
-        printf("as_root_with_identifier failed to match type_identifer\n");
+        printf("as_root_with_identifier failed to match type_identifier\n");
         return -1;
     }
     if (!ns(with_emptystruct_as_typed_root(buffer))) {
@@ -850,7 +873,7 @@ int test_monster(flatcc_builder_t *B)
 
     buffer = flatcc_builder_finalize_buffer(B, &size);
     hexdump("monster table", buffer, size, stderr);
-    if ((ret = ns(Monster_verify_as_root(buffer, size, ns(Monster_identifier))))) {
+    if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
         printf("Monster buffer failed to verify, got: %s\n", flatcc_verify_error_string(ret));
         return -1;
     }
@@ -1458,7 +1481,19 @@ int test_typed_struct_buffer(flatcc_builder_t *B)
         printf("wrong Vec3 type identifier (via define)\n");
         return -1;
     }
+    if (!ns(Vec3_verify_as_root_with_type_hash(buffer, size, ns(Vec3_type_hash)))) {
+        printf("verify failed with Vec3 type hash)\n");
+        return -1;
+    }
     vec3 = ns(Vec3_as_typed_root(buffer));
+    if (!vec3) {
+        printf("typed Vec3 could not be read\n");
+        return -1;
+    }
+    if (!ns(Vec3_verify_as_typed_root(buffer, size))) {
+        printf("verify failed with Vec3 type hash)\n");
+        return -1;
+    }
     /* Convert buffer to native in place - a nop on native platform. */
     v = (ns(Vec3_t) *)vec3;
     ns(Vec3_from_pe(v));
@@ -1632,6 +1667,12 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_struct_buffer(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_typed_struct_buffer(B)) {
         printf("TEST FAILED\n");
         return -1;
     }

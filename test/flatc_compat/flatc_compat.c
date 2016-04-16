@@ -175,8 +175,13 @@ int main(int argc, char *argv[])
      * is stored (normally a vtable), but this is generated with `flatc
      * v1.1`.
      */
-    if (flatcc_verify_ok != ns(Monster_verify_as_root(buffer, size, "MONS"))) {
+    if (flatcc_verify_ok != ns(Monster_verify_as_root_with_identifier(buffer, size, "MONS"))) {
         fprintf(stderr, "could not verify foreign monster file\n");
+        ret = -1;
+        goto done;
+    }
+    if (flatcc_verify_ok != ns(Monster_verify_as_root(buffer, size))) {
+        fprintf(stderr, "could not verify foreign monster file with default identifier\n");
         ret = -1;
         goto done;
     }

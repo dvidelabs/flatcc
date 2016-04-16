@@ -131,13 +131,6 @@ stable, but input from the community will always be welcome and included
 in releases where relevant, especially with respect to testing on
 different target platforms.
 
-**Potential upcoming breaking changes:**
-
-The `verify_as_root` calls may change to use `verify_as_root` and
-`verify_as_root_with_identifier` for consistency with create calls, but
-this is still an open issue. In addition, the upcoming type identifiers
-need a new verifier call `verify_as_typed_root()`.
-
 
 ## Time / Space / Usability Tradeoff
 
@@ -221,9 +214,9 @@ read-only buffer access. Now a library of include files is always
 required (`include/flatcc`) because the original approach lead to
 excessive code duplication. The generated code for building flatbuffers,
 and for parsing and printing flatbuffers, all need to link with the
-runtime library `libflatccrt.a`, but they are independent of each other,
-except that the builder depends on the generated reader files. The
-generated reader only depends on library header files.
+runtime library `libflatccrt.a`. The verifier and builder headers depend
+on the reader header. The generated reader only depends on library
+header files.
 
 The reader and builder rely on generated common reader and builder
 header files. These common file makes it possible to change the global
@@ -253,8 +246,7 @@ wrapping a union of buffers in a network interface and it ensures proper
 alignment of all buffer levels.
 
 For verifying flatbuffers, a `myschema_verifier.h` is generated. It
-depends on the runtime library but is completely independent of the
-the generated reader, builder, and common files.
+depends on the runtime library and the reader header.
 
 Json parsers and printers generate one file per schema file and included
 schema will have their own parsers and printers which including parsers
@@ -286,8 +278,7 @@ included schema and a common file and with or without support for both
 reading (default) and writing (-w) flatbuffers. The simplest option is
 to use (-a) for all and include the `myschema_builder.h` file.
 
-The (-a) or (-v) also generates a verifier file which only depends on
-the runtime library (and other verifiers from included schema).
+The (-a) or (-v) also generates a verifier file.
 
 Make sure `flatcc` under the `include` folder is visible in the C
 compilers include path when compiling flatbuffer builders. It is not
@@ -709,6 +700,8 @@ identifier in the buffer.
     ...
     MyGame_Example_Monster_create_as_typed_root(B, ...);
     buffer = flatcc_builder_get_direct_buffer(B);
+    MyGame_Example_Monster_verify_as_typed_root(buffer, size);
+    // read back
     monster = MyGame_Example_Monster_as_typed_root(buffer);
 
     switch (flatbuffers_get_type_hash(buffer)) {

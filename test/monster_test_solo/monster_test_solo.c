@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     MyGame_Example_Monster_name_create_str(B, "MyMonster");
     MyGame_Example_Monster_end_as_root(B);
     buf = flatcc_builder_get_direct_buffer(B, &size);
-    ret = MyGame_Example_Monster_verify_as_root(buf, size, MyGame_Example_Monster_identifier);
+    ret = MyGame_Example_Monster_verify_as_root(buf, size);
     flatcc_builder_clear(B);
     return ret;
 }

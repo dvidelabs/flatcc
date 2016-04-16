@@ -2,13 +2,18 @@
 
 ## [Unreleased]
 
+- BREAKING: `verify_as_root` no longer takes an identifier argument, use
+  `verify_as_root_with_identifier`. `myschema_verifier.h` now
+  includes `myschema_reader.h` to access identifier.
+  identifer argument, and variants for type identifiers;.
 - Added scripts/setup.sh to quickly get started on small user projects.
 - Support `namespace ;` for reverting to global namespace in schema.
 - Enable block comments now that they are supported in flatc.
 - Parse and validate new `rpc_service` schema syntax, but with no
   support for code generation.
-- Add type hash support (`create_as_typed_root` etc.) to optionally
-  store file identifiers based on hashed fully qualified type names.
+- Add type hash support (`create/verify_as_typed_root` etc.) to
+  optionally store and verify file identifiers based on hashed fully
+  qualified type names.
 - Fix potential issue with detection of valid file identifiers in
   buffer.
 - Moved `include/support` into `include/flatcc/support`, renamed
