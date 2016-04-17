@@ -4,8 +4,8 @@
 #include <stdio.h>
 
 /* Based on: http://stackoverflow.com/a/7776146 */
-static void hexdump(char *desc, void *addr, int len, FILE *fp) {
-    int i;
+static void hexdump(char *desc, void *addr, size_t len, FILE *fp) {
+    unsigned int i;
     unsigned char buff[17];
     unsigned char *pc = (unsigned char*)addr;
 
@@ -14,7 +14,7 @@ static void hexdump(char *desc, void *addr, int len, FILE *fp) {
         fprintf(fp, "%s:\n", desc);
 
     // Process every byte in the data.
-    for (i = 0; i < len; i++) {
+    for (i = 0; i < (unsigned int)len; i++) {
         // Multiple of 16 means new line (with line offset).
 
         if ((i % 16) == 0) {
