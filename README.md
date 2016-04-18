@@ -78,7 +78,7 @@ namespace.
 
 ## Status
 
-Main features supported as of 0.3.2:
+Main features supported as of 0.3.3:
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -107,6 +107,9 @@ tested and configured.
 
 Use versions from 0.3.0 and up as there has been some minor breaking
 [interface changes](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030).
+Versions 0.3.3 has a minor breaking change where the `verify_as_root` call
+must be renamed to `verify_as_root_with_identifer`, or drop the identifier
+argument.
 
 Big endian platforms have not been tested at all. While care has been
 taken to handle endian encoding, there are bound to be some issues. The
