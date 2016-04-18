@@ -225,7 +225,7 @@ static const char lex_alnum[256] = {
  * It may be null if unused.
  *
  */
-static int lex(const char *buf, int len, int mode, void *context)
+static int lex(const char *buf, size_t len, int mode, void *context)
 {
     const char *p, *q, *s, *d;
 #if 0
