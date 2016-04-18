@@ -78,23 +78,23 @@ static void gen_find(output_t *out)
      */
     fprintf(out->fp,
         "#include <string.h>\n"
-        "static %suoffset_t %snot_found = (%suoffset_t)-1;\n"
+        "static size_t %snot_found = (size_t)-1;\n"
         "#define __%sidentity(n) (n)\n",
-        nsc, nsc, nsc, nsc);
+        nsc, nsc);
     fprintf(out->fp,
         "/* Subtraction doesn't work for unsigned types. */\n"
         "#define __%sscalar_cmp(x, y, n) ((x) < (y) ? -1 : (x) > (y))\n"
         "static inline int __%sstring_n_cmp(%sstring_t v, const char *s, size_t n)\n"
-        "{ %suoffset_t nv = %sstring_len(v); int x = strncmp(v, s, nv < n ? nv : n);\n"
+        "{ size_t nv = %sstring_len(v); int x = strncmp(v, s, nv < n ? nv : n);\n"
         "  return x != 0 ? x : nv < n ? -1 : nv > n; }\n"
         "/* `n` arg unused, but needed by string find macro expansion. */\n"
         "static inline int __%sstring_cmp(%sstring_t v, const char *s, size_t n) { (void)n; return strcmp(v, s); }\n",
-        nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+        nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "/* A = identity if searching scalar vectors rather than key fields. */\n"
         "/* Returns lowest matching index not_found. */\n"
         "#define __%sfind_by_field(A, V, E, L, K, Kn, T, D)\\\n"
-        "{ T v; %suoffset_t a = 0, b, m; if (!(b = L(V))) { return %snot_found; }\\\n"
+        "{ T v; size_t a = 0, b, m; if (!(b = L(V))) { return %snot_found; }\\\n"
         "  --b;\\\n"
         "  while (a < b) {\\\n"
         "    m = a + ((b - a) >> 1);\\\n"
@@ -113,7 +113,7 @@ static void gen_find(output_t *out)
         "  }\\\n"
         "  return %snot_found;\\\n"
         "}\n",
-        nsc, nsc, nsc, nsc);
+        nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sfind_by_scalar_field(A, V, E, L, K, T)\\\n"
         "__%sfind_by_field(A, V, E, L, K, 0, T, __%sscalar_cmp)\n"
@@ -125,14 +125,14 @@ static void gen_find(output_t *out)
         nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_find_by_scalar_field(N, NK, TK)\\\n"
-        "static inline %suoffset_t N ## _vec_find_by_ ## NK(N ## _vec_t vec, TK key)\\\n"
+        "static inline size_t N ## _vec_find_by_ ## NK(N ## _vec_t vec, TK key)\\\n"
         "__%sfind_by_scalar_field(N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\n",
-        nsc, nsc, nsc);
+        nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_scalar_find(N, T)\\\n"
-        "static inline %suoffset_t N ## _vec_find(N ## _vec_t vec, T key)\\\n"
+        "static inline size_t N ## _vec_find(N ## _vec_t vec, T key)\\\n"
         "__%sfind_by_scalar_field(__%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\n",
-        nsc, nsc, nsc, nsc);
+        nsc, nsc, nsc);
 }
 
 static void gen_helpers(output_t *out)
@@ -253,14 +253,13 @@ static void gen_helpers(output_t *out)
         nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%svec_len(vec)\\\n"
-        "{ return (vec) ? __%suoffset_read_from_pe((flatbuffers_uoffset_t *)vec - 1) : 0; }\n"
+        "{ return (vec) ? (size_t)__%suoffset_read_from_pe((flatbuffers_uoffset_t *)vec - 1) : 0; }\n"
         "#define __%sstring_len(s) __%svec_len(s)\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
-        "static inline %suoffset_t %svec_len(const void *vec)\n"
+        "static inline size_t %svec_len(const void *vec)\n"
         "__%svec_len(vec)\n",
-        nsc, nsc,
-        nsc);
+        nsc, nsc);
     fprintf(out->fp,
         /* Tb is the base type for loads. */
         "#define __%sscalar_vec_at(N, vec, i)\\\n"
@@ -276,35 +275,31 @@ static void gen_helpers(output_t *out)
         "#define __%soffset_vec_at(T, vec, i, adjust)\\\n"
         "{ const %suoffset_t *elem = (vec) + (i);\\\n"
         "  assert(%svec_len(vec) > (i) && \"index out of range\");\\\n"
-        "  return (T)((uint8_t *)(elem) + __%suoffset_read_from_pe(elem) + adjust); }\n",
+        "  return (T)((uint8_t *)(elem) + (size_t)__%suoffset_read_from_pe(elem) + adjust); }\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "#define __%sdefine_scalar_vec_len(N) \\\n"
-            "static inline %suoffset_t N ## _vec_len(N ##_vec_t vec)\\\n"
+            "static inline size_t N ## _vec_len(N ##_vec_t vec)\\\n"
             "{ return %svec_len(vec); }\n",
-            nsc, nsc, nsc);
+            nsc, nsc);
     fprintf(out->fp,
             "#define __%sdefine_scalar_vec_at(N, T) \\\n"
-            "static inline T N ## _vec_at(N ## _vec_t vec, %suoffset_t i)\\\n"
+            "static inline T N ## _vec_at(N ## _vec_t vec, size_t i)\\\n"
             "__%sscalar_vec_at(N, vec, i)\n",
-            nsc, nsc, nsc);
+            nsc, nsc);
     fprintf(out->fp,
             "typedef const char *%sstring_t;\n"
-            "static inline %suoffset_t %sstring_len(%sstring_t s)\n"
+            "static inline size_t %sstring_len(%sstring_t s)\n"
             "__%sstring_len(s)\n",
-            nsc,
-            nsc, nsc, nsc,
-            nsc);
+            nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "typedef const %suoffset_t *%sstring_vec_t;\n"
             "typedef %suoffset_t *%sstring_mutable_vec_t;\n"
-            "static inline %suoffset_t %sstring_vec_len(%sstring_vec_t vec)\n"
+            "static inline size_t %sstring_vec_len(%sstring_vec_t vec)\n"
             "__%svec_len(vec)\n"
-            "static inline %sstring_t %sstring_vec_at(%sstring_vec_t vec, %suoffset_t i)\n"
+            "static inline %sstring_t %sstring_vec_at(%sstring_vec_t vec, size_t i)\n"
             "__%soffset_vec_at(%sstring_t, vec, i, sizeof(vec[0]))\n",
-            nsc, nsc, nsc, nsc, nsc,
-            nsc, nsc, nsc, nsc, nsc,
-            nsc, nsc, nsc, nsc);
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "typedef const void *%sgeneric_table_t;\n",
             nsc);
@@ -347,11 +342,11 @@ static void gen_helpers(output_t *out)
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
-            "static inline %suoffset_t %sstring_vec_find(%sstring_vec_t vec, const char *s)\n"
+            "static inline size_t %sstring_vec_find(%sstring_vec_t vec, const char *s)\n"
             "__%sfind_by_string_field(__%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s)\n"
-            "static inline %suoffset_t %sstring_vec_find_n(%sstring_vec_t vec, const char *s, size_t n)\n"
+            "static inline size_t %sstring_vec_find_n(%sstring_vec_t vec, const char *s, size_t n)\n"
             "__%sfind_by_string_n_field(__%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s, n)\n",
-            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     if (out->opts->cgen_sort) {
         fprintf(out->fp, "__%sdefine_string_sort()\n", nsc);
     }
@@ -365,11 +360,12 @@ static void gen_helpers(output_t *out)
             "static inline int %shas_identifier(const void *buffer, const char *fid)\n"
             "{ return fid == 0 || memcmp(fid, ((%suoffset_t *)buffer) + 1, %s_IDENTIFIER_SIZE) == 0; }\n\n"
             "static inline int %shas_type_hash(const void *buffer, %sthash_t type_hash)\n"
-            "{ return type_hash == 0 || (__%sthash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1) == type_hash); }\n\n"
+            /* TODO: read_from_pe should be `to_pe` and if isn't supported, fix it in accessors or similar. Ditto in verifier. */
+            "{ return type_hash == 0 || (__%sthash_read_from_pe((%suoffset_t *)buffer + 1) == type_hash); }\n\n"
             "static inline %sthash_t %sget_type_hash(const void *buffer)\n"
             "{ return __%sthash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1); }\n\n"
             "#define %sverify_endian() %shas_identifier(\"\\x00\\x00\\x00\\x00\" \"1234\", \"1234\")\n",
-            nsc, nsc, nscup, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+            nsc, nsc, nscup, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
 
     fprintf(out->fp,
             "/* Null file identifier accepts anything, otherwise fid should be 4 characters. */\n"
@@ -614,11 +610,11 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
          */
         fprintf(out->fp, "/* empty struct already typedef'ed as void since this not permitted in std. C: struct %s {}; */\n", snt.text);
         fprintf(out->fp,
-                "static inline const %s_t *%s__const_ptr_add(const %s_t *p, %suoffset_t i) { return p; }\n", snt.text, snt.text, snt.text, nsc);
+                "static inline const %s_t *%s__const_ptr_add(const %s_t *p, size_t i) { return p; }\n", snt.text, snt.text, snt.text);
         fprintf(out->fp,
-                "static inline %s_t *%s__ptr_add(%s_t *p, %suoffset_t i) { return p; }\n", snt.text, snt.text, snt.text, nsc);
+                "static inline %s_t *%s__ptr_add(%s_t *p, size_t i) { return p; }\n", snt.text, snt.text, snt.text);
         fprintf(out->fp,
-                "static inline %s_struct_t %s_vec_at(%s_vec_t vec, %suoffset_t i) { return vec; }\n", snt.text, snt.text, snt.text, nsc);
+                "static inline %s_struct_t %s_vec_at(%s_vec_t vec, size_t i) { return vec; }\n", snt.text, snt.text, snt.text);
     } else {
         if (do_pad) {
             fprintf(out->fp, "#pragma pack(1)\n");
@@ -703,23 +699,22 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
                 "static_assert(sizeof(%s_t) == %llu, \"struct size mismatch\");\n\n",
                 snt.text, llu(ct->size));
         fprintf(out->fp,
-                "static inline const %s_t *%s__const_ptr_add(const %s_t *p, %suoffset_t i) { return p + i; }\n", snt.text, snt.text, snt.text, nsc);
+                "static inline const %s_t *%s__const_ptr_add(const %s_t *p, size_t i) { return p + i; }\n", snt.text, snt.text, snt.text);
         fprintf(out->fp,
-                "static inline %s_t *%s__ptr_add(%s_t *p, %suoffset_t i) { return p + i; }\n", snt.text, snt.text, snt.text, nsc);
+                "static inline %s_t *%s__ptr_add(%s_t *p, size_t i) { return p + i; }\n", snt.text, snt.text, snt.text);
         fprintf(out->fp,
-                "static inline %s_struct_t %s_vec_at(%s_vec_t vec, %suoffset_t i)\n"
+                "static inline %s_struct_t %s_vec_at(%s_vec_t vec, size_t i)\n"
                 "__%sstruct_vec_at(vec, i)\n",
-                snt.text, snt.text, snt.text, nsc,
+                snt.text, snt.text, snt.text,
                 nsc);
     }
     fprintf(out->fp, "static inline size_t %s__size() { return %llu; }\n",
             snt.text, llu(ct->size));
     print_type_identifier(out, snt.text, ct->type_hash);
     fprintf(out->fp,
-            "static inline %suoffset_t %s_vec_len(%s_vec_t vec)\n"
+            "static inline size_t %s_vec_len(%s_vec_t vec)\n"
             "__%svec_len(vec)\n",
-            nsc, snt.text, snt.text,
-            nsc);
+            snt.text, snt.text, nsc);
     fprintf(out->fp,
             "__%sstruct_as_root(%s)\n",
             nsc, snt.text);
@@ -1001,15 +996,13 @@ static void gen_table(output_t *out, fb_compound_type_t *ct)
             snt.text);
     print_type_identifier(out, snt.text, ct->type_hash);
     fprintf(out->fp,
-            "static inline %suoffset_t %s_vec_len(%s_vec_t vec)\n"
+            "static inline size_t %s_vec_len(%s_vec_t vec)\n"
             "__%svec_len(vec)\n",
-            nsc, snt.text, snt.text,
-            nsc);
+            snt.text, snt.text, nsc);
     fprintf(out->fp,
-            "static inline %s_table_t %s_vec_at(%s_vec_t vec, %suoffset_t i)\n"
+            "static inline %s_table_t %s_vec_at(%s_vec_t vec, size_t i)\n"
             "__%soffset_vec_at(%s_table_t, vec, i, 0)\n",
-            snt.text, snt.text, snt.text, nsc,
-            nsc, snt.text);
+            snt.text, snt.text, snt.text, nsc, snt.text);
     fprintf(out->fp,
             "__%stable_as_root(%s)\n",
             nsc, snt.text);
@@ -1124,15 +1117,13 @@ static void gen_table(output_t *out, fb_compound_type_t *ct)
                 }
                 fprintf(out->fp,     "/* Note: find only works on vectors sorted by this field. */\n");
                 fprintf(out->fp,
-                    "static inline %suoffset_t %s_vec_find_by_%.*s(%s_vec_t vec, const char *s)\n"
+                    "static inline size_t %s_vec_find_by_%.*s(%s_vec_t vec, const char *s)\n"
                     "__%sfind_by_string_field(%s_%.*s, vec, %s_vec_at, %s_vec_len, s)\n",
-                    nsc, snt.text, n, s, snt.text,
-                    nsc, snt.text, n, s, snt.text, snt.text);
+                    snt.text, n, s, snt.text, nsc, snt.text, n, s, snt.text, snt.text);
                 fprintf(out->fp,
-                    "static inline %suoffset_t %s_vec_find_n_by_%.*s(%s_vec_t vec, const char *s, int n)\n"
+                    "static inline size_t %s_vec_find_n_by_%.*s(%s_vec_t vec, const char *s, int n)\n"
                     "__%sfind_by_string_n_field(%s_%.*s, vec, %s_vec_at, %s_vec_len, s, n)\n",
-                    nsc, snt.text, n, s, snt.text,
-                    nsc, snt.text, n, s, snt.text, snt.text);
+                    snt.text, n, s, snt.text, nsc, snt.text, n, s, snt.text, snt.text);
                 if (out->opts->cgen_sort) {
                     fprintf(out->fp,
                         "__%sdefine_sort_by_string_field(%s, %.*s)\n",

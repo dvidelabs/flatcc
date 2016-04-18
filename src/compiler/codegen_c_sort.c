@@ -30,8 +30,8 @@ int gen_sort(output_t *out)
     fprintf(out->fp,
         "#define __%sheap_sort(N, X, A, E, L, TK, TE, D, S)\\\n"
         "static inline void __ ## N ## X ## __heap_sift_down(\\\n"
-        "        N ## _mutable_vec_t vec, %s ## uoffset_t start, %s ## uoffset_t end)\\\n"
-        "{ %suoffset_t child, root; TK v1, v2, vroot;\\\n"
+        "        N ## _mutable_vec_t vec, size_t start, size_t end)\\\n"
+        "{ size_t child, root; TK v1, v2, vroot;\\\n"
         "  root = start;\\\n"
         "  while ((root << 1) <= end) {\\\n"
         "    child = root << 1;\\\n"
@@ -53,13 +53,13 @@ int gen_sort(output_t *out)
         "  }\\\n"
         "}\\\n"
         "static inline void __ ## N ## X ## __heap_sort(N ## _mutable_vec_t vec)\\\n"
-        "{ %suoffset_t start, end, size;\\\n"
+        "{ size_t start, end, size;\\\n"
         "  size = L(vec); if (size == 0) return; end = size - 1; start = size >> 1;\\\n"
         "  do { __ ## N ## X ## __heap_sift_down(vec, start, end); } while (start--);\\\n"
         "  while (end > 0) { \\\n"
         "    S(vec, 0, end, TE);\\\n"
         "    __ ## N ## X ## __heap_sift_down(vec, 0, --end); } }\n",
-        out->nsc, out->nsc, out->nsc, out->nsc, out->nsc);
+        out->nsc);
     fprintf(out->fp,
         "#define __%sdefine_sort_by_field(N, NK, TK, TE, D, S)\\\n"
         "  __%sheap_sort(N, _sort_by_ ## NK, N ## _ ## NK, N ## _vec_at, N ## _vec_len, TK, TE, D, S)\\\n"
@@ -79,7 +79,7 @@ int gen_sort(output_t *out)
     fprintf(out->fp,
         "#define __%sscalar_swap(vec, a, b, TE) { TE tmp = vec[b]; vec[b] = vec[a]; vec[a] = tmp; }\n"
         "#define __%sstring_swap(vec, a, b, TE)\\\n"
-        "{ TE tmp, d; d = (a - b) * sizeof(vec[0]); tmp = vec[b]; vec[b] = vec[a] + d; vec[a] = tmp - d; }\n",
+        "{ TE tmp, d; d = (TE)((a - b) * sizeof(vec[0])); tmp = vec[b]; vec[b] = vec[a] + d; vec[a] = tmp - d; }\n",
         out->nsc, out->nsc);
     fprintf(out->fp,
         "#define __%sdefine_sort_by_scalar_field(N, NK, TK, TE)\\\n"
