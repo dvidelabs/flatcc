@@ -61,7 +61,7 @@ option (FLATCC_FAST_DOUBLE
 option (FLATCC_ALLOW_WERROR "allow -Werror to be configured" ON)
 
 # Experimental setting - sometimes the code branches on a constant
-# epression in orer to select the best option for a given type size or
+# expression in order to select the best option for a given type size or
 # similar. Sometimes compilers don't like that. If this issue surfaces,
 # try using this option.
 option (FLATCC_IGNORE_CONST_COND "silence const condition warnings" OFF)
