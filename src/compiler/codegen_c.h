@@ -280,7 +280,7 @@ static inline int gen_pragma_pop(output_t *out)
 int __flatcc_fb_init_output(output_t *out, fb_options_t *opts);
 #define fb_init_output __flatcc_fb_init_output
 
-int __flatcc_fb_open_output_file(output_t *out, const char *name, int len, const char *ext);
+int __flatcc_fb_open_output_file(output_t *out, const char *name, size_t len, const char *ext);
 #define fb_open_output_file __flatcc_fb_open_output_file
 
 void __flatcc_fb_close_output_file(output_t *out);

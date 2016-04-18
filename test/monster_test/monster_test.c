@@ -386,7 +386,7 @@ int verify_monster(void *buffer)
     int booldata[] = { 0, 1, 1, 0 };
     size_t offset;
     const uint8_t *inv;
-    int i;
+    size_t i;
 
     if (!nsc(has_identifier(buffer, 0))) {
         printf("wrong monster identifier (when ignoring)\n");
@@ -482,9 +482,9 @@ int verify_monster(void *buffer)
         printf("Inventory length unexpected\n");
         return -1;
     }
-    for (i = 0; i < (int)nsc(uint8_vec_len(inv)); ++i) {
+    for (i = 0; i < nsc(uint8_vec_len(inv)); ++i) {
         if (nsc(uint8_vec_at(inv, i)) != i) {
-            printf("inventory item #%d is wrong\n", i);
+            printf("inventory item #%d is wrong\n", (int)i);
             return -1;
         }
     }
@@ -512,11 +512,11 @@ int verify_monster(void *buffer)
     for (i = 0; i < 5; ++i) {
         test = ns(Test_vec_at(testvec, i));
         if (testvec_data[i].a != ns(Test_a(test))) {
-            printf("Test4 vec failed at index %d, member a\n", i);
+            printf("Test4 vec failed at index %d, member a\n", (int)i);
             return -1;
         }
         if (testvec_data[i].b != ns(Test_b(test))) {
-            printf("Test4 vec failed at index %d, member a\n", i);
+            printf("Test4 vec failed at index %d, member a\n", (int)i);
             return -1;
         }
     }
@@ -615,7 +615,7 @@ int verify_monster(void *buffer)
     }
     for (i = 0; i < 4; ++i) {
         if (nsc(bool_vec_at(bools, i) != booldata[i])) {
-            printf("bools vector elem %d is wrong\n", i);
+            printf("bools vector elem %d is wrong\n", (int)i);
             return -1;
         }
     }

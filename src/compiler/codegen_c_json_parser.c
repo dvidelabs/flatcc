@@ -344,7 +344,7 @@ static dict_entry_t *build_global_scope_dict(catalog_t *catalog, int *count_out)
     }
     for (i = 0; i < catalog->nenums; ++i) {
         dict[i].text = catalog->enums[i].name;
-        dict[i].len = strlen(catalog->enums[i].name);
+        dict[i].len = (int)strlen(catalog->enums[i].name);
         dict[i].data = catalog->enums[i].ct;
         dict[i].hint = 0;
     }

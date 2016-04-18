@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include "../../external/hash/str_set.h"
 
-int fb_open_output_file(output_t *out, const char *name, int len, const char *ext)
+int fb_open_output_file(output_t *out, const char *name, size_t len, const char *ext)
 {
     char *path;
     int ret;
@@ -142,7 +142,7 @@ int fb_copy_scope(fb_scope_t *scope, char *buf)
         buf[len - 1] = '_';
     }
     buf[len] = '\0';
-    return len;
+    return (int)len;
 }
 
 void fb_scoped_symbol_name(fb_scope_t *scope, fb_symbol_t *sym, fb_scoped_name_t *sn)

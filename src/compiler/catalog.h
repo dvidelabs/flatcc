@@ -28,7 +28,7 @@ struct catalog {
     int qualify_names;
     int nobjects;
     int nenums;
-    int name_table_size;
+    size_t name_table_size;
     object_entry_t *objects;
     enum_entry_t *enums;
     char *name_table;
@@ -42,7 +42,7 @@ static void count_symbol(void *context, fb_symbol_t *sym)
 {
     catalog_t *catalog = context;
     fb_ref_t *scope_name;
-    int n = 0;
+    size_t n = 0;
     fb_compound_type_t *ct;
     
     if (!(ct = get_compound_if_visible(catalog->schema, sym))) {
@@ -58,12 +58,12 @@ static void count_symbol(void *context, fb_symbol_t *sym)
         scope_name = ct->scope->name;
         while (scope_name) {
             /* + 1 for '.'. */
-            n += scope_name->ident->len + 1;
+            n += (size_t)scope_name->ident->len + 1;
             scope_name = scope_name->link;
         }
     }
     /* + 1 for '\0'. */
-    n += sym->ident->len + 1;
+    n += (size_t)sym->ident->len + 1;
     catalog->name_table_size += n;
 
     switch (sym->kind) {
