@@ -107,8 +107,8 @@ tested and configured.
 
 Use versions from 0.3.0 and up as there has been some minor breaking
 [interface changes](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030).
-Versions 0.3.3 has a minor breaking change where the `verify_as_root` call
-must be renamed to `verify_as_root_with_identifer`, or drop the identifier
+Version 0.3.3 has a minor breaking change where the `verify_as_root` call
+must be renamed to `verify_as_root_with_identifier`, or drop the identifier
 argument.
 
 Big endian platforms have not been tested at all. While care has been
@@ -453,7 +453,7 @@ library is shown later on.
 
     cc -I include monster_example.c -o monster_example
 
-    cc --std=c11 -I include monster_example.c -o monster_example
+    cc -std=c11 -I include monster_example.c -o monster_example
 
     cc -D FLATCC_PORTABLE -I include monster_example.c -o monster_example
 
@@ -568,7 +568,7 @@ too large. See also documentation comments in `flatcc_builder.h` and
 
 Compile the example project:
 
-    cc --std=c11 -I include monster_example.c lib/libflatccrt.a -o monster_example
+    cc -std=c11 -I include monster_example.c lib/libflatccrt.a -o monster_example
 
 Note that the runtime library is required for building buffers, but not
 for reading them. If it is incovenient to distribute the runtime library
@@ -576,7 +576,7 @@ for a given target, source files may be used instead. Each feature has
 its own source file, so not all runtime files are needed for building a
 buffer:
 
-    cc --std=c11 -I include monster_example.c \
+    cc -std=c11 -I include monster_example.c \
         src/runtime/emitter.c src/runtime/builder.c \
         -o monster_example
 
@@ -1118,13 +1118,15 @@ that `libflatccrt.a` is compiled with the same types as defined in
 
 `uoffset_t` currently always point forward like `flatc`. In retrospect
 it would probably have simplified buffer constrution if offsets pointed
-the opposite direction or were allowed to be signed. This is a major
-change and not likely to happen for reasons of effort and compatibility,
-but it is worth keeping in mind for a v2.0 of the format.
+the opposite direction. This is a major change and not likely to happen
+for reasons of effort and compatibility, but it is worth keeping in mind
+for a v2.0 of the format.
 
-Vector header fields storing the lengthare defined as `uoffset_t` which
+Vector header fields storing the length are defined as `uoffset_t` which
 is 32-bit wide by default. If `uoffset_t` is redefined this will
-therefore also affect vectors and strings.
+therefore also affect vectors and strings. The vector and string length
+and index arguments are exposed as `size_t` in user code regardless of
+underlying `uoffset_t` type.
 
 The practical buffer size is limited to about half of the `uoffset_t` range
 because vtable references are signed which in effect means that buffers
@@ -1189,7 +1191,7 @@ it detectable by `is_present`.
 
 ## Portability Layer
 
-Some aspects of the portablity layer is not required when --std=c11 is
+Some aspects of the portablity layer is not required when -std=c11 is
 defined on a clang compiler where little endian is avaiable and easily
 detected, or where `<endian.h>` is available and easily detected.
 `flatbuffers_common_reader.h` contains a minimal portability abstraction
