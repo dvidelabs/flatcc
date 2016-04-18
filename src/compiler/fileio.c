@@ -14,13 +14,12 @@ static inline size_t pstrnlen(const char *s, size_t max_len)
 #undef strnlen
 #define strnlen pstrnlen
 
-/* Like strndup except len == -1 maps to strdup. */
-char *fb_copy_path(const char *path, int len)
+char *fb_copy_path_n(const char *path, size_t len)
 {
     size_t n;
     char *s;
 
-    n = len >= 0 ? strnlen(path, (size_t)len) : strlen(path);
+    n = strnlen(path, len);
     if ((s = malloc(n + 1))) {
         memcpy(s, path, n);
         s[n] = '\0';
@@ -28,17 +27,30 @@ char *fb_copy_path(const char *path, int len)
     return s;
 }
 
-int fb_chomp(const char *path, int len, const char *ext)
+char *fb_copy_path(const char *path)
 {
-    int ext_len = ext ? strlen(ext) : 0;
+    size_t n;
+    char *s;
+
+    n = strlen(path);
+    if ((s = malloc(n + 1))) {
+        memcpy(s, path, n);
+        s[n] = '\0';
+    }
+    return s;
+}
+
+size_t fb_chomp(const char *path, size_t len, const char *ext)
+{
+    size_t ext_len = ext ? strlen(ext) : 0;
     if (len > ext_len && 0 == strncmp(path + len - ext_len, ext, ext_len)) {
         len -= ext_len;
     }
     return len;
 }
 
-char *fb_create_join_path(const char *prefix, int prefix_len,
-        const char *suffix, int suffix_len, const char *ext, int path_sep)
+char *fb_create_join_path(const char *prefix, size_t prefix_len,
+        const char *suffix, size_t suffix_len, const char *ext, int path_sep)
 {
     char *path;
     int ext_len = ext ? strlen(ext) : 0;
@@ -71,7 +83,7 @@ char *fb_create_join_path(const char *prefix, int prefix_len,
     return path;
 }
 
-int fb_find_basename(const char *path, int len)
+size_t fb_find_basename(const char *path, size_t len)
 {
     char *p = (char *)path;
 
@@ -86,9 +98,9 @@ int fb_find_basename(const char *path, int len)
     return p - path;
 }
 
-char *fb_create_basename(const char *path, int len, const char *ext)
+char *fb_create_basename(const char *path, size_t len, const char *ext)
 {
-    int pos;
+    size_t pos;
     char *s;
 
     pos = fb_find_basename(path, len);

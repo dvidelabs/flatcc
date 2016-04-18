@@ -91,12 +91,12 @@ void fb_gen_c_includes(output_t *out, const char *ext, const char *extup)
     fb_clear(set);
 
     /* Don't include our own file. */
-    str_set_insert_item(&set, fb_copy_path(out->S->basenameup, -1), ht_keep);
+    str_set_insert_item(&set, fb_copy_path(out->S->basenameup), ht_keep);
     while (inc) {
         checkmem((basename = fb_create_basename(
                     inc->name.s.s, inc->name.s.len, out->opts->default_schema_ext)));
         inc = inc->link;
-        checkmem((basenameup = fb_copy_path(basename, -1)));
+        checkmem((basenameup = fb_copy_path(basename)));
         s = basenameup;
         while (*s) {
             *s = toupper(*s);

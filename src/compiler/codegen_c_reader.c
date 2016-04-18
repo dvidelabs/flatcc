@@ -548,7 +548,7 @@ static void gen_forward_decl(output_t *out, fb_compound_type_t *ct)
 
 static inline void print_doc(output_t *out, const char *indent, fb_doc_t *doc)
 {
-    long ln = 0;
+    size_t ln = 0;
     int first = 1;
     if (doc == 0) {
         return;

@@ -191,7 +191,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
                 return -1;
             }
         } else {
-            checkmem((path = fb_copy_path(filename, -1)));
+            checkmem((path = fb_copy_path(filename)));
         }
     }
     for (i = 0; !buf && i < P->opts.inpath_count; ++i) {
@@ -234,7 +234,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
     if (!(ret = fb_parse(P, buf, size, 1))) {
         inc = P->schema.includes;
         while (inc) {
-            checkmem((include_file = fb_copy_path(inc->name.s.s, inc->name.s.len)));
+            checkmem((include_file = fb_copy_path_n(inc->name.s.s, inc->name.s.len)));
             if (__parse_include_file(P, include_file)) {
                 return -1;
             }

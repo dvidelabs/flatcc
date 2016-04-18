@@ -66,10 +66,10 @@ enum {
 
 struct fb_token {
     const char *text;
-    long len;
+    size_t len;
+    size_t linenum;
+    size_t pos;
     long id;
-    long linenum;
-    long pos;
 };
 
 enum fb_scalar_type {
