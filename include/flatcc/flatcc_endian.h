@@ -86,6 +86,8 @@
          FLATBUFFERS_VOFFSET_WIDTH, flatbuffers_endian)
  __flatcc_define_integer_accessors(__flatbuffers_utype, flatbuffers_utype_t,
          FLATBUFFERS_UTYPE_WIDTH, flatbuffers_endian)
+ __flatcc_define_integer_accessors(__flatbuffers_thash, flatbuffers_thash_t,
+         FLATBUFFERS_THASH_WIDTH, flatbuffers_endian)
 
 /* flatcc/portable/pendian.h sets LITTLE/BIG flags if possible, and always defines le16toh. */
 #ifndef flatbuffers_is_native_pe

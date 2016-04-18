@@ -7,11 +7,11 @@
 /* Only needed for verification. */
 #include "monster_test_reader.h"
 #include "monster_test_json_parser.h"
-#include "support/hexdump.h"
-#include "support/readfile.h"
+#include "flatcc/support/hexdump.h"
+#include "flatcc/support/readfile.h"
 
 #if FLATCC_BENCHMARK
-#include "support/elapsed.h"
+#include "flatcc/support/elapsed.h"
 #endif
 
 #define BENCH_TITLE "monsterdata_test.golden"
@@ -82,7 +82,7 @@ int test_parse()
 
     flatcc_builder_init(B);
 
-    buf = read_file(filename, FILE_SIZE_MAX, &in_size);
+    buf = readfile(filename, FILE_SIZE_MAX, &in_size);
     if (!buf) {
         fprintf(stderr, "%s: could not read input json file\n", filename);
         return -1;

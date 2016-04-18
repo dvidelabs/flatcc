@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "support/elapsed.h"
+#include "flatcc/support/elapsed.h"
 
 #ifdef NDEBUG
 #define COMPILE_TYPE "(optimized)"

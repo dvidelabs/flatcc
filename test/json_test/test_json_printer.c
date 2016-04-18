@@ -2,7 +2,7 @@
 
 /* Only needed for verification. */
 #include "monster_test_json_printer.h"
-#include "support/readfile.h"
+#include "flatcc/support/readfile.h"
 
 #ifdef NDEBUG
 #define COMPILE_TYPE "(optimized)"
@@ -43,12 +43,12 @@ int test_print()
     /* Uses same formatting as golden reference file. */
     flatcc_json_printer_set_nonstrict(ctx);
 
-    buf = read_file(filename, FILE_SIZE_MAX, &size);
+    buf = readfile(filename, FILE_SIZE_MAX, &size);
     if (!buf) {
         fprintf(stderr, "%s: could not read input flatbuffer file\n", filename);
         goto fail;
     }
-    golden = read_file(golden_filename, FILE_SIZE_MAX, &golden_size);
+    golden = readfile(golden_filename, FILE_SIZE_MAX, &golden_size);
     if (!golden) {
         fprintf(stderr, "%s: could not read verification json file\n", golden_filename);
         goto fail;
@@ -60,7 +60,7 @@ int test_print()
     }
     fclose(fp);
     fp = 0;
-    target = read_file(target_filename, FILE_SIZE_MAX, &target_size);
+    target = readfile(target_filename, FILE_SIZE_MAX, &target_size);
     if (!target) {
         fprintf(stderr, "%s: could not read back output file\n", target_filename);
         goto fail;

@@ -65,7 +65,7 @@ void error_report(fb_parser_t *P, fb_token_t *t, const char *msg, fb_token_t *pe
 
     if (t && !s) {
         s = t->text;
-        len = t->len;
+        len = (int)t->len;
     }
     if (!msg) {
         msg = "";
@@ -77,7 +77,7 @@ void error_report(fb_parser_t *P, fb_token_t *t, const char *msg, fb_token_t *pe
     if (t && !peer) {
         file = error_find_file_of_token(P, t);
         fb_print_error(P, "%s:%ld:%ld: error: '%.*s': %s\n",
-                file, (long)t->linenum, (long)t->pos, (int)len, s, msg);
+                file, (long)t->linenum, (long)t->pos, len, s, msg);
     } else if (t && peer) {
         file = error_find_file_of_token(P, t);
         peer_file = error_find_file_of_token(P, peer);
@@ -149,6 +149,8 @@ void error_ref_sym(fb_parser_t *P, fb_ref_t *ref, const char *msg, fb_symbol_t *
 /* Hex and octal notation not allowed in flatbuffer schema. Scientific
  * notation is supported, and the lexer handles this by default. */
 //#define LEX_C_NUMERIC
+
+#define lex_isblank(c) ((c) == ' ' || (c) == '\t')
 
 #include "parser.h"
 
@@ -336,14 +338,16 @@ again:
     if (P->token == P->te) {
         /* We keep returning end of token to help binary operators etc., if any. */
         --P->token;
+        assert(0);
         switch (P->token->id) {
         case LEX_TOK_EOS: case LEX_TOK_EOB: case LEX_TOK_EOF:
             P->token->id = LEX_TOK_EOF;
             return P->token;
         }
-        error_tok(P, P->token, "Unexpected end of input");
+        error_tok(P, P->token, "unexpected end of input");
     }
     if (P->token->id == tok_kw_doc_comment) {
+        /* Note: we can have blanks that are control characters here, such as \t. */
         fb_add_doc(P, P->token);
         goto again;
     }
@@ -500,7 +504,7 @@ static void parse_string_literal(fb_parser_t *P, fb_value_t *v)
             break;
         case LEX_TOK_STRING_CTRL:
             v->type = vt_invalid;
-            error_tok(P, t, "control characters not allowed in strings");
+            error_tok_as_string(P, t, "control characters not allowed in strings", "?", 1);
             break;
         case LEX_TOK_STRING_NEWLINE:
             v->type = vt_invalid;
@@ -523,7 +527,7 @@ done:
      * string as is excluding delimiting quotes.
      */
     if (v->s.s) {
-        v->s.len = P->token->text - v->s.s;
+        v->s.len = (long)(P->token->text - v->s.s);
     }
     if (!match(P, LEX_TOK_STRING_END, "unterminated string")) {
         v->type = vt_invalid;
@@ -1051,6 +1055,20 @@ static void parse_schema_decl(fb_parser_t *P)
     case '{':
         error_tok(P, P->token, "JSON objects in schema file is not supported - but a schema specific JSON parser can be generated");
         break;
+    case LEX_TOK_CTRL:
+        error_tok_as_string(P, P->token, "unexpected control character in schema definition", "?", 1);
+        break;
+    case LEX_TOK_COMMENT_CTRL:
+        if (lex_isblank(P->token->text[0])) {
+            /* This also strips tabs in doc comments. */
+            next(P);
+            break;
+        }
+        error_tok_as_string(P, P->token, "unexpected control character in comment", "?", 1);
+        break;
+    case LEX_TOK_COMMENT_UNTERMINATED:
+        error_tok_as_string(P, P->token, "unterminated comment", "<eof>", 5);
+        break;
     default:
         error_tok(P, P->token, "unexpected token in schema definition");
         break;
@@ -1114,9 +1132,9 @@ static void push_token(fb_parser_t *P, long id, const char *first, const char *l
     t = P->token;
     t->id = id;
     t->text = first;
-    t->len = last - first;
+    t->len = (long)(last - first);
     t->linenum = P->linenum;
-    t->pos = first - P->line + 1;
+    t->pos = (long)(first - P->line + 1);
     ++P->token;
 }
 
@@ -1135,7 +1153,7 @@ static void inject_token(fb_token_t *t, const char *lex, long id)
 {
     t->id = id;
     t->text = lex;
-    t->len = strlen(lex);
+    t->len = (long)strlen(lex);
     t->pos = 0;
     t->linenum = 0;
 }
@@ -1151,11 +1169,20 @@ static void inject_token(fb_token_t *t, const char *lex, long id)
     (ctx(linenum)++, ctx(line) = last,                                  \
     push_token((fb_parser_t*)context, LEX_TOK_STRING_NEWLINE, first, last))
 
-/* Add emtpy comment on comment start - otherwise we miss empty lines. */
+/*
+ * Add emtpy comment on comment start - otherwise we miss empty lines.
+ * Save is_doc becuase comment_part does not remember.
+ */
 #define lex_emit_comment_begin(first, last, is_doc)                     \
     { ctx(doc_mode) = is_doc; push_comment((fb_parser_t*)context, last, last); }
 #define lex_emit_comment_part(first, last) push_comment((fb_parser_t*)context, first, last)
 #define lex_emit_comment_end(first, last) (ctx(doc_mode) = 0)
+
+/* By default emitted as lex_emit_other which would be ignored. */
+#define lex_emit_comment_unterminated(pos)                                  \
+    push_token((fb_parser_t*)context, LEX_TOK_COMMENT_UNTERMINATED, pos, pos)
+#define lex_emit_comment_ctrl(pos)                                          \
+    push_token((fb_parser_t*)context, LEX_TOK_COMMENT_CTRL, pos, pos + 1)
 
 /*
  * Provide hook to lexer for emitting tokens. We can override many
@@ -1196,7 +1223,7 @@ static void inject_token(fb_token_t *t, const char *lex, long id)
 int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
         fb_error_fun error_out, void *error_ctx, fb_root_schema_t *rs)
 {
-    int i, n, name_len;
+    size_t i, n, name_len;
     char *s;
 
     memset(P, 0, sizeof(*P));
@@ -1241,17 +1268,17 @@ int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
     name_len = strlen(name);
     checkmem((P->schema.basename = fb_create_basename(name, name_len, opts->default_schema_ext)));
     n = strlen(P->schema.basename);
-    checkmem(s = fb_copy_path(P->schema.basename, n));
+    checkmem(s = fb_copy_path_n(P->schema.basename, n));
     for (i = 0; i < n; ++i) {
         s[i] = toupper(s[i]);
     }
     P->schema.basenameup = s;
     P->schema.name.name.s.s = s;
-    P->schema.name.name.s.len = n;
+    P->schema.name.name.s.len = (long)n;
     checkmem((P->schema.errorname = fb_create_basename(name, name_len, "")));
     if (opts->ns) {
         P->schema.prefix.s = (char *)opts->ns;
-        P->schema.prefix.len = strlen(opts->ns);
+        P->schema.prefix.len = (long)strlen(opts->ns);
     }
     P->current_scope = fb_add_scope(P, 0);
     assert(P->current_scope == fb_scope_table_find(&P->schema.root_schema->scope_index, 0, 0));
@@ -1274,7 +1301,7 @@ int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
  * `own_buffer` indicates that the the buffer should be deallocated when
  * the parser is cleaned up.
  */
-int fb_parse(fb_parser_t *P, const char *input, int len, int own_buffer)
+int fb_parse(fb_parser_t *P, const char *input, size_t len, int own_buffer)
 {
     static const char *id_none = "NONE";
     static const char *id_ubyte = "ubyte";

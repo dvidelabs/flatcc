@@ -3,12 +3,12 @@
 #include <ctype.h>
 #include "../../external/hash/str_set.h"
 
-int fb_open_output_file(output_t *out, const char *name, int len, const char *ext)
+int fb_open_output_file(output_t *out, const char *name, size_t len, const char *ext)
 {
     char *path;
     int ret;
     const char *prefix = out->opts->outpath ? out->opts->outpath : "";
-    int prefix_len = strlen(prefix);
+    size_t prefix_len = strlen(prefix);
 
     if (out->opts->gen_stdout) {
         out->fp = stdout;
@@ -37,7 +37,7 @@ int fb_init_output(output_t *out, fb_options_t *opts)
 {
     const char *nsc;
     char *p;
-    int n;
+    size_t n;
 
     memset(out, 0, sizeof(*out));
     out->opts = opts;
@@ -91,12 +91,12 @@ void fb_gen_c_includes(output_t *out, const char *ext, const char *extup)
     fb_clear(set);
 
     /* Don't include our own file. */
-    str_set_insert_item(&set, fb_copy_path(out->S->basenameup, -1), ht_keep);
+    str_set_insert_item(&set, fb_copy_path(out->S->basenameup), ht_keep);
     while (inc) {
         checkmem((basename = fb_create_basename(
                     inc->name.s.s, inc->name.s.len, out->opts->default_schema_ext)));
         inc = inc->link;
-        checkmem((basenameup = fb_copy_path(basename, -1)));
+        checkmem((basenameup = fb_copy_path(basename)));
         s = basenameup;
         while (*s) {
             *s = toupper(*s);
@@ -121,7 +121,7 @@ void fb_gen_c_includes(output_t *out, const char *ext, const char *extup)
 
 int fb_copy_scope(fb_scope_t *scope, char *buf)
 {
-    int n, len;
+    size_t n, len;
     fb_ref_t *name;
 
     len = scope->prefix.len;
@@ -142,7 +142,7 @@ int fb_copy_scope(fb_scope_t *scope, char *buf)
         buf[len - 1] = '_';
     }
     buf[len] = '\0';
-    return len;
+    return (int)len;
 }
 
 void fb_scoped_symbol_name(fb_scope_t *scope, fb_symbol_t *sym, fb_scoped_name_t *sn)
@@ -169,7 +169,8 @@ void fb_scoped_symbol_name(fb_scope_t *scope, fb_symbol_t *sym, fb_scoped_name_t
 int fb_codegen_c(fb_options_t *opts, fb_schema_t *S)
 {
     output_t output, *out;
-    int ret, basename_len;
+    size_t basename_len;
+    int ret;
 
     out = &output;
     if (fb_init_output(out, opts)) {

@@ -12,6 +12,9 @@ project (FlatCC)
 #   scripts/cleanall.sh
 #
 
+# Disable if cross compiling or if experiencing build issues with certain
+# custom CMake configurations - suspect dependency issue on flatcc tool
+# in custom build steps used by tests and samples.
 option(FLATCC_TEST "enable tests" ON)
 
 # Force use of portable shims such as providing `static_assert`, and
@@ -183,11 +186,14 @@ if (CMAKE_BUILD_TYPE MATCHES "Debug")
     set(CMAKE_EXECUTABLE_SUFFIX "_d${CMAKE_EXECUTABLE_SUFFIX}")
 endif()
 
-add_subdirectory(test)
 add_subdirectory(src/compiler)
 add_subdirectory(src/runtime)
 add_subdirectory(src/cli)
+
+if (FLATCC_TEST)
+add_subdirectory(test)
 add_subdirectory(samples)
+endif()
 
 set_target_properties(${dist_targets}
     PROPERTIES

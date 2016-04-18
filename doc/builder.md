@@ -627,7 +627,7 @@ has an extra zero after the requested length such that strlen can be
 called on the content, but only the requested bytes may be updated.
 
 Every call only returns the substring being added to the string in that
-operation. It is also possible to call `flabuilder_string_edit` to get a
+operation. It is also possible to call `flatbuffers_string_edit` to get a
 modifiable pointer to the start of the string.
 
 `flatbuffers_string_reserved_len(B)` returns the current string length

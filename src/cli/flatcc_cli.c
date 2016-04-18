@@ -14,6 +14,7 @@ void usage(FILE *fp)
     fprintf(fp, "version: %s\n", VERSION);
     fprintf(fp, "usage: flatcc [options] file [...]\n");
     fprintf(fp, "options:\n"
+            "                             No option generates reader only\n"
             "  -c                         Generate common include header(s)\n"
             "  -w                         Generate builders (writable buffers)\n"
             "  -r                         Recursively generate included schema files\n"
@@ -323,7 +324,7 @@ int main(int argc, const char *argv[])
     cgen = opts.cgen_reader || opts.cgen_builder || opts.cgen_verifier
         || opts.cgen_common_reader || opts.cgen_common_builder
         || opts.cgen_json_parser || opts.cgen_json_printer;
-    if (!opts.bgen_bfbs && (!cgen || opts.cgen_builder)) {
+    if (!opts.bgen_bfbs && (!cgen || opts.cgen_builder || opts.cgen_verifier)) {
         /* Assume default if no other output specified. */
         opts.cgen_reader = 1;
     }

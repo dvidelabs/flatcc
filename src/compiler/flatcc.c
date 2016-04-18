@@ -91,7 +91,7 @@ flatcc_context_t __flatcc_create_child_context(flatcc_options_t *opts, const cha
 
 /* TODO: handle include files via some sort of buffer read callback
  * and possible transfer file based parser to this logic. */
-int flatcc_parse_buffer(flatcc_context_t ctx, const char *buf, int buflen)
+int flatcc_parse_buffer(flatcc_context_t ctx, const char *buf, size_t buflen)
 {
     fb_parser_t *P = ctx;
 
@@ -162,7 +162,7 @@ static int __parse_include_file(fb_parser_t *P_parent, const char *filename)
 int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
 {
     fb_parser_t *P = ctx;
-    int inpath_len, filename_len;
+    size_t inpath_len, filename_len;
     char *buf, *path, *include_file;
     const char *inpath;
     size_t size;
@@ -191,7 +191,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
                 return -1;
             }
         } else {
-            checkmem((path = fb_copy_path(filename, -1)));
+            checkmem((path = fb_copy_path(filename)));
         }
     }
     for (i = 0; !buf && i < P->opts.inpath_count; ++i) {
@@ -234,7 +234,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
     if (!(ret = fb_parse(P, buf, size, 1))) {
         inc = P->schema.includes;
         while (inc) {
-            checkmem((include_file = fb_copy_path(inc->name.s.s, inc->name.s.len)));
+            checkmem((include_file = fb_copy_path_n(inc->name.s.s, inc->name.s.len)));
             if (__parse_include_file(P, include_file)) {
                 return -1;
             }

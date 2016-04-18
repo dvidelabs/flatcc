@@ -3,8 +3,8 @@
 
 #include "monster_test_reader.h"
 #include "monster_test_verifier.h"
-#include "support/readfile.h"
-#include "support/hexdump.h"
+#include "flatcc/support/readfile.h"
+#include "flatcc/support/hexdump.h"
 
 #undef ns
 #define ns(x) MyGame_Example_ ## x
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
     (void)argc;
     (void)argv;
 
-    buffer = read_file("monsterdata_test.mon", 1024, &size);
+    buffer = readfile("monsterdata_test.mon", 1024, &size);
 
     if (!buffer) {
         fprintf(stderr, "could not read binary test file\n");
@@ -175,8 +175,13 @@ int main(int argc, char *argv[])
      * is stored (normally a vtable), but this is generated with `flatc
      * v1.1`.
      */
-    if (flatcc_verify_ok != ns(Monster_verify_as_root(buffer, size, "MONS"))) {
+    if (flatcc_verify_ok != ns(Monster_verify_as_root_with_identifier(buffer, size, "MONS"))) {
         fprintf(stderr, "could not verify foreign monster file\n");
+        ret = -1;
+        goto done;
+    }
+    if (flatcc_verify_ok != ns(Monster_verify_as_root(buffer, size))) {
+        fprintf(stderr, "could not verify foreign monster file with default identifier\n");
         ret = -1;
         goto done;
     }

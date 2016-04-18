@@ -1,7 +1,10 @@
+#ifndef READFILE_H
+#define READFILE_H
+
 #include <stdio.h>
 #include <stdlib.h>
 
-static char *read_file(const char *filename, size_t max_size, size_t *size_out)
+static char *readfile(const char *filename, size_t max_size, size_t *size_out)
 {
     FILE *fp;
     size_t size, pos, n, _out;
@@ -48,3 +51,5 @@ fail:
     *size_out = size;
     return 0;
 }
+
+#endif /* READFILE_H */

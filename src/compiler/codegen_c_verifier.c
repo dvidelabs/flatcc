@@ -15,6 +15,10 @@ static int gen_verifier_pretext(output_t *out)
         out->S->basenameup, out->S->basenameup);
 
     fprintf(out->fp, "\n/* " FLATCC_GENERATED_BY " */\n\n");
+    /* Needed to get the file identifiers */
+    fprintf(out->fp, "#ifndef %s_READER_H\n", out->S->basenameup);
+    fprintf(out->fp, "#include \"%s_reader.h\"\n", out->S->basename);
+    fprintf(out->fp, "#endif\n");
     fprintf(out->fp, "#include \"flatcc/flatcc_verifier.h\"\n");
     fb_gen_c_includes(out, "_verifier.h", "_VERIFIER_H");
     gen_pragma_push(out);
@@ -67,6 +71,7 @@ static int gen_table_verifier(output_t *out, fb_compound_type_t *ct)
     fb_member_t *member;
     fb_scoped_name_t snt, snref;
     int required, first = 1;
+    const char *nsc = out->nsc;
 
     fb_clear(snt);
     fb_clear(snref);
@@ -81,7 +86,7 @@ static int gen_table_verifier(output_t *out, fb_compound_type_t *ct)
         if (member->metadata_flags & fb_f_deprecated) {
             continue;
         }
-        
+
         if (first) {
             fprintf(out->fp, "    int ret;\n    if ((ret = ");
         } else {
@@ -174,13 +179,26 @@ static int gen_table_verifier(output_t *out, fb_compound_type_t *ct)
     }
     if (!first) {
         fprintf(out->fp, ")) return ret;\n");
-    } 
+    }
     fprintf(out->fp, "    return flatcc_verify_ok;\n");
     fprintf(out->fp, "}\n\n");
     fprintf(out->fp,
-            "static inline int %s_verify_as_root(const void *buf, size_t bufsiz, const char *fid)\n"
+            "static inline int %s_verify_as_root(const void *buf, size_t bufsiz)\n"
+            "{\n    return flatcc_verify_table_as_root(buf, bufsiz, %s_identifier, &__%s_table_verifier);\n}\n\n",
+            snt.text, snt.text, snt.text);
+    fprintf(out->fp,
+            "static inline int %s_verify_as_typed_root(const void *buf, size_t bufsiz)\n"
+            "{\n    return flatcc_verify_table_as_root(buf, bufsiz, %s_type_identifier, &__%s_table_verifier);\n}\n\n",
+            snt.text, snt.text, snt.text);
+    fprintf(out->fp,
+            "static inline int %s_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)\n"
             "{\n    return flatcc_verify_table_as_root(buf, bufsiz, fid, &__%s_table_verifier);\n}\n\n",
             snt.text, snt.text);
+    fprintf(out->fp,
+            "static inline int %s_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, %sthash_t thash)\n"
+            "{ __flatbuffers_thash_write_to_pe(&thash, thash);\n"
+            "  return flatcc_verify_table_as_root(buf, bufsiz, thash ? (const char *)&thash : 0, &__%s_table_verifier);\n}\n\n",
+            snt.text, nsc, snt.text);
     return 0;
 }
 
@@ -192,7 +210,20 @@ static int gen_struct_verifier(output_t *out, fb_compound_type_t *ct)
     fb_compound_name(ct, &snt);
 
     fprintf(out->fp,
-            "static inline int %s_verify_as_root(const void *buf, size_t bufsiz, const char *fid)\n"
+            "static inline int %s_verify_as_root(const void *buf, size_t bufsiz)\n"
+            "{\n    return flatcc_verify_struct_as_root(buf, bufsiz, %s_identifier, %"PRIu16", %"PRIu64");\n}\n\n",
+            snt.text, snt.text, ct->align, ct->size);
+    fprintf(out->fp,
+            "static inline int %s_verify_as_typed_root(const void *buf, size_t bufsiz)\n"
+            "{\n    return flatcc_verify_struct_as_root(buf, bufsiz, %s_type_identifier, %"PRIu16", %"PRIu64");\n}\n\n",
+            snt.text, snt.text, ct->align, ct->size);
+    fprintf(out->fp,
+            "static inline int %s_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, %sthash_t thash)\n"
+            "{ __flatbuffers_thash_write_to_pe(&thash, thash);\n"
+            "    return flatcc_verify_struct_as_root(buf, bufsiz, %s_type_identifier, %"PRIu16", %"PRIu64");\n}\n\n",
+            snt.text, out->nsc, snt.text, ct->align, ct->size);
+    fprintf(out->fp,
+            "static inline int %s_verify_as_root_with_identifer(const void *buf, size_t bufsiz, const char *fid)\n"
             "{\n    return flatcc_verify_struct_as_root(buf, bufsiz, fid, %"PRIu16", %"PRIu64");\n}\n\n",
             snt.text, ct->align, ct->size);
     return 0;

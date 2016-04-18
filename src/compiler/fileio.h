@@ -5,10 +5,13 @@
 
 /*
  * Returns an allocated copy of the path truncated to len if len is
- * shorter len is set to strlen if len < 0. Free returned string
- * subsequently.
+ * shorter. Free returned string subsequently.
  */
-char *__flatcc_fb_copy_path(const char *path, int len);
+char *__flatcc_fb_copy_path_n(const char *path, size_t len);
+#define fb_copy_path_n __flatcc_fb_copy_path_n
+
+/* Returns an allocated copy of path. Free returned string subsequently. */
+char *__flatcc_fb_copy_path(const char *path);
 #define fb_copy_path __flatcc_fb_copy_path
 
 /*
@@ -16,15 +19,15 @@ char *__flatcc_fb_copy_path(const char *path, int len);
  * Free returned string subsequently. If `path_sep` is true, prefix is
  * separated from suffix with a path separator if not already present.
  */
-char *__flatcc_fb_create_join_path(const char *prefix, int prefix_len,
-        const char *suffix, int suffix_len, const char *ext, int path_sep);
+char *__flatcc_fb_create_join_path(const char *prefix, size_t prefix_len,
+        const char *suffix, size_t suffix_len, const char *ext, int path_sep);
 #define fb_create_join_path __flatcc_fb_create_join_path
 
 /*
  * Creates a new filename stripped from path prefix and optional ext
  * suffix. Free returned string subsequently.
  */
-char *__flatcc_fb_create_basename(const char *path, int len, const char *ext);
+char *__flatcc_fb_create_basename(const char *path, size_t len, const char *ext);
 #define fb_create_basename __flatcc_fb_create_basename
 
 /* Free returned buffer subsequently. Stores file size in `size_out` arg.
@@ -39,11 +42,11 @@ char *__flatcc_fb_read_file(const char *filename, size_t max_size, size_t *size_
  * Returns offset into source path representing the longest suffix
  * string with no path separator.
  */
-int __flatcc_fb_find_basename(const char *path, int len);
+size_t __flatcc_fb_find_basename(const char *path, size_t len);
 #define fb_find_basename __flatcc_fb_find_basename
 
 /* Returns input length or length reduced by ext len if ext is a proper suffix. */
-int __flatcc_fb_chomp(const char *path, int len, const char *ext);
+size_t __flatcc_fb_chomp(const char *path, size_t len, const char *ext);
 #define fb_chomp __flatcc_fb_chomp
 
 #endif /* FILES_H */

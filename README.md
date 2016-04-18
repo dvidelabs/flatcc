@@ -4,9 +4,12 @@ Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/gi
 # FlatCC FlatBuffers in C for C
 
 NOTE: see
-[CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md),
-there are occassionally breaking changes. In case of trouble, make sure
-the `flatcc` tool is same version as the `include/flatcc` path.
+[CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md).
+There are occassionally minor breaking changes as API inconsistencies
+are discovered. Unless clearly stated, breaking changes will not affect
+the compiled runtime library, only the header files. In case of trouble,
+make sure the `flatcc` tool is same version as the `include/flatcc`
+path.
 
 
 The project includes:
@@ -120,21 +123,17 @@ compilers around, but relies on community feedback for maturity.
 The necessary size of the runtime include files can be reduced
 significantly by using -std=c11 and avoiding JSON (which needs a lot of
 numeric parsing support), and by removing `include/flatcc/reflection`
-which is present to support handling of binary schema files and
-can be generated from `reflection/reflection.fbs`. The exact set of
-required files may change from release to release, and it doesn't really
-matter with respect to the compiled code size.
+which is present to support handling of binary schema files and can be
+generated from `reflection/reflection.fbs`, and removing
+`include/flatcc/support` which is only used for tests and samples. The
+exact set of required files may change from release to release, and it
+doesn't really matter with respect to the compiled code size.
 
 There are no plans to make frequent updates once the project becomes
 stable, but input from the community will always be welcome and included
 in releases where relevant, especially with respect to testing on
 different target platforms.
 
-**Potential upcoming breaking changes:**
-
-_The `verify_as_root` calls may change to use `verify_as_root` and
-`verify_as_root_with_identifier` for consistency with create calls, but
-this is still an open issue._
 
 ## Time / Space / Usability Tradeoff
 
@@ -142,7 +141,9 @@ The priority has been to design an easy to use C builder interface that
 is reasonably fast, suitable for both servers and embedded devices, but
 with usability over absolute performance - still the small buffer output
 rate is measured in millons per second and read access 10-100 millon
-buffers per second from a rough estimate.
+buffers per second from a rough estimate. Reading FlatBuffers is more
+than an order of magnitude faster than building them.
+
 
 For 100MB buffers with 1000 monsters, dynamically extended monster
 names, monster vector, and inventory vector, the bandwidth reaches about
@@ -150,10 +151,28 @@ names, monster vector, and inventory vector, the bandwidth reaches about
 reading back and validating all data. Reading only a few key fields
 increases bandwidth to 2.7GB/s and 37ms/op. For 10MB buffers bandwidth
 may be higher but eventually smaller buffers will be hit by call
-overhead and thus we down to 300MB/s at about 150ns/op encoding small
-buffers. These numbers are just a rough guideline - they obviously
+overhead and thus we get down to 300MB/s at about 150ns/op encoding
+small buffers. These numbers are just a rough guideline - they obviously
 depend on hardware, compiler, and data encoded. Measurements are
-excluding an ininitial warmup step.
+excluding an ininitial warmup step. 
+
+The generated JSON parsers are roughly 4 times slower than building a
+FlatBuffer directly in C or C++, or about 2200ns vs 600ns for a 700 byte
+JSON message. JSON parsing is thus roughly two orders of magnitude faster
+than reading the equivalent Protocol Buffer, as reported on the [Google
+FlatBuffers
+Benchmarks](http://google.github.io/flatbuffers/flatbuffers_benchmarks.html)
+page. LZ4 compression would estimated double the overall processing time
+of JSON parsing. JSON printing is faster than parsing but not very
+significantly so. JSON compresses to roughly half the size of compressed
+FlatBuffers on large buffers, but compresses worse on small buffers (not
+to mention when not compressing at all).
+
+It should be noted that FlatBuffer read performance exclude verification
+which JSON parsers and Protocol Buffers inherently include by their
+nature. Verification has not been benchmarked, but would presumably add
+less than 50% read overhead unless only a fraction of a large buffer is to
+be read.
 
 See also [benchmark](https://github.com/dvidelabs/flatcc#benchmark)
 below.
@@ -178,12 +197,17 @@ in a less than 50K optimized binary executable file including overhead
 for printf statements and other support logic, or a 30K object file
 excluding the builder library.
 
-Read-only binaries are smaller but not necessarily much smaller
-considering they do less work: The compatibility test reads a
+Read-only binaries are smaller but not necessarily much smaller than
+builders considering they do less work: The compatibility test reads a
 pre-generated binary `monsterdata_test.golden` monster file and verifies
 that all content is as expected. This results in a 13K optimized binary
 executable or a 6K object file. The source for this check is 5K
-excluding header files. Readers do not need to link with a library.
+excluding header files. Readers do not need to link with a library. 
+
+JSON parsers bloat the compiled C binary compared to pure Flatbuffer
+usage because they inline the parser decision tree. A JSON parser for
+monster.fbs may add 100K +/- optimization settings to the executable
+binary.
 
 
 ## Generated Files
@@ -193,9 +217,9 @@ read-only buffer access. Now a library of include files is always
 required (`include/flatcc`) because the original approach lead to
 excessive code duplication. The generated code for building flatbuffers,
 and for parsing and printing flatbuffers, all need to link with the
-runtime library `libflatccrt.a`, but they are independent of each other,
-except that the builder depends on the generated reader files. The
-generated reader only depends on library header files.
+runtime library `libflatccrt.a`. The verifier and builder headers depend
+on the reader header. The generated reader only depends on library
+header files.
 
 The reader and builder rely on generated common reader and builder
 header files. These common file makes it possible to change the global
@@ -225,8 +249,7 @@ wrapping a union of buffers in a network interface and it ensures proper
 alignment of all buffer levels.
 
 For verifying flatbuffers, a `myschema_verifier.h` is generated. It
-depends on the runtime library but is completely independent of the
-the generated reader, builder, and common files.
+depends on the runtime library and the reader header.
 
 Json parsers and printers generate one file per schema file and included
 schema will have their own parsers and printers which including parsers
@@ -258,8 +281,7 @@ included schema and a common file and with or without support for both
 reading (default) and writing (-w) flatbuffers. The simplest option is
 to use (-a) for all and include the `myschema_builder.h` file.
 
-The (-a) or (-v) also generates a verifier file which only depends on
-the runtime library (and other verifiers from included schema).
+The (-a) or (-v) also generates a verifier file.
 
 Make sure `flatcc` under the `include` folder is visible in the C
 compilers include path when compiling flatbuffer builders. It is not
@@ -338,8 +360,8 @@ follow along, but there are no assumptions about that in the text below.
 
 ## Quickstart - reading a buffer
 
-Here we provide a quick example of read-only access to Monster flatbuffer
-- it is an adapted extract of the `monster_test.c` file.
+Here we provide a quick example of read-only access to Monster flatbuffer -
+it is an adapted extract of the `monster_test.c` file.
 
 First we compile the schema read-only with common (-c) support header and we
 add the recursion because `monster_test.fbs` includes other files.
@@ -351,7 +373,7 @@ root folder, but in praxis you would want to change some paths, for
 example:
 
     mkdir -p build/example
-    flatcc -cr -o build/example samples/monster/monster.fbs
+    flatcc -cr -o build/example test/monster_test/monster_test.fbs
     cd build/example
 
 We get:
@@ -512,7 +534,7 @@ too large. See also documentation comments in `flatcc_builder.h` and
         ns(Monster_end_as_root(B));
     }
 
-    #include "support/hexdump.h"
+    #include "flatcc/support/hexdump.h"
 
     int main(int argc, char *argv[])
     {
@@ -604,6 +626,121 @@ verifier. This will break debug builds and not usually what is desired,
 but it can be very useful when debugging why a buffer is invalid.
 
 See also `include/flatcc/flatcc_verifier.h`.
+
+
+## File and Type Identifiers
+
+There are two ways to identify the content of a FlatBuffer. The first is
+to use file identifiers which are defined in the schema. The second is
+to use `type identifiers` which are calculated hashes based on each
+tables name prefixed with its namespace, if any. In either case the
+identifier is stored at offset 4 in binary FlatBuffers, when present.
+Type identifiers are not to be confused with union types.
+
+### File Identifiers
+
+The FlatBuffers schema language has the optional `file_identifier`
+declaration which accepts a 4 characer ASCII string. It is intended to be
+human readable. When absent, the buffer potentially becomes 4 bytes
+shorter (depending on padding).
+
+The `file_identifier` is intended to match the `root_type` schema
+declaration, but this does not take into account that it is convenient
+to create FlatBuffers for other types as well. `flatcc` makes no special
+destinction for the `root_type` while Googles `flatc` JSON parser uses
+it to determine the JSON root object type.
+
+As a consequence, the file identifier is ambigous. Included schema may
+have separate `file_identifier` declarations. To at least make sure each
+type is associated with its own schemas `file_identifier`, a symbol is
+defined for each type. If the schema has such identifier, it will be
+defined as the null identifier.
+
+The generated code defines the identifiers for a given table:
+
+    #ifndef MyGame_Example_Monster_identifier
+    #define MyGame_Example_Monster_identifier flatbuffers_identifier
+    #endif
+
+The `flatbuffers_identifier` is the schema specific `file_identifier`
+and is undefined and redefined for each generated `_reader.h` file.
+
+The user can now override the identifier for a given type, for example:
+
+    #define MyGame_Example_Vec3_identifer "VEC3"
+    #include "monster_test_builder.h"
+
+    ...
+    MyGame_Example_Vec3_create_as_root(B, ...);
+
+The `create_as_root` method uses the identifier for the type in question,
+and so does other `_as_root` methods.
+
+The `file_extension` is handled in a similar manner:
+
+    #ifndef MyGame_Example_Monster_extension
+    #define MyGame_Example_Monster_extension flatbuffers_extension
+    #endif
+
+### Type Identifiers
+
+To better deal with the ambigouties of file identifiers, type
+identifiers have been introduced as an alternative 4 byte buffer
+identifier. The hash is standardized on FNV-1a for interoperability.
+
+The type identifier use a type hash which maps a fully qualified type
+name into a 4 byte hash. The type hash is a 32-bit native value and the
+type identifier is a 4 character little endian encoded string of the
+same value.
+
+In this example the type hash is derived from the string
+"MyGame.Example.Monster" and is the same for all FlatBuffer code
+generators that supports type hashes.
+
+The value 0 is used to indicate that one does not care about the
+identifier in the buffer. 
+
+    ...
+    MyGame_Example_Monster_create_as_typed_root(B, ...);
+    buffer = flatcc_builder_get_direct_buffer(B);
+    MyGame_Example_Monster_verify_as_typed_root(buffer, size);
+    // read back
+    monster = MyGame_Example_Monster_as_typed_root(buffer);
+
+    switch (flatbuffers_get_type_hash(buffer)) {
+    case MyGame_Example_Monster_type_hash:
+        ...
+
+    }
+    ...
+    if (flatbuffers_get_type_hash(buffer) ==
+        flatbuffers_type_hash_from_name("Some.Old.Buffer")) {
+        printf("Buffer is the old version, not supported.\n"); 
+    }
+
+More API calls are available to naturally extend the existing API. See
+`test/monster_test/monster_test.c` for more.
+
+The type identifiers are defined like:
+
+    #define MyGame_Example_Monster_type_hash ((flatbuffers_thash_t)0x330ef481)
+    #define MyGame_Example_Monster_type_identifier "\x81\xf4\x0e\x33"
+
+The `type_identifier` can be used anywhere the original 4 character
+file identifier would be used, but a buffer must choose which system, if any,
+to use. This will not affect the `file_extension`.
+
+
+The
+[`flatcc/flatcc_identifier.h`](https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_identifier.h)
+file contains an implementation of the FNV-1a hash used. The hash was
+chosen for simplicity, availability, and collision resistance. For
+better distribution, and for internal use only, a dispersion function is
+also provided, mostly to discourage use of alternative hashes in
+transmission since the type hash is normally good enough as is.
+
+_Note: there is a potential for collisions in the type hash values
+because the hash is only 4 bytes._
 
 
 ## JSON Parsing and Printing
@@ -794,32 +931,6 @@ strain on compile time. Optimizing beyond -O2 leads to too large
 binaries which offsets any speed gains.
 
 
-## Buffer Identifiers and Schema Roots
-
-The FlatBuffers schema is intended to have a single root object and a
-single file identifier and extension - but this mostly makes sense for a
-JSON parser needing to make an automated choice (and `flatcc` does not
-read JSON objecs).
-
-In praxis all objects (tables and structs) can be roots. This makes it
-ambigious as to what identifier an individual object should use as root.
-`flatcc` uses the `file_identifier` last set in the current schema file
-(ignoring included schema). The identifier is frozen by a define
-`myobject_identifer` and `myobject_extension` so it does not change with
-different included include schema. There is also a global
-`file_identifier` representing the last set schema identifier, and ditto
-extension. The binary schema code generator uses this to set the
-identifier and file extension of its output.
-
-Each object created `_as_root` will automatically use the identifier
-from its `myobject_identifier` definition. When an object is read
-`as_root` this identifier is checked and will return null or assert in
-debug. The `_as_root` call is really a wrapper around first opening or
-closing a buffer then reading the first object as the given root type.
-This can be done as two steps and allows detailed control of identifier
-handling - see `builder.md` for more.
-
-
 ## Global Scope and Included Schema
 
 Attributes included in the schema are viewed in a global namespace and
@@ -841,10 +952,16 @@ or `myschema_builder.h` all these dependencies are handled correctly.
 
 Note: `libflatcc.a` can only parse a single schema when the schema is
 given as a memory buffer, but can handle the above when given a
-filename. It is almost possible to simply concatenate schema together to
-obtain the same effect in memory, but for this to work each schema must
-be separated by a global scope reset such as an empty `namespace;`. This
-is currently not supported.
+filename. It is possible to concatename schema files, but a `namespace;`
+declaration must be inserted as a separator to revert to global
+namespace at the start of each included file. This can lead to subtle
+errors because if one parent schema includes two child schema `a.fbs`
+and `b.fbs`, then `b.fbs` should not be able to see anything in `a.fbs`
+even if they share namespaces. This would rarely be a problem in praxis,
+but it means that schema compilation from memory buffers cannot
+authoratively validate a schema. The reason the schema must be isolated
+is that otherwise code generation for a given schema could change with
+how it is being used leading to very strange errors in user code.
 
 
 ## Required Fields and Duplicate Fields
@@ -1147,6 +1264,11 @@ OS-X also has a HomeBrew package:
     brew update
     brew install flatcc
 
+or for the bleeding edge:
+
+    brew update
+    brew install flatcc --HEAD
+
 
 ### Windows Build (MSVC)
 
@@ -1177,6 +1299,22 @@ that `include\flatcc\portable\pwarnings.h` disable certain warnings for
 warning level -W3.*
 
 
+### Cross-compilation
+
+Users have been reporting some degree of success using cross compiles
+from Linux x86 host to embedded ARM Linux devices.
+
+For this to work, `FLATCC_TEST` option should be disabled in part
+because cross-compilation cannot run the cross-compiled flatcc tool, and
+in part because there appears to be some issues with CMake custom build
+steps needed when building test and sample projects.
+
+Overall, it is probably better to create a separate Makefile and just
+compile the few `src/runtime/*.c` into a library and distribute the
+headers as for other platforms, unless `flatcc` is also required for the
+target.
+
+
 ## Distribution
 
 ### Unix Files
@@ -1190,11 +1328,11 @@ Compiler:
     lib/libflatcc.a            (optional, for linking with schema compiler)
     include/flatcc/flatcc.h    (optional, header and doc for libflatcc.a)
 
-
 Runtime:
 
     include/flatcc/**          (runtime header files)
     include/flatcc/reflection  (optional)
+    include/flatcc/support     (optional, only used for test and samples)
     lib/libflatccrt.a          (runtime library)
 
 In addition the runtime library source files may be used instead of
@@ -1203,11 +1341,6 @@ along with schema specific generated files for a foreign target that is
 not binary compatible with the host system:
 
     src/runtime/*.c
-
-Note that `include/support` should not be included in a system
-installation. It is only used by test and sample code, but may be
-packaged with end user source that chooses to rely upon it, such as
-benchmark code.
 
 ### Windows Files
 
