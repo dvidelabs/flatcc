@@ -190,7 +190,7 @@ static int split_dict_right(dict_entry_t *dict, int a, int b, int pos)
 static int dict_cmp(const void *x, const void *y)
 {
     const dict_entry_t *a = x, *b = y;
-    int n = a->len > b->len ? b->len : a->len;
+    size_t n = a->len > b->len ? b->len : a->len;
     int k;
 
     k = memcmp(a->text, b->text, n);

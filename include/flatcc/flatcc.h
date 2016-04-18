@@ -153,7 +153,7 @@ flatcc_context_t flatcc_create_context(flatcc_options_t *options, const char *na
  *
  * Returns 0 on success.
  */
-int flatcc_parse_buffer(flatcc_context_t ctx, const char *buf, int buflen);
+int flatcc_parse_buffer(flatcc_context_t ctx, const char *buf, size_t buflen);
 
 /*
  * If options contain a non-zero `inpath` option, the resulting filename is

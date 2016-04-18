@@ -81,7 +81,7 @@ static int verify_monster(const char *base, ns(Monster_table_t) mon)
     for (i = 0; i < NAME_REP; ++i) {
         if (memcmp(s + i * 7, "Monster", 7)) {
             printf("failed monster name at %lu: %s\n", (unsigned long)i, s ? s : "NULL");
-            printf("offset: %ld\n", s + i * 7 - base);
+            printf("offset: %ld\n", (long)(s + i * 7 - base));
             assert(0);
             return -1;
         }

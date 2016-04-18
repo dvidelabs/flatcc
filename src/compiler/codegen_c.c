@@ -8,7 +8,7 @@ int fb_open_output_file(output_t *out, const char *name, int len, const char *ex
     char *path;
     int ret;
     const char *prefix = out->opts->outpath ? out->opts->outpath : "";
-    int prefix_len = strlen(prefix);
+    size_t prefix_len = strlen(prefix);
 
     if (out->opts->gen_stdout) {
         out->fp = stdout;

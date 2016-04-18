@@ -91,7 +91,7 @@ flatcc_context_t __flatcc_create_child_context(flatcc_options_t *opts, const cha
 
 /* TODO: handle include files via some sort of buffer read callback
  * and possible transfer file based parser to this logic. */
-int flatcc_parse_buffer(flatcc_context_t ctx, const char *buf, int buflen)
+int flatcc_parse_buffer(flatcc_context_t ctx, const char *buf, size_t buflen)
 {
     fb_parser_t *P = ctx;
 

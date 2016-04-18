@@ -320,7 +320,7 @@ static FILE *open_file(fb_options_t *opts, fb_schema_t *S)
     const char *prefix = opts->outpath ? opts->outpath : "";
     int prefix_len = strlen(prefix);
     const char *name;
-    int len;
+    size_t len;
     const char *ext;
 
     name = S->basename;
@@ -421,7 +421,7 @@ int fb_codegen_bfbs_to_file(fb_options_t *opts, fb_schema_t *S)
         goto done;
     }
     if (opts->bgen_length_prefix) {
-        flatbuffers_uoffset_t length = __flatbuffers_uoffset_cast_to_pe(size);
+        flatbuffers_uoffset_t length = __flatbuffers_uoffset_cast_to_pe((flatbuffers_uoffset_t)size);
         if (sizeof(flatbuffers_uoffset_t) != fwrite(&length, 1, sizeof(length), fp)) {
             fprintf(stderr, "cound not write binary schema to file\n");
             goto done;

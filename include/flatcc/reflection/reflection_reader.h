@@ -89,9 +89,9 @@ struct reflection_Type_table { uint8_t unused__; };
 #endif
 #define reflection_Type_type_hash ((flatbuffers_thash_t)0x44c8fe5e)
 #define reflection_Type_type_identifier "\x5e\xfe\xc8\x44"
-static inline flatbuffers_uoffset_t reflection_Type_vec_len(reflection_Type_vec_t vec)
+static inline size_t reflection_Type_vec_len(reflection_Type_vec_t vec)
 __flatbuffers_vec_len(vec)
-static inline reflection_Type_table_t reflection_Type_vec_at(reflection_Type_vec_t vec, flatbuffers_uoffset_t i)
+static inline reflection_Type_table_t reflection_Type_vec_at(reflection_Type_vec_t vec, size_t i)
 __flatbuffers_offset_vec_at(reflection_Type_table_t, vec, i, 0)
 __flatbuffers_table_as_root(reflection_Type)
 
@@ -118,9 +118,9 @@ struct reflection_EnumVal_table { uint8_t unused__; };
 #endif
 #define reflection_EnumVal_type_hash ((flatbuffers_thash_t)0x9531c946)
 #define reflection_EnumVal_type_identifier "\x46\xc9\x31\x95"
-static inline flatbuffers_uoffset_t reflection_EnumVal_vec_len(reflection_EnumVal_vec_t vec)
+static inline size_t reflection_EnumVal_vec_len(reflection_EnumVal_vec_t vec)
 __flatbuffers_vec_len(vec)
-static inline reflection_EnumVal_table_t reflection_EnumVal_vec_at(reflection_EnumVal_vec_t vec, flatbuffers_uoffset_t i)
+static inline reflection_EnumVal_table_t reflection_EnumVal_vec_at(reflection_EnumVal_vec_t vec, size_t i)
 __flatbuffers_offset_vec_at(reflection_EnumVal_table_t, vec, i, 0)
 __flatbuffers_table_as_root(reflection_EnumVal)
 
@@ -152,18 +152,18 @@ struct reflection_Enum_table { uint8_t unused__; };
 #endif
 #define reflection_Enum_type_hash ((flatbuffers_thash_t)0xacffa90f)
 #define reflection_Enum_type_identifier "\x0f\xa9\xff\xac"
-static inline flatbuffers_uoffset_t reflection_Enum_vec_len(reflection_Enum_vec_t vec)
+static inline size_t reflection_Enum_vec_len(reflection_Enum_vec_t vec)
 __flatbuffers_vec_len(vec)
-static inline reflection_Enum_table_t reflection_Enum_vec_at(reflection_Enum_vec_t vec, flatbuffers_uoffset_t i)
+static inline reflection_Enum_table_t reflection_Enum_vec_at(reflection_Enum_vec_t vec, size_t i)
 __flatbuffers_offset_vec_at(reflection_Enum_table_t, vec, i, 0)
 __flatbuffers_table_as_root(reflection_Enum)
 
 static inline flatbuffers_string_t reflection_Enum_name(reflection_Enum_table_t t)
 __flatbuffers_vector_field(flatbuffers_string_t, 0, t, 1)
 /* Note: find only works on vectors sorted by this field. */
-static inline flatbuffers_uoffset_t reflection_Enum_vec_find_by_name(reflection_Enum_vec_t vec, const char *s)
+static inline size_t reflection_Enum_vec_find_by_name(reflection_Enum_vec_t vec, const char *s)
 __flatbuffers_find_by_string_field(reflection_Enum_name, vec, reflection_Enum_vec_at, reflection_Enum_vec_len, s)
-static inline flatbuffers_uoffset_t reflection_Enum_vec_find_n_by_name(reflection_Enum_vec_t vec, const char *s, int n)
+static inline size_t reflection_Enum_vec_find_n_by_name(reflection_Enum_vec_t vec, const char *s, int n)
 __flatbuffers_find_by_string_n_field(reflection_Enum_name, vec, reflection_Enum_vec_at, reflection_Enum_vec_len, s, n)
 __flatbuffers_define_sort_by_string_field(reflection_Enum, name)
 #define reflection_Enum_vec_find reflection_Enum_vec_find_by_name
@@ -195,18 +195,18 @@ struct reflection_Field_table { uint8_t unused__; };
 #endif
 #define reflection_Field_type_hash ((flatbuffers_thash_t)0x9f7e408a)
 #define reflection_Field_type_identifier "\x8a\x40\x7e\x9f"
-static inline flatbuffers_uoffset_t reflection_Field_vec_len(reflection_Field_vec_t vec)
+static inline size_t reflection_Field_vec_len(reflection_Field_vec_t vec)
 __flatbuffers_vec_len(vec)
-static inline reflection_Field_table_t reflection_Field_vec_at(reflection_Field_vec_t vec, flatbuffers_uoffset_t i)
+static inline reflection_Field_table_t reflection_Field_vec_at(reflection_Field_vec_t vec, size_t i)
 __flatbuffers_offset_vec_at(reflection_Field_table_t, vec, i, 0)
 __flatbuffers_table_as_root(reflection_Field)
 
 static inline flatbuffers_string_t reflection_Field_name(reflection_Field_table_t t)
 __flatbuffers_vector_field(flatbuffers_string_t, 0, t, 1)
 /* Note: find only works on vectors sorted by this field. */
-static inline flatbuffers_uoffset_t reflection_Field_vec_find_by_name(reflection_Field_vec_t vec, const char *s)
+static inline size_t reflection_Field_vec_find_by_name(reflection_Field_vec_t vec, const char *s)
 __flatbuffers_find_by_string_field(reflection_Field_name, vec, reflection_Field_vec_at, reflection_Field_vec_len, s)
-static inline flatbuffers_uoffset_t reflection_Field_vec_find_n_by_name(reflection_Field_vec_t vec, const char *s, int n)
+static inline size_t reflection_Field_vec_find_n_by_name(reflection_Field_vec_t vec, const char *s, int n)
 __flatbuffers_find_by_string_n_field(reflection_Field_name, vec, reflection_Field_vec_at, reflection_Field_vec_len, s, n)
 __flatbuffers_define_sort_by_string_field(reflection_Field, name)
 #define reflection_Field_vec_find reflection_Field_vec_find_by_name
@@ -263,18 +263,18 @@ struct reflection_Object_table { uint8_t unused__; };
 #endif
 #define reflection_Object_type_hash ((flatbuffers_thash_t)0xb09729bd)
 #define reflection_Object_type_identifier "\xbd\x29\x97\xb0"
-static inline flatbuffers_uoffset_t reflection_Object_vec_len(reflection_Object_vec_t vec)
+static inline size_t reflection_Object_vec_len(reflection_Object_vec_t vec)
 __flatbuffers_vec_len(vec)
-static inline reflection_Object_table_t reflection_Object_vec_at(reflection_Object_vec_t vec, flatbuffers_uoffset_t i)
+static inline reflection_Object_table_t reflection_Object_vec_at(reflection_Object_vec_t vec, size_t i)
 __flatbuffers_offset_vec_at(reflection_Object_table_t, vec, i, 0)
 __flatbuffers_table_as_root(reflection_Object)
 
 static inline flatbuffers_string_t reflection_Object_name(reflection_Object_table_t t)
 __flatbuffers_vector_field(flatbuffers_string_t, 0, t, 1)
 /* Note: find only works on vectors sorted by this field. */
-static inline flatbuffers_uoffset_t reflection_Object_vec_find_by_name(reflection_Object_vec_t vec, const char *s)
+static inline size_t reflection_Object_vec_find_by_name(reflection_Object_vec_t vec, const char *s)
 __flatbuffers_find_by_string_field(reflection_Object_name, vec, reflection_Object_vec_at, reflection_Object_vec_len, s)
-static inline flatbuffers_uoffset_t reflection_Object_vec_find_n_by_name(reflection_Object_vec_t vec, const char *s, int n)
+static inline size_t reflection_Object_vec_find_n_by_name(reflection_Object_vec_t vec, const char *s, int n)
 __flatbuffers_find_by_string_n_field(reflection_Object_name, vec, reflection_Object_vec_at, reflection_Object_vec_len, s, n)
 __flatbuffers_define_sort_by_string_field(reflection_Object, name)
 #define reflection_Object_vec_find reflection_Object_vec_find_by_name
@@ -311,9 +311,9 @@ struct reflection_Schema_table { uint8_t unused__; };
 #endif
 #define reflection_Schema_type_hash ((flatbuffers_thash_t)0xfaf93779)
 #define reflection_Schema_type_identifier "\x79\x37\xf9\xfa"
-static inline flatbuffers_uoffset_t reflection_Schema_vec_len(reflection_Schema_vec_t vec)
+static inline size_t reflection_Schema_vec_len(reflection_Schema_vec_t vec)
 __flatbuffers_vec_len(vec)
-static inline reflection_Schema_table_t reflection_Schema_vec_at(reflection_Schema_vec_t vec, flatbuffers_uoffset_t i)
+static inline reflection_Schema_table_t reflection_Schema_vec_at(reflection_Schema_vec_t vec, size_t i)
 __flatbuffers_offset_vec_at(reflection_Schema_table_t, vec, i, 0)
 __flatbuffers_table_as_root(reflection_Schema)
 
