@@ -25,7 +25,7 @@ int dbg_emitter(void *emit_context,
             printf("dbg:  null vector reserved at: %ld, len: %ld\n",
                     (long)offset, (long)iov[i].iov_len);
         }
-        offset += iov[i].iov_len;
+        offset += (flatbuffers_soffset_t)iov[i].iov_len;
     }
     return 0;
 }
