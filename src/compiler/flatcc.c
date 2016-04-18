@@ -162,7 +162,7 @@ static int __parse_include_file(fb_parser_t *P_parent, const char *filename)
 int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
 {
     fb_parser_t *P = ctx;
-    int inpath_len, filename_len;
+    size_t inpath_len, filename_len;
     char *buf, *path, *include_file;
     const char *inpath;
     size_t size;

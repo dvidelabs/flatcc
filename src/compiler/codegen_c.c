@@ -37,7 +37,7 @@ int fb_init_output(output_t *out, fb_options_t *opts)
 {
     const char *nsc;
     char *p;
-    int n;
+    size_t n;
 
     memset(out, 0, sizeof(*out));
     out->opts = opts;
@@ -121,7 +121,7 @@ void fb_gen_c_includes(output_t *out, const char *ext, const char *extup)
 
 int fb_copy_scope(fb_scope_t *scope, char *buf)
 {
-    int n, len;
+    size_t n, len;
     fb_ref_t *name;
 
     len = scope->prefix.len;
@@ -169,7 +169,8 @@ void fb_scoped_symbol_name(fb_scope_t *scope, fb_symbol_t *sym, fb_scoped_name_t
 int fb_codegen_c(fb_options_t *opts, fb_schema_t *S)
 {
     output_t output, *out;
-    int ret, basename_len;
+    size_t basename_len;
+    int ret;
 
     out = &output;
     if (fb_init_output(out, opts)) {

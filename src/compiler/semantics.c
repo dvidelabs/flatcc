@@ -300,7 +300,7 @@ static void install_known_attributes(fb_parser_t *P)
         a = new_elem(P, sizeof(*a));
         a->known = i;
         a->name.name.s.s = (char *)fb_known_attribute_names[i];
-        a->name.name.s.len = strlen(fb_known_attribute_names[i]);
+        a->name.name.s.len = (long)strlen(fb_known_attribute_names[i]);
         a->name.name.type = vt_string;
         a->name.link = 0;
         if ((a = (fb_attribute_t *)define_fb_name(&P->schema.root_schema->attribute_index, &a->name))) {

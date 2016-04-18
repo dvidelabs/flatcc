@@ -921,7 +921,7 @@ int test_string(flatcc_builder_t *B)
 
 int test_sort_find(flatcc_builder_t *B)
 {
-    nsc(uoffset_t) pos;
+    size_t pos;
     ns(Monster_table_t) mon;
     ns(Monster_vec_t) monsters;
     ns(Monster_mutable_vec_t) mutable_monsters;

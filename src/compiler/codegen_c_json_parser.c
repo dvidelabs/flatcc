@@ -70,7 +70,7 @@ static int gen_json_parser_footer(output_t *out)
 typedef struct dict_entry dict_entry_t;
 struct dict_entry {
     const char *text;
-    size_t len;
+    int len;
     void *data;
     int hint;
 };
@@ -99,7 +99,7 @@ static int get_dict_tag(dict_entry_t *de, int pos, uint64_t *tag, uint64_t *mask
     const char *a = 0;
     uint64_t w = 0;
 
-    if (pos > (int)de->len) {
+    if (pos > de->len) {
         goto done;
     }
     a = de->text + pos;
@@ -190,11 +190,10 @@ static int split_dict_right(dict_entry_t *dict, int a, int b, int pos)
 static int dict_cmp(const void *x, const void *y)
 {
     const dict_entry_t *a = x, *b = y;
-    size_t n = a->len > b->len ? b->len : a->len;
-    int k;
+    int k, n = a->len > b->len ? b->len : a->len;
 
-    k = memcmp(a->text, b->text, n);
-    return k ? k : (int)a->len - (int)b->len;
+    k = memcmp(a->text, b->text, (size_t)n);
+    return k ? k : a->len - b->len;
 }
 
 static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
@@ -260,7 +259,7 @@ static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
 }
 
 typedef struct {
-    size_t count;
+    int count;
     fb_schema_t *schema;
     dict_entry_t *de;
 } install_enum_context_t;

@@ -15,7 +15,7 @@ int test_schema(const char *monster_bfbs)
     reflection_Field_vec_t Flds;
     reflection_Field_table_t F;
     reflection_Type_table_t T;
-    int k, monster_index;
+    size_t k, monster_index;
 
     buffer = readfile(monster_bfbs, 10000, &size);
     if (!buffer) {
@@ -24,12 +24,12 @@ int test_schema(const char *monster_bfbs)
     }
     S = reflection_Schema_as_root(buffer);
     Objs = reflection_Schema_objects(S);
-    for (k = 0; k < (int)reflection_Object_vec_len(Objs); ++k) {
-        printf("dbg: obj #%d : %s\n", k,
+    for (k = 0; k < reflection_Object_vec_len(Objs); ++k) {
+        printf("dbg: obj #%d : %s\n", (int)k,
                 reflection_Object_name(reflection_Object_vec_at(Objs, k)));
     }
-    k = (int)reflection_Object_vec_find(Objs, "MyGame.Example.Monster");
-    if (k < 0) {
+    k = reflection_Object_vec_find(Objs, "MyGame.Example.Monster");
+    if (k == flatbuffers_not_found) {
         printf("Could not find monster in schema\n");
         goto done;
     }
@@ -41,7 +41,7 @@ int test_schema(const char *monster_bfbs)
     }
     Flds = reflection_Object_fields(Obj);
     k = reflection_Field_vec_find(Flds, "mana");
-    if (k < 0) {
+    if (k == flatbuffers_not_found) {
         printf("Did not find mana field in Monster schema\n");
         goto done;
     }
@@ -58,7 +58,7 @@ int test_schema(const char *monster_bfbs)
         goto done;
     }
     k = reflection_Field_vec_find(Flds, "enemy");
-    if (k < 0) {
+    if (k == flatbuffers_not_found) {
         printf("enemy field not found\n");
         goto done;
     }
@@ -67,12 +67,12 @@ int test_schema(const char *monster_bfbs)
         printf("enemy is not an object\n");
         goto done;
     }
-    if (reflection_Type_index(T) != monster_index) {
+    if (reflection_Type_index(T) != (int32_t)monster_index) {
         printf("enemy is not a monster\n");
         goto done;
     }
     k = reflection_Field_vec_find(Flds, "testarrayoftables");
-    if (k < 0) {
+    if (k == flatbuffers_not_found) {
         printf("array of tables not found\n");
         goto done;
     }
@@ -85,7 +85,7 @@ int test_schema(const char *monster_bfbs)
         printf("array of tables is not a vector of table type\n");
         goto done;
     }
-    if (reflection_Type_index(T) != monster_index) {
+    if (reflection_Type_index(T) != (int32_t)monster_index) {
         printf("array of tables is not a monster vector\n");
         goto done;
     }

@@ -1354,7 +1354,8 @@ int fb_gen_c_reader(output_t *out)
 int fb_codegen_common_c(fb_options_t *opts)
 {
     output_t output, *out;
-    int ret, nsc_len;
+    size_t nsc_len;
+    int ret;
 
     out = &output;
     if (fb_init_output(out, opts)) {
