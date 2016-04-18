@@ -53,8 +53,8 @@ char *fb_create_join_path(const char *prefix, size_t prefix_len,
         const char *suffix, size_t suffix_len, const char *ext, int path_sep)
 {
     char *path;
-    int ext_len = ext ? strlen(ext) : 0;
-    int n;
+    size_t ext_len = ext ? strlen(ext) : 0;
+    size_t n;
 
     if (!prefix ||
             (suffix_len > 0 && (suffix[0] == '/' || suffix[0] == '\\')) ||
