@@ -65,7 +65,7 @@ void error_report(fb_parser_t *P, fb_token_t *t, const char *msg, fb_token_t *pe
 
     if (t && !s) {
         s = t->text;
-        len = t->len;
+        len = (int)t->len;
     }
     if (!msg) {
         msg = "";
@@ -77,7 +77,7 @@ void error_report(fb_parser_t *P, fb_token_t *t, const char *msg, fb_token_t *pe
     if (t && !peer) {
         file = error_find_file_of_token(P, t);
         fb_print_error(P, "%s:%ld:%ld: error: '%.*s': %s\n",
-                file, (long)t->linenum, (long)t->pos, (int)len, s, msg);
+                file, (long)t->linenum, (long)t->pos, len, s, msg);
     } else if (t && peer) {
         file = error_find_file_of_token(P, t);
         peer_file = error_find_file_of_token(P, peer);
@@ -527,7 +527,7 @@ done:
      * string as is excluding delimiting quotes.
      */
     if (v->s.s) {
-        v->s.len = P->token->text - v->s.s;
+        v->s.len = (long)(P->token->text - v->s.s);
     }
     if (!match(P, LEX_TOK_STRING_END, "unterminated string")) {
         v->type = vt_invalid;
@@ -1132,7 +1132,7 @@ static void push_token(fb_parser_t *P, long id, const char *first, const char *l
     t = P->token;
     t->id = id;
     t->text = first;
-    t->len = last - first;
+    t->len = (long)(last - first);
     t->linenum = P->linenum;
     t->pos = (long)(first - P->line + 1);
     ++P->token;
@@ -1153,7 +1153,7 @@ static void inject_token(fb_token_t *t, const char *lex, long id)
 {
     t->id = id;
     t->text = lex;
-    t->len = strlen(lex);
+    t->len = (long)strlen(lex);
     t->pos = 0;
     t->linenum = 0;
 }
@@ -1274,11 +1274,11 @@ int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
     }
     P->schema.basenameup = s;
     P->schema.name.name.s.s = s;
-    P->schema.name.name.s.len = n;
+    P->schema.name.name.s.len = (long)n;
     checkmem((P->schema.errorname = fb_create_basename(name, name_len, "")));
     if (opts->ns) {
         P->schema.prefix.s = (char *)opts->ns;
-        P->schema.prefix.len = strlen(opts->ns);
+        P->schema.prefix.len = (long)strlen(opts->ns);
     }
     P->current_scope = fb_add_scope(P, 0);
     assert(P->current_scope == fb_scope_table_find(&P->schema.root_schema->scope_index, 0, 0));
@@ -1301,7 +1301,7 @@ int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
  * `own_buffer` indicates that the the buffer should be deallocated when
  * the parser is cleaned up.
  */
-int fb_parse(fb_parser_t *P, const char *input, int len, int own_buffer)
+int fb_parse(fb_parser_t *P, const char *input, size_t len, int own_buffer)
 {
     static const char *id_none = "NONE";
     static const char *id_ubyte = "ubyte";

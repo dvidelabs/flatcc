@@ -318,9 +318,8 @@ static FILE *open_file(fb_options_t *opts, fb_schema_t *S)
     FILE *fp = 0;
     char *path;
     const char *prefix = opts->outpath ? opts->outpath : "";
-    int prefix_len = strlen(prefix);
+    size_t len, prefix_len = strlen(prefix);
     const char *name;
-    size_t len;
     const char *ext;
 
     name = S->basename;

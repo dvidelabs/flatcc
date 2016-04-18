@@ -203,7 +203,7 @@ int __flatcc_fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name
         fb_error_fun error_out, void *error_ctx, fb_root_schema_t *rs);
 #define fb_init_parser __flatcc_fb_init_parser
 
-int __flatcc_fb_parse(fb_parser_t *P, const char *input, int len, int own_buffer);
+int __flatcc_fb_parse(fb_parser_t *P, const char *input, size_t len, int own_buffer);
 #define fb_parse __flatcc_fb_parse
 
 void __flatcc_fb_clear_parser(fb_parser_t *P);
