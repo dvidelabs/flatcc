@@ -67,8 +67,8 @@ enum {
 struct fb_token {
     const char *text;
     size_t len;
-    size_t linenum;
-    size_t pos;
+    long linenum;
+    long pos;
     long id;
 };
 

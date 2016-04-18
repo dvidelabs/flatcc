@@ -1134,7 +1134,7 @@ static void push_token(fb_parser_t *P, long id, const char *first, const char *l
     t->text = first;
     t->len = last - first;
     t->linenum = P->linenum;
-    t->pos = first - P->line + 1;
+    t->pos = (long)(first - P->line + 1);
     ++P->token;
 }
 
