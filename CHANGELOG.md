@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.3.3]
 
 - BREAKING: `verify_as_root` no longer takes an identifier argument, use
   `verify_as_root_with_identifier`. `myschema_verifier.h` now
