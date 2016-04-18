@@ -20,6 +20,9 @@
   `include/support/readfile.h` function `read_file` to `readfile`.
 - Make `FLATCC_TEST` build option skip building samples and test
   files, as opposed to just skip running the tests.
+- `vec_at`, `vec_find`, etc. now use index type `size_t` instead of
+  `flatbuffers_uoffset_t`.
+- Removed `size_t` conversion warnings on Win64.
 
 ## [0.3.2]
 
