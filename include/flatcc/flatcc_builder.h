@@ -929,12 +929,12 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
  */
 #ifndef FLATCC_SLOW_MUL
 #ifndef FLATCC_BUILDER_INIT_VT_HASH
-#define FLATCC_BUILDER_INIT_VT_HASH(hash) { (hash) = (uint32_t)0x2f693b52; }
+#define FLATCC_BUILDER_INIT_VT_HASH(hash) { (hash) = (uint32_t)0x2f693b52UL; }
 #endif
 #ifndef FLATCC_BUILDER_UPDATE_VT_HASH
 #define FLATCC_BUILDER_UPDATE_VT_HASH(hash, id, offset)\
-        { (hash) = (((((uint32_t)id ^ (hash)) * (uint32_t)2654435761)\
-                ^ (uint32_t)(offset)) * (uint32_t)2654435761); }
+        { (hash) = (((((uint32_t)id ^ (hash)) * (uint32_t)2654435761UL)\
+                ^ (uint32_t)(offset)) * (uint32_t)2654435761UL); }
 #endif
 #endif
 
