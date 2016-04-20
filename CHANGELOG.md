@@ -1,5 +1,9 @@
 # Change Log
 
+## [Unreleased]
+
+- Add `FLATCC_RTONLY` and `FLATCC_INSTALL` build targets.
+
 ## [0.3.3]
 
 - BREAKING: `verify_as_root` no longer takes an identifier argument, use

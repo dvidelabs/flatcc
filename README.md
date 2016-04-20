@@ -1314,13 +1314,40 @@ because cross-compilation cannot run the cross-compiled flatcc tool, and
 in part because there appears to be some issues with CMake custom build
 steps needed when building test and sample projects.
 
-Overall, it is probably better to create a separate Makefile and just
+The option `FLATCC_RTONLY` will disable tests and only build the runtime
+library.
+
+The following is not well tested, but may be a starting point:
+
+    mkdir -p build/xbuild
+    cd build/xbuild
+    cmake ../.. -DBUILD_SHARED_LIBS=on -DFLATCC_RTONLY=on \
+      -DCMAKE_BUILD_TYPE=Release
+
+Overall, it may be simpler to create a separate Makefile and just
 compile the few `src/runtime/*.c` into a library and distribute the
 headers as for other platforms, unless `flatcc` is also required for the
-target.
+target. Or to simply include the runtime source and header files in the user
+project.
+
+Note that no tests will not be built nor run. It is highly recommended
+to at least run the `tests/monster_test` project on a new platform, but
+the generated files must be provided by a manual build step.
 
 
 ## Distribution
+
+Install targes may be built with:
+
+    mkdir -p build/install
+    cd build/install
+    cmake ../.. -DBUILD_SHARED_LIBS=on -DFLATCC_RTONLY=on \
+      -DCMAKE_BUILD_TYPE=Release -DFLATCC_INSTALL=on
+    make install
+
+However, this is not well tested and should be seen as a starting point.
+The normal scripts/build.sh places files in bin and lib of the source tree.
+
 
 ### Unix Files
 

@@ -7,21 +7,31 @@ cmake_minimum_required (VERSION 2.8)
 project (FlatCC)
 
 #
-# NOTE: when changing build options, clean the build using:
+# NOTE: when changing build options, clean the build using on of:
 #
 #   scripts/cleanall.sh
+#   scripts/test.sh
 #
-
-# Disable if cross compiling or if experiencing build issues with certain
-# custom CMake configurations - suspect dependency issue on flatcc tool
-# in custom build steps used by tests and samples.
-option(FLATCC_TEST "enable tests" ON)
 
 # Force use of portable shims such as providing `static_assert`, and
 # `stdaligh.h`. Otherwise this option is automatically enabled for some
 # known compiler configurations below.
 option (FLATCC_PORTABLE
     "include extra headers for compilers that do not support certain C11 features" OFF)
+
+# Only build the runtime library - mostly intended in combination with
+# FLATCC_INSTALL for cross compiling targets.
+option(FLATCC_RTONLY "enable build of runtime library only" OFF)
+
+# Use with or witout FLATCC_RTONLY to enable install targets.
+# Libraries are built statically by default, but can CMake's
+# cmake -DBUILD_SHARED_LIBS=on can override.
+option(FLATCC_INSTALL "enable build of runtime library only" OFF)
+
+# Disable build of tests and samples. Due to custom build step
+# dependency on flatcc tool, some custom build configurations may
+# experience issues, and this option can then help.
+option(FLATCC_TEST "enable tests" ON)
 
 # Affects the flatbuffer verify operation. Normally a verify should just
 # quickly reject invalid buffers but for troubleshooting, assertions can
@@ -66,6 +76,10 @@ option (FLATCC_ALLOW_WERROR "allow -Werror to be configured" ON)
 # try using this option.
 option (FLATCC_IGNORE_CONST_COND "silence const condition warnings" OFF)
 
+if (FLATCC_RTONLY)
+    set(FLATCC_TEST off)
+endif()
+
 if (FLATCC_TEST)
     enable_testing()
 endif()
@@ -97,13 +111,6 @@ endif()
 # which would usually be the build/Release and build/Debug paths
 set (dist_dir "${PROJECT_SOURCE_DIR}")
 # set (dist_dir "${CMAKE_BINARY_DIR}")
-
-# The targets we copy to bin and lib directories, i.e. not tests.
-set(dist_targets
-    flatcc
-    flatccrt
-    flatcc_cli
-)
 
 # Note: for compiling generated C code, warnings of unused functions
 # and constants should be turned off - those are plentiful. They are
@@ -186,13 +193,29 @@ if (CMAKE_BUILD_TYPE MATCHES "Debug")
     set(CMAKE_EXECUTABLE_SUFFIX "_d${CMAKE_EXECUTABLE_SUFFIX}")
 endif()
 
-add_subdirectory(src/compiler)
-add_subdirectory(src/runtime)
-add_subdirectory(src/cli)
 
+if (FLATCC_RTONLY)
+    # The targets we copy to bin and lib directories, i.e. not tests.
+    set(dist_targets
+        flatccrt
+    )
+    add_subdirectory(src/runtime)
+else()
+    # The targets we copy to bin and lib directories, i.e. not tests.
+    set(dist_targets
+        flatcc
+        flatccrt
+        flatcc_cli
+    )
+    add_subdirectory(src/runtime)
+    add_subdirectory(src/compiler)
+    add_subdirectory(src/cli)
+endif()
+
+# disabled by FLATCC_RTONLY
 if (FLATCC_TEST)
-add_subdirectory(test)
-add_subdirectory(samples)
+    add_subdirectory(test)
+    add_subdirectory(samples)
 endif()
 
 set_target_properties(${dist_targets}
@@ -201,3 +224,8 @@ set_target_properties(${dist_targets}
     LIBRARY_OUTPUT_DIRECTORY "${dist_dir}/lib"
     RUNTIME_OUTPUT_DIRECTORY "${dist_dir}/bin"
 )
+
+if (FLATCC_INSTALL)
+    install(DIRECTORY include/flatcc DESTINATION include)
+endif()
+
