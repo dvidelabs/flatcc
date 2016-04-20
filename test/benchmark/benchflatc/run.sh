@@ -11,7 +11,7 @@ CXX=${CXX:-c++}
 cp -r test/benchmark/benchmain/* ${TMP}
 cp -r test/benchmark/benchflatc/* ${TMP}
 #include include at root as it may conflict
-cp -r ${ROOT}/include/support ${TMP}
+cp -r ${ROOT}/include/flatcc/support ${TMP}
 
 cd ${TMP}
 $CXX -g -std=c++11 benchflatc.cpp -o benchflatc_d
