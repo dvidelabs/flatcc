@@ -1330,9 +1330,9 @@ headers as for other platforms, unless `flatcc` is also required for the
 target. Or to simply include the runtime source and header files in the user
 project.
 
-Note that no tests will not be built nor run. It is highly recommended
-to at least run the `tests/monster_test` project on a new platform, but
-the generated files must be provided by a manual build step.
+Note that no tests will be built nor run with `FLATCC_RTONLY` enabled.
+It is highly recommended to at least run the `tests/monster_test`
+project on a new platform.
 
 
 ## Distribution
