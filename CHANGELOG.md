@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Add `FLATCC_RTONLY` and `FLATCC_INSTALL` build targets.
+- Add `FLATCC_RTONLY` and `FLATCC_INSTALL` build options.
 
 ## [0.3.3]
 
