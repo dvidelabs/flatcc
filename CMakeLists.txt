@@ -4,7 +4,7 @@
 #cmake_minimum_required (VERSION 2.8.11)
 cmake_minimum_required (VERSION 2.8)
 
-project (FlatCC)
+project (FlatCC C)
 
 #
 # NOTE: when changing build options, clean the build using on of:
