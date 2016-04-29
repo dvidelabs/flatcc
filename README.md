@@ -62,7 +62,7 @@ top-down construction mixed freely.
 
 The JSON format is compatible with Googles `flatc` tool. The `flatc`
 tool converts JSON from the command line using a schema and a buffer as
-input. `flatcc` generates schema speicific code to read and write JSON
+input. `flatcc` generates schema specific code to read and write JSON
 at runtime. While the `flatcc` approach is likely much faster and also
 easier to deploy, the `flatc` approach is likely more convenient when
 manually working with JSON such as editing game scenes. Both tools have
@@ -287,8 +287,7 @@ to use (-a) for all and include the `myschema_builder.h` file.
 The (-a) or (-v) also generates a verifier file.
 
 Make sure `flatcc` under the `include` folder is visible in the C
-compilers include path when compiling flatbuffer builders. It is not
-needed for readers without `-DFLATCC_PORTABLE` defined.
+compilers include path when compiling flatbuffer builders.
 
 The `flatcc` (-I) include path will assume all files with same base name
 (case insentive) are identical and only include the first. All generated
@@ -304,7 +303,7 @@ also the bfbs2json example).
 Files can be generated to stdout using (--stdout). C headers will be
 ordered and concatenated, but otherwise identical to the separate file
 output. Each include statement is guarded so this will not lead to
-missing include files. When including builder logic.
+missing include files.
 
 The generated code, especially with all combined with --stdout, may
 appear large, but only the parts actually used will take space up the
@@ -315,6 +314,7 @@ JSON printer and parser can be generated using the --json flag or
 --json-printer or json-parser if only one of them is required. There are
 some certain runtime library compile time flags that can optimize out
 printing symbolic enums, but these can also be disabled at runtime.
+
 
 ## Quickstart
 
