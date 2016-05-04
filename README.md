@@ -29,6 +29,10 @@ The project includes:
 `flatcc` has no external dependencies except for build and compiler
 tools, and the C runtime library.
 
+Reporting bugs: if possible, please provide a short reproducible schema and
+source file using [issue4](https://github.com/dvidelabs/flatcc/issues/4)
+as an example - see comment on `scripts/setup.sh` for this.
+
 See also:
 
 - [Google FPL FlatBuffers](http://google.github.io/flatbuffers/)
