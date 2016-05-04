@@ -29,11 +29,9 @@ The project includes:
 `flatcc` has no external dependencies except for build and compiler
 tools, and the C runtime library.
 
-Reporting bugs: if possible, please provide a short reproducible schema and
-source file using [issue4](https://github.com/dvidelabs/flatcc/issues/4)
-as an example - see comment on `scripts/setup.sh` for this.
-
 See also:
+
+- [Reporting Bugs](https://github.com/dvidelabs/flatcc#reporting-bugs)
 
 - [Google FPL FlatBuffers](http://google.github.io/flatbuffers/)
 
@@ -78,6 +76,14 @@ without dotted namespace prefixes where `flatc` always store without a
 namespace.
 
 **NOTE: Big-endian platforms are untested but supported in principle.**
+
+
+## Reporting Bugs
+
+If possible, please provide a short reproducible schema and
+source file using [issue4](https://github.com/dvidelabs/flatcc/issues/4)
+as an example. The first comment in this issue details how to quickly
+set up a new temporary project using the `scripts/setup.sh` script.
 
 
 ## Status
