@@ -27,7 +27,7 @@ CFLAGS_RELEAE=${CFLAGS_RELEASE:--O2 -DNDEBUG}
 ${ROOT}/bin/flatcc -a -o ${ROOT}/generated ${ROOT}/src/*.fbs
 
 echo "building '$NAME' for debug"
-$CC $CFLAGS $CFLAGS_DEBUG ${ROOT}/src/*.c ${ROOT}/lib/libflatccrt.a -o ${NAME}_d
+$CC $CFLAGS $CFLAGS_DEBUG ${ROOT}/src/*.c ${ROOT}/lib/libflatccrt_d.a -o ${NAME}_d
 
 echo "building '$NAME' for relase"
 $CC $CFLAGS $CFLAGS_RELEASE ${ROOT}/src/*.c ${ROOT}/lib/libflatccrt.a -o ${NAME}

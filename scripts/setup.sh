@@ -95,6 +95,8 @@ mkdir -p include
 ln -sf $ROOT/bin/flatcc bin/
 ln -sf $ROOT/lib/libflatcc.a lib/
 ln -sf $ROOT/lib/libflatccrt.a lib/
+ln -sf $ROOT/lib/libflatcc_d.a lib/
+ln -sf $ROOT/lib/libflatccrt_d.a lib/
 ln -sf $ROOT/include/flatcc include/
 
 if [[ -n "$G" ]]; then
