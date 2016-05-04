@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.3.4-pre]
 
 - Add `FLATCC_RTONLY` and `FLATCC_INSTALL` build options.
 - Fix issue4: when building a buffer and the first thing created is an
