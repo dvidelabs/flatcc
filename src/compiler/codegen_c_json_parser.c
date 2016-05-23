@@ -451,7 +451,7 @@ repeat_nested:
             println(out, "if (flatcc_builder_start_offset_vector(ctx->ctx)) goto failed;");
         } else {
             println(out,
-                "if (flatcc_builder_start_vector(ctx->ctx, %"PRIszu", %hu, %"PRIszu")) goto failed;",
+                "if (flatcc_builder_start_vector(ctx->ctx, %"PRIszu", %hu, %"PRIszu"ULL)) goto failed;",
                 (size_t)member->size, (short)member->align,
                 (size_t)FLATBUFFERS_COUNT_MAX(member->size));
         }

@@ -8,6 +8,8 @@
   runtime library.
 - `scripts/setup.sh` now also links to debug libraries useful for bug
   reporting.
+- Add ULL suffic to large printed constants in generated code which
+  would otherwise required --std=c99 to silence warnings.
 
 ## [0.3.3]
 
