@@ -103,7 +103,7 @@ Main features supported as of 0.3.3:
 
 Supported platforms:
 
-- Ubuntu clang 4.4-4.8 and gcc 3.5-3.8
+- Ubuntu gcc 4.4-4.8 and clang 3.5-3.8
 - OS-X current clang / gcc
 - Windows MSVC 2010, 2013, 2015, 2015 Win64 
 
