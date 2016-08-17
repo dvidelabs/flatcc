@@ -88,7 +88,7 @@ set up a new temporary project using the `scripts/setup.sh` script.
 
 ## Status
 
-Main features supported as of 0.3.3:
+Main features supported as of 0.3.4:
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
