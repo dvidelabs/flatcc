@@ -117,7 +117,7 @@ static int gen_table_verifier(output_t *out, fb_compound_type_t *ct)
                 }
             } else {
                 fprintf(out->fp,
-                        "flatcc_verify_vector_field(td, %"PRIu64", %d, %"PRId16", %"PRIu64", %"PRIu64")",
+                        "flatcc_verify_vector_field(td, %"PRIu64", %d, %"PRId16", %"PRIu64", %"PRIu64"ULL)",
                         member->id, required, member->align, member->size, (uint64_t)FLATBUFFERS_COUNT_MAX(member->size));
             };
             break;
@@ -166,7 +166,7 @@ static int gen_table_verifier(output_t *out, fb_compound_type_t *ct)
             case fb_is_enum:
             case fb_is_struct:
                 fprintf(out->fp,
-                        "flatcc_verify_vector_field(td, %"PRIu64", %d, %"PRId16", %"PRIu64", %"PRIu64")",
+                        "flatcc_verify_vector_field(td, %"PRIu64", %d, %"PRId16", %"PRIu64", %"PRIu64"ULL)",
                         member->id, required, member->align, member->size, (uint64_t)FLATBUFFERS_COUNT_MAX(member->size));
                 break;
             default:

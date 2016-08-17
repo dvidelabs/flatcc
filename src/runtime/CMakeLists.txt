@@ -9,3 +9,7 @@ add_library(flatccrt
     json_parser.c
     json_printer.c
 )
+
+if (FLATCC_INSTALL)
+    install(TARGETS flatccrt DESTINATION lib)
+endif()

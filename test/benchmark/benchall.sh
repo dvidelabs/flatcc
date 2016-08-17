@@ -6,7 +6,7 @@ cd `dirname $0`
 
 echo "running all benchmarks (raw, flatc C++, flatcc C)"
 
-echo "building and benchmarking raw strucs"
+echo "building and benchmarking raw structs"
 benchraw/run.sh
 echo "building and benchmarking flatc generated C++"
 benchflatc/run.sh

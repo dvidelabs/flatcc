@@ -316,7 +316,8 @@ static inline int reserve_fields(flatcc_builder_t *B, int count)
     /* Move past header for convenience. */
     B->vs += 2;
     used = frame(table.pl_end);
-    need = count * sizeof(*(B->pl));
+    /* Add one to handle special case of first table being empty. */
+    need = count * sizeof(*(B->pl)) + 1;
     if (!(B->pl = reserve_buffer(B, flatcc_builder_alloc_pl, used, need, 0))) {
         return -1;
     }

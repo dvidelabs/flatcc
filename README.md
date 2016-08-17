@@ -31,6 +31,8 @@ tools, and the C runtime library.
 
 See also:
 
+- [Reporting Bugs](https://github.com/dvidelabs/flatcc#reporting-bugs)
+
 - [Google FPL FlatBuffers](http://google.github.io/flatbuffers/)
 
 - [Online Forum](https://groups.google.com/forum/#!forum/flatbuffers)
@@ -62,7 +64,7 @@ top-down construction mixed freely.
 
 The JSON format is compatible with Googles `flatc` tool. The `flatc`
 tool converts JSON from the command line using a schema and a buffer as
-input. `flatcc` generates schema speicific code to read and write JSON
+input. `flatcc` generates schema specific code to read and write JSON
 at runtime. While the `flatcc` approach is likely much faster and also
 easier to deploy, the `flatc` approach is likely more convenient when
 manually working with JSON such as editing game scenes. Both tools have
@@ -74,6 +76,14 @@ without dotted namespace prefixes where `flatc` always store without a
 namespace.
 
 **NOTE: Big-endian platforms are untested but supported in principle.**
+
+
+## Reporting Bugs
+
+If possible, please provide a short reproducible schema and
+source file using [issue4](https://github.com/dvidelabs/flatcc/issues/4)
+as an example. The first comment in this issue details how to quickly
+set up a new temporary project using the `scripts/setup.sh` script.
 
 
 ## Status
@@ -93,7 +103,7 @@ Main features supported as of 0.3.3:
 
 Supported platforms:
 
-- Ubuntu clang 4.4-4.8 and gcc 3.5-3.8
+- Ubuntu gcc 4.4-4.8 and clang 3.5-3.8
 - OS-X current clang / gcc
 - Windows MSVC 2010, 2013, 2015, 2015 Win64 
 
@@ -107,8 +117,8 @@ tested and configured.
 
 Use versions from 0.3.0 and up as there has been some minor breaking
 [interface changes](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030).
-Versions 0.3.3 has a minor breaking change where the `verify_as_root` call
-must be renamed to `verify_as_root_with_identifer`, or drop the identifier
+Version 0.3.3 has a minor breaking change where the `verify_as_root` call
+must be renamed to `verify_as_root_with_identifier`, or drop the identifier
 argument.
 
 Big endian platforms have not been tested at all. While care has been
@@ -287,8 +297,7 @@ to use (-a) for all and include the `myschema_builder.h` file.
 The (-a) or (-v) also generates a verifier file.
 
 Make sure `flatcc` under the `include` folder is visible in the C
-compilers include path when compiling flatbuffer builders. It is not
-needed for readers without `-DFLATCC_PORTABLE` defined.
+compilers include path when compiling flatbuffer builders.
 
 The `flatcc` (-I) include path will assume all files with same base name
 (case insentive) are identical and only include the first. All generated
@@ -304,7 +313,7 @@ also the bfbs2json example).
 Files can be generated to stdout using (--stdout). C headers will be
 ordered and concatenated, but otherwise identical to the separate file
 output. Each include statement is guarded so this will not lead to
-missing include files. When including builder logic.
+missing include files.
 
 The generated code, especially with all combined with --stdout, may
 appear large, but only the parts actually used will take space up the
@@ -315,6 +324,7 @@ JSON printer and parser can be generated using the --json flag or
 --json-printer or json-parser if only one of them is required. There are
 some certain runtime library compile time flags that can optimize out
 printing symbolic enums, but these can also be disabled at runtime.
+
 
 ## Quickstart
 
@@ -453,7 +463,7 @@ library is shown later on.
 
     cc -I include monster_example.c -o monster_example
 
-    cc --std=c11 -I include monster_example.c -o monster_example
+    cc -std=c11 -I include monster_example.c -o monster_example
 
     cc -D FLATCC_PORTABLE -I include monster_example.c -o monster_example
 
@@ -568,7 +578,7 @@ too large. See also documentation comments in `flatcc_builder.h` and
 
 Compile the example project:
 
-    cc --std=c11 -I include monster_example.c lib/libflatccrt.a -o monster_example
+    cc -std=c11 -I include monster_example.c lib/libflatccrt.a -o monster_example
 
 Note that the runtime library is required for building buffers, but not
 for reading them. If it is incovenient to distribute the runtime library
@@ -576,7 +586,7 @@ for a given target, source files may be used instead. Each feature has
 its own source file, so not all runtime files are needed for building a
 buffer:
 
-    cc --std=c11 -I include monster_example.c \
+    cc -std=c11 -I include monster_example.c \
         src/runtime/emitter.c src/runtime/builder.c \
         -o monster_example
 
@@ -1118,13 +1128,15 @@ that `libflatccrt.a` is compiled with the same types as defined in
 
 `uoffset_t` currently always point forward like `flatc`. In retrospect
 it would probably have simplified buffer constrution if offsets pointed
-the opposite direction or were allowed to be signed. This is a major
-change and not likely to happen for reasons of effort and compatibility,
-but it is worth keeping in mind for a v2.0 of the format.
+the opposite direction. This is a major change and not likely to happen
+for reasons of effort and compatibility, but it is worth keeping in mind
+for a v2.0 of the format.
 
-Vector header fields storing the lengthare defined as `uoffset_t` which
+Vector header fields storing the length are defined as `uoffset_t` which
 is 32-bit wide by default. If `uoffset_t` is redefined this will
-therefore also affect vectors and strings.
+therefore also affect vectors and strings. The vector and string length
+and index arguments are exposed as `size_t` in user code regardless of
+underlying `uoffset_t` type.
 
 The practical buffer size is limited to about half of the `uoffset_t` range
 because vtable references are signed which in effect means that buffers
@@ -1189,7 +1201,7 @@ it detectable by `is_present`.
 
 ## Portability Layer
 
-Some aspects of the portablity layer is not required when --std=c11 is
+Some aspects of the portablity layer is not required when -std=c11 is
 defined on a clang compiler where little endian is avaiable and easily
 detected, or where `<endian.h>` is available and easily detected.
 `flatbuffers_common_reader.h` contains a minimal portability abstraction
@@ -1312,13 +1324,40 @@ because cross-compilation cannot run the cross-compiled flatcc tool, and
 in part because there appears to be some issues with CMake custom build
 steps needed when building test and sample projects.
 
-Overall, it is probably better to create a separate Makefile and just
+The option `FLATCC_RTONLY` will disable tests and only build the runtime
+library.
+
+The following is not well tested, but may be a starting point:
+
+    mkdir -p build/xbuild
+    cd build/xbuild
+    cmake ../.. -DBUILD_SHARED_LIBS=on -DFLATCC_RTONLY=on \
+      -DCMAKE_BUILD_TYPE=Release
+
+Overall, it may be simpler to create a separate Makefile and just
 compile the few `src/runtime/*.c` into a library and distribute the
 headers as for other platforms, unless `flatcc` is also required for the
-target.
+target. Or to simply include the runtime source and header files in the user
+project.
+
+Note that no tests will be built nor run with `FLATCC_RTONLY` enabled.
+It is highly recommended to at least run the `tests/monster_test`
+project on a new platform.
 
 
 ## Distribution
+
+Install targes may be built with:
+
+    mkdir -p build/install
+    cd build/install
+    cmake ../.. -DBUILD_SHARED_LIBS=on -DFLATCC_RTONLY=on \
+      -DCMAKE_BUILD_TYPE=Release -DFLATCC_INSTALL=on
+    make install
+
+However, this is not well tested and should be seen as a starting point.
+The normal scripts/build.sh places files in bin and lib of the source tree.
+
 
 ### Unix Files
 

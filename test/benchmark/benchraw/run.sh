@@ -11,7 +11,7 @@ CC=${CC:-cc}
 cp -r test/benchmark/benchmain/* ${TMP}
 cp -r test/benchmark/benchraw/* ${TMP}
 #include include at root as it may conflict
-cp -r ${ROOT}/include/support ${TMP}
+cp -r ${ROOT}/include/flatcc/support ${TMP}
 
 cd ${TMP}
 $CC -g benchraw.c -o benchraw_d

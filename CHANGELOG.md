@@ -1,5 +1,16 @@
 # Change Log
 
+## [0.3.4-pre]
+
+- Add `FLATCC_RTONLY` and `FLATCC_INSTALL` build options.
+- Fix issue4: when building a buffer and the first thing created is an
+  empty table, the builder wrongly assumed allocation failure. Affects
+  runtime library.
+- `scripts/setup.sh` now also links to debug libraries useful for bug
+  reporting.
+- Add ULL suffix to large printed constants in generated code which
+  would otherwise required --std=c99 to silence warnings.
+
 ## [0.3.3]
 
 - BREAKING: `verify_as_root` no longer takes an identifier argument, use
