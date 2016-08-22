@@ -112,7 +112,7 @@ uses C99 style code to better follow the C++ version.
 
 There is no reason why other or older compilers cannot be supported, but
 it may require some work in the build configuration and possibly
-updates to the portable library. The above is simple what has been
+updates to the portable library. The above is simply what has been
 tested and configured.
 
 Use versions from 0.3.0 and up as there has been some minor breaking
@@ -129,7 +129,7 @@ little endian platforms presumable will be correct regardless of bugs in
 endian encoding.
 
 The portability layer has some features that are generally important for
-things like endian handling, and others to provide compatiblity for
+things like endian handling, and others to provide compatibility for
 non-C11 compliant compilers. Together this should support most C
 compilers around, but relies on community feedback for maturity.
 
