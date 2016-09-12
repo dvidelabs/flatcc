@@ -6,6 +6,8 @@
 #include "flatcc/support/readfile.h"
 #include "flatcc/support/hexdump.h"
 
+const char *filename = "monsterdata_test.mon";
+
 #undef ns
 #define ns(x) MyGame_Example_ ## x
 
@@ -151,14 +153,25 @@ int verify_monster(void *buffer)
     return 0;
 }
 
+
+/* We take arguments so test can run without copying sources. */
+#define usage \
+"wrong number of arguments:\n" \
+"usage: <program> [<input-filename>]\n"
+
 int main(int argc, char *argv[])
 {
     int ret;
     size_t size;
     void *buffer;
 
-    (void)argc;
-    (void)argv;
+    if (argc != 1 && argc != 2) {
+        fprintf(stderr, usage);
+        exit(1);
+    }
+    if (argc == 2) {
+        filename = argv[1];
+    }
 
     buffer = readfile("monsterdata_test.mon", 1024, &size);
 
