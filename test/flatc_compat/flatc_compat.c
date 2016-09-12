@@ -173,10 +173,10 @@ int main(int argc, char *argv[])
         filename = argv[1];
     }
 
-    buffer = readfile("monsterdata_test.mon", 1024, &size);
+    buffer = readfile(filename, 1024, &size);
 
     if (!buffer) {
-        fprintf(stderr, "could not read binary test file\n");
+        fprintf(stderr, "could not read binary test file: %s\n", filename);
         return -1;
     }
     hexdump("monsterdata_test.mon", buffer, size, stderr);
