@@ -14,6 +14,8 @@
 #include "flatcc/support/elapsed.h"
 #endif
 
+const char *filename = "monsterdata_test.golden";
+
 #define BENCH_TITLE "monsterdata_test.golden"
 
 #ifdef NDEBUG
@@ -78,7 +80,6 @@ int test_parse()
     flatcc_builder_t *B = &builder;
     int ret = -1;
     int flags = 0;
-    const char *filename = "monsterdata_test.golden";
 
     flatcc_builder_init(B);
 
@@ -140,12 +141,21 @@ failed:
     goto done;
 }
 
+/* We take arguments so test can run without copying sources. */
+#define usage \
+"wrong number of arguments:\n" \
+"usage: <program> [<input-filename>]\n"
+
 int main(int argc, const char *argv[])
 {
-    (void)argc;
-    (void)argv;
-
     fprintf(stderr, "JSON parse test\n");
+
+    if (argc != 1 && argc != 2) {
+        fprintf(stderr, usage);
+        exit(1);
+    }
+    if (argc == 2) {
+        filename = argv[1];
+    }
     return test_parse();
 }
-
