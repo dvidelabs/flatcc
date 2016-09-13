@@ -3,6 +3,7 @@
 #include "semantics.h"
 #include "fileio.h"
 #include "codegen.h"
+#include "codegen_c.h" /* for .depends */
 #include "flatcc/flatcc.h"
 
 void flatcc_init_options(flatcc_options_t *opts)
@@ -53,6 +54,7 @@ void flatcc_init_options(flatcc_options_t *opts)
     opts->cgen_builder = 0;
     opts->cgen_json_parser = 0;
     opts->cgen_spacing = FLATCC_CGEN_SPACING;
+    opts->cgen_depends = 0;
 
     opts->bgen_bfbs = FLATCC_BGEN_BFBS;
     opts->bgen_qualify_names = FLATCC_BGEN_QUALIFY_NAMES;
@@ -74,7 +76,7 @@ flatcc_context_t flatcc_create_context(flatcc_options_t *opts, const char *name,
     return P;
 }
 
-flatcc_context_t __flatcc_create_child_context(flatcc_options_t *opts, const char *name,
+static flatcc_context_t __flatcc_create_child_context(flatcc_options_t *opts, const char *name,
         fb_parser_t *P_parent)
 {
     fb_parser_t *P;
@@ -159,6 +161,42 @@ static int __parse_include_file(fb_parser_t *P_parent, const char *filename)
     return 0;
 }
 
+/*
+ * Not placed with code generators becuase our dependencies are stored
+ * with the parser, not the schema.
+ */
+static int __flatcc_gen_depends_file(fb_parser_t *P)
+{
+    output_t output, *out;
+    out = &output;
+
+    /*
+     * The dependencies list is only correct for root files as it is a
+     * linear list. To deal with children, we would have to filter via
+     * visible schema, but we don't really need that.
+     */
+    assert(P->referer_path == 0);
+
+    if (fb_init_output(out, &P->opts)) {
+        return -1;
+    }
+    out->S = &P->schema;
+    if (fb_open_output_file(out, out->S->basename, strlen(out->S->basename), ".depends")) {
+        return -1;
+    }
+    /* Don't depend on our selves. */
+    P = P->dependencies;
+    while (P) {
+        size_t n = strlen(P->path);
+        P->path[n] = '\n';
+        fwrite(P->path, 1, n + 1, out->fp);
+        P->path[n] = '\0';
+        P = P->dependencies;
+    }
+    fb_close_output_file(out);
+    return 0;
+}
+
 int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
 {
     fb_parser_t *P = ctx;
@@ -178,17 +216,19 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
     path = 0;
     include_file = 0;
     ret = -1;
+    int is_root = !P->referer_path;
 
     /*
      * For root files, read file relative to working dir first. For
      * included files (`referer_path` set), first try include paths
      * in order, then path relative to including file.
      */
-    if (!P->referer_path) {
+    if (is_root) {
         if (!(buf = fb_read_file(filename, P->opts.max_schema_size, &size))) {
             if (size + P->schema.root_schema->total_source_size > P->opts.max_schema_size && P->opts.max_schema_size > 0) {
                 fb_print_error(P, "input exceeds maximum allowed size\n");
-                return -1;
+                ret = -1;
+                goto fail;
             }
         } else {
             checkmem((path = fb_copy_path(filename)));
@@ -203,11 +243,12 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
             path = 0;
             if (size > P->opts.max_schema_size && P->opts.max_schema_size > 0) {
                 fb_print_error(P, "input exceeds maximum allowed size\n");
-                return -1;
+                ret = -1;
+                goto fail;
             }
         }
     }
-    if (!buf && P->referer_path) {
+    if (!buf && !is_root) {
         inpath = P->referer_path;
         inpath_len = fb_find_basename(inpath, strlen(inpath));
         checkmem((path = fb_create_join_path(inpath, inpath_len, filename, filename_len, "", 1)));
@@ -216,27 +257,32 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
             path = 0;
             if (size > P->opts.max_schema_size && P->opts.max_schema_size > 0) {
                 fb_print_error(P, "input exceeds maximum allowed size\n");
-                return -1;
+                ret = -1;
+                goto fail;
             }
         }
     }
     if (!buf) {
         fb_print_error(P, "error reading included schema file: %s\n", filename);
-        return -1;
+        goto fail;
     }
     P->schema.root_schema->total_source_size += size;
     P->path = path;
+    /* Parser owns path. */
+    path = 0;
     /*
      * Even if we do not have the recursive option set, we still
      * need to parse all include files to make sense of the current
      * file.
      */
     if (!(ret = fb_parse(P, buf, size, 1))) {
+        /* Parser owns buffer. */
+        buf = 0;
         inc = P->schema.includes;
         while (inc) {
             checkmem((include_file = fb_copy_path_n(inc->name.s.s, inc->name.s.len)));
             if (__parse_include_file(P, include_file)) {
-                return -1;
+                goto fail;
             }
             free(include_file);
             include_file = 0;
@@ -245,6 +291,25 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
         /* Add self to set of visible schema. */
         ptr_set_insert_item(&P->schema.visible_schema, &P->schema, ht_keep);
         ret = fb_build_schema(P);
+    }
+
+    /*
+     * We choose to only generate optional .depends files for root level
+     * files. These will contain all nested files regardless of
+     * recursive file generation flags.
+     */
+    if (P->opts.cgen_depends) {
+        ret = __flatcc_gen_depends_file(P);
+    }
+fail:
+    if (buf) {
+        free(buf);
+    }
+    if (path) {
+        free(path);
+    }
+    if (include_file) {
+        free(include_file);
     }
     return ret;
 }

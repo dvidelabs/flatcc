@@ -19,6 +19,7 @@ void usage(FILE *fp)
             "  -w                         Generate builders (writable buffers)\n"
             "  -r                         Recursively generate included schema files\n"
             "  -a                         Generate all (like -cwvr)\n"
+            "  -d                         Generate .depends files\n"
             "  -I<inpath>                 Search path for include files (multiple allowed)\n"
             "  -o<outpath>                Write files to given output directory (must exist)\n"
             "  --stdout                   Concatenate all output to stdout\n"
@@ -62,6 +63,8 @@ void help(FILE *fp)
         "\n"
         "All C output can be concatenated to a single file using --stdout. This is\n"
         "the exact same content as the generated files ordered by dependencies.\n"
+        "\n"
+        "-d generates a .depends file of include paths for use in build systems.\n"
         "\n"
 #if FLATCC_REFLECTION
         "--schema will generate a binary .bfbs file for each top-level schema file.\n"
@@ -243,6 +246,9 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         return noarg;
     case 'r':
         opts->cgen_recursive = 1;
+        return noarg;
+    case 'd':
+        opts->cgen_depends = 1;
         return noarg;
     case 'a':
         opts->cgen_builder = 1;

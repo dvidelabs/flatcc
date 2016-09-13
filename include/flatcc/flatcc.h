@@ -68,6 +68,7 @@ struct flatcc_options {
     int cgen_json_printer;
     int cgen_recursive;
     int cgen_spacing;
+    int cgen_depends;
 
     int bgen_bfbs;
     int bgen_qualify_names;
