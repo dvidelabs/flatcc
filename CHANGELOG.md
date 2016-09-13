@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.3.5-dev]
+- Better build system support: Add -d option to produce dependency file
+  and allow some test cases to take file arguments.
+
 ## [0.3.4]
 
 - Add `FLATCC_RTONLY` and `FLATCC_INSTALL` build options.
