@@ -298,7 +298,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
      * files. These will contain all nested files regardless of
      * recursive file generation flags.
      */
-    if (P->opts.cgen_depends) {
+    if (P->opts.cgen_depends && is_root) {
         ret = __flatcc_gen_depends_file(P);
     }
 fail:
