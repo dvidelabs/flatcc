@@ -9,12 +9,13 @@ int fb_open_output_file(fb_output_t *out, const char *name, size_t len, const ch
     int ret;
     const char *prefix = out->opts->outpath ? out->opts->outpath : "";
     size_t prefix_len = strlen(prefix);
+    const char *mode = out->opts->gen_append ? "ab" : "wb";
 
     if (out->fp) {
         return 0;
     }
     checkmem((path = fb_create_join_path_n(prefix, prefix_len, name, len, ext, 1)));
-    out->fp = fopen(path, "wb");
+    out->fp = fopen(path, mode);
     ret = 0;
     if (!out->fp) {
         fprintf(stderr, "error opening file for write: %s\n", path);
@@ -27,7 +28,7 @@ int fb_open_output_file(fb_output_t *out, const char *name, size_t len, const ch
 void fb_close_output_file(fb_output_t *out)
 {
     /* Concatenate covers either stdout or a file. */
-    if (!out->opts->gen_concat && !out->opts->gen_stdout && out->fp) {
+    if (!out->opts->gen_outfile && !out->opts->gen_stdout && out->fp) {
         fclose(out->fp);
         out->fp = 0;
     }
@@ -86,11 +87,11 @@ int fb_init_output_c(fb_output_t *out, fb_options_t *opts)
         out->fp = stdout;
         return 0;
     }
-    if (!out->opts->gen_concat) {
+    if (!out->opts->gen_outfile) {
         /* Normal operation to multiple header filers. */
         return 0;
     }
-    checkmem((path = fb_create_join_path(prefix, out->opts->gen_concat, "", 1)));
+    checkmem((path = fb_create_join_path(prefix, out->opts->gen_outfile, "", 1)));
     out->fp = fopen(path, "wb");
     if (!out->fp) {
         fprintf(stderr, "error opening file for write: %s\n", path);

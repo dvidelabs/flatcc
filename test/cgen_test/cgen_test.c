@@ -1,6 +1,6 @@
 /*
  * Parse and verify schema complex nonsense schema, then generate common
- * and schema specific files for reader and builder, all concatenated to
+ * and schema specific files for reader and builder, all outfileenated to
  * stdout, followed by the schema source in a comment.
  *
  * Notes:

@@ -57,7 +57,9 @@ struct flatcc_options {
 
     const char *gen_depfile;
     const char *gen_deptarget;
-    const char *gen_concat;
+    const char *gen_outfile;
+
+    int gen_append;
 
     int cgen_pad;
     int cgen_sort;

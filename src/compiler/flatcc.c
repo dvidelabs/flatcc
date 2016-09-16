@@ -221,7 +221,7 @@ static int __flatcc_gen_depends_file(fb_parser_t *P)
     basename = P->schema.basename;
     depfile = P->opts.gen_depfile;
     targetfile = P->opts.gen_deptarget;
-    targetfile = targetfile ? targetfile : P->opts.gen_concat;
+    targetfile = targetfile ? targetfile : P->opts.gen_outfile;
 
     checkmem(path = fb_create_join_path(outpath, depfile, "", 1));
 
@@ -427,7 +427,7 @@ int flatcc_generate_files(flatcc_context_t ctx)
         return -1;
     }
     /* This does not require a parse first. */
-    if ((ret = fb_codegen_common_c(out))) {
+    if (!P->opts.gen_append && (ret = fb_codegen_common_c(out))) {
         goto done;
     }
     /* If no file parsed - just common files if at all. */
@@ -438,7 +438,7 @@ int flatcc_generate_files(flatcc_context_t ctx)
         ret = fb_codegen_c(out, &P->schema);
         goto done;
     }
-    /* Make sure stdout and concat output is generated in the right order. */
+    /* Make sure stdout and outfile output is generated in the right order. */
     P = P_leaf;
     while (!ret && P) {
         ret = P->failed || fb_codegen_c(out, &P->schema);
