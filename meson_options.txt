@@ -1,0 +1,10 @@
+option('flatcc_portable', type : 'boolean', value : false)
+option('flatcc_debug_verify', type : 'boolean', value : false)
+option('flatcc_reflection', type : 'boolean', value : true)
+option('flatcc_fast_double', type : 'boolean', value : false)
+option('flatcc_use_default_library', type : 'boolean', value : false)
+
+# dealing with missing support for proper multi output dependencies in
+# both ninja build and in flatcc. For now the myschema_reader.h is used
+# to drive the depencies.
+option('xflatcc_multi_dep_targets', type : 'boolean', value : false)
