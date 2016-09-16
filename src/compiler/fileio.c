@@ -49,7 +49,7 @@ size_t fb_chomp(const char *path, size_t len, const char *ext)
     return len;
 }
 
-char *fb_create_join_path(const char *prefix, size_t prefix_len,
+char *fb_create_join_path_n(const char *prefix, size_t prefix_len,
         const char *suffix, size_t suffix_len, const char *ext, int path_sep)
 {
     char *path;
@@ -81,6 +81,71 @@ char *fb_create_join_path(const char *prefix, size_t prefix_len,
     n += ext_len;
     path[n] = '\0';
     return path;
+}
+
+char *fb_create_join_path(const char *prefix, const char *suffix, const char *ext, int path_sep)
+{
+    return fb_create_join_path_n(prefix, prefix ? strlen(prefix) : 0,
+            suffix, suffix ? strlen(suffix) : 0, ext, path_sep);
+}
+
+char *fb_create_path_ext_n(const char *path, size_t path_len, const char *ext)
+{
+    return fb_create_join_path_n(0, 0, path, path_len, ext, 0);
+}
+
+char *fb_create_path_ext(const char *path, const char *ext)
+{
+    return fb_create_join_path(0, path, ext, 0);
+}
+
+char *fb_create_make_path_n(const char *path, size_t len)
+{
+    size_t i, j, n;
+    char *s;
+
+    if (len == 1 && (path[0] == ' ' || path[0] == '\\')) {
+        if (!(s = malloc(3))) {
+            return 0;
+        }
+        s[0] = '\\';
+        s[1] = path[0];
+        s[2] = '\0';
+        return s;
+    }
+    if (len <= 1) {
+        return fb_copy_path_n(path, len);
+    }
+    for (i = 0, n = len; i < len - 1; ++i) {
+        if (path[i] == '\\' && path[i + 1] == ' ') {
+            ++n;
+        }
+        n += path[i] == ' ';
+    }
+    n += path[i] == ' ';
+    if (!(s = malloc(n + 1))) {
+        return 0;
+    }
+    for (i = 0, j = 0; i < len - 1; ++i, ++j) {
+        if (path[i] == '\\' && path[i + 1] == ' ') {
+            s[j++] = '\\';
+        }
+        if (path[i] == ' ') {
+            s[j++] = '\\';
+        }
+        s[j] = path[i];
+    }
+    if (path[i] == ' ') {
+        s[j++] = '\\';
+    }
+    s[j++] = path[i];
+    s[j] = 0;
+    return s;
+}
+
+char *fb_create_make_path(const char *path)
+{
+    return fb_create_make_path_n(path, strlen(path));
 }
 
 size_t fb_find_basename(const char *path, size_t len)

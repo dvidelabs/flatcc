@@ -1,10 +1,12 @@
+#include <assert.h>
 #include "config.h"
 #include "parser.h"
 #include "semantics.h"
 #include "fileio.h"
 #include "codegen.h"
-#include "codegen_c.h" /* for .depends */
 #include "flatcc/flatcc.h"
+
+#define checkfree(s) if (s) { free(s); s = 0; }
 
 void flatcc_init_options(flatcc_options_t *opts)
 {
@@ -54,7 +56,6 @@ void flatcc_init_options(flatcc_options_t *opts)
     opts->cgen_builder = 0;
     opts->cgen_json_parser = 0;
     opts->cgen_spacing = FLATCC_CGEN_SPACING;
-    opts->cgen_depends = 0;
 
     opts->bgen_bfbs = FLATCC_BGEN_BFBS;
     opts->bgen_qualify_names = FLATCC_BGEN_QUALIFY_NAMES;
@@ -97,7 +98,7 @@ int flatcc_parse_buffer(flatcc_context_t ctx, const char *buf, size_t buflen)
 {
     fb_parser_t *P = ctx;
 
-    /* Currently includes cannot be handled by buffers, so they should fail. */
+    /* Currently includes cannot be handled by buffers, so they should done. */
     P->opts.disable_includes = 1;
     if ((size_t)buflen > P->opts.max_schema_size && P->opts.max_schema_size > 0) {
         fb_print_error(P, "input exceeds maximum allowed size\n");
@@ -162,39 +163,108 @@ static int __parse_include_file(fb_parser_t *P_parent, const char *filename)
 }
 
 /*
- * Not placed with code generators becuase our dependencies are stored
- * with the parser, not the schema.
+ * The depends file format is a make rule:
+ *
+ * <outputfile> : <dep1-file> <dep2-file> ...
+ *
+ * like -MMD option for gcc/clang:
+ * lib.o.d generated with content:
+ *
+ * lib.o : header1.h header2.h
+ *
+ * We use a file name <basename>.depends for schema <basename>.fbs with content:
+ *
+ * <basename>_reader.h : <included-schema-1> ...
+ *
+ * The .d extension could mean the D language and we don't have sensible
+ * .o.d name because of multiple outputs, so .depends is better.
+ *
+ * (the above above is subject to the configuration of extensions).
+ *
+ * TODO:
+ * perhaps we should optionally add a dependency to the common reader
+ * and builder files when they are generated separately as they should in
+ * concurrent builds.
+ *
+ * TODO:
+ * 1. we should have a file for every output we produce (_builder.h * etc.)
+ * 2. reader might not even be in the output, e.g. verifier only.
+ * 3. multiple outputs doesn't work with ninja build 1.7.1, so just
+ *    use reader for now, and possible add an option for multiple
+ *    outputs later.
+ *
+ *  http://stackoverflow.com/questions/11855386/using-g-with-mmd-in-makefile-to-automatically-generate-dependencies
+ *  https://groups.google.com/forum/#!topic/ninja-build/j-2RfBIOd_8
+ *  https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47485
+ *
+ *  Spaces in gnu make:
+ *  https://www.cmcrossroads.com/article/gnu-make-meets-file-names-spaces-them
+ *  See comments on gnu make handling of spaces.
+ *  http://clang.llvm.org/doxygen/DependencyFile_8cpp_source.html
  */
 static int __flatcc_gen_depends_file(fb_parser_t *P)
 {
-    output_t output, *out;
-    out = &output;
+    FILE *fp = 0;
+    const char *outpath, *basename, *depfile, *targetfile;
+    char *path = 0, *tmp_path = 0, *target_path = 0, *dep_path = 0;
+    const char *suffix;
+    int ret = -1;
 
     /*
      * The dependencies list is only correct for root files as it is a
      * linear list. To deal with children, we would have to filter via
-     * visible schema, but we don't really need that.
+     * the visible schema hash table, but we don't really need that.
      */
     assert(P->referer_path == 0);
 
-    if (fb_init_output(out, &P->opts)) {
-        return -1;
+    outpath = P->opts.outpath ? P->opts.outpath : "";
+    basename = P->schema.basename;
+    depfile = P->opts.gen_depfile;
+    targetfile = P->opts.gen_deptarget;
+    targetfile = targetfile ? targetfile : P->opts.gen_concat;
+
+    checkmem(path = fb_create_join_path(outpath, depfile, "", 1));
+
+    if (targetfile) {
+        checkmem(tmp_path = fb_create_join_path(outpath, targetfile, "", 1));
+    } else {
+        suffix = P->opts.bgen_bfbs 
+                ? FLATCC_DEFAULT_BIN_SCHEMA_EXT 
+                : FLATCC_DEFAULT_DEPS_TARGET_SUFFIX;
+        /* Typically chooses  <.../basename>_reader.h as target. */
+        checkmem(tmp_path = fb_create_join_path(outpath, basename, suffix, 1));
     }
-    out->S = &P->schema;
-    if (fb_open_output_file(out, out->S->basename, strlen(out->S->basename), ".depends")) {
-        return -1;
+    /* Handle spaces in dependency file. */
+    checkmem((target_path = fb_create_make_path(tmp_path)));
+    checkfree(tmp_path);
+
+    fp = fopen(path, "wb");
+    if (!fp) {
+        fb_print_error(P, "could not open dependency file for output: %s\n", path);
+        goto done;
     }
-    /* Don't depend on our selves. */
+    fprintf(fp, "%s:", target_path);
+
+    /* Don't depend on root schema. */
     P = P->dependencies;
     while (P) {
-        size_t n = strlen(P->path);
-        P->path[n] = '\n';
-        fwrite(P->path, 1, n + 1, out->fp);
-        P->path[n] = '\0';
+        checkmem((dep_path = fb_create_make_path(P->path)));
+        fprintf(fp, " %s", dep_path);
         P = P->dependencies;
+        checkfree(dep_path);
     }
-    fb_close_output_file(out);
-    return 0;
+    fprintf(fp, "\n");
+    ret = 0;
+
+done:
+    checkfree(path);
+    checkfree(tmp_path);
+    checkfree(target_path);
+    checkfree(dep_path);
+    if (fp) {
+        fclose(fp);
+    }
+    return ret;
 }
 
 int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
@@ -228,7 +298,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
             if (size + P->schema.root_schema->total_source_size > P->opts.max_schema_size && P->opts.max_schema_size > 0) {
                 fb_print_error(P, "input exceeds maximum allowed size\n");
                 ret = -1;
-                goto fail;
+                goto done;
             }
         } else {
             checkmem((path = fb_copy_path(filename)));
@@ -237,34 +307,34 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
     for (i = 0; !buf && i < P->opts.inpath_count; ++i) {
         inpath = P->opts.inpaths[i];
         inpath_len = strlen(inpath);
-        checkmem((path = fb_create_join_path(inpath, inpath_len, filename, filename_len, "", 1)));
+        checkmem((path = fb_create_join_path_n(inpath, inpath_len, filename, filename_len, "", 1)));
         if (!(buf = fb_read_file(path, P->opts.max_schema_size, &size))) {
             free(path);
             path = 0;
             if (size > P->opts.max_schema_size && P->opts.max_schema_size > 0) {
                 fb_print_error(P, "input exceeds maximum allowed size\n");
                 ret = -1;
-                goto fail;
+                goto done;
             }
         }
     }
     if (!buf && !is_root) {
         inpath = P->referer_path;
         inpath_len = fb_find_basename(inpath, strlen(inpath));
-        checkmem((path = fb_create_join_path(inpath, inpath_len, filename, filename_len, "", 1)));
+        checkmem((path = fb_create_join_path_n(inpath, inpath_len, filename, filename_len, "", 1)));
         if (!(buf = fb_read_file(path, P->opts.max_schema_size, &size))) {
             free(path);
             path = 0;
             if (size > P->opts.max_schema_size && P->opts.max_schema_size > 0) {
                 fb_print_error(P, "input exceeds maximum allowed size\n");
                 ret = -1;
-                goto fail;
+                goto done;
             }
         }
     }
     if (!buf) {
         fb_print_error(P, "error reading included schema file: %s\n", filename);
-        goto fail;
+        goto done;
     }
     P->schema.root_schema->total_source_size += size;
     P->path = path;
@@ -282,7 +352,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
         while (inc) {
             checkmem((include_file = fb_copy_path_n(inc->name.s.s, inc->name.s.len)));
             if (__parse_include_file(P, include_file)) {
-                goto fail;
+                goto done;
             }
             free(include_file);
             include_file = 0;
@@ -298,19 +368,14 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
      * files. These will contain all nested files regardless of
      * recursive file generation flags.
      */
-    if (P->opts.cgen_depends && is_root) {
+    if (P->opts.gen_depfile && is_root) {
         ret = __flatcc_gen_depends_file(P);
     }
-fail:
-    if (buf) {
-        free(buf);
-    }
-    if (path) {
-        free(path);
-    }
-    if (include_file) {
-        free(include_file);
-    }
+
+done:
+    checkfree(buf);
+    checkfree(path);
+    checkfree(include_file);
     return ret;
 }
 
@@ -336,7 +401,9 @@ void *flatcc_generate_binary_schema(flatcc_context_t ctx, size_t *size)
 int flatcc_generate_files(flatcc_context_t ctx)
 {
     fb_parser_t *P = ctx, *P_leaf;
+    fb_output_t *out, output;
     int ret = 0;
+    out = &output;
 
     if (!P || P->failed) {
         return -1;
@@ -355,23 +422,30 @@ int flatcc_generate_files(flatcc_context_t ctx)
         }
     }
 #endif
-    /* This does not require a parse first. */
-    if (fb_codegen_common_c(&P->opts)) {
+
+    if (fb_init_output_c(out, &P->opts)) {
         return -1;
+    }
+    /* This does not require a parse first. */
+    if ((ret = fb_codegen_common_c(out))) {
+        goto done;
     }
     /* If no file parsed - just common files if at all. */
     if (!P->has_schema) {
-        return 0;
+        goto done;
     }
     if (!P->opts.cgen_recursive) {
-        return fb_codegen_c(&P->opts, &P->schema);
+        ret = fb_codegen_c(out, &P->schema);
+        goto done;
     }
-    /* Make sure stdout output is generated in the right order. */
+    /* Make sure stdout and concat output is generated in the right order. */
     P = P_leaf;
     while (!ret && P) {
-        ret = P->failed || fb_codegen_c(&P->opts, &P->schema);
+        ret = P->failed || fb_codegen_c(out, &P->schema);
         P = P->inverse_dependencies;
     }
+done:
+    fb_end_output_c(out);
     return ret;
 }
 

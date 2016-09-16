@@ -5,7 +5,7 @@
 #define llu(x) (long long unsigned int)(x)
 #define lld(x) (long long int)(x)
 
-int fb_gen_common_c_builder_header(output_t *out)
+int fb_gen_common_c_builder_header(fb_output_t *out)
 {
     const char *nsc = out->nsc;
     const char *nscup = out->nscup;
@@ -553,7 +553,7 @@ int fb_gen_common_c_builder_header(output_t *out)
     return 0;
 }
 
-static int gen_builder_pretext(output_t *out)
+static int gen_builder_pretext(fb_output_t *out)
 {
     const char *nsc = out->nsc;
     const char *nscup = out->nscup;
@@ -634,7 +634,7 @@ static int get_total_struct_field_count(fb_compound_type_t *ct)
     return count;
 }
 
-static inline void gen_comma(output_t *out, int index, int count, int is_macro)
+static inline void gen_comma(fb_output_t *out, int index, int count, int is_macro)
 {
     char *cont = is_macro ? "\\\n" : "\n";
 
@@ -656,7 +656,7 @@ static inline void gen_comma(output_t *out, int index, int count, int is_macro)
     }
 }
 
-static int gen_builder_struct_args(output_t *out, fb_compound_type_t *ct, int index, int len, int is_macro)
+static int gen_builder_struct_args(fb_output_t *out, fb_compound_type_t *ct, int index, int len, int is_macro)
 {
     const char *nsc = out->nsc;
     fb_member_t *member;
@@ -695,7 +695,7 @@ static int gen_builder_struct_args(output_t *out, fb_compound_type_t *ct, int in
     return index;
 }
 
-static int gen_builder_struct_call_list(output_t *out, fb_compound_type_t *ct, int index, int arg_count, int is_macro)
+static int gen_builder_struct_call_list(fb_output_t *out, fb_compound_type_t *ct, int index, int arg_count, int is_macro)
 {
     int i;
     int len = get_total_struct_field_count(ct);
@@ -710,7 +710,7 @@ static int gen_builder_struct_call_list(output_t *out, fb_compound_type_t *ct, i
 enum { no_conversion, convert_from_pe, convert_to_pe };
 
 /* Note: returned index is not correct when using from_ptr since it doesn't track arguments, but it shouldn't matter. */
-static int gen_builder_struct_field_assign(output_t *out, fb_compound_type_t *ct, int index, int arg_count, int conversion, int from_ptr)
+static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t *ct, int index, int arg_count, int conversion, int from_ptr)
 {
     const char *nsc = out->nsc;
     fb_member_t *member;
@@ -841,7 +841,7 @@ static int gen_builder_struct_field_assign(output_t *out, fb_compound_type_t *ct
     return index;
 }
 
-static void gen_builder_struct(output_t *out, fb_compound_type_t *ct)
+static void gen_builder_struct(fb_output_t *out, fb_compound_type_t *ct)
 {
     const char *nsc = out->nsc;
     int arg_count;
@@ -917,7 +917,7 @@ static int get_create_table_arg_count(fb_compound_type_t *ct)
     return count;
 }
 
-static int gen_builder_table_call_list(output_t *out, fb_compound_type_t *ct, int arg_count, int is_macro)
+static int gen_builder_table_call_list(fb_output_t *out, fb_compound_type_t *ct, int arg_count, int is_macro)
 {
     fb_member_t *member;
     fb_symbol_t *sym;
@@ -936,7 +936,7 @@ static int gen_builder_table_call_list(output_t *out, fb_compound_type_t *ct, in
 }
 
 
-static int gen_required_table_fields(output_t *out, fb_compound_type_t *ct)
+static int gen_required_table_fields(fb_output_t *out, fb_compound_type_t *ct)
 {
     const char *nsc = out->nsc;
     fb_member_t *member;
@@ -974,7 +974,7 @@ static int gen_required_table_fields(output_t *out, fb_compound_type_t *ct)
     return index;
 }
 
-static int gen_builder_table_args(output_t *out, fb_compound_type_t *ct, int arg_count, int is_macro)
+static int gen_builder_table_args(fb_output_t *out, fb_compound_type_t *ct, int arg_count, int is_macro)
 {
     const char *nsc = out->nsc;
     fb_symbol_t *sym;
@@ -1052,7 +1052,7 @@ static int gen_builder_table_args(output_t *out, fb_compound_type_t *ct, int arg
     return index;
 }
 
-static int gen_builder_create_table_decl(output_t *out, fb_compound_type_t *ct)
+static int gen_builder_create_table_decl(fb_output_t *out, fb_compound_type_t *ct)
 {
     const char *nsc = out->nsc;
     int arg_count;
@@ -1074,7 +1074,7 @@ static int gen_builder_create_table_decl(output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_builder_create_table(output_t *out, fb_compound_type_t *ct)
+static int gen_builder_create_table(fb_output_t *out, fb_compound_type_t *ct)
 {
     const char *nsc = out->nsc;
     fb_member_t *member;
@@ -1121,7 +1121,7 @@ static int gen_builder_create_table(output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_builder_structs(output_t *out)
+static int gen_builder_structs(fb_output_t *out)
 {
     fb_compound_type_t *ct;
 
@@ -1133,7 +1133,7 @@ static int gen_builder_structs(output_t *out)
     return 0;
 }
 
-static int gen_builder_table(output_t *out, fb_compound_type_t *ct)
+static int gen_builder_table(fb_output_t *out, fb_compound_type_t *ct)
 {
     const char *nsc = out->nsc;
     fb_scoped_name_t snt;
@@ -1146,7 +1146,7 @@ static int gen_builder_table(output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_builder_table_prolog(output_t *out, fb_compound_type_t *ct)
+static int gen_builder_table_prolog(fb_output_t *out, fb_compound_type_t *ct)
 {
     const char *nsc = out->nsc;
     fb_scoped_name_t snt;
@@ -1159,7 +1159,7 @@ static int gen_builder_table_prolog(output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_union_member_fields(output_t *out, const char *st, int n, const char *s, fb_compound_type_t *ct)
+static int gen_union_member_fields(fb_output_t *out, const char *st, int n, const char *s, fb_compound_type_t *ct)
 {
     const char *nsc = out->nsc;
     fb_symbol_t *sym;
@@ -1189,7 +1189,7 @@ static int gen_union_member_fields(output_t *out, const char *st, int n, const c
     return 0;
 }
 
-static int gen_builder_table_fields(output_t *out, fb_compound_type_t *ct)
+static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
 {
     const char *nsc = out->nsc;
     fb_member_t *member;
@@ -1372,7 +1372,7 @@ static int gen_builder_table_fields(output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_builder_enums(output_t *out)
+static int gen_builder_enums(fb_output_t *out)
 {
     const char *nsc = out->nsc;
     fb_symbol_t *sym;
@@ -1419,7 +1419,7 @@ static int gen_builder_enums(output_t *out)
  * is not concerned with how the scope is parsed or how errors are
  * flagged - it just expects members to be unique.
  */
-static int gen_union(output_t *out, fb_compound_type_t *ct)
+static int gen_union(fb_output_t *out, fb_compound_type_t *ct)
 {
     const char *nsc = out->nsc;
     fb_member_t *member;
@@ -1486,7 +1486,7 @@ static int gen_union(output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_union_typedefs(output_t *out)
+static int gen_union_typedefs(fb_output_t *out)
 {
     fb_symbol_t *sym;
     int was_here = 0;
@@ -1513,7 +1513,7 @@ static int gen_union_typedefs(output_t *out)
     return 0;
 }
 
-static int gen_unions(output_t *out)
+static int gen_unions(fb_output_t *out)
 {
     fb_symbol_t *sym;
     int was_here = 0;
@@ -1534,7 +1534,7 @@ static int gen_unions(output_t *out)
     return 0;
 }
 
-static int gen_builder_tables(output_t *out)
+static int gen_builder_tables(fb_output_t *out)
 {
     fb_symbol_t *sym;
     int was_here = 0;
@@ -1591,7 +1591,7 @@ static int gen_builder_tables(output_t *out)
     return 0;
 }
 
-static int gen_builder_footer(output_t *out)
+static int gen_builder_footer(fb_output_t *out)
 {
     gen_pragma_pop(out);
     fprintf(out->fp,
@@ -1600,7 +1600,7 @@ static int gen_builder_footer(output_t *out)
     return 0;
 }
 
-int fb_gen_c_builder(output_t *out)
+int fb_gen_c_builder(fb_output_t *out)
 {
     gen_builder_pretext(out);
     gen_builder_enums(out);

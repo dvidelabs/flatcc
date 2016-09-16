@@ -19,10 +19,12 @@ void usage(FILE *fp)
             "  -w                         Generate builders (writable buffers)\n"
             "  -r                         Recursively generate included schema files\n"
             "  -a                         Generate all (like -cwvr)\n"
-            "  -d                         Generate .depends files\n"
             "  -I<inpath>                 Search path for include files (multiple allowed)\n"
             "  -o<outpath>                Write files to given output directory (must exist)\n"
             "  --stdout                   Concatenate all output to stdout\n"
+            "  --concat=<file>            Like --stdout, but to a file.\n"
+            "  --depfile=<file>           Dependency file like gcc -MMD.\n"
+            "  --deptarget=<file>         Override target depending on depfile content.\n"
             "  --prefix=<prefix>          Add prefix to all generated names (no _ added)\n"
             "  --common-prefix=<prefix>   Replace 'flatbuffers' prefix in common files\n"
 #if FLATCC_REFLECTION
@@ -64,8 +66,11 @@ void help(FILE *fp)
         "All C output can be concatenated to a single file using --stdout. This is\n"
         "the exact same content as the generated files ordered by dependencies.\n"
         "\n"
-        "-d generates a .depends file of include paths for use in build systems.\n"
+        "--depfile generates a depenency file like gcc -MMD -MF of include paths with\n"
+        "<schema>_reader_h as target, or the --concat file target if given, or the\n"
+        "binary schema with --schema.\n"
         "\n"
+        "--deptarget overrides the chosen target for --depfile, simiar to gcc -MT.\n"
 #if FLATCC_REFLECTION
         "--schema will generate a binary .bfbs file for each top-level schema file.\n"
         "Can be used with --stdout if no C output is specified. When used with multiple\n"
@@ -187,6 +192,30 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         return v ? noarg : nextarg;
     }
 #endif
+    if (match_long_arg("-depfile", s, n)) {
+        if (!a) {
+            fprintf(stderr, "--depfile option needs an argument\n");
+            exit(-1);
+        }
+        opts->gen_depfile = a;
+        return v ? noarg : nextarg;
+    }
+    if (match_long_arg("-deptarget", s, n)) {
+        if (!a) {
+            fprintf(stderr, "--deptarget option needs an argument\n");
+            exit(-1);
+        }
+        opts->gen_deptarget = a;
+        return v ? noarg : nextarg;
+    }
+    if (match_long_arg("-concat", s, n)) {
+        if (!a) {
+            fprintf(stderr, "--concat option needs an argument\n");
+            exit(-1);
+        }
+        opts->gen_concat= a;
+        return v ? noarg : nextarg;
+    }
     if (match_long_arg("-common-prefix", s, n)) {
         if (!a) {
             fprintf(stderr, "--common-prefix option needs an argument\n");
@@ -247,13 +276,12 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
     case 'r':
         opts->cgen_recursive = 1;
         return noarg;
-    case 'd':
-        opts->cgen_depends = 1;
-        return noarg;
     case 'a':
+        opts->cgen_reader = 1;
         opts->cgen_builder = 1;
         opts->cgen_verifier = 1;
         opts->cgen_common_reader = 1;
+        opts->cgen_common_builder = 1;
         opts->cgen_recursive = 1;
         return noarg;
     default:
@@ -308,11 +336,6 @@ int main(int argc, const char *argv[])
         a = i + 1 < argc ? argv[i + 1] : 0;
         i += get_opt(&opts, s, a);
     }
-    if (opts.gen_stdout && opts.outpath) {
-        fprintf(stderr, "--stdout is not compatible with -o option\n");
-        status = -1;
-        goto done;
-    }
     opts.cgen_common_builder = opts.cgen_builder && opts.cgen_common_reader;
     if (i == argc) {
         /* No input files, so only generate header. */
@@ -340,6 +363,21 @@ int main(int argc, const char *argv[])
             status = -1;
             goto done;
         }
+        if (opts.gen_concat) {
+            fprintf(stderr, "--concat cannot be used with mixed text and binary output");
+            status = -1;
+            goto done;
+        }
+    }
+    if (opts.gen_deptarget && !opts.gen_depfile) {
+        fprintf(stderr, "--deptarget cannot be used without --depfile");
+        status = -1;
+        goto done;
+    }
+    if (opts.gen_stdout && opts.gen_concat) {
+        fprintf(stderr, "--concat cannot be used with --stdout");
+        status = -1;
+        goto done;
     }
     for (; i < argc; ++i) {
         ctx = flatcc_create_context(&opts, argv[i], 0, 0);

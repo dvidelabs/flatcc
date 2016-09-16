@@ -3,18 +3,17 @@
 #include <ctype.h>
 #include "../../external/hash/str_set.h"
 
-int fb_open_output_file(output_t *out, const char *name, size_t len, const char *ext)
+int fb_open_output_file(fb_output_t *out, const char *name, size_t len, const char *ext)
 {
     char *path;
     int ret;
     const char *prefix = out->opts->outpath ? out->opts->outpath : "";
     size_t prefix_len = strlen(prefix);
 
-    if (out->opts->gen_stdout) {
-        out->fp = stdout;
+    if (out->fp) {
         return 0;
     }
-    checkmem((path = fb_create_join_path(prefix, prefix_len, name, len, ext, 1)));
+    checkmem((path = fb_create_join_path_n(prefix, prefix_len, name, len, ext, 1)));
     out->fp = fopen(path, "wb");
     ret = 0;
     if (!out->fp) {
@@ -25,7 +24,17 @@ int fb_open_output_file(output_t *out, const char *name, size_t len, const char 
     return ret;
 }
 
-void fb_close_output_file(output_t *out)
+void fb_close_output_file(fb_output_t *out)
+{
+    /* Concatenate covers either stdout or a file. */
+    if (!out->opts->gen_concat && !out->opts->gen_stdout && out->fp) {
+        fclose(out->fp);
+        out->fp = 0;
+    }
+    /* Keep out->fp open for next file. */
+}
+
+void fb_end_output_c(fb_output_t *out)
 {
     if (out->fp != stdout && out->fp) {
         fclose(out->fp);
@@ -33,11 +42,18 @@ void fb_close_output_file(output_t *out)
     out->fp = 0;
 }
 
-int fb_init_output(output_t *out, fb_options_t *opts)
+/*
+ * If used with --stdout or concat=<file>, we assume there
+ * are no other language outputs at the same time.
+ */
+int fb_init_output_c(fb_output_t *out, fb_options_t *opts)
 {
     const char *nsc;
     char *p;
+    char *path = 0;
     size_t n;
+    const char *prefix = opts->outpath ? opts->outpath : "";
+    int ret = -1;
 
     memset(out, 0, sizeof(*out));
     out->opts = opts;
@@ -66,6 +82,26 @@ int fb_init_output(output_t *out, fb_options_t *opts)
       p[-1] = '\0'; /* No trailing _ */
     }
     out->spacing = opts->cgen_spacing;
+    if (opts->gen_stdout) {
+        out->fp = stdout;
+        return 0;
+    }
+    if (!out->opts->gen_concat) {
+        /* Normal operation to multiple header filers. */
+        return 0;
+    }
+    checkmem((path = fb_create_join_path(prefix, out->opts->gen_concat, "", 1)));
+    out->fp = fopen(path, "wb");
+    if (!out->fp) {
+        fprintf(stderr, "error opening file for write: %s\n", path);
+        ret = -1;
+        goto done;
+    }
+    ret = 0;
+done:
+    if (path) {
+        free(path);
+    }
     return 0;
 }
 
@@ -82,7 +118,7 @@ static void _str_set_destructor(void *context, char *item)
  * guards. The guards are required to deal with concatenated files
  * regardless unless we generate special code for concatenation.
  */
-void fb_gen_c_includes(output_t *out, const char *ext, const char *extup)
+void fb_gen_c_includes(fb_output_t *out, const char *ext, const char *extup)
 {
     fb_include_t *inc = out->S->includes;
     char *basename, *basenameup, *s;
@@ -166,54 +202,89 @@ void fb_scoped_symbol_name(fb_scope_t *scope, fb_symbol_t *sym, fb_scoped_name_t
     sn->text[sn->total_len] = '\0';
 }
 
-int fb_codegen_c(fb_options_t *opts, fb_schema_t *S)
+int fb_codegen_common_c(fb_output_t *out)
 {
-    output_t output, *out;
-    size_t basename_len;
+    size_t nsc_len;
     int ret;
 
-    out = &output;
-    if (fb_init_output(out, opts)) {
-        return -1;
+    nsc_len = strlen(out->nsc) - 1;
+    ret = 0;
+    if (out->opts->cgen_common_reader) {
+        if (fb_open_output_file(out, out->nsc, nsc_len, "_common_reader.h")) {
+            return -1;
+        }
+        ret = fb_gen_common_c_header(out);
+        fb_close_output_file(out);
     }
+    if (!ret && out->opts->cgen_common_builder) {
+        if (fb_open_output_file(out, out->nsc, nsc_len, "_common_builder.h")) {
+            return -1;
+        }
+        fb_gen_common_c_builder_header(out);
+        fb_close_output_file(out);
+    }
+    return ret;
+}
+
+int fb_codegen_c(fb_output_t *out, fb_schema_t *S)
+{
+    size_t basename_len;
+    /* OK if no files were processed. */
+    int ret = 0;
+
     out->S = S;
     out->current_scope = fb_scope_table_find(&S->root_schema->scope_index, 0, 0);
     basename_len = strlen(out->S->basename);
-    ret = 0;
-    if (opts->cgen_reader) {
+    if (out->opts->cgen_reader) {
         if (fb_open_output_file(out, out->S->basename, basename_len, "_reader.h")) {
-            return -1;
+            ret = -1;
+            goto done;
         }
-        ret = fb_gen_c_reader(out);
+        if ((ret = fb_gen_c_reader(out))) {
+            goto done;
+        }
         fb_close_output_file(out);
     }
-    if (!ret && opts->cgen_builder) {
+    if (out->opts->cgen_builder) {
         if (fb_open_output_file(out, out->S->basename, basename_len, "_builder.h")) {
-            return -1;
+            ret = -1;
+            goto done;
         }
-        ret = fb_gen_c_builder(out);
+        if ((ret = fb_gen_c_builder(out))) {
+                    goto done;
+        }
         fb_close_output_file(out);
     }
-    if (!ret && opts->cgen_verifier) {
+    if (out->opts->cgen_verifier) {
         if (fb_open_output_file(out, out->S->basename, basename_len, "_verifier.h")) {
-            return -1;
+            ret = -1;
+            goto done;
         }
-        ret = fb_gen_c_verifier(out);
+        if ((ret = fb_gen_c_verifier(out))) {
+            goto done;
+        }
         fb_close_output_file(out);
     }
-    if (!ret && opts->cgen_json_parser) {
+    if (out->opts->cgen_json_parser) {
         if (fb_open_output_file(out, out->S->basename, basename_len, "_json_parser.h")) {
-            return -1;
+            ret = -1;
+            goto done;
         }
-        ret = fb_gen_c_json_parser(out);
+        if ((ret = fb_gen_c_json_parser(out))) {
+            goto done;
+        }
         fb_close_output_file(out);
     }
-    if (!ret && opts->cgen_json_printer) {
+    if (out->opts->cgen_json_printer) {
         if (fb_open_output_file(out, out->S->basename, basename_len, "_json_printer.h")) {
-            return -1;
+            ret = -1;
+            goto done;
         }
-        ret = fb_gen_c_json_printer(out);
+        if ((ret = fb_gen_c_json_printer(out))) {
+            goto done;
+        }
         fb_close_output_file(out);
     }
+done:
     return ret;
 }

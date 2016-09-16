@@ -14,25 +14,6 @@
 #define gen_panic(context, msg) fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, msg), assert(0), exit(-1)
 #endif
 
-typedef struct output output_t;
-
-struct output {
-    /*
-     * Common namespace across files. May differ from namespace
-     * for consistent use of type names.
-     */
-    char nsc[FLATCC_NAMESPACE_MAX + 2];
-    char nscup[FLATCC_NAMESPACE_MAX + 2];
-
-    FILE *fp;
-    fb_schema_t *S;
-    fb_options_t *opts;
-    fb_scope_t *current_scope;
-    int indent;
-    int spacing;
-    int tmp_indent;
-};
-
 static inline void token_name(fb_token_t *t, int *n, const char **s) {
     *n = t->len;
     *s = t->text;
@@ -250,7 +231,7 @@ static inline const char *scalar_suffix(fb_scalar_type_t scalar_type)
 }
 
 /* See also: https://github.com/philsquared/Catch/issues/376 */
-static inline int gen_pragma_push(output_t *out)
+static inline int gen_pragma_push(fb_output_t *out)
 {
     if (out->opts->cgen_pragmas) {
         fprintf(out->fp,
@@ -260,7 +241,7 @@ static inline int gen_pragma_push(output_t *out)
     return 0;
 }
 
-static inline int gen_pragma_pop(output_t *out)
+static inline int gen_pragma_pop(fb_output_t *out)
 {
     if (out->opts->cgen_pragmas) {
         fprintf(out->fp,
@@ -277,37 +258,37 @@ static inline int gen_pragma_pop(output_t *out)
 
 /* Redefine names to avoid polluting library namespace. */
 
-int __flatcc_fb_init_output(output_t *out, fb_options_t *opts);
-#define fb_init_output __flatcc_fb_init_output
+int __flatcc_fb_init_output_c(fb_output_t *out, fb_options_t *opts);
+#define fb_init_output_c __flatcc_fb_init_output_c
 
-int __flatcc_fb_open_output_file(output_t *out, const char *name, size_t len, const char *ext);
+int __flatcc_fb_open_output_file(fb_output_t *out, const char *name, size_t len, const char *ext);
 #define fb_open_output_file __flatcc_fb_open_output_file
 
-void __flatcc_fb_close_output_file(output_t *out);
+void __flatcc_fb_close_output_file(fb_output_t *out);
 #define fb_close_output_file __flatcc_fb_close_output_file
 
-void __flatcc_fb_gen_c_includes(output_t *out, const char *ext, const char *extup);
+void __flatcc_fb_gen_c_includes(fb_output_t *out, const char *ext, const char *extup);
 #define fb_gen_c_includes __flatcc_fb_gen_c_includes
 
-int __flatcc_fb_gen_common_c_header(output_t *out);
+int __flatcc_fb_gen_common_c_header(fb_output_t *out);
 #define fb_gen_common_c_header __flatcc_fb_gen_common_c_header
 
-int __flatcc_fb_gen_common_c_builder_header(output_t *out);
+int __flatcc_fb_gen_common_c_builder_header(fb_output_t *out);
 #define fb_gen_common_c_builder_header __flatcc_fb_gen_common_c_builder_header
 
-int __flatcc_fb_gen_c_reader(output_t *out);
+int __flatcc_fb_gen_c_reader(fb_output_t *out);
 #define fb_gen_c_reader __flatcc_fb_gen_c_reader
 
-int __flatcc_fb_gen_c_builder(output_t *out);
+int __flatcc_fb_gen_c_builder(fb_output_t *out);
 #define fb_gen_c_builder __flatcc_fb_gen_c_builder
 
-int __flatcc_fb_gen_c_verifier(output_t *out);
+int __flatcc_fb_gen_c_verifier(fb_output_t *out);
 #define fb_gen_c_verifier __flatcc_fb_gen_c_verifier
 
-int __flatcc_fb_gen_c_json_parser(output_t *out);
+int __flatcc_fb_gen_c_json_parser(fb_output_t *out);
 #define fb_gen_c_json_parser __flatcc_fb_gen_c_json_parser
 
-int __flatcc_fb_gen_c_json_printer(output_t *out);
+int __flatcc_fb_gen_c_json_printer(fb_output_t *out);
 #define fb_gen_c_json_printer __flatcc_fb_gen_c_json_printer
 
 #endif /* CODEGEN_C_H */

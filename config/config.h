@@ -295,6 +295,14 @@
 #define FLATCC_DEFAULT_BIN_EXT ".bin"
 #endif
 
+/*
+ * A depends file sometimes needs a single file to hook
+ * the include file dependencies onto.
+ */
+#ifndef FLATCC_DEFAULT_DEPS_TARGET_SUFFIX
+#define FLATCC_DEFAULT_DEPS_TARGET_SUFFIX "_reader.h"
+#endif
+
 #ifndef FLATCC_DEFAULT_FILENAME
 #define FLATCC_DEFAULT_FILENAME "test"
 #endif

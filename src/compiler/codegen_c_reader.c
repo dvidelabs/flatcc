@@ -23,7 +23,7 @@
  * in switch statements, and encoded as a little endian C string for use
  * as a file identifier.
  */
-static void print_type_identifier(output_t *out, const char *name, uint32_t type_hash)
+static void print_type_identifier(fb_output_t *out, const char *name, uint32_t type_hash)
 {
     uint8_t buf[17];
     uint8_t *p;
@@ -61,7 +61,7 @@ static void print_type_identifier(output_t *out, const char *name, uint32_t type
 }
 
 /* Finds first occurrence of matching key when vector is sorted on the named field. */
-static void gen_find(output_t *out)
+static void gen_find(fb_output_t *out)
 {
     const char *nsc = out->nsc;
 
@@ -135,7 +135,7 @@ static void gen_find(output_t *out)
         nsc, nsc, nsc);
 }
 
-static void gen_helpers(output_t *out)
+static void gen_helpers(fb_output_t *out)
 {
     const char *nsc = out->nsc;
     const char *nscup = out->nscup;
@@ -402,7 +402,7 @@ static void gen_helpers(output_t *out)
     fprintf(out->fp, "\n");
 }
 
-int fb_gen_common_c_header(output_t *out)
+int fb_gen_common_c_header(fb_output_t *out)
 {
     const char *nscup = out->nscup;
 
@@ -428,7 +428,7 @@ int fb_gen_common_c_header(output_t *out)
     return 0;
 }
 
-static void gen_pretext(output_t *out)
+static void gen_pretext(fb_output_t *out)
 {
     const char *nsc = out->nsc;
     const char *nscup = out->nscup;
@@ -502,13 +502,13 @@ static void gen_pretext(output_t *out)
     fprintf(out->fp, "\n");
 }
 
-static void gen_footer(output_t *out)
+static void gen_footer(fb_output_t *out)
 {
     gen_pragma_pop(out);
-    fprintf(out->fp, "#endif /* %s_H */\n", out->S->basenameup);
+    fprintf(out->fp, "#endif /* %s_READER_H */\n", out->S->basenameup);
 }
 
-static void gen_forward_decl(output_t *out, fb_compound_type_t *ct)
+static void gen_forward_decl(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_scoped_name_t snt;
     const char *nsc = out->nsc;
@@ -542,7 +542,7 @@ static void gen_forward_decl(output_t *out, fb_compound_type_t *ct)
     }
 }
 
-static inline void print_doc(output_t *out, const char *indent, fb_doc_t *doc)
+static inline void print_doc(fb_output_t *out, const char *indent, fb_doc_t *doc)
 {
     long ln = 0;
     int first = 1;
@@ -567,7 +567,7 @@ static inline void print_doc(output_t *out, const char *indent, fb_doc_t *doc)
     fprintf(out->fp, " */\n");
 }
 
-static void gen_struct(output_t *out, fb_compound_type_t *ct)
+static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_member_t *member;
     fb_symbol_t *sym;
@@ -832,7 +832,7 @@ static void gen_struct(output_t *out, fb_compound_type_t *ct)
  * To produce a typesafe and portable result, we generate constants
  * instead.
  */
-static void gen_enum(output_t *out, fb_compound_type_t *ct)
+static void gen_enum(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_member_t *member;
     fb_symbol_t *sym;
@@ -929,7 +929,7 @@ static void gen_enum(output_t *out, fb_compound_type_t *ct)
     fprintf(out->fp, "\n");
 }
 
-static void gen_nested_root(output_t *out, fb_symbol_t *root_type, fb_symbol_t *container, fb_symbol_t *member)
+static void gen_nested_root(fb_output_t *out, fb_symbol_t *root_type, fb_symbol_t *container, fb_symbol_t *member)
 {
     const char *s;
     int n;
@@ -966,7 +966,7 @@ static void gen_nested_root(output_t *out, fb_symbol_t *root_type, fb_symbol_t *
     fprintf(out->fp, "__%snested_buffer_as_root(%s, %.*s, %s, %s)\n", nsc, snc.text, n, s, snt.text, kind);
 }
 
-static void gen_table(output_t *out, fb_compound_type_t *ct)
+static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_member_t *member;
     fb_symbol_t *sym;
@@ -1294,7 +1294,7 @@ static void gen_table(output_t *out, fb_compound_type_t *ct)
     }
 }
 
-int fb_gen_c_reader(output_t *out)
+int fb_gen_c_reader(fb_output_t *out)
 {
     fb_symbol_t *sym;
     fb_compound_type_t *ct;
@@ -1349,33 +1349,4 @@ int fb_gen_c_reader(output_t *out)
     fprintf(out->fp, "\n");
     gen_footer(out);
     return 0;
-}
-
-int fb_codegen_common_c(fb_options_t *opts)
-{
-    output_t output, *out;
-    size_t nsc_len;
-    int ret;
-
-    out = &output;
-    if (fb_init_output(out, opts)) {
-        return -1;
-    }
-    nsc_len = strlen(output.nsc) - 1;
-    ret = 0;
-    if (opts->cgen_common_reader) {
-        if (fb_open_output_file(out, out->nsc, nsc_len, "_common_reader.h")) {
-            return -1;
-        }
-        ret = fb_gen_common_c_header(out);
-        fb_close_output_file(out);
-    }
-    if (!ret && opts->cgen_common_builder) {
-        if (fb_open_output_file(out, out->nsc, nsc_len, "_common_builder.h")) {
-            return -1;
-        }
-        fb_gen_common_c_builder_header(out);
-        fb_close_output_file(out);
-    }
-    return ret;
 }

@@ -7,7 +7,7 @@
 #include <inttypes.h>
 #endif
 
-static int gen_verifier_pretext(output_t *out)
+static int gen_verifier_pretext(fb_output_t *out)
 {
     fprintf(out->fp,
         "#ifndef %s_VERIFIER_H\n"
@@ -26,7 +26,7 @@ static int gen_verifier_pretext(output_t *out)
     return 0;
 }
 
-static int gen_verifier_footer(output_t *out)
+static int gen_verifier_footer(fb_output_t *out)
 {
     gen_pragma_pop(out);
     fprintf(out->fp,
@@ -35,7 +35,7 @@ static int gen_verifier_footer(output_t *out)
     return 0;
 }
 
-static int gen_union_verifier(output_t *out, fb_compound_type_t *ct)
+static int gen_union_verifier(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_symbol_t *sym;
     fb_member_t *member;
@@ -65,7 +65,7 @@ static int gen_union_verifier(output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_table_verifier(output_t *out, fb_compound_type_t *ct)
+static int gen_table_verifier(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_symbol_t *sym;
     fb_member_t *member;
@@ -202,7 +202,7 @@ static int gen_table_verifier(output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_struct_verifier(output_t *out, fb_compound_type_t *ct)
+static int gen_struct_verifier(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_scoped_name_t snt;
 
@@ -229,7 +229,7 @@ static int gen_struct_verifier(output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_verifier_prototypes(output_t *out)
+static int gen_verifier_prototypes(fb_output_t *out)
 {
     fb_symbol_t *sym;
     fb_scoped_name_t snt;
@@ -249,7 +249,7 @@ static int gen_verifier_prototypes(output_t *out)
     return 0;
 }
 
-static int gen_union_verifiers(output_t *out)
+static int gen_union_verifiers(fb_output_t *out)
 {
     fb_symbol_t *sym;
 
@@ -262,7 +262,7 @@ static int gen_union_verifiers(output_t *out)
     return 0;
 }
 
-static int gen_struct_verifiers(output_t *out)
+static int gen_struct_verifiers(fb_output_t *out)
 {
     fb_symbol_t *sym;
 
@@ -275,7 +275,7 @@ static int gen_struct_verifiers(output_t *out)
     return 0;
 }
 
-static int gen_table_verifiers(output_t *out)
+static int gen_table_verifiers(fb_output_t *out)
 {
     fb_symbol_t *sym;
 
@@ -288,7 +288,7 @@ static int gen_table_verifiers(output_t *out)
     return 0;
 }
 
-int fb_gen_c_verifier(output_t *out)
+int fb_gen_c_verifier(fb_output_t *out)
 {
     gen_verifier_pretext(out);
     gen_verifier_prototypes(out);

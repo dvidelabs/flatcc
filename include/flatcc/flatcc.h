@@ -55,6 +55,10 @@ struct flatcc_options {
     /* Code Generator specific options. */
     int gen_stdout;
 
+    const char *gen_depfile;
+    const char *gen_deptarget;
+    const char *gen_concat;
+
     int cgen_pad;
     int cgen_sort;
     int cgen_pragmas;
@@ -68,7 +72,6 @@ struct flatcc_options {
     int cgen_json_printer;
     int cgen_recursive;
     int cgen_spacing;
-    int cgen_depends;
 
     int bgen_bfbs;
     int bgen_qualify_names;
