@@ -346,8 +346,7 @@ int main(int argc, const char *argv[])
             fprintf(stderr, "filename missing\n");
             goto fail;
         }
-        ctx = flatcc_create_context(&opts, 0, 0, 0);
-        if (!ctx) {
+        if (!(ctx = flatcc_create_context(&opts, 0, 0, 0))) {
             fprintf(stderr, "internal error: failed to create parsing context\n");
             goto fail;
         }
@@ -384,8 +383,7 @@ int main(int argc, const char *argv[])
         goto fail;
     }
     while (i < argc) {
-        ctx = flatcc_create_context(&opts, argv[i], 0, 0);
-        if (ctx) {
+        if (!(ctx = flatcc_create_context(&opts, argv[i], 0, 0))) {
             fprintf(stderr, "internal error: failed to create parsing context\n");
             goto fail;
         }
@@ -401,6 +399,7 @@ int main(int argc, const char *argv[])
         opts.gen_append = 1;
         ++i;
     }
+    goto done;
 fail:
     ret = -1;
 done:
