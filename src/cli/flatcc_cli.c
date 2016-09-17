@@ -318,12 +318,24 @@ int get_opt(flatcc_options_t *opts, const char *s, const char *a)
     return noarg;
 }
 
+int parse_opts(int argc, const char *argv[], flatcc_options_t *opts)
+{
+    int i;
+    const char *s, *a;
+
+    for (i = 1; i < argc && argv[i][0] == '-'; ++i) {
+        s = argv[i];
+        a = i + 1 < argc ? argv[i + 1] : 0;
+        i += get_opt(opts, s, a);
+    }
+    return i;
+}
+
 int main(int argc, const char *argv[])
 {
     flatcc_options_t opts;
     flatcc_context_t ctx = 0;
     int i, ret, cgen;
-    const char *s, *a;
 
     ctx = 0;
     ret = 0;
@@ -333,12 +345,8 @@ int main(int argc, const char *argv[])
     }
     flatcc_init_options(&opts);
     opts.inpaths = malloc(argc * sizeof(char *));
-
-    for (i = 1; i < argc && argv[i][0] == '-'; ++i) {
-        s = argv[i];
-        a = i + 1 < argc ? argv[i + 1] : 0;
-        i += get_opt(&opts, s, a);
-    }
+ 
+    i = parse_opts(argc, argv, &opts);
     opts.cgen_common_builder = opts.cgen_builder && opts.cgen_common_reader;
     if (i == argc) {
         /* No input files, so only generate header. */
