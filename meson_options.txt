@@ -18,10 +18,6 @@ option('xflatcc_multi_dep_targets', type : 'boolean', value : false)
 option('xflatcc_monster_test_only', type : 'boolean', value : false)
 
 # WIP
-# test fails on incorrect output path.
-option('xflatcc_monster_test_concat_explicit', type : 'boolean', value : false)
-
-# WIP
 # The binary schema can be generated via a custom rule, or via a
 # generator. The generator fails test, the custom rule rebuilds too
 # often.

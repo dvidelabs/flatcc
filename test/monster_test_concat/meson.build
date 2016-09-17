@@ -32,8 +32,6 @@ test(name,
         include_directories : testinc_dir))
 
 # Test manual build of dependent files without recursion.
-if get_option('xflatcc_monster_test_concat_explicit')
-
 name2 = name + '_explicit'
 
 concat_gen_explicit = custom_target(name + '_explicit',
@@ -51,4 +49,3 @@ test(name2,
         concat_gen_explicit,
         link_with : libflatccrt,
         include_directories : testinc_dir))
-endif
