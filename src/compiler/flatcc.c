@@ -205,9 +205,10 @@ static int __parse_include_file(fb_parser_t *P_parent, const char *filename)
 static int __flatcc_gen_depends_file(fb_parser_t *P)
 {
     FILE *fp = 0;
-    const char *outpath, *basename, *depfile, *targetfile;
-    char *path = 0, *tmp_path = 0, *target_path = 0, *dep_path = 0;
-    const char *suffix;
+    const char *outpath, *basename; 
+    const char *depfile, *deproot, *depext;
+    const char *targetfile, *targetsuffix, *targetroot;
+    char *path = 0, *deppath = 0, *tmppath = 0, *targetpath = 0; 
     int ret = -1;
 
     /*
@@ -219,48 +220,91 @@ static int __flatcc_gen_depends_file(fb_parser_t *P)
 
     outpath = P->opts.outpath ? P->opts.outpath : "";
     basename = P->schema.basename;
-    depfile = P->opts.gen_depfile;
     targetfile = P->opts.gen_deptarget;
-    targetfile = targetfile ? targetfile : P->opts.gen_outfile;
 
-    checkmem(path = fb_create_join_path(outpath, depfile, "", 1));
 
-    if (targetfile) {
-        checkmem(tmp_path = fb_create_join_path(outpath, targetfile, "", 1));
+    /* The following is mostly considering build tools generating
+     * a depfile as Ninja build would use it. It is a bit strict
+     * on path variations and currenlty doesn't accept multiple
+     * build products in a build rule (Ninja 1.7.1).
+     *
+     * Make depfile relative to cwd so the user can add output if
+     * needed, otherwise it is not possible, or difficult, to use a path given
+     * by a build tool, relative the cwd. If --depfile is not given,
+     * then -d is given or we would not be here. In that case we add an
+     * extension "<basename>.fbs.d" in the outpath.
+     *
+     * A general problem is that the outpath may be a build root dir or
+     * a current subdir for a custom build rule while the dep file
+     * content needs the same path every time, not just an equivalent
+     * path. For dependencies, we can rely on the input schema path.
+     * The input search paths may because confusion but we choose the
+     * discovered path relative to cwd consistently for each schema file
+     * encountered.
+     *
+     * The target file (<target>: <include1.fbs> <include2.fbs> ...)
+     * is tricky because it is not unique - but we can chose <schema>_reader.h
+     * or <schema>.bfbs prefixed with outpath. The user should choose an
+     * outpath relative to cwd or an absolute path depending on what the
+     * build system prefers. This may not be so easy in praxis, but what
+     * can we do?
+     *
+     * It is important to note the default target and the default
+     * depfile name is not just a convenience. Sometimes it is much
+     * simpler to use this version over an explicit path, sometimes
+     * perhaps not so much.
+     */
+
+    if (P->opts.gen_depfile) {
+        depfile = P->opts.gen_depfile;
+        deproot = "";
+        depext = "";
     } else {
-        suffix = P->opts.bgen_bfbs 
-                ? FLATCC_DEFAULT_BIN_SCHEMA_EXT 
-                : FLATCC_DEFAULT_DEPS_TARGET_SUFFIX;
-        /* Typically chooses  <.../basename>_reader.h as target. */
-        checkmem(tmp_path = fb_create_join_path(outpath, basename, suffix, 1));
+        depfile = basename;
+        deproot = outpath;
+        depext = FLATCC_DEFAULT_DEP_EXT;
     }
+    if (targetfile) {
+        targetsuffix = "";
+        targetroot = "";
+    } else {
+        targetsuffix = P->opts.bgen_bfbs 
+                ? FLATCC_DEFAULT_BIN_SCHEMA_EXT 
+                : FLATCC_DEFAULT_DEP_TARGET_SUFFIX;
+        targetfile = basename;
+        targetroot = outpath;
+    }
+
+    checkmem(path = fb_create_join_path(deproot, depfile, depext, 1));
+
+    checkmem(tmppath = fb_create_join_path(targetroot, targetfile, targetsuffix, 1));
     /* Handle spaces in dependency file. */
-    checkmem((target_path = fb_create_make_path(tmp_path)));
-    checkfree(tmp_path);
+    checkmem((targetpath = fb_create_make_path(tmppath)));
+    checkfree(tmppath);
 
     fp = fopen(path, "wb");
     if (!fp) {
         fb_print_error(P, "could not open dependency file for output: %s\n", path);
         goto done;
     }
-    fprintf(fp, "%s:", target_path);
+    fprintf(fp, "%s:", targetpath);
 
     /* Don't depend on root schema. */
     P = P->dependencies;
     while (P) {
-        checkmem((dep_path = fb_create_make_path(P->path)));
-        fprintf(fp, " %s", dep_path);
+        checkmem((deppath = fb_create_make_path(P->path)));
+        fprintf(fp, " %s", deppath);
         P = P->dependencies;
-        checkfree(dep_path);
+        checkfree(deppath);
     }
     fprintf(fp, "\n");
     ret = 0;
 
 done:
     checkfree(path);
-    checkfree(tmp_path);
-    checkfree(target_path);
-    checkfree(dep_path);
+    checkfree(tmppath);
+    checkfree(targetpath);
+    checkfree(deppath);
     if (fp) {
         fclose(fp);
     }
@@ -368,7 +412,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
      * files. These will contain all nested files regardless of
      * recursive file generation flags.
      */
-    if (P->opts.gen_depfile && is_root) {
+    if (P->opts.gen_dep && is_root) {
         ret = __flatcc_gen_depends_file(P);
     }
 
