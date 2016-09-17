@@ -32,6 +32,10 @@ if get_option('flatcc_debug_verify')
     add_global_arguments('-DFLATCC_DEBUG_VERIFY=1', language : 'c')
 endif
 
+if get_option('flatcc_fast_double')
+    add_global_arguments('-DGRISU3_PARSE_ALLOW_ERROR', '-DFLATCC_USE_GRISU3=1', language : 'c')
+endif
+
 # Reflection must be disabled temporarily when making breaking changes.
 if get_option('flatcc_reflection')
     add_global_arguments('-DFLATCC_REFLECTION=1', language : 'c')
@@ -39,16 +43,12 @@ else
     add_global_arguments('-DFLATCC_REFLECTION=0', language : 'c')
 endif
 
-if get_option('flatcc_fast_double')
-    add_global_arguments('-DGRISU3_PARSE_ALLOW_ERROR', '-DFLATCC_USE_GRISU3=1', language : 'c')
-endif
-
 flatccrt_src = [
     'src/runtime/builder.c',
     'src/runtime/emitter.c',
     'src/runtime/json_parser.c',
     'src/runtime/json_printer.c',
-    'src/runtime/verifier.c']
+    'src/runtime/verifier.c' ]
 
 flatcc_src = [
     'src/compiler/codegen_c.c',
@@ -72,7 +72,7 @@ flatcc_src = [
     'external/hash/cmetrohash64.c',
     'external/hash/ptr_set.c',
     'external/hash/str_set.c',
-    flatccrt_src]
+    flatccrt_src ]
 
 # We build both library types because shared libraries are good
 # with a lot of different buffers around
@@ -98,6 +98,8 @@ flatcc = executable('flatcc', 'src/cli/flatcc_cli.c',
     include_directories : inc_dir)
 
 if not meson.is_subproject()
+    # For end user programs, samples, and test.
+    subdir('rules')
     subdir('samples')
     subdir('test')
 endif
