@@ -1,6 +1,6 @@
 #include "codegen_c.h"
 #include "fileio.h"
-#include <ctype.h>
+#include "pstrutil.h"
 #include "../../external/hash/str_set.h"
 
 int fb_open_output_file(fb_output_t *out, const char *name, size_t len, const char *ext)
@@ -50,7 +50,6 @@ void fb_end_output_c(fb_output_t *out)
 int fb_init_output_c(fb_output_t *out, fb_options_t *opts)
 {
     const char *nsc;
-    char *p;
     char *path = 0;
     size_t n;
     const char *prefix = opts->outpath ? opts->outpath : "";
@@ -75,13 +74,8 @@ int fb_init_output_c(fb_output_t *out, fb_options_t *opts)
         out->nsc[n] = '_';
         out->nsc[n + 1] = '\0';
     }
-    strcpy(out->nscup, out->nsc);
-    for (p = out->nscup; *p; ++p) {
-        *p = toupper(*p);
-    }
-    if (p != out->nscup) {
-      p[-1] = '\0'; /* No trailing _ */
-    }
+    pstrcpyupper(out->nscup, out->nsc);
+    out->nscup[n] = '\0'; /* No trailing _ */
     out->spacing = opts->cgen_spacing;
     if (opts->gen_stdout) {
         out->fp = stdout;
