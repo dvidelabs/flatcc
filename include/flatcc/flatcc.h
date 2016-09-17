@@ -85,7 +85,9 @@ struct flatcc_options {
     const char *nsc;
 
     const char **inpaths;
+    const char **srcpaths;
     int inpath_count;
+    int srcpath_count;
     const char *outpath;
 };
 
