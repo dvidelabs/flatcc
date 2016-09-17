@@ -335,17 +335,20 @@ int get_opt(flatcc_options_t *opts, const char *s, const char *a)
     return noarg;
 }
 
-int parse_opts(int argc, const char *argv[], flatcc_options_t *opts)
+void parse_opts(int argc, const char *argv[], flatcc_options_t *opts)
 {
     int i;
     const char *s, *a;
 
-    for (i = 1; i < argc && argv[i][0] == '-'; ++i) {
-        s = argv[i];
-        a = i + 1 < argc ? argv[i + 1] : 0;
-        i += get_opt(opts, s, a);
+    for (i = 1; i < argc; ++i) {
+        if (argv[i][0] == '-') {
+            s = argv[i];
+            a = i + 1 < argc ? argv[i + 1] : 0;
+            i += get_opt(opts, s, a);
+        } else {
+            opts->srcpaths[opts->srcpath_count++] = argv[i];
+        }
     }
-    return i;
 }
 
 int main(int argc, const char *argv[])
@@ -353,6 +356,7 @@ int main(int argc, const char *argv[])
     flatcc_options_t opts;
     flatcc_context_t ctx = 0;
     int i, ret, cgen;
+    const char **src;
 
     ctx = 0;
     ret = 0;
@@ -362,10 +366,11 @@ int main(int argc, const char *argv[])
     }
     flatcc_init_options(&opts);
     opts.inpaths = malloc(argc * sizeof(char *));
+    opts.srcpaths = malloc(argc * sizeof(char *));
  
-    i = parse_opts(argc, argv, &opts);
+    parse_opts(argc, argv, &opts);
     opts.cgen_common_builder = opts.cgen_builder && opts.cgen_common_reader;
-    if (i == argc) {
+    if (opts.srcpath_count == 0) {
         /* No input files, so only generate header. */
         if (!opts.cgen_common_reader || opts.bgen_bfbs) {
             fprintf(stderr, "filename missing\n");
@@ -407,12 +412,12 @@ int main(int argc, const char *argv[])
         fprintf(stderr, "--outfile cannot be used with --stdout");
         goto fail;
     }
-    while (i < argc) {
-        if (!(ctx = flatcc_create_context(&opts, argv[i], 0, 0))) {
+    for (i = 0, src = opts.srcpaths; i < opts.srcpath_count; ++i, ++src) {
+        if (!(ctx = flatcc_create_context(&opts, *src, 0, 0))) {
             fprintf(stderr, "internal error: failed to create parsing context\n");
             goto fail;
         }
-        if (flatcc_parse_file(ctx, argv[i])) {
+        if (flatcc_parse_file(ctx, *src)) {
             goto fail;
         }
         if (flatcc_generate_files(ctx)) {
@@ -422,7 +427,6 @@ int main(int argc, const char *argv[])
         ctx = 0;
         /* for --stdout and --outfile options: append to file and skip generating common headers. */
         opts.gen_append = 1;
-        ++i;
     }
     goto done;
 fail:
@@ -436,5 +440,6 @@ done:
         fprintf(stderr, "output failed\n");
     }
     free((void *)opts.inpaths);
+    free((void *)opts.srcpaths);
     return ret;
 }
