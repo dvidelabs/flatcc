@@ -6,6 +6,7 @@
 
 
 
+build_root = meson.build_root()
 test_dir = meson.current_source_dir()
 gen_dir = meson.current_build_dir()
 bench_dir = test_dir + '/benchmark'
@@ -91,27 +92,43 @@ else
     flatcc_json_gen_output = [ '@BASENAME@_reader.h' ]
 endif
 
+# Debugging depfile rules:
+#
+# Ninja immediately consumes (reads and deletes) depfiles.
+# For debugging, rename the file so it does not match, e.g:
+# '--depfile=@DEPFILE@,x'
+# then `ag -g ,x` in the build dir to find generated depfiles,
+# or `find . -type f -name '*,x'` if find is preferable.
+#
+# With the normal build rules (no rename hack), enable only
+# monster_test, the build, then cd build
+# ninja
+# ninja
+# Second time, nothing to build.
+# touch ../test/monster_test/include_test2.fbs
+# ninja
+# should rebuild, next time it shouldn't, try also with touch .../monster.fbs
 
-# NOTE: disable the solo test below when testing depfile because the
-# solo test explicitly states dependencies that hides effects of
-# scanning. Comment out depfile to debug the result because ninja
-# deletes them when it finds them.
 flatcc_gen = generator(flatcc,
     output  : flatcc_gen_output,
-    #depfile: '@BASENAME@' + '.fbs.d',
-    arguments : ['-vwr', '-o', '@BUILD_DIR@',
-        #'--depfile', '@DEPFILE@',
-        #'--depfile', '@BASENAME@'.format() + '.fbs.d',
-        '@INPUT@'])
+    depfile: '@BASENAME@' + '.fbs.d',
+    # with explicit --depfile relative to cwd, i.e. build root,
+    # depfile: name can be chosen relatively freely.
+    arguments : ['-vwr', '-o', '@BUILD_DIR@', '--depfile=@DEPFILE@', '@INPUT@'])
+    # With flatcc -d option, depfile: must be exactly as listed
+    #arguments : ['-vwrd', '-o', '@BUILD_DIR@', '@INPUT@'])
 
 flatcc_json_gen = generator(flatcc,
     output  : flatcc_json_gen_output,
-    #depfile: '@BASENAME@' + '.fbs.d',
-    arguments : ['-vwr', '--json','-o', '@BUILD_DIR@', 
-            #'--depfile=@DEPFILE@', '--deptarget=@BASENAME@_reader.h',
-            #'--depfile=@BASENAME@.fbs.d', '--deptarget=@BASENAME@_reader.h',
+    depfile: '@BASENAME@' + '.fbs.d',
+    arguments : ['-vwrd', '--json','-o', '@BUILD_DIR@', 
             '@INPUT@'])
 
+# use this for debugging generator rules, or for performing only basic sanity checks
+# option subject to change.
+if get_option('xflatcc_monster_test_only')
+subdir('monster_test')
+else
 subdir('cgen_test')
 subdir('monster_test')
 subdir('monster_test_solo')
@@ -149,4 +166,4 @@ run_target('flatbench',
         benchflatc, '&&',
         benchraw, '&&',
         benchflatccjson])
-
+endif # monster_test only

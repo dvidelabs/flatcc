@@ -8,3 +8,4 @@ option('flatcc_use_default_library', type : 'boolean', value : false)
 # both ninja build and in flatcc. For now the myschema_reader.h is used
 # to drive the depencies.
 option('xflatcc_multi_dep_targets', type : 'boolean', value : false)
+option('xflatcc_monster_test_only', type : 'boolean', value : false)
