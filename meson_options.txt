@@ -4,8 +4,26 @@ option('flatcc_reflection', type : 'boolean', value : true)
 option('flatcc_fast_double', type : 'boolean', value : false)
 option('flatcc_use_default_library', type : 'boolean', value : false)
 
+# Do not rely no experimental xflatcc options for production,
+# these are subject to change without notice.
+
 # dealing with missing support for proper multi output dependencies in
 # both ninja build and in flatcc. For now the myschema_reader.h is used
 # to drive the depencies.
 option('xflatcc_multi_dep_targets', type : 'boolean', value : false)
+
+# Removes all tests, except the important `monster_test`.
+# Useful for smaller test suite on new build targets
+# and for testing dependency rules without noise.
 option('xflatcc_monster_test_only', type : 'boolean', value : false)
+
+# WIP
+# test fails on incorrect output path.
+option('xflatcc_monster_test_concat_explicit', type : 'boolean', value : false)
+
+# WIP
+# The binary schema can be generated via a custom rule, or via a
+# generator. The generator fails test, the custom rule rebuilds too
+# often.
+option('xflatcc_reflection_test_custom', type : 'boolean', value : true)
+

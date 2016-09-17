@@ -114,18 +114,21 @@ flatcc_gen = generator(flatcc,
     depfile: '@BASENAME@' + '.fbs.d',
     # with explicit --depfile relative to cwd, i.e. build root,
     # depfile: name can be chosen relatively freely.
-    arguments : ['-vwr', '-o', '@BUILD_DIR@', '--depfile=@DEPFILE@', '@INPUT@'])
+    arguments : [ '-vwr', '-o', '@BUILD_DIR@', '--depfile=@DEPFILE@', '@INPUT@' ])
     # With flatcc -d option, depfile: must be exactly as listed
     #arguments : ['-vwrd', '-o', '@BUILD_DIR@', '@INPUT@'])
 
 flatcc_json_gen = generator(flatcc,
     output  : flatcc_json_gen_output,
     depfile: '@BASENAME@' + '.fbs.d',
-    arguments : ['-vwrd', '--json','-o', '@BUILD_DIR@', 
-            '@INPUT@'])
+    arguments : [ '-vwrd', '--json','-o', '@BUILD_DIR@', '@INPUT@' ])
 
-# use this for debugging generator rules, or for performing only basic sanity checks
-# option subject to change.
+flatcc_bfbs_gen = generator(flatcc,
+    output  : '@BASENAME@' + '.bfbs',
+    depfile: '@BASENAME@' + '.fbs.d',
+    arguments : [ '-rd', '--schema', '-o', '@BUILD_DIR@', '@INPUT@' ])
+
+# Simply testing for debugging build rules and for smoke testing new platforms.
 if get_option('xflatcc_monster_test_only')
 subdir('monster_test')
 else
@@ -139,16 +142,13 @@ subdir('load_test')
 subdir('json_test')
 subdir('flatc_compat')
 
-
+# We disable this during development of breaking changes in code generation.
 if get_option('flatcc_reflection')
     subdir('reflection_test')
 else
     message('warning: reflection disabled')
 endif
 
-# Note: benchmark code isn't an ideal match with mesons currrent
-# benchmark wrapper as it repeats calling test and includes warmup time.
-# but benchmark can also be built as a direct target with ninja.
 subdir('benchmark/benchflatcc')
 subdir('benchmark/benchflatc')
 subdir('benchmark/benchraw')

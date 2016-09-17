@@ -19,25 +19,36 @@ build_root = meson.build_root()
 concat_gen = custom_target(name,
     output : 'monster_test.h',
     input : [ monster_test_dir + '/monster_test.fbs' ],
-    depfile: '@OUTPUT@.depends',
+    depfile: '@BASENAME@.depends-custom-extension',
+    # we don't actually need -o with --outfile.
     command : [flatcc, '-cwvr', '-o', build_root,
         '--depfile', '@DEPFILE@',
         '--outfile', '@OUTPUT@', '@INPUT@'])
 
+test(name,
+    executable(name, name + '.c',
+        concat_gen,
+        link_with : libflatccrt,
+        include_directories : testinc_dir))
+
 # Test manual build of dependent files without recursion.
+if get_option('xflatcc_monster_test_concat_explicit')
+
+name2 = name + '_explicit'
+
 concat_gen_explicit = custom_target(name + '_explicit',
     output : 'monster_test_explicit.h',
     input : [
-        monster_test_dir + '/monster_test.fbs',
-        monster_test_dir + '/include_test1.fbs',
-        monster_test_dir + '/include_test2.fbs' ],
-    command : [
-        flatcc, '-cwv', '-o', build_root,
         monster_test_dir + '/include_test2.fbs',
-        monster_test_dir + '/include_test1.fbs', '@INPUT@' ])
+        monster_test_dir + '/include_test1.fbs',
+        monster_test_dir + '/monster_test.fbs',
+    ],
+    command : [ flatcc, '-cwv', '@INPUT@', '--outfile', '@OUTPUT@' ])
 
-test(name,
-    executable(name, name + '.c',
-        prefix_gen,
+
+test(name2,
+    executable(name2, name2 + '.c',
+        concat_gen_explicit,
         link_with : libflatccrt,
         include_directories : testinc_dir))
+endif
