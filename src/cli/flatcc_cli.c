@@ -19,11 +19,12 @@ void usage(FILE *fp)
             "  -w                         Generate builders (writable buffers)\n"
             "  -r                         Recursively generate included schema files\n"
             "  -a                         Generate all (like -cwvr)\n"
+            "  -d                         Dependency file like gcc -MMD\n"
             "  -I<inpath>                 Search path for include files (multiple allowed)\n"
             "  -o<outpath>                Write files relative to this path (dir must exist)\n"
             "  --stdout                   Concatenate all output to stdout\n"
             "  --outfile=<file>           Like --stdout, but to a file.\n"
-            "  --depfile=<file>           Dependency file like gcc -MMD.\n"
+            "  --depfile=<file>           Dependency file like gcc -MF.\n"
             "  --deptarget=<file>         Override --depfile target like gcc -MT.\n"
             "  --prefix=<prefix>          Add prefix to all generated names (no _ added)\n"
             "  --common-prefix=<prefix>   Replace 'flatbuffers' prefix in common files\n"
@@ -47,29 +48,39 @@ void help(FILE *fp)
         "\n"
         "This is a flatbuffer compatible compiler implemented in C generating C\n"
         "source. It is largely compatible with the flatc compiler provided by\n"
-        "Google Fun Propulsion Lab but does not support JSON objects or binary schema.\n"
+        "Google Fun Propulsion Lab but does not support JSON objects or binary\n"
+        "schema.\n"
         "\n"
         "By example 'flatcc monster.fbs' generates a 'monster.h' file which\n"
         "provides functions to read a flatbuffer. A common include header is also\n"
-        "required. The common file is generated with the -c option. The reader has\n"
-        "no external dependencies.\n"
+        "required. The common file is generated with the -c option. The reader\n"
+        "has no external dependencies.\n"
         "\n"
-        "The -w option enables code generation to write buffers: `flatbuffers\n"
-        "-w monster.fbs` will generate `monster.h` and `monster_builder.h`, and\n"
-        "also a builder specific common file with the -cw option. The builder\n"
-        "must link with the extern `flatbuilder` library.\n"
+        "The -w option enables code generation to write buffers: `flatbuffers -w\n"
+        "monster.fbs` will generate `monster.h` and `monster_builder.h`, and also\n"
+        "a builder specific common file with the -cw option. The builder must\n"
+        "link with the extern `flatbuilder` library.\n"
         "\n"
-        "-v generates a verifier file per schema. It depends on the runtime library\n"
-        "but not on other generated files, except other included verifiers.\n"
+        "-v generates a verifier file per schema. It depends on the runtime\n"
+        "library but not on other generated files, except other included\n"
+        "verifiers.\n"
         "\n"
-        "All C output can be concated to a single file using --stdout or --outfile\n"
-        "with content produced in dependency order.\n"
+        "All C output can be concated to a single file using --stdout or\n"
+        "--outfile with content produced in dependency order. The outfile is\n"
+        "relative to cwd.\n"
         "\n"
-        "--depfile generates a depenency file like gcc -MMD -MF of include paths with\n"
-        "<schema>_reader_h as target, or the --outfile file target if given, or the\n"
-        "binary schema with --schema.\n"
+        "-d generates a dependency file, e.g. 'monster.fbs.d' in the output dir.\n"
         "\n"
-        "--deptarget overrides the chosen target for --depfile, simiar to gcc -MT.\n"
+        "--depfile implies -d but accepts an explicit filename with a path\n"
+        "relative to cwd. The dependency files content is a gnu make rule with a\n"
+        "target followed by the included schema files The target must match how\n"
+        "it is seen by the rest of the build system and defaults to e.g.\n"
+        "'monster_reader.h' or 'monster.bfbs' paths relative to the working\n"
+        "directory.\n"
+        "\n"
+        "--deptarget overrides the default target for --depfile, simiar to gcc -MT.\n"
+        "\n"
+
 #if FLATCC_REFLECTION
         "--schema will generate a binary .bfbs file for each top-level schema file.\n"
         "Can be used with --stdout if no C output is specified. When used with multiple\n"
@@ -175,6 +186,8 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
     }
 #if FLATCC_REFLECTION
     if (match_long_arg("-schema-namespace", s, n)) {
+        fprintf(stderr, "warning: --schema-namespace is deprecated\n"
+                        "         a namespace is added by default and should always be present\n");
         if (!a) {
             fprintf(stderr, "--schema-namespace option needs an argument\n");
             exit(-1);
@@ -201,6 +214,7 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
             exit(-1);
         }
         opts->gen_depfile = a;
+        opts->gen_dep = 1;
         return v ? noarg : nextarg;
     }
     if (match_long_arg("-deptarget", s, n)) {
@@ -278,6 +292,9 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         return noarg;
     case 'r':
         opts->cgen_recursive = 1;
+        return noarg;
+    case 'd':
+        opts->gen_dep = 1;
         return noarg;
     case 'a':
         opts->cgen_reader = 1;
