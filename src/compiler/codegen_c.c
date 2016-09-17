@@ -9,13 +9,12 @@ int fb_open_output_file(fb_output_t *out, const char *name, size_t len, const ch
     int ret;
     const char *prefix = out->opts->outpath ? out->opts->outpath : "";
     size_t prefix_len = strlen(prefix);
-    const char *mode = out->opts->gen_append ? "ab" : "wb";
 
     if (out->fp) {
         return 0;
     }
     checkmem((path = fb_create_join_path_n(prefix, prefix_len, name, len, ext, 1)));
-    out->fp = fopen(path, mode);
+    out->fp = fopen(path, "wb");
     ret = 0;
     if (!out->fp) {
         fprintf(stderr, "error opening file for write: %s\n", path);
@@ -52,6 +51,7 @@ int fb_init_output_c(fb_output_t *out, fb_options_t *opts)
     const char *nsc;
     char *path = 0;
     size_t n;
+    const char *mode = opts->gen_append ? "ab" : "wb";
     const char *prefix = opts->outpath ? opts->outpath : "";
     int ret = -1;
 
@@ -86,7 +86,7 @@ int fb_init_output_c(fb_output_t *out, fb_options_t *opts)
         return 0;
     }
     checkmem((path = fb_create_join_path(prefix, out->opts->gen_outfile, "", 1)));
-    out->fp = fopen(path, "wb");
+    out->fp = fopen(path, mode);
     if (!out->fp) {
         fprintf(stderr, "error opening file for write: %s\n", path);
         ret = -1;
