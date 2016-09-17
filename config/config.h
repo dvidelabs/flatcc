@@ -383,7 +383,7 @@
 
 /*
  * Add uoffset length field before buffer. This is not a valid buffer
- * then but can be used to concatenate multiple files and it is
+ * then but can be used to outfileenate multiple files and it is
  * compatible with the layout of nested buffers that have a similar
  * prefix. The prefix is a uoffset_t field.
  */

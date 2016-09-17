@@ -4,15 +4,7 @@
 /* Ensures portable headers are included such as inline. */
 #include "config.h"
 #include "fileio.h"
-
-/* `strnlen` not widely supported. */
-static inline size_t pstrnlen(const char *s, size_t max_len)
-{
-    const char *end = memchr (s, 0, max_len);
-    return end ? (size_t)(end - s) : max_len;
-}
-#undef strnlen
-#define strnlen pstrnlen
+#include "pstrutil.h"
 
 char *fb_copy_path_n(const char *path, size_t len)
 {

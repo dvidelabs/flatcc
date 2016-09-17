@@ -2,7 +2,7 @@
 
 ## [0.3.5-pre]
 - Refactoring of C code generator to support features below.
-- Add --concat option similar to --stdout, but to a file.
+- Add --outfile option similar to --stdout, but to a file.
 - Add --depfile and --deptarget options to produce dependency.
 - Allow some test cases to accept arguments over hardcoded path.
 

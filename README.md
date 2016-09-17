@@ -93,7 +93,7 @@ Main features supported as of 0.3.4:
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
 - generated FlatBuffers JSON parser and printer for C
-- ability to concatenate all output into one file
+- ability to outfileenate all output into one file
 - binary schema (.bfbs) generation
 - pre-generated reflection headers for handling .bfbs files
 - cli schema compiler and library for compiling schema
@@ -307,11 +307,11 @@ set by (-o).
 Note that the binary schema output can be with or without namespace
 prefixes and the default differs from `flatc` which strips namespaces.
 The binary schema can also have a non-standard size field prefixed so
-multiple schema can be concatenated in a single file if so desired (see
+multiple schema can be outfileenated in a single file if so desired (see
 also the bfbs2json example).
 
 Files can be generated to stdout using (--stdout). C headers will be
-ordered and concatenated, but otherwise identical to the separate file
+ordered and outfileenated, but otherwise identical to the separate file
 output. Each include statement is guarded so this will not lead to
 missing include files.
 
@@ -965,7 +965,7 @@ or `myschema_builder.h` all these dependencies are handled correctly.
 
 Note: `libflatcc.a` can only parse a single schema when the schema is
 given as a memory buffer, but can handle the above when given a
-filename. It is possible to concatename schema files, but a `namespace;`
+filename. It is possible to outfileename schema files, but a `namespace;`
 declaration must be inserted as a separator to revert to global
 namespace at the start of each included file. This can lead to subtle
 errors because if one parent schema includes two child schema `a.fbs`

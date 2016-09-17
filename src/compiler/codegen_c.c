@@ -1,6 +1,6 @@
 #include "codegen_c.h"
 #include "fileio.h"
-#include <ctype.h>
+#include "pstrutil.h"
 #include "../../external/hash/str_set.h"
 
 int fb_open_output_file(fb_output_t *out, const char *name, size_t len, const char *ext)
@@ -27,7 +27,7 @@ int fb_open_output_file(fb_output_t *out, const char *name, size_t len, const ch
 void fb_close_output_file(fb_output_t *out)
 {
     /* Concatenate covers either stdout or a file. */
-    if (!out->opts->gen_concat && !out->opts->gen_stdout && out->fp) {
+    if (!out->opts->gen_outfile && !out->opts->gen_stdout && out->fp) {
         fclose(out->fp);
         out->fp = 0;
     }
@@ -49,9 +49,9 @@ void fb_end_output_c(fb_output_t *out)
 int fb_init_output_c(fb_output_t *out, fb_options_t *opts)
 {
     const char *nsc;
-    char *p;
     char *path = 0;
     size_t n;
+    const char *mode = opts->gen_append ? "ab" : "wb";
     const char *prefix = opts->outpath ? opts->outpath : "";
     int ret = -1;
 
@@ -74,24 +74,19 @@ int fb_init_output_c(fb_output_t *out, fb_options_t *opts)
         out->nsc[n] = '_';
         out->nsc[n + 1] = '\0';
     }
-    strcpy(out->nscup, out->nsc);
-    for (p = out->nscup; *p; ++p) {
-        *p = toupper(*p);
-    }
-    if (p != out->nscup) {
-      p[-1] = '\0'; /* No trailing _ */
-    }
+    pstrcpyupper(out->nscup, out->nsc);
+    out->nscup[n] = '\0'; /* No trailing _ */
     out->spacing = opts->cgen_spacing;
     if (opts->gen_stdout) {
         out->fp = stdout;
         return 0;
     }
-    if (!out->opts->gen_concat) {
+    if (!out->opts->gen_outfile) {
         /* Normal operation to multiple header filers. */
         return 0;
     }
-    checkmem((path = fb_create_join_path(prefix, out->opts->gen_concat, "", 1)));
-    out->fp = fopen(path, "wb");
+    checkmem((path = fb_create_join_path(prefix, out->opts->gen_outfile, "", 1)));
+    out->fp = fopen(path, mode);
     if (!out->fp) {
         fprintf(stderr, "error opening file for write: %s\n", path);
         ret = -1;
