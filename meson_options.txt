@@ -17,8 +17,8 @@ option('xflatcc_multi_dep_targets', type : 'boolean', value : false)
 # and for testing dependency rules without noise.
 option('xflatcc_monster_test_only', type : 'boolean', value : false)
 
-# WIP
-# The binary schema can be generated via a custom rule, or via a
-# generator. The generator test currently fails.
+# Currently (meson 0.34) it is not possible to generate .bfbs. files
+# because there must be a registered compiler that handles .bfbs
+# extension, but it is possible to use a custom target that does.
 option('xflatcc_reflection_test_custom', type : 'boolean', value : true)
 

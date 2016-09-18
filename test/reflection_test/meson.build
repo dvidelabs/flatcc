@@ -10,16 +10,15 @@ bfbs_monster_test = custom_target('monster_test.bfbs',
     depfile : 'monster_test.fbs.d',
     command : [ flatcc, '--schema', '-d', '-o', out_dir, '--depfile', '@DEPFILE@', '@INPUT@' ])
 
-test(name,
-    executable(name, name + '.c',
-        bfbs_monster_test,
-        link_with : libflatcc,
-        include_directories : testinc_dir),
-    args: out_dir + '/monster_test.bfbs')
-
 else
 
-bfbs_monster_test = flatcc_gen.process(monster_test_fbs)
+# Currently (meson 0.34) it is not possible to generate .bfbs. files
+# because there must be a registered compiler that handles .bfbs
+# extension.
+bfbs_monster_test = flatcc_bfbs_gen.process(monster_test_fbs)
+
+endif
+
 test(name,
     executable(name, name + '.c',
         bfbs_monster_test,
@@ -27,4 +26,3 @@ test(name,
         include_directories : testinc_dir),
     args: out_dir + '/monster_test.bfbs')
 
-endif

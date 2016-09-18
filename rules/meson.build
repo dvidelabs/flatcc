@@ -95,8 +95,11 @@ flatcc_json_gen = generator(flatcc,
     depfile: '@BASENAME@' + '.fbs.d',
     arguments : [ '-vwrd', '--json','-o', '@BUILD_DIR@', '@INPUT@' ])
 
+# Note: we cannot currently (mesono 0.34) define a genrator the produces
+# and output file with a .bfbs extension. Only things like .c, .h, .cpp
+# files can be generated. We leave the rule for future reference.
 flatcc_bfbs_gen = generator(flatcc,
-    output  : '@BASENAME@' + '.bfbs',
+    output  : [ '@BASENAME@' + '.bfbs' ],
     depfile: '@BASENAME@' + '.fbs.d',
     arguments : [ '-rd', '--schema', '-o', '@BUILD_DIR@', '@INPUT@' ])
 
