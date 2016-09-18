@@ -7,11 +7,14 @@ project('flatcc', 'c',
 
 buildtype = get_option('buildtype')
 
-# This doesn't affect test cases or benchmarks unless they
-# explicitly add test_c_args.
+# Meson 0.34 does not support NDEBUG
+#
+# Test cases do not use global arguments by design and therefore miss
+# the NDEBUG flag, but we add test_c_args to benchmarks (25+% slowdown
+# without).
 if buildtype == 'release' or buildtype == 'minsize'
     test_c_args = ['-DNDEBUG']
-    add_global_arguments('-DFOO=bar', language : 'c')
+    add_global_arguments('-DNDEBUG', language : 'c')
 else
     test_c_args = []
 endif

@@ -1,8 +1,3 @@
-# NOTE:
-# test cases do not generally use the test_c_args setting we have added
-# to work around missing NDEBUG in meson 0.34 (and because tests by
-# design don't use added global args), but we do add it in benchmarks.
-
 build_root = meson.build_root()
 test_dir = meson.current_source_dir()
 bench_dir = test_dir + '/benchmark'
