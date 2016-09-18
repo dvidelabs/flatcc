@@ -4,9 +4,12 @@
 
 set -e
 
+echo running flatcc post install check
+
 CC=${CC:-cc}
 
-flatcc --version
+flatcc --version || \
+    echo flatcc executable not available for post-install check - might be a path issue
 
 SMOKE=$TMPDIR/flatccsmoke
 
@@ -17,8 +20,6 @@ flatcc -a test/monster_test/monster_test.fbs -o $SMOKE
 $CC -lflatccrt test/monster_test/monster_test.c -I $SMOKE -o $SMOKE/monster
 $SMOKE/monster
 
-flatcc -a test/monster_test/monster_test.fbs -o $SMOKE
-$CC -lflatccrt_sha test/monster_test/monster_test.c -I $SMOKE -o $SMOKE/monster_sha
-$SMOKE/monster_sha
-
 rm -rf $SMOKE
+
+echo flatcc post install check completed successfully

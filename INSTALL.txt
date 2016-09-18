@@ -42,3 +42,15 @@ rm -rf $DESTDIR/include/flatcc/*
 rmdir $DESTDIR/include/flatcc
 
 but please be careful and double check things on you system first.
+
+
+DEBUG LIBRARIES
+
+The meson install script does not suffix libraries with _d in debug
+build and the install script (which is just a guideline) does not
+install debug libraries. The CMake installer does/did this at some
+point. If this is needed, simply run with --buildtype=debug and
+rename the libraries with the _d suffix. Meson does not do this as
+it would break the concept of transparent building of different
+configurations from source. For debugging, it is likely better to
+link against a source tree build anyway.

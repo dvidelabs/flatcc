@@ -13,11 +13,12 @@ buildtype = get_option('buildtype')
 # Test cases do not use global arguments by design and therefore miss
 # the NDEBUG flag, but we add test_c_args to benchmarks (25+% slowdown
 # without).
+test_c_args = []
 if buildtype == 'release' or buildtype == 'minsize'
-    test_c_args = ['-DNDEBUG']
-    add_global_arguments('-DNDEBUG', language : 'c')
-else
-    test_c_args = []
+    if not meson.is_subproject()
+        add_global_arguments('-DNDEBUG', language : 'c')
+        test_c_args =[ '-DNDEBUG' ]
+    endif
 endif
 
 if get_option('xflatcc_gen_version')
@@ -95,19 +96,21 @@ flatcc_src = [
     'external/hash/str_set.c',
     flatccrt_src ]
 
-# A static runtime library is really important for flatcc to work well
-# so we must use separate names for shared or static libraries, otherwise
-# linker options gets messy and won't work at all on OS-X.
-libflatccrt = static_library('flatccrt', flatccrt_src, install : true,
+libflatccrt_sta = static_library('flatccrt', flatccrt_src, install : true, 
         include_directories : inc_dir)
 
-libflatccrt_sha = shared_library('flatccrt_sha', flatccrt_src, install : true,
+libflatccrt_sha = shared_library('flatccrt', flatccrt_src, install : true,
         include_directories : inc_dir)
 
-# Use defaul_library linkage for the compiler library: We don't care as
-# much for the compiler and some package managers might complain.
-libflatcc = library('flatcc', flatcc_src, install : true,
+libflatccrt = libflatccrt_sta
+
+libflatcc_sha = shared_library('flatcc', flatcc_src, install : true,
         include_directories : inc_dir)
+
+libflatcc_sta = static_library('flatcc', flatcc_src, install : true,
+        include_directories : inc_dir)
+
+libflatcc = libflatcc_sta
 
 flatcc = executable('flatcc', 'src/cli/flatcc_cli.c', install : true,
     link_with : libflatcc,

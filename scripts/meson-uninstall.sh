@@ -1,11 +1,10 @@
 #!/bin/sh
 
-DESTDIR=${DESTDIR:-/usr/local}
+PREFIX=${PREFIX:-/usr/local}
+
 RM=false
 RMALL=false
 RMDIR=false
-
-echo "DESTDIR=$DESTDIR"
 
 case "$1" in
     dry-run=yes)
@@ -22,44 +21,46 @@ case "$1" in
     *)
         echo "This script is a an example of how one might uninstall flatcc"
         echo "This script is not designed for your system"
-        echo "If you insist, use at own script"
-        echo "set DESTDIR variable accordingly"
-        echo "then call again with $(basename $0) dry-run=yes"
-        echo "then call again with $(basename $0) confirm-uninstall=yes"
+        echo "If you insist, be careful and set PREFIX suitably,"
+        echo "it is not the same as DESTDIR if used during install."
+        echo
+        echo "test with $(basename $0) dry-run=yes"
+        echo "then execute with $(basename $0) confirm-uninstall=yes"
         exit -1
 esac
 
+echo starting flatcc uninstall in $PREFIX
 
 found=no
-if [ -f $DESTDIR/bin/flatcc ]; then
-    $RM $DESTDIR/bin/flatcc
+
+if [ -f $PREFIX/bin/flatcc ]; then
+    $RM $PREFIX/bin/flatcc
     found=yes
 fi
 
-#if [ -e "$DESTDIR/lib/libflatcc*" ]; then
-for f in $DESTDIR/include/flatcc/*; do
+for f in $PREFIX/include/flatcc/*; do
     if [ -e "$f" ]; then
-        $RMALL $DESTDIR/lib/libflatcc*
+        $RMALL $PREFIX/lib/libflatcc*
         found=yes
         break;
     fi
 done
 
-if [ -d $DESTDIR/include/flatcc ]; then
-    for f in $DESTDIR/include/flatcc/*; do
+if [ -d $PREFIX/include/flatcc ]; then
+    for f in $PREFIX/include/flatcc/*; do
         if [ -e "$f" ]; then
-            $RMALL $DESTDIR/include/flatcc/*
+            $RMALL $PREFIX/include/flatcc/*
             found=yes
             break
         fi
     done
-    $RMDIR $DESTDIR/include/flatcc
+    $RMDIR $PREFIX/include/flatcc
     found=yes
 fi
 
 if [ "$found" == "no" ]; then
-    echo "no installed files detected"
+    echo "no installed files detected in $PREFIX"
 else
-    echo "files uninstalled"
+    echo "files uninstalled from $PREFIX"
 fi
 
