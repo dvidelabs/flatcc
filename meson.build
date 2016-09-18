@@ -19,6 +19,18 @@ else
     test_c_args = []
 endif
 
+if get_option('xflatcc_gen_version')
+revisition_tag = vcs_tag(input : 'config/version.in', 
+    output : 'revision',
+    command : [ 'git', 'rev-parse', 'HEAD' ],
+    fallback : 'n/a')
+
+version_tag = vcs_tag(input : 'config/version.in',
+    output : 'version',
+    command : [ 'git', 'describe', '--abbrev=0', '--tags' ],
+    fallback : 'n/a')
+endif
+
 # This meson project does not attempt to handle old gcc versions and for the
 # time being does not set aggressive warnings that requires extra attention
 # to compiler versions. This is more about making the project available

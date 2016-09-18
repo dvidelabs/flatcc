@@ -90,3 +90,6 @@ option('xflatcc_monster_test_only', type : 'boolean', value : false)
 
 option('xflatcc_reflection_test_custom', type : 'boolean', value : true)
 
+# Experimental support for automatically generating latest tag
+# and revision from source control.
+option('xflatcc_gen_version', type : 'boolean', value : false)
