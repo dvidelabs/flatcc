@@ -1,0 +1,44 @@
+Please note that build system support for install is not very well
+tested, so please be careful.
+
+To install using CMake - set up a cmake project as usual
+and use make or ninja install much like for Meson below
+which we document in more detail since it is less known.
+Also be aware of scripts/post-install-check.sh
+
+See also Build Instructions in README.md.
+
+To install with meson from root of project tree see
+scripts/meson-install.sh as a starting point.
+
+The runtime library is (or should be) installed as a static libflatccrt
+and a shared library libflatccrt_sha. The compiler library libflatccrt
+is installed as either a shared or a dynamic library depending on build
+flags. The static library version is really important for efficient
+flatbuffer performance as it is designed for whole program static
+inlining. Older compilers should use object files instead for the same
+reason. While the runtime library versions could have the same name with
+different extensions, this is very difficult to use, and currently
+impossible on MacOS.
+
+If installing documentation, please be aware that README.md should
+be copied together with in content in the doc directory. This is not
+part of the build install procedure.
+
+UNINSTALL:
+
+There is a meson-uninstall.sh script that should only be used as a
+guideline since it is not tested well, and likely not the system of
+choice.
+
+Simplified, the following files are to be removed:
+
+#!/bin/sh
+set -e
+DESTDIR=/usr/local
+rm $DESTDIR/bin/flatcc
+rm -rf $DESTDIR/lib/libflatcc*
+rm -rf $DESTDIR/include/flatcc/*
+rmdir $DESTDIR/include/flatcc
+
+but please be careful and double check things on you system first.

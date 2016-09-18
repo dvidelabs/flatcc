@@ -7,6 +7,7 @@ project('flatcc', 'c',
 
 buildtype = get_option('buildtype')
 
+
 # Meson 0.34 does not support NDEBUG
 #
 # Test cases do not use global arguments by design and therefore miss
@@ -20,7 +21,7 @@ else
 endif
 
 if get_option('xflatcc_gen_version')
-revisition_tag = vcs_tag(input : 'config/version.in', 
+revisition_tag = vcs_tag(input : 'config/version.in',
     output : 'revision',
     command : [ 'git', 'rev-parse', 'HEAD' ],
     fallback : 'n/a')
@@ -38,6 +39,11 @@ endif
 # versions more carefully.
 
 inc_dir = include_directories('include', 'config', 'external')
+
+# TODO: this likely installs in /usr/local/include/flatcc/flatcc
+# but better safe than sorry
+install_subdir('include/flatcc', install_dir: 'include')
+
 
 if get_option('flatcc_portable')
     add_global_arguments('-DFLATCC_PORTABLE', language : 'c')
@@ -89,26 +95,21 @@ flatcc_src = [
     'external/hash/str_set.c',
     flatccrt_src ]
 
-# We build both library types because shared libraries are good
-# with a lot of different buffers around
-# but static libraries are essential for optimizing high performance
-# builders and json parsers.
-# However, to be nice we also support the 'default_library' convention.
-if get_option('flatcc_use_default_library')
-    libflatccrt = library('flatccrt', flatccrt_src, include_directories : inc_dir)
-    libflatcc = library('flatcc', flatcc_src, include_directories : inc_dir)
-else
-    libflatccrt_sha = shared_library('flatccrt', flatccrt_src, include_directories : inc_dir)
-    libflatccrt_sta = static_library('flatccrt', flatccrt_src, include_directories : inc_dir)
-    libflatccrt = libflatccrt_sta
+# A static runtime library is really important for flatcc to work well
+# so we must use separate names for shared or static libraries, otherwise
+# linker options gets messy and won't work at all on OS-X.
+libflatccrt = static_library('flatccrt', flatccrt_src, install : true,
+        include_directories : inc_dir)
 
-    libflatcc_sha = shared_library('flatcc', flatcc_src, include_directories : inc_dir)
-    libflatcc_sta = static_library('flatcc', flatcc_src, include_directories : inc_dir)
-    libflatcc = libflatcc_sta
-endif
+libflatccrt_sha = shared_library('flatccrt_sha', flatccrt_src, install : true,
+        include_directories : inc_dir)
 
+# Use defaul_library linkage for the compiler library: We don't care as
+# much for the compiler and some package managers might complain.
+libflatcc = library('flatcc', flatcc_src, install : true,
+        include_directories : inc_dir)
 
-flatcc = executable('flatcc', 'src/cli/flatcc_cli.c',
+flatcc = executable('flatcc', 'src/cli/flatcc_cli.c', install : true,
     link_with : libflatcc,
     include_directories : inc_dir)
 

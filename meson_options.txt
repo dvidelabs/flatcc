@@ -31,27 +31,6 @@ option('flatcc_reflection', type : 'boolean', value : true)
 
 option('flatcc_fast_double', type : 'boolean', value : false)
 
-# The meson build system has a 'default_library' option, and the default
-# library is shared if nothing else is done (e.g. in a parent project).
-#
-# We normally want a static runtime library even if a parent project
-# prefers dynamic linking because the runtime library is designed to
-# heavily inline with modern compilers such as clang.
-#
-# The variable libflatccrt is static with the this option false, and
-# in addition libflatccrt_sha and libflatccrt_sta becomes avaialable
-# so programs can choose either explicitly (both types are built
-# physically, but the build times are really fast).
-#
-# For system installation it is also reasonable to install both version
-# of libraries, but be aware that the linker option --whole-archive
-# may then be needed to select the static version when linking a
-# user program.
-#
-# See also the main meson.build file.
-
-option('flatcc_use_default_library', type : 'boolean', value : false)
-
 # Only build libraries, not samples, tests, or benchmarks.
 # This option is implied true when building as a subproject
 # regardless of this setting.
