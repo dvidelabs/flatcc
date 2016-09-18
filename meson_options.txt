@@ -19,7 +19,6 @@ option('xflatcc_monster_test_only', type : 'boolean', value : false)
 
 # WIP
 # The binary schema can be generated via a custom rule, or via a
-# generator. The generator fails test, the custom rule rebuilds too
-# often.
+# generator. The generator test currently fails.
 option('xflatcc_reflection_test_custom', type : 'boolean', value : true)
 
