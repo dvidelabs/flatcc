@@ -97,9 +97,11 @@ flatcc = executable('flatcc', 'src/cli/flatcc_cli.c',
     link_with : libflatcc,
     include_directories : inc_dir)
 
+if not get_option('flatcc_disable_tests')
 if not meson.is_subproject()
     # For end user programs, samples, and test.
     subdir('rules')
     subdir('samples')
     subdir('test')
+endif
 endif

@@ -1,24 +1,92 @@
+# Use this for some compilers that doesn't C11 standard.
+# It is not needed for some non-compliant compilers such as
+# recent gcc and clang.
+
 option('flatcc_portable', type : 'boolean', value : false)
+
+# Use this option to trigger assertions on flatcc errors. Useful to
+# learn more about why api is used incorrectly or where a binary
+# flatbuffer fails a verify test.
+
 option('flatcc_debug_verify', type : 'boolean', value : false)
+
+# Controls the flatcc compilers ability to handle binary schema (bfbs).
+# Can be used to trim down flatcc and libflatcc size, but is primarily
+# for internal development because flatcc won't otherwise compile while
+# there are breaking changes in generated code.
+
 option('flatcc_reflection', type : 'boolean', value : true)
+
+# This option controls a special case in grisu3 but does not enable or
+# disable grisu3 floating point parsing, which is enabled without
+# special configuration elsewhere:
+#
+# Fast grisu3 string/floating point conversion still depends on strtod
+# for about 1-2% of the conversions in order to produce an exact result.
+# By allowing a minor difference in the least significant bits, this
+# dependeny can be avoided, and speed improved. Some strtod
+# implementations call strlen which is really slow on large JSON
+# buffers, and catastrophic on buffers that are not zero-terminated -
+# regardless of size. Most platforms have a decent strtod these days.
+
 option('flatcc_fast_double', type : 'boolean', value : false)
+
+# The meson build system has a 'default_library' option, and the default
+# library is shared if nothing else is done (e.g. in a parent project).
+#
+# We normally want a static runtime library even if a parent project
+# prefers dynamic linking because the runtime library is designed to
+# heavily inline with modern compilers such as clang.
+#
+# The variable libflatccrt is static with the this option false, and
+# in addition libflatccrt_sha and libflatccrt_sta becomes avaialable
+# so programs can choose either explicitly (both types are built
+# physically, but the build times are really fast).
+#
+# For system installation it is also reasonable to install both version
+# of libraries, but be aware that the linker option --whole-archive
+# may then be needed to select the static version when linking a
+# user program.
+#
+# See also the main meson.build file.
+
 option('flatcc_use_default_library', type : 'boolean', value : false)
 
-# Do not rely no experimental xflatcc options for production,
-# these are subject to change without notice.
+# Only build libraries, not samples, tests, or benchmarks.
+# This option is implied true when building as a subproject
+# regardless of this setting.
+
+option('flatcc_disable_tests', type : 'boolean', value : false)
+
+# --
+# -- For more detailed control, see also config/config.h compiler flags.
+# --
+
+
+#####################################################################
+#
+# EXPERIMENTAL SETTINGS
+#
+# Subject to change without notice.
+#
+#####################################################################
+
 
 # dealing with missing support for proper multi output dependencies in
 # both ninja build and in flatcc. For now the myschema_reader.h is used
 # to drive the depencies.
+
 option('xflatcc_multi_dep_targets', type : 'boolean', value : false)
 
 # Removes all tests, except the important `monster_test`.
 # Useful for smaller test suite on new build targets
 # and for testing dependency rules without noise.
+
 option('xflatcc_monster_test_only', type : 'boolean', value : false)
 
 # Currently (meson 0.34) it is not possible to generate .bfbs. files
 # because there must be a registered compiler that handles .bfbs
 # extension, but it is possible to use a custom target that does.
+
 option('xflatcc_reflection_test_custom', type : 'boolean', value : true)
 
