@@ -19,6 +19,9 @@ else
     test_c_args = []
 endif
 
+version_tag = vcs_tag(input : 'config/version.h.in', output : 'version.h', fallback : 'dev')
+
+
 # This meson project does not attempt to handle old gcc versions and for the
 # time being does not set aggressive warnings that requires extra attention
 # to compiler versions. This is more about making the project available
