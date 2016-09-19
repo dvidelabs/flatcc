@@ -405,19 +405,19 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
         /* Add self to set of visible schema. */
         ptr_set_insert_item(&P->schema.visible_schema, &P->schema, ht_keep);
         ret = fb_build_schema(P);
-    }
+        /*
+        * We choose to only generate optional .depends files for root level
+        * files. These will contain all nested files regardless of
+        * recursive file generation flags.
+        */
+        if (P->opts.gen_dep && is_root) {
+            ret = __flatcc_gen_depends_file(P);
+        }
 
-    /*
-     * We choose to only generate optional .depends files for root level
-     * files. These will contain all nested files regardless of
-     * recursive file generation flags.
-     */
-    if (P->opts.gen_dep && is_root) {
-        ret = __flatcc_gen_depends_file(P);
     }
 
 done:
-    checkfree(buf);
+    /* Parser owns buffer so don't free it here. */
     checkfree(path);
     checkfree(include_file);
     return ret;
