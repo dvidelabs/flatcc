@@ -1,6 +1,6 @@
 name = 'monster_build_rules'
 
-# We use the predefined flatcc custom target `fb_common` to build common
+# We use the predefined flatcc custom target `flatcc_common` to build common
 # files once, then use the `flatcc_gen` generator the builds header
 # files with reasonable flags without common headers.
 # `samples_inc_dir` is includes the directory for the generated common
@@ -12,10 +12,10 @@ name = 'monster_build_rules'
 
 test(name,
     executable(name, monster_src,
-        fb_common,
+        flatcc_common,
         flatcc_gen.process(monster_fbs),
         # See also main meson.build  where both a static and a shared
         # library is available. The static version will likely optimize
         # much better.
         link_with : libflatccrt,
-        include_directories : samples_inc_dir))
+        include_directories : flatcc_include))

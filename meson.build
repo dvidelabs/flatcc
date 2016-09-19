@@ -7,62 +7,53 @@ project('flatcc', 'c',
 
 buildtype = get_option('buildtype')
 
-
 # Meson 0.34 does not support NDEBUG
 #
 # Test cases do not use global arguments by design and therefore miss
 # the NDEBUG flag, but we add test_c_args to benchmarks (25+% slowdown
 # without).
 test_c_args = []
+c_args = []
 if buildtype == 'release' or buildtype == 'minsize'
     if not meson.is_subproject()
-        add_global_arguments('-DNDEBUG', language : 'c')
-        test_c_args =[ '-DNDEBUG' ]
+        c_args = ['-DNDEBUG']
+        test_c_args = c_args
     endif
 endif
 
 if get_option('xflatcc_gen_version')
 revisition_tag = vcs_tag(input : 'config/version.in',
     output : 'revision',
-    command : [ 'git', 'rev-parse', 'HEAD' ],
+    command : ['git', 'rev-parse', 'HEAD'],
     fallback : 'n/a')
 
 version_tag = vcs_tag(input : 'config/version.in',
     output : 'version',
-    command : [ 'git', 'describe', '--abbrev=0', '--tags' ],
+    command : ['git', 'describe', '--abbrev=0', '--tags'],
     fallback : 'n/a')
 endif
 
-# This meson project does not attempt to handle old gcc versions and for the
-# time being does not set aggressive warnings that requires extra attention
-# to compiler versions. This is more about making the project available
-# for other meson projects. The CMake build handles various compiler
-# versions more carefully.
-
 inc_dir = include_directories('include', 'config', 'external')
 
-# TODO: this likely installs in /usr/local/include/flatcc/flatcc
-# but better safe than sorry
 install_subdir('include/flatcc', install_dir: 'include')
 
-
-if get_option('flatcc_portable')
-    add_global_arguments('-DFLATCC_PORTABLE', language : 'c')
+if get_option('flatcc_portable') or meson.get_compiler('c').get_id() == 'msvc'
+    c_args = c_args + ['-DFLATCC_PORTABLE']
 endif
 
 if get_option('flatcc_debug_verify')
-    add_global_arguments('-DFLATCC_DEBUG_VERIFY=1', language : 'c')
+    c_args = c_args + ['-DFLATCC_DEBUG_VERIFY=1']
 endif
 
 if get_option('flatcc_fast_double')
-    add_global_arguments('-DGRISU3_PARSE_ALLOW_ERROR', '-DFLATCC_USE_GRISU3=1', language : 'c')
+    c_args = c_args + ['-DGRISU3_PARSE_ALLOW_ERROR', '-DFLATCC_USE_GRISU3=1']
 endif
 
 # Reflection must be disabled temporarily when making breaking changes.
 if get_option('flatcc_reflection')
-    add_global_arguments('-DFLATCC_REFLECTION=1', language : 'c')
+    c_args = c_args + ['-DFLATCC_REFLECTION=1']
 else
-    add_global_arguments('-DFLATCC_REFLECTION=0', language : 'c')
+    c_args = c_args + ['-DFLATCC_REFLECTION=0']
 endif
 
 flatccrt_src = [
@@ -70,7 +61,7 @@ flatccrt_src = [
     'src/runtime/emitter.c',
     'src/runtime/json_parser.c',
     'src/runtime/json_printer.c',
-    'src/runtime/verifier.c' ]
+    'src/runtime/verifier.c']
 
 flatcc_src = [
     'src/compiler/codegen_c.c',
@@ -94,33 +85,44 @@ flatcc_src = [
     'external/hash/cmetrohash64.c',
     'external/hash/ptr_set.c',
     'external/hash/str_set.c',
-    flatccrt_src ]
+    flatccrt_src]
 
 libflatccrt_sta = static_library('flatccrt', flatccrt_src, install : true, 
+        c_args : c_args,
         include_directories : inc_dir)
 
 libflatccrt_sha = shared_library('flatccrt', flatccrt_src, install : true,
+        c_args : c_args,
         include_directories : inc_dir)
 
-libflatccrt = libflatccrt_sta
-
 libflatcc_sha = shared_library('flatcc', flatcc_src, install : true,
+        c_args : c_args,
         include_directories : inc_dir)
 
 libflatcc_sta = static_library('flatcc', flatcc_src, install : true,
+        c_args : c_args,
         include_directories : inc_dir)
 
-libflatcc = libflatcc_sta
+if get_option('default_library') == 'static'
+    libflatccrt = libflatccrt_sta
+    libflatcc = libflatcc_sta
+else
+    libflatccrt = libflatccrt_sha
+    libflatcc = libflatcc_sha
+endif
 
 flatcc = executable('flatcc', 'src/cli/flatcc_cli.c', install : true,
     link_with : libflatcc,
+    c_args : c_args,
     include_directories : inc_dir)
+
+subdir('rules')
 
 if not get_option('flatcc_disable_tests')
 if not meson.is_subproject()
     # For end user programs, samples, and test.
-    subdir('rules')
     subdir('samples')
     subdir('test')
 endif
 endif
+

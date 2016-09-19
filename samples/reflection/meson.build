@@ -12,5 +12,5 @@ test(name,
     executable(name, name + '.c',
         bfbs_monster,
         link_with : libflatcc,
-        include_directories : samples_inc_dir),
+        include_directories : flatcc_include),
     args: bfbs_monster.full_path())

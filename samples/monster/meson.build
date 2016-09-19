@@ -9,7 +9,6 @@
 my_schema_dir = meson.current_source_dir() 
 my_gen_dir = meson.current_build_dir()
 
-
 my_monster_gen = custom_target('my_monster_builder',
     output : [
         'monster_builder.h', 'monster_reader.h',
@@ -19,6 +18,6 @@ my_monster_gen = custom_target('my_monster_builder',
 
 monster_sample = executable('monster', 'monster.c', my_monster_gen,
     link_with : libflatccrt,
-    include_directories : samples_inc_dir)
+    include_directories : flatcc_include)
 
 test('monster_sample', monster_sample)

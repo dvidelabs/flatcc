@@ -1,5 +1,5 @@
-fb_common_dir = meson.current_build_dir()
-
+# Must be a relative path for parent projects to work
+flatcc_include = include_directories('../include')
 
 # The flatcc compiler can generate common header files and
 # schema specific files in one operation, but meson isn't
@@ -18,11 +18,11 @@ fb_common_dir = meson.current_build_dir()
 # variations in the namespaces and file format, such as
 # large offset buffers.
 #
-fb_common = custom_target('flatbuffer_common',
+flatcc_common = custom_target('flatbuffer_common',
     output : [
         'flatbuffers_common_reader.h',
         'flatbuffers_common_builder.h'],
-    command : [ flatcc, '-cw', '-o', fb_common_dir])
+    command : [ flatcc, '-cw', '-o', meson.current_build_dir()])
 
 # flatcc -r generates included schema recursively, and -d lists included
 # schema files in a dependency file.  Ninja 1.7.1 (via meson 0.34)
@@ -43,7 +43,7 @@ fb_common = custom_target('flatbuffer_common',
 # do in a generator. For our test purposes this is ok, but as an example
 # for other users with active schema development, it is not ok.
 #
-# NOTE: make sure to add fb_common as input to C executables as a
+# NOTE: make sure to add flatcc_common as input to C executables as a
 # dependency when using the flatcc_gen generator. This is needed because
 # meson does not allow the generator to depend on a custom target as is.
 # (We could also just generate the custom headers here with flatcc -c

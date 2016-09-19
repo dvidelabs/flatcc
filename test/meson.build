@@ -1,8 +1,7 @@
-build_root = meson.build_root()
 test_dir = meson.current_source_dir()
-bench_dir = test_dir + '/benchmark'
+bench_dir = test_dir + '/benchmark/'
 
-testinc_dir = [ inc_dir, include_directories(fb_common_dir, bench_dir + '/benchmain')]
+testinc_dir = [ inc_dir, include_directories(bench_dir + '/benchmain')]
 
 
 # This schema is widely reused in various tests and has
