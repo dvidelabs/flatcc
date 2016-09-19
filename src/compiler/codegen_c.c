@@ -97,7 +97,7 @@ done:
     if (path) {
         free(path);
     }
-    return 0;
+    return ret;
 }
 
 static void _str_set_destructor(void *context, char *item)
