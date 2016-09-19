@@ -38,7 +38,6 @@
 
 static const char zero_pad[100];
 
-
 int verify_empty_monster(void *buffer)
 {
     /* Proper id given. */
@@ -1397,6 +1396,22 @@ int test_nested_buffer(flatcc_builder_t *B)
     return 0;
 }
 
+int verify_include(void *buffer)
+{
+    if (MyGame_OtherNameSpace_FromInclude_Foo != 17) {
+        printf("Unexpected enum value `Foo` from included schema\n");
+        return -1;
+    }
+
+    if (MyGame_OtherNameSpace_FromInclude_IncludeVal != 0) {
+        printf("Unexpected enum value `IncludeVal` from included schema\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+
 int test_struct_buffer(flatcc_builder_t *B)
 {
     uint8_t buffer[100];
@@ -1709,6 +1724,12 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_nested_buffer(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (verify_include(B)) {
         printf("TEST FAILED\n");
         return -1;
     }

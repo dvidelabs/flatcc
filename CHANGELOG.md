@@ -1,6 +1,13 @@
 # Change Log
 
-## [0.3.4-pre]
+## [0.3.5]
+
+- Allow flatcc cli options anywhere in the argument list.
+- Add --outfile option similar to --stdout, but to a file.
+- Add --depfile and --deptarget options for build dependencies.
+- Allow some test cases to accept arguments to avoid hardcoded paths.
+
+## [0.3.4]
 
 - Add `FLATCC_RTONLY` and `FLATCC_INSTALL` build options.
 - Fix issue4: when building a buffer and the first thing created is an

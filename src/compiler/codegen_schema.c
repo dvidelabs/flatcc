@@ -331,7 +331,7 @@ static FILE *open_file(fb_options_t *opts, fb_schema_t *S)
     if (opts->gen_stdout) {
         return stdout;
     }
-    checkmem((path = fb_create_join_path(prefix, prefix_len, name, len, ext, 1)));
+    checkmem((path = fb_create_join_path_n(prefix, prefix_len, name, len, ext, 1)));
     fp = fopen(path, "wb");
     if (!fp) {
         fprintf(stderr, "error opening file for writing binary schema: %s\n", path);
@@ -422,12 +422,12 @@ int fb_codegen_bfbs_to_file(fb_options_t *opts, fb_schema_t *S)
     if (opts->bgen_length_prefix) {
         flatbuffers_uoffset_t length = __flatbuffers_uoffset_cast_to_pe((flatbuffers_uoffset_t)size);
         if (sizeof(flatbuffers_uoffset_t) != fwrite(&length, 1, sizeof(length), fp)) {
-            fprintf(stderr, "cound not write binary schema to file\n");
+            fprintf(stderr, "could not write binary schema to file\n");
             goto done;
         }
     }
     if (size != fwrite(buffer, 1, size, fp)) {
-        fprintf(stderr, "cound not write binary schema to file\n");
+        fprintf(stderr, "could not write binary schema to file\n");
         goto done;
     }
     ret = 0;

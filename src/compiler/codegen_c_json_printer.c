@@ -7,7 +7,7 @@
 #include <inttypes.h>
 #endif
 
-static int gen_json_printer_pretext(output_t *out)
+static int gen_json_printer_pretext(fb_output_t *out)
 {
     fprintf(out->fp,
         "#ifndef %s_JSON_PRINTER_H\n"
@@ -22,7 +22,7 @@ static int gen_json_printer_pretext(output_t *out)
     return 0;
 }
 
-static int gen_json_printer_footer(output_t *out)
+static int gen_json_printer_footer(fb_output_t *out)
 {
     gen_pragma_pop(out);
     fprintf(out->fp,
@@ -31,7 +31,7 @@ static int gen_json_printer_footer(output_t *out)
     return 0;
 }
 
-static int gen_json_printer_enum(output_t *out, fb_compound_type_t *ct)
+static int gen_json_printer_enum(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_symbol_t *sym;
     fb_member_t *member;
@@ -168,7 +168,7 @@ static int gen_json_printer_enum(output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_json_printer_union(output_t *out, fb_compound_type_t *ct)
+static int gen_json_printer_union(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_symbol_t *sym;
     fb_member_t *member;
@@ -211,7 +211,7 @@ static int gen_json_printer_union(output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_json_printer_struct(output_t *out, fb_compound_type_t *ct)
+static int gen_json_printer_struct(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_symbol_t *sym;
     fb_member_t *member;
@@ -274,7 +274,7 @@ static int gen_json_printer_struct(output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_json_printer_table(output_t *out, fb_compound_type_t *ct)
+static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_symbol_t *sym;
     fb_member_t *member;
@@ -496,7 +496,7 @@ fail:
  * Only tables are mutually recursive. Structs are sorted and unions are
  * defined earlier, depending on the table prototypes.
  */
-static int gen_json_printer_prototypes(output_t *out)
+static int gen_json_printer_prototypes(fb_output_t *out)
 {
     fb_symbol_t *sym;
     fb_scoped_name_t snt;
@@ -538,7 +538,7 @@ static int gen_json_printer_prototypes(output_t *out)
     return 0;
 }
 
-static int gen_json_printer_enums(output_t *out)
+static int gen_json_printer_enums(fb_output_t *out)
 {
     fb_symbol_t *sym;
 
@@ -551,7 +551,7 @@ static int gen_json_printer_enums(output_t *out)
     return 0;
 }
 
-static int gen_json_printer_unions(output_t *out)
+static int gen_json_printer_unions(fb_output_t *out)
 {
     fb_symbol_t *sym;
 
@@ -564,7 +564,7 @@ static int gen_json_printer_unions(output_t *out)
     return 0;
 }
 
-static int gen_json_printer_structs(output_t *out)
+static int gen_json_printer_structs(fb_output_t *out)
 {
     fb_symbol_t *sym;
 
@@ -577,7 +577,7 @@ static int gen_json_printer_structs(output_t *out)
     return 0;
 }
 
-static int gen_json_printer_tables(output_t *out)
+static int gen_json_printer_tables(fb_output_t *out)
 {
     fb_symbol_t *sym;
 
@@ -591,7 +591,7 @@ static int gen_json_printer_tables(output_t *out)
 }
 
 /* Same for structs and tables. */
-static int gen_root_type_printer(output_t *out, fb_compound_type_t *ct)
+static int gen_root_type_printer(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_scoped_name_t snt;
 
@@ -624,7 +624,7 @@ static int gen_root_type_printer(output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_json_root_printer(output_t *out)
+static int gen_json_root_printer(fb_output_t *out)
 {
     fb_symbol_t *root_type = out->S->root_type.type;
 
@@ -643,7 +643,7 @@ static int gen_json_root_printer(output_t *out)
     return 0;
 }
 
-int fb_gen_c_json_printer(output_t *out)
+int fb_gen_c_json_printer(fb_output_t *out)
 {
     gen_json_printer_pretext(out);
     gen_json_printer_prototypes(out);

@@ -98,9 +98,22 @@ done:
     return ret;
 }
 
+/* We take arguments so test can run without copying sources. */
+#define usage \
+"wrong number of arguments:\n" \
+"usage: <program> [<output-filename>]\n"
+
+const char *filename = "generated/monster_test.bfbs";
+
 int main(int argc, char *argv[])
 {
-    (void)argc;
-    (void)argv;
-    return test_schema("generated/monster_test.bfbs");
+    if (argc != 1 && argc != 2) {
+        fprintf(stderr, usage);
+        exit(1);
+    }
+    if (argc == 2) {
+        filename = argv[1];
+    }
+
+    return test_schema(filename);
 }

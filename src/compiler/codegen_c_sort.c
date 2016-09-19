@@ -25,7 +25,7 @@
  * S: Swap operation - must handle offset change when offset elements are moved.
  */
 
-int gen_sort(output_t *out)
+int gen_sort(fb_output_t *out)
 {
     fprintf(out->fp,
         "#define __%sheap_sort(N, X, A, E, L, TK, TE, D, S)\\\n"

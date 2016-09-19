@@ -4,7 +4,7 @@ attribute "included_attribute";
 
 namespace MyGame.OtherNameSpace;
 
-enum FromInclude:long { IncludeVal }
+enum FromInclude:long { IncludeVal, Foo = 17 }
 
 struct Unused {}
 

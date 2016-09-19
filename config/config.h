@@ -295,6 +295,18 @@
 #define FLATCC_DEFAULT_BIN_EXT ".bin"
 #endif
 
+#ifndef FLATCC_DEFAULT_DEP_EXT
+#define FLATCC_DEFAULT_DEP_EXT ".fbs.d"
+#endif
+
+/*
+ * A depends file sometimes needs a single file to hook
+ * the include file dependencies onto.
+ */
+#ifndef FLATCC_DEFAULT_DEP_TARGET_SUFFIX
+#define FLATCC_DEFAULT_DEP_TARGET_SUFFIX "_reader.h"
+#endif
+
 #ifndef FLATCC_DEFAULT_FILENAME
 #define FLATCC_DEFAULT_FILENAME "test"
 #endif
@@ -375,7 +387,7 @@
 
 /*
  * Add uoffset length field before buffer. This is not a valid buffer
- * then but can be used to concatenate multiple files and it is
+ * then but can be used to outfileenate multiple files and it is
  * compatible with the layout of nested buffers that have a similar
  * prefix. The prefix is a uoffset_t field.
  */

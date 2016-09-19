@@ -19,14 +19,17 @@ void usage(FILE *fp)
             "  -w                         Generate builders (writable buffers)\n"
             "  -r                         Recursively generate included schema files\n"
             "  -a                         Generate all (like -cwvr)\n"
+            "  -d                         Dependency file like gcc -MMD\n"
             "  -I<inpath>                 Search path for include files (multiple allowed)\n"
-            "  -o<outpath>                Write files to given output directory (must exist)\n"
+            "  -o<outpath>                Write files relative to this path (dir must exist)\n"
             "  --stdout                   Concatenate all output to stdout\n"
+            "  --outfile=<file>           Like --stdout, but to a file.\n"
+            "  --depfile=<file>           Dependency file like gcc -MF.\n"
+            "  --deptarget=<file>         Override --depfile target like gcc -MT.\n"
             "  --prefix=<prefix>          Add prefix to all generated names (no _ added)\n"
             "  --common-prefix=<prefix>   Replace 'flatbuffers' prefix in common files\n"
 #if FLATCC_REFLECTION
             "  --schema                   Generate binary schema (.bfbs)\n"
-            "  --schema-namespace=yes     Generate namespace prefix in binary schema\n"
             "  --schema-length=no         Add length prefix to binary schema\n"
 #endif
             "  --verifier                 Generate verifier for schema\n"
@@ -45,30 +48,43 @@ void help(FILE *fp)
         "\n"
         "This is a flatbuffer compatible compiler implemented in C generating C\n"
         "source. It is largely compatible with the flatc compiler provided by\n"
-        "Google Fun Propulsion Lab but does not support JSON objects or binary schema.\n"
+        "Google Fun Propulsion Lab but does not support JSON objects or binary\n"
+        "schema.\n"
         "\n"
         "By example 'flatcc monster.fbs' generates a 'monster.h' file which\n"
         "provides functions to read a flatbuffer. A common include header is also\n"
-        "required. The common file is generated with the -c option. The reader has\n"
-        "no external dependencies.\n"
+        "required. The common file is generated with the -c option. The reader\n"
+        "has no external dependencies.\n"
         "\n"
-        "The -w option enables code generation to write buffers: `flatbuffers\n"
-        "-w monster.fbs` will generate `monster.h` and `monster_builder.h`, and\n"
-        "also a builder specific common file with the -cw option. The builder\n"
-        "must link with the extern `flatbuilder` library.\n"
+        "The -w option enables code generation to write buffers: `flatbuffers -w\n"
+        "monster.fbs` will generate `monster.h` and `monster_builder.h`, and also\n"
+        "a builder specific common file with the -cw option. The builder must\n"
+        "link with the extern `flatbuilder` library.\n"
         "\n"
-        "-v generates a verifier file per schema. It depends on the runtime library\n"
-        "but not on other generated files, except other included verifiers.\n"
+        "-v generates a verifier file per schema. It depends on the runtime\n"
+        "library but not on other generated files, except other included\n"
+        "verifiers.\n"
         "\n"
-        "All C output can be concatenated to a single file using --stdout. This is\n"
-        "the exact same content as the generated files ordered by dependencies.\n"
+        "All C output can be concated to a single file using --stdout or\n"
+        "--outfile with content produced in dependency order. The outfile is\n"
+        "relative to cwd.\n"
         "\n"
+        "-d generates a dependency file, e.g. 'monster.fbs.d' in the output dir.\n"
+        "\n"
+        "--depfile implies -d but accepts an explicit filename with a path\n"
+        "relative to cwd. The dependency files content is a gnu make rule with a\n"
+        "target followed by the included schema files The target must match how\n"
+        "it is seen by the rest of the build system and defaults to e.g.\n"
+        "'monster_reader.h' or 'monster.bfbs' paths relative to the working\n"
+        "directory.\n"
+        "\n"
+        "--deptarget overrides the default target for --depfile, simiar to gcc -MT.\n"
+        "\n"
+
 #if FLATCC_REFLECTION
         "--schema will generate a binary .bfbs file for each top-level schema file.\n"
         "Can be used with --stdout if no C output is specified. When used with multiple\n"
         "files --schema-length=yes is recommend.\n"
-        "\n"
-        "--schema-namespace controls if typenames in schema are prefixed a namespace.\n"
         "\n"
         "--schema-length adds a length prefix of type uoffset_t to binary schema so\n"
         "they can be concatenated - the aligned buffer starts after the prefix.\n"
@@ -86,6 +102,12 @@ void help(FILE *fp)
         "\n"
         "--json is generates both printer and parser.\n"
         "\n"
+#if FLATCC_REFLECTION
+        "DEPRECATED:\n"
+        "  --schema-namespace controls if typenames in schema are prefixed a namespace.\n"
+        "  namespaces should always be present.\n"
+        "\n"
+#endif
         "The generated source can redefine offset sizes by including a modified\n"
         "`flatcc_types.h` file. The flatbuilder library must then be compiled with the\n"
         "same `flatcc_types.h` file. In this case --prefix and --common-prefix options\n"
@@ -164,6 +186,8 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
     }
 #if FLATCC_REFLECTION
     if (match_long_arg("-schema-namespace", s, n)) {
+        fprintf(stderr, "warning: --schema-namespace is deprecated\n"
+                        "         a namespace is added by default and should always be present\n");
         if (!a) {
             fprintf(stderr, "--schema-namespace option needs an argument\n");
             exit(-1);
@@ -184,6 +208,31 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         return v ? noarg : nextarg;
     }
 #endif
+    if (match_long_arg("-depfile", s, n)) {
+        if (!a) {
+            fprintf(stderr, "--depfile option needs an argument\n");
+            exit(-1);
+        }
+        opts->gen_depfile = a;
+        opts->gen_dep = 1;
+        return v ? noarg : nextarg;
+    }
+    if (match_long_arg("-deptarget", s, n)) {
+        if (!a) {
+            fprintf(stderr, "--deptarget option needs an argument\n");
+            exit(-1);
+        }
+        opts->gen_deptarget = a;
+        return v ? noarg : nextarg;
+    }
+    if (match_long_arg("-outfile", s, n)) {
+        if (!a) {
+            fprintf(stderr, "--outfile option needs an argument\n");
+            exit(-1);
+        }
+        opts->gen_outfile= a;
+        return v ? noarg : nextarg;
+    }
     if (match_long_arg("-common-prefix", s, n)) {
         if (!a) {
             fprintf(stderr, "--common-prefix option needs an argument\n");
@@ -244,10 +293,15 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
     case 'r':
         opts->cgen_recursive = 1;
         return noarg;
+    case 'd':
+        opts->gen_dep = 1;
+        return noarg;
     case 'a':
+        opts->cgen_reader = 1;
         opts->cgen_builder = 1;
         opts->cgen_verifier = 1;
         opts->cgen_common_reader = 1;
+        opts->cgen_common_builder = 1;
         opts->cgen_recursive = 1;
         return noarg;
     default:
@@ -281,44 +335,56 @@ int get_opt(flatcc_options_t *opts, const char *s, const char *a)
     return noarg;
 }
 
+void parse_opts(int argc, const char *argv[], flatcc_options_t *opts)
+{
+    int i;
+    const char *s, *a;
+
+    for (i = 1; i < argc; ++i) {
+        if (argv[i][0] == '-') {
+            s = argv[i];
+            a = i + 1 < argc ? argv[i + 1] : 0;
+            i += get_opt(opts, s, a);
+        } else {
+            opts->srcpaths[opts->srcpath_count++] = argv[i];
+        }
+    }
+}
+
 int main(int argc, const char *argv[])
 {
     flatcc_options_t opts;
-    flatcc_context_t ctx;
-    int i, ret, status, cgen;
-    const char *s, *a;
+    flatcc_context_t ctx = 0;
+    int i, ret, cgen;
+    const char **src;
 
     ctx = 0;
-    status = 0;
+    ret = 0;
     if (argc < 2) {
         usage(stderr);
         exit(-1);
     }
     flatcc_init_options(&opts);
     opts.inpaths = malloc(argc * sizeof(char *));
-
-    for (i = 1; i < argc && argv[i][0] == '-'; ++i) {
-        s = argv[i];
-        a = i + 1 < argc ? argv[i + 1] : 0;
-        i += get_opt(&opts, s, a);
-    }
-    if (opts.gen_stdout && opts.outpath) {
-        fprintf(stderr, "--stdout is not compatible with -o option\n");
-        status = -1;
-        goto done;
-    }
+    opts.srcpaths = malloc(argc * sizeof(char *));
+ 
+    parse_opts(argc, argv, &opts);
     opts.cgen_common_builder = opts.cgen_builder && opts.cgen_common_reader;
-    if (i == argc) {
+    if (opts.srcpath_count == 0) {
         /* No input files, so only generate header. */
         if (!opts.cgen_common_reader || opts.bgen_bfbs) {
             fprintf(stderr, "filename missing\n");
-            status = -1;
-            goto done;
+            goto fail;
         }
-        ctx = flatcc_create_context(&opts, 0, 0, 0);
-        ret = flatcc_generate_files(ctx);
+        if (!(ctx = flatcc_create_context(&opts, 0, 0, 0))) {
+            fprintf(stderr, "internal error: failed to create parsing context\n");
+            goto fail;
+        }
+        if (flatcc_generate_files(ctx)) {
+            goto fail;
+        }
         flatcc_destroy_context(ctx);
-        status = ret ? -1 : 0;
+        ctx = 0;
         goto done;
     }
     cgen = opts.cgen_reader || opts.cgen_builder || opts.cgen_verifier
@@ -331,27 +397,49 @@ int main(int argc, const char *argv[])
     if (opts.bgen_bfbs && cgen) {
         if (opts.gen_stdout) {
             fprintf(stderr, "--stdout cannot be used with mixed text and binary output");
-            status = -1;
-            goto done;
+            goto fail;
+        }
+        if (opts.gen_outfile) {
+            fprintf(stderr, "--outfile cannot be used with mixed text and binary output");
+            goto fail;
         }
     }
-    for (; i < argc; ++i) {
-        ctx = flatcc_create_context(&opts, argv[i], 0, 0);
-        ret = flatcc_parse_file(ctx, argv[i]);
-        status |= ret;
-        if (!ret) {
-            status |= flatcc_generate_files(ctx);
+    if (opts.gen_deptarget && !opts.gen_depfile) {
+        fprintf(stderr, "--deptarget cannot be used without --depfile");
+        goto fail;
+    }
+    if (opts.gen_stdout && opts.gen_outfile) {
+        fprintf(stderr, "--outfile cannot be used with --stdout");
+        goto fail;
+    }
+    for (i = 0, src = opts.srcpaths; i < opts.srcpath_count; ++i, ++src) {
+        if (!(ctx = flatcc_create_context(&opts, *src, 0, 0))) {
+            fprintf(stderr, "internal error: failed to create parsing context\n");
+            goto fail;
+        }
+        if (flatcc_parse_file(ctx, *src)) {
+            goto fail;
+        }
+        if (flatcc_generate_files(ctx)) {
+            goto fail;
         }
         flatcc_destroy_context(ctx);
         ctx = 0;
-        /* Only generate common files once. */
-        opts.cgen_common_reader = 0;
-        opts.cgen_common_builder = 0;
+        /* for --stdout and --outfile options: append to file and skip generating common headers. */
+        opts.gen_append = 1;
     }
+    goto done;
+fail:
+    ret = -1;
 done:
-    if (status) {
+    if (ctx) {
+        flatcc_destroy_context(ctx);
+        ctx = 0;
+    }
+    if (ret) {
         fprintf(stderr, "output failed\n");
     }
     free((void *)opts.inpaths);
-    return status ? -1 : 0;
+    free((void *)opts.srcpaths);
+    return ret;
 }

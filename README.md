@@ -3,6 +3,16 @@ Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/gi
 
 # FlatCC FlatBuffers in C for C
 
+`flatcc` has no external dependencies except for build and compiler
+tools, and the C runtime library. With concurrent Ninja builds and
+proper dependencies, a small client project can build flatcc with
+libraries, generate schema code, link the project and execute a test
+case in less than 2 seconds and rebuild in less than 0.2 seconds and
+produce binaries between 15K and 60K, read small buffers in 30ns, build
+FlatBuffers in about 600ns, and with a larger executable handle optional
+json parsing and decoding in about 2 us for a 10 field mixed type message.
+
+
 NOTE: see
 [CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md).
 There are occassionally minor breaking changes as API inconsistencies
@@ -10,7 +20,6 @@ are discovered. Unless clearly stated, breaking changes will not affect
 the compiled runtime library, only the header files. In case of trouble,
 make sure the `flatcc` tool is same version as the `include/flatcc`
 path.
-
 
 The project includes:
 
@@ -25,9 +34,6 @@ The project includes:
 - a small `flatcc/portable` header only library for non-C11 compliant
   compilers, and small helpers for all compilers including endian
   handling and numeric printing and parsing.
-
-`flatcc` has no external dependencies except for build and compiler
-tools, and the C runtime library.
 
 See also:
 
@@ -88,18 +94,20 @@ set up a new temporary project using the `scripts/setup.sh` script.
 
 ## Status
 
-Main features supported as of 0.3.3:
+Main features supported as of 0.3.5:
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
 - generated FlatBuffers JSON parser and printer for C
-- ability to concatenate all output into one file
+- ability to concatenate all output into one file, or to stdout
+- robust dependency file generation for build systems
 - binary schema (.bfbs) generation
 - pre-generated reflection headers for handling .bfbs files
 - cli schema compiler and library for compiling schema
 - runtime library for builder, verifier and JSON support
 - thorough test cases
 - monster sample project
+- fast build times
 
 Supported platforms:
 
@@ -112,7 +120,7 @@ uses C99 style code to better follow the C++ version.
 
 There is no reason why other or older compilers cannot be supported, but
 it may require some work in the build configuration and possibly
-updates to the portable library. The above is simple what has been
+updates to the portable library. The above is simply what has been
 tested and configured.
 
 Use versions from 0.3.0 and up as there has been some minor breaking
@@ -129,7 +137,7 @@ little endian platforms presumable will be correct regardless of bugs in
 endian encoding.
 
 The portability layer has some features that are generally important for
-things like endian handling, and others to provide compatiblity for
+things like endian handling, and others to provide compatibility for
 non-C11 compliant compilers. Together this should support most C
 compilers around, but relies on community feedback for maturity.
 
@@ -156,7 +164,6 @@ with usability over absolute performance - still the small buffer output
 rate is measured in millons per second and read access 10-100 millon
 buffers per second from a rough estimate. Reading FlatBuffers is more
 than an order of magnitude faster than building them.
-
 
 For 100MB buffers with 1000 monsters, dynamically extended monster
 names, monster vector, and inventory vector, the bandwidth reaches about
@@ -307,11 +314,11 @@ set by (-o).
 Note that the binary schema output can be with or without namespace
 prefixes and the default differs from `flatc` which strips namespaces.
 The binary schema can also have a non-standard size field prefixed so
-multiple schema can be concatenated in a single file if so desired (see
+multiple schema can be outfileenated in a single file if so desired (see
 also the bfbs2json example).
 
 Files can be generated to stdout using (--stdout). C headers will be
-ordered and concatenated, but otherwise identical to the separate file
+ordered and outfileenated, but otherwise identical to the separate file
 output. Each include statement is guarded so this will not lead to
 missing include files.
 
@@ -965,7 +972,7 @@ or `myschema_builder.h` all these dependencies are handled correctly.
 
 Note: `libflatcc.a` can only parse a single schema when the schema is
 given as a memory buffer, but can handle the above when given a
-filename. It is possible to concatename schema files, but a `namespace;`
+filename. It is possible to outfileename schema files, but a `namespace;`
 declaration must be inserted as a separator to revert to global
 namespace at the start of each included file. This can lead to subtle
 errors because if one parent schema includes two child schema `a.fbs`

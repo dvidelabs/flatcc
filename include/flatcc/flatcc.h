@@ -54,6 +54,13 @@ struct flatcc_options {
 
     /* Code Generator specific options. */
     int gen_stdout;
+    int gen_dep;
+
+    const char *gen_depfile;
+    const char *gen_deptarget;
+    const char *gen_outfile;
+
+    int gen_append;
 
     int cgen_pad;
     int cgen_sort;
@@ -78,7 +85,9 @@ struct flatcc_options {
     const char *nsc;
 
     const char **inpaths;
+    const char **srcpaths;
     int inpath_count;
+    int srcpath_count;
     const char *outpath;
 };
 

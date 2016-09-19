@@ -1,5 +1,5 @@
 /*
-doc * FlatBuffers IDL parser.
+ * FlatBuffers IDL parser.
  *
  * Originally based on the numeric parser in the Luthor lexer project.
  *
@@ -9,7 +9,6 @@ doc * FlatBuffers IDL parser.
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <memory.h>
 #include <assert.h>
 #include <stdarg.h>
@@ -17,6 +16,7 @@ doc * FlatBuffers IDL parser.
 #include "semantics.h"
 #include "codegen.h"
 #include "fileio.h"
+#include "pstrutil.h"
 #include "flatcc/portable/pparseint.h"
 
 void fb_default_error_out(void *err_ctx, const char *buf, int len)
@@ -1223,7 +1223,7 @@ static void inject_token(fb_token_t *t, const char *lex, long id)
 int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
         fb_error_fun error_out, void *error_ctx, fb_root_schema_t *rs)
 {
-    size_t i, n, name_len;
+    size_t n, name_len;
     char *s;
 
     memset(P, 0, sizeof(*P));
@@ -1269,9 +1269,7 @@ int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
     checkmem((P->schema.basename = fb_create_basename(name, name_len, opts->default_schema_ext)));
     n = strlen(P->schema.basename);
     checkmem(s = fb_copy_path_n(P->schema.basename, n));
-    for (i = 0; i < n; ++i) {
-        s[i] = toupper(s[i]);
-    }
+    pstrntoupper(s, n);
     P->schema.basenameup = s;
     P->schema.name.name.s.s = s;
     P->schema.name.name.s.len = (long)n;
