@@ -319,7 +319,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
     const char *inpath;
     size_t size;
     fb_name_t *inc;
-    int i, ret;
+    int i, ret, is_root;
 
     filename_len = strlen(filename);
     /* Don't parse the same file twice, or any other file with same basename. */
@@ -330,7 +330,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
     path = 0;
     include_file = 0;
     ret = -1;
-    int is_root = !P->referer_path;
+    is_root = !P->referer_path;
 
     /*
      * For root files, read file relative to working dir first. For

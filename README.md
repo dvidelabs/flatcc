@@ -4,14 +4,15 @@ Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/gi
 # FlatCC FlatBuffers in C for C
 
 `flatcc` has no external dependencies except for build and compiler
-tools, and the C runtime library. With concurrent Ninja builds and
-proper dependencies, a small client project can build flatcc with
-libraries, generate schema code, link the project and execute a test
-case in less than 2 seconds and rebuild in less than 0.2 seconds and
-produce binaries between 15K and 60K, read small buffers in 30ns, build
-FlatBuffers in about 600ns, and with a larger executable handle optional
-json parsing and decoding in about 2 us for a 10 field mixed type message.
+tools, and the C runtime library. With concurrent Ninja builds, a small
+client project can build flatcc with libraries, generate schema code,
+link the project and execute a test case in less than 2 seconds (4 incl.
+flatcc clone), rebuild in less than 0.2 seconds and produce binaries
+between 15K and 60K, read small buffers in 30ns, build FlatBuffers in
+about 600ns, and with a larger executable handle optional json parsing
+or parsing in less than 2 us for a 10 field mixed type message.
 
+See also experimental meson branch, and [sample client project](https://github.com/dvidelabs/flatcc-meson-sample)
 
 NOTE: see
 [CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md).
