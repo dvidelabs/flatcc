@@ -1,11 +1,11 @@
 # Change Log
 
-## [0.3.5-pre]
-- Refactoring of C code generator to support features below.
-- Allow options between and after input arguments.
+## [0.3.5]
+
+- Allow flatcc cli options anywhere in the argument list.
 - Add --outfile option similar to --stdout, but to a file.
-- Add --depfile and --deptarget options to produce dependency.
-- Allow some test cases to accept arguments over hardcoded path.
+- Add --depfile and --deptarget options for build dependencies.
+- Allow some test cases to accept arguments to avoid hardcoded paths.
 
 ## [0.3.4]
 
