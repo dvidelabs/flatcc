@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.3.5a]
+- Fix regression introduced in 0.3.5 that caused double memory free on
+  input file buffer. See issue #7.
+
 ## [0.3.5]
 
 - Allow flatcc cli options anywhere in the argument list.
