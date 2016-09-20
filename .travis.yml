@@ -14,6 +14,7 @@ compiler:
 addons:
   apt:
     packages:
+      - python3
       - ninja-build
 
 before_install:
@@ -21,9 +22,7 @@ before_install:
 
 install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ninja; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install meson; fi
 
 script:
-  - scripts/initbuild.sh ninja
-  - scripts/test.sh
-  - scripts/initbuild.sh make-concurrent
-  - scripts/test.sh
+  - scripts/meson-test.sh
