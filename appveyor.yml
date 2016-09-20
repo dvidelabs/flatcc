@@ -4,7 +4,7 @@ image: Visual Studio 2015
 
 init:
   - git config --global core.autocrlf input
-  - cmake --version
+  #- cmake --version
   - msbuild /version
 
 shallow_clone: true
@@ -22,17 +22,22 @@ configuration:
 skip_tags: true
 
 before_build:
-  - echo Running cmake...
+  - set PATH=C:\Python34\scripts;%PATH%
+  - pip3 install meson
+  - echo Running meson
   - cd c:\projects\flatcc
   - mkdir build\MSVC
   - cd build\MSVC
-  - if "%platform%"=="Win32" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..\..
-  - if "%platform%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..\..
+  - meson ..\.. --backend=vs2015 --buildtype=%configuration%
+    #- if "%platform%"=="Win32" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..\..
+    #- if "%platform%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..\..
 
 build:
   parallel: true # enable MSBuild parallel builds
-  project: c:\projects\flatcc\build\MSVC\FlatCC.sln
+  project: c:\projects\flatcc\build\MSVC\flatcc.sln
 
 test_script:
-  - ctest -C "%configuration%" -VV
+  - meson test
+  - meson flatbench
+  #- ctest -C "%configuration%" -VV
 
