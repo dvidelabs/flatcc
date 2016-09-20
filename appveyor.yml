@@ -16,8 +16,8 @@ platform:
   - x64
 
 configuration:
-  - Debug
-  - Release
+  - debug
+  - release
 
 skip_tags: true
 
