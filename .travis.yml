@@ -15,16 +15,15 @@ addons:
   apt:
     packages:
       - python3
-      - ninja-build
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
 
 
 install:
-  - if  "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://github.com/ninja-build/ninja/releases/download/v1.7.1/ninja-linux.zip; fi
-  - if  "$TRAVIS_OS_NAME" == "linux" ]]; then unzip ninja-linux.zip; fi
-  - if  "$TRAVIS_OS_NAME" == "linux" ]]; then mv ninja /usr/local/bin/ninja; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://github.com/ninja-build/ninja/releases/download/v1.7.1/ninja-linux.zip; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then unzip ninja-linux.zip; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mv ninja /usr/local/bin/ninja; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ninja; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install meson; fi
 
