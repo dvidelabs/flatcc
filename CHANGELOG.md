@@ -10,7 +10,7 @@
 - Add --outfile option similar to --stdout, but to a file.
 - Add --depfile and --deptarget options for build dependencies.
 - Allow some test cases to accept arguments to avoid hardcoded paths.
-- Deprecate --schema-namespac=no option to disable namespace prefixes
+- Deprecate --schema-namespace=no option to disable namespace prefixes
   in binary schema as Google flatbuffers now also includes namespaces
   according to https://github.com/google/flatbuffers/pull/4025
 
