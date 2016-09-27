@@ -12,7 +12,7 @@ shallow_clone: true
 clone_folder: c:\projects\flatcc
 
 platform:
-  - Win32 
+  - x86 
   - x64
 
 configuration:
@@ -28,6 +28,7 @@ before_build:
   - cd c:\projects\flatcc
   - mkdir build\MSVC
   - cd build\MSVC
+  - '"C:\Program Files\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" /%platform%'
   - meson ..\.. --backend=vs2015 --buildtype=%configuration%
     #- if "%platform%"=="Win32" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..\..
     #- if "%platform%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..\..
