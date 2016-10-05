@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 /* Based on http://stackoverflow.com/a/8583395 */
-#if !defined(_WINDOWS)
+#if !defined(_WIN32)
 #include <sys/time.h>
 static double elapsed_realtime(void) { // returns 0 seconds first time called
     static struct timeval t0;

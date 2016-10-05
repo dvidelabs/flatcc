@@ -1,11 +1,21 @@
 # Change Log
 
+## [0.3.6-pre]
+- Fix Windows detection in flatcc/support/elapsed.h used by benchmark.
+
+## [0.3.5a]
+- Fix regression introduced in 0.3.5 that caused double memory free on
+  input file buffer. See issue #7.
+
 ## [0.3.5]
 
 - Allow flatcc cli options anywhere in the argument list.
 - Add --outfile option similar to --stdout, but to a file.
 - Add --depfile and --deptarget options for build dependencies.
 - Allow some test cases to accept arguments to avoid hardcoded paths.
+- Deprecate --schema-namespace=no option to disable namespace prefixes
+  in binary schema as Google flatbuffers now also includes namespaces
+  according to https://github.com/google/flatbuffers/pull/4025
 
 ## [0.3.4]
 

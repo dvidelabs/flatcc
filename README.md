@@ -77,11 +77,6 @@ easier to deploy, the `flatc` approach is likely more convenient when
 manually working with JSON such as editing game scenes. Both tools have
 their place. 
 
-The `flatcc` generated binary schema (`.bfbs`) files are also compatible
-with Googles `flatc` tool, except there is an option to store names with or
-without dotted namespace prefixes where `flatc` always store without a
-namespace.
-
 **NOTE: Big-endian platforms are untested but supported in principle.**
 
 
