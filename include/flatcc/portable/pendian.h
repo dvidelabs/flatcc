@@ -70,20 +70,20 @@
 #ifndef bswap32
 #define bswap32(v)                                                          \
       ((((uint32_t)(v) << 24))                                              \
-          | (((uint32_t)(v) << 8) & UINT32_C(0x00FF0000U))                  \
-          | (((uint32_t)(v) >> 8) & UINT32_C(0x0000FF00U))                  \
+          | (((uint32_t)(v) << 8) & UINT32_C(0x00FF0000))                   \
+          | (((uint32_t)(v) >> 8) & UINT32_C(0x0000FF00))                   \
           | (((uint32_t)(v) >> 24)))
 #endif
 
 #ifndef bswap64
 #define bswap64(v)                                                          \
       ((((uint64_t)(v) << 56))                                              \
-          | (((uint64_t)(v) << 40) & UINT64_C(0x00FF000000000000ULL))       \
-          | (((uint64_t)(v) << 24) & UINT64_C(0x0000FF0000000000ULL))       \
-          | (((uint64_t)(v) << 8) & UINT64_C(0x000000FF00000000ULL))        \
-          | (((uint64_t)(v) >> 8) & UINT64_C(0x00000000FF000000ULL))        \
-          | (((uint64_t)(v) >> 24) & UINT64_C(0x0000000000FF0000ULL))       \
-          | (((uint64_t)(v) >> 40) & UINT64_C(0x000000000000FF00ULL))       \
+          | (((uint64_t)(v) << 40) & UINT64_C(0x00FF000000000000))          \
+          | (((uint64_t)(v) << 24) & UINT64_C(0x0000FF0000000000))          \
+          | (((uint64_t)(v) << 8) & UINT64_C(0x000000FF00000000))           \
+          | (((uint64_t)(v) >> 8) & UINT64_C(0x00000000FF000000))           \
+          | (((uint64_t)(v) >> 24) & UINT64_C(0x0000000000FF0000))          \
+          | (((uint64_t)(v) >> 40) & UINT64_C(0x000000000000FF00))          \
           | (((uint64_t)(v) >> 56)))
 #endif
 
