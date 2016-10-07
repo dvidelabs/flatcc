@@ -2,6 +2,7 @@
 
 ## [0.3.6-pre]
 - Fix Windows detection in flatcc/support/elapsed.h used by benchmark.
+- Fix #8 surplus integer literal suffix rejected by some compilers.
 
 ## [0.3.5a]
 - Fix regression introduced in 0.3.5 that caused double memory free on
