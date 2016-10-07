@@ -26,7 +26,7 @@ static char *readfile(const char *filename, size_t max_size, size_t *size_out)
         goto fail;
     }
     rewind(fp);
-    buf = malloc(size);
+    buf = malloc(size ? size : 1);
     if (!buf) {
         goto fail;
     }

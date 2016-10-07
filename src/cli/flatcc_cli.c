@@ -365,8 +365,15 @@ int main(int argc, const char *argv[])
         exit(-1);
     }
     flatcc_init_options(&opts);
-    opts.inpaths = malloc(argc * sizeof(char *));
-    opts.srcpaths = malloc(argc * sizeof(char *));
+    if (!(opts.inpaths = malloc(argc * sizeof(char *)))) {
+        fprintf(stderr, "memory allocation failure\n");
+        exit(-1);
+    }
+    if (!(opts.srcpaths = malloc(argc * sizeof(char *)))) {
+        fprintf(stderr, "memory allocation failure\n");
+        free(opts.inpaths);
+        exit(-1);
+    }
  
     parse_opts(argc, argv, &opts);
     opts.cgen_common_builder = opts.cgen_builder && opts.cgen_common_reader;
