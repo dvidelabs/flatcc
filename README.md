@@ -10,7 +10,7 @@ link the project and execute a test case in less than 2 seconds (4 incl.
 flatcc clone), rebuild in less than 0.2 seconds and produce binaries
 between 15K and 60K, read small buffers in 30ns, build FlatBuffers in
 about 600ns, and with a larger executable handle optional json parsing
-or parsing in less than 2 us for a 10 field mixed type message.
+or printing in less than 2 us for a 10 field mixed type message.
 
 See also experimental meson branch, and [sample client project](https://github.com/dvidelabs/flatcc-meson-sample)
 
