@@ -66,12 +66,12 @@ static inline int parse_float_isinf(float x)
 /* Returns 0 when in range, 1 on overflow, and -1 on underflow. */
 static inline int parse_double_is_range_error(double x)
 {
-    return parse_double_isinf(x) ? x > 0 : -1;
+    return parse_double_isinf(x) ? (x < 0.0 ? -1 : 1) : 0;
 }
 
 static inline int parse_float_is_range_error(float x)
 {
-    return parse_float_isinf(x) ? x > 0 : -1;
+    return parse_float_isinf(x) ? (x < 0.0f ? -1 : 1) : 0;
 }
 
 #ifndef PORTABLE_USE_GRISU3
