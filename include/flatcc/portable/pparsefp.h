@@ -20,10 +20,19 @@
 #include "pdiagnostic_push.h"
 
 /*
- * We don't generally use HAVE_ macros, but isinf requires linking with
- * libmath, so make it possible to is it instead of fallback if desired.
+ * isinf is needed in order to stay compatible with strtod's
+ * over/underflow handling but isinf has some portability issues.
+ *
+ * Use the parse_double/float_is_range_error instead of isinf directly.
+ * This ensures optimizations can be added when not using strtod.
+ *
+ * On gcc, clang and msvc we can use isinf or equivalent directly.
+ * Other compilers such as xlc may require linking with -lm which may not
+ * be convienent so a default isinf is provided. If isinf is available
+ * and there is a noticable performance issue, define
+ * `PORTABLE_USE_ISINF`.
  */
-#if defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER) || defined(HAVE_ISINF)
+#if defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER) || defined(PORTABLE_USE_ISINF)
 #include <math.h>
 #if defined(_MSC_VER) && !defined(isinf)
 #include <float.h>
@@ -54,15 +63,15 @@ static inline int parse_float_isinf(float x)
 }
 #endif
 
-/* Positive isinf is overflow, negative isinf is underflow. */
+/* Returns 0 when in range, 1 on overflow, and -1 on underflow. */
 static inline int parse_double_is_range_error(double x)
 {
-    return parse_double_isinf(x);
+    return parse_double_isinf(x) ? x > 0 : -1;
 }
 
 static inline int parse_float_is_range_error(float x)
 {
-    return parse_float_isinf(x);
+    return parse_float_isinf(x) ? x > 0 : -1;
 }
 
 #ifndef PORTABLE_USE_GRISU3
