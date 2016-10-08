@@ -508,16 +508,24 @@ int verify_monster(void *buffer)
         printf("Test4 vector is not the right length.\n");
         return -1;
     }
-    for (i = 0; i < 5; ++i) {
-        test = ns(Test_vec_at(testvec, i));
-        if (testvec_data[i].a != ns(Test_a(test))) {
-            printf("Test4 vec failed at index %d, member a\n", (int)i);
-            return -1;
+    /*
+     * This particular test requires that the in-memory
+     * array layout matches the array layout in the buffer.
+     */
+    if (flatbuffers_is_native_pe()) {
+        for (i = 0; i < 5; ++i) {
+            test = ns(Test_vec_at(testvec, i));
+            if (testvec_data[i].a != ns(Test_a(test))) {
+                printf("Test4 vec failed at index %d, member a\n", (int)i);
+                return -1;
+            }
+            if (testvec_data[i].b != ns(Test_b(test))) {
+                printf("Test4 vec failed at index %d, member a\n", (int)i);
+                return -1;
+            }
         }
-        if (testvec_data[i].b != ns(Test_b(test))) {
-            printf("Test4 vec failed at index %d, member a\n", (int)i);
-            return -1;
-        }
+    } else {
+        printf("SKIPPING DIRECT VECTOR ACCESS ON NON-NATIVE ENDIAN PLATFORM\n");
     }
     monsters = ns(Monster_testarrayoftables(monster));
     if (ns(Monster_vec_len(monsters)) != 8) {
