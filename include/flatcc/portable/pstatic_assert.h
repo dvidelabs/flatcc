@@ -4,11 +4,14 @@
 #include <assert.h>
 
 #ifndef static_assert
-#ifdef __has_feature
+
+#ifndef __has_feature         
+  #define __has_feature(x) 0
+#endif
 
 #if __has_feature(c_static_assert)
+
 #define static_assert(pred, msg) _Static_assert(pred, msg)
-#endif
 
 #else
 
