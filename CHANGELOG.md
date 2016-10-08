@@ -7,6 +7,8 @@
 - Fix #11 by avoiding dependency on -lm (libmath) by providing a cleaner
   over/underflow function in `include/flatcc/portable/pparsefp.h`.
 - Fix `pstatic_assert.h` missing fallback case.
+- Disable direct vector access test case when running on non-native
+  endian platform.
 
 ## [0.3.5a]
 - Fix regression introduced in 0.3.5 that caused double memory free on
