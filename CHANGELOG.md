@@ -4,8 +4,8 @@
 - Fix Windows detection in flatcc/support/elapsed.h used by benchmark.
 - Fix #8 surplus integer literal suffix rejected by some compilers.
 - Fix #9 return values from allocation can be zero without being an error.
-- Fix #11 make isinf portable and provide cleaner error checks for range
-  errors in float/double parser.
+- Fix #11 by avoiding dependency on -lm (libmath) by providing a cleaner
+  over/underflow function in `include/flatcc/portable/pparsefp.h`.
 
 ## [0.3.5a]
 - Fix regression introduced in 0.3.5 that caused double memory free on
