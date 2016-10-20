@@ -1020,6 +1020,8 @@ flatcc_builder_vt_ref_t flatcc_builder_create_vtable(flatcc_builder_t *B,
 {
     flatcc_builder_vt_ref_t vt_ref;
     iov_state_t iov;
+    voffset_t *vt_;
+    size_t i;
 
     /*
      * Only top-level buffer can cluster vtables because only it can
@@ -1036,7 +1038,26 @@ flatcc_builder_vt_ref_t flatcc_builder_create_vtable(flatcc_builder_t *B,
      * valid reference (which usally means error). It also idententifies
      * vtable references as the only uneven references, and the only
      * references that can be used multiple times in the same buffer.
+     *
+     * We do the vtable conversion here so cached vtables can be built
+     * hashed and compared more efficiently, and so end users with
+     * direct vtable construction don't have to worry about endianness.
+     * This also ensures the hash function works the same wrt.
+     * collision frequency.
      */
+
+    if (!flatbuffers_is_native_pe()) {
+        /* Make space in vtable cache for temporary endian conversion. */
+        if (!(vt_ = reserve_buffer(B, flatcc_builder_alloc_vb, B->vb_end, vt_size, 0))) {
+            return 0;
+        }
+        for (i = 0; i < vt_size / sizeof(voffset_t); ++i) {
+            vt_[i] = store_voffset(vt[i]);
+        }
+        vt = vt_;
+        /* We don't need to free the reservation since we don't advance any base pointer. */
+    }
+
     init_iov();
     push_iov(vt, vt_size);
     if (is_top_buffer(B) && !B->disable_vt_clustering) {
@@ -1065,7 +1086,6 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
     uoffset_t *pvd, *pvd_head;
     uoffset_t next;
     voffset_t *vt_;
-    voffset_t encoded_vt_size;
 
     /* This just gets the hash table slot, we still have to inspect it. */
     if (!(pvd_head = lookup_ht(B, vt_hash))) {
@@ -1075,11 +1095,10 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
     next = *pvd;
     /* Tracks if there already is a cached copy. */
     vd2 = 0;
-    encoded_vt_size = vt[0];
     while (next) {
         vd = vd_ptr(next);
         vt_ = vb_ptr(vd->vb_start);
-        if (vt_[0] != encoded_vt_size || 0 != memcmp(vt, vt_, vt_size)) {
+        if (vt_[0] != vt_size || 0 != memcmp(vt, vt_, vt_size)) {
             pvd = &vd->next;
             next = vd->next;
             continue;
@@ -1231,13 +1250,13 @@ flatcc_builder_ref_t flatcc_builder_end_table(flatcc_builder_t *B)
     vt = B->vs - 2;
     vt_size = sizeof(voffset_t) * (B->id_end + 2);
     /* Update vtable header fields, first vtable size, then object table size. */
-    vt[0] = store_voffset(vt_size);
+    vt[0] = vt_size;
     /*
      * The `ds` buffer is always at least `field_size` aligned but excludes the
      * initial vtable offset field. Therefore `field_size` is added here
      * to the total table size in the vtable.
      */
-    vt[1] = store_voffset((voffset_t)B->ds_offset + field_size);
+    vt[1] = (voffset_t)B->ds_offset + field_size;
     FLATCC_BUILDER_UPDATE_VT_HASH(B->vt_hash, (uint32_t)vt[0], (uint32_t)vt[1]);
     /* Find already emitted vtable, or emit a new one. */
     if (!(vt_ref = flatcc_builder_create_cached_vtable(B, vt, vt_size, B->vt_hash))) {
