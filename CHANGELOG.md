@@ -9,6 +9,8 @@
 - Fix `pstatic_assert.h` missing fallback case.
 - Disable direct vector access test case when running on non-native
   endian platform.
+- Fix infinite loop during flatbuffer build operations caused by certain
+  vtable collision chains
 
 ## [0.3.5a]
 - Fix regression introduced in 0.3.5 that caused double memory free on
