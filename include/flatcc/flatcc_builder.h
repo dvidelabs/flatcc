@@ -622,7 +622,7 @@ flatcc_builder_ref_t flatcc_builder_create_struct(flatcc_builder_t *B,
 
 /**
  * Starts a struct and returns a pointer that should be used immediately
- * to fill in the struct in litte endian format, and when done,
+ * to fill in the struct in protocol endian format, and when done,
  * `end_struct` should be called. The returned reference should be used
  * as argument to `end_buffer`. See also `create_struct`.
  */
@@ -920,7 +920,7 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
         flatbuffers_voffset_t vt_size, uint32_t vt_hash);
 
 /*
- * Based on Knuts prime multiplier.
+ * Based on Knuth's prime multiplier.
  *
  * This is an incremental hash that is called with id and size of each
  * non-empty field, and finally with the two vtable header fields
