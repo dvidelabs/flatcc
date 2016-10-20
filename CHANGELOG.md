@@ -11,6 +11,9 @@
   endian platform.
 - Fix infinite loop during flatbuffer build operations caused by certain
   vtable collision chains
+- Fix vtable conversion to protocol endian format. This keeps cached
+  vtables entirely in native format and reduces hash collisions and only
+  converts when emitting the vtable to a buffer location.
 
 ## [0.3.5a]
 - Fix regression introduced in 0.3.5 that caused double memory free on
