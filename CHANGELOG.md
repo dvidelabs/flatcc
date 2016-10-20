@@ -2,7 +2,7 @@
 
 ## [0.3.6-pre]
 - Fix Windows detection in flatcc/support/elapsed.h used by benchmark.
-- Fix #8 surplus integer literal suffix rejected by some compilers.
+- Fix #8 surplus integer literal suffix in portable byteswap fallback.
 - Fix #9 return values from allocation can be zero without being an error.
 - Fix #11 by avoiding dependency on -lm (libmath) by providing a cleaner
   over/underflow function in `include/flatcc/portable/pparsefp.h`.
@@ -10,10 +10,16 @@
 - Disable direct vector access test case when running on non-native
   endian platform.
 - Fix infinite loop during flatbuffer build operations caused by certain
-  vtable collision chains
+  vtable collision chains.
+
+Changes related to big endian support which do not affect little endian
+platforms:
+
 - Fix vtable conversion to protocol endian format. This keeps cached
   vtables entirely in native format and reduces hash collisions and only
   converts when emitting the vtable to a buffer location.
+- Fix structs created with parameter list resulting in double endian
+  conversion back to native. 
 
 ## [0.3.5a]
 - Fix regression introduced in 0.3.5 that caused double memory free on

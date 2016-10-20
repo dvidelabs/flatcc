@@ -346,7 +346,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "{ return flatcc_builder_end_struct(B); }\\\n"
         "static inline N ## _ref_t N ## _create(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
         "{ N ## _t *_p = N ## _start(B); if (!_p) return 0; N ##_assign_to_pe(_p __ ## N ## _call_args);\\\n"
-        "  return N ## _end(B); }\\\n"
+        "  return N ## _end_pe(B); }\\\n"
         "__%sbuild_vector(NS, N, N ## _t, S, A)\\\n"
         "__%sbuild_struct_root(NS, N, A, FID, TFID)\n"
         "\n",
