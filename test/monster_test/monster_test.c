@@ -525,7 +525,7 @@ int verify_monster(void *buffer)
             }
         }
     } else {
-        printf("SKIPPING DIRECT VECTOR ACCESS ON NON-NATIVE ENDIAN PLATFORM\n");
+        printf("SKIPPING DIRECT VECTOR ACCESS WITH NON-NATIVE ENDIAN PROTOCOL\n");
     }
     monsters = ns(Monster_testarrayoftables(monster));
     if (ns(Monster_vec_len(monsters)) != 8) {
@@ -1114,6 +1114,7 @@ int test_clone_slice(flatcc_builder_t *B)
     ns(Monster_ref_t) monster_ref;
     ns(Test_t) *t;
     ns(Test_struct_t) test4;
+    ns(Test_struct_t) elem4;
     void *buffer, *buf2;
     size_t size;
     int ret = -1;
@@ -1234,11 +1235,17 @@ int test_clone_slice(flatcc_builder_t *B)
         printf("struct vector test4 not cloned with correct length\n");
         goto done;
     }
-    if (ns(Test_vec_at(test4, 0))->a != 22) {
+    elem4 = ns(Test_vec_at(test4, 0));
+    if (ns(Test_a(elem4)) != 22) {
         printf("elem 0 of test4 not cloned\n");
         goto done;
     }
-    if (ns(Test_vec_at(test4, 1))->a != 44) {
+    if (flatbuffers_is_native_pe() && ns(Test_vec_at(test4, 0))->a != 22) {
+        printf("elem 0 of test4 not cloned, direct access\n");
+        goto done;
+    }
+    elem4 = ns(Test_vec_at(test4, 1));
+    if (ns(Test_a(elem4)) != 44) {
         printf("elem 1 of test4 not cloned\n");
         goto done;
     }
@@ -1247,7 +1254,8 @@ int test_clone_slice(flatcc_builder_t *B)
         printf("sliced struct vec not sliced\n");
         goto done;
     }
-    if (ns(Test_vec_at(test4, 0))->a != 44) {
+    elem4 = ns(Test_vec_at(test4, 0));
+    if (ns(Test_a(elem4)) != 44) {
         printf("sliced struct vec has wrong element\n");
         goto done;
     }
@@ -1703,7 +1711,7 @@ int main(int argc, char *argv[])
     }
 #endif
 #else
-    printf("SKIPPING TYPE HASH TESTS WITH BIG ENDIAN PROTOCOL ENCODING, NOT SUPPORTED\n");
+    printf("SKIPPING TYPE HASH TESTS WITH BIG ENDIAN PROTOCOL, FEATURE NOT SUPPORTED\n");
 #endif
 #if 1
     if (test_clone_slice(B)) {
