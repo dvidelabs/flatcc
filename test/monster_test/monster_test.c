@@ -1659,19 +1659,7 @@ int main(int argc, char *argv[])
     }
 #endif
 #if 1
-    if (test_typed_table_with_emptystruct(B)) {
-        printf("TEST FAILED\n");
-        return -1;
-    }
-#endif
-#if 1
     if (test_empty_monster(B)) {
-        printf("TEST FAILED\n");
-        return -1;
-    }
-#endif
-#if 1
-    if (test_typed_empty_monster(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
@@ -1694,11 +1682,28 @@ int main(int argc, char *argv[])
         return -1;
     }
 #endif
+/* TODO: BE buffers do not work with type hashes. */
+#if FLATBUFFERS_PROTOCOL_IS_LE 
+#if 1
+    if (test_typed_empty_monster(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_typed_table_with_emptystruct(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
 #if 1
     if (test_typed_struct_buffer(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
+#endif
+#else
+    printf("SKIPPING TYPE HASH TESTS WITH BIG ENDIAN PROTOCOL ENCODING, NOT SUPPORTED\n");
 #endif
 #if 1
     if (test_clone_slice(B)) {
