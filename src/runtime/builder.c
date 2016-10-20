@@ -1095,7 +1095,7 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
         }
         /* Move to front hash strategy. */
         if (pvd != pvd_head) {
-            *pvd = next;
+            *pvd = vd->next;
             vd->next = *pvd_head;
             *pvd_head = next;
         }
