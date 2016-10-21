@@ -11,8 +11,18 @@
   rare vtable dedupe hash table collision chains.
 - Added `include/flatcc/support/cdump.h` tool for encoding buffers in C.
 
+Ongoing work:
+
 Changes related to big endian support which do not affect little endian
 platforms with little endian wire format.
+
+- Support for big endian platforms such as IBM AIX power pc.
+- Support for big endian encoded flatbuffers on both little and big
+  endian host platforms via `FLATBUFFERS_PROTOCOL_IS_LE/BE` in
+  `include/flatcc/flatcc_types.h`. Use `flatbuffers_is_native_pe()` to
+  see if the host native endian format matches the buffer protocol.
+
+In more detail:
 
 - Fix vtable conversion to protocol endian format. This keeps cached
   vtables entirely in native format and reduces hash collisions and only
@@ -30,9 +40,8 @@ platforms with little endian wire format.
   `FLATBUFFERS_PROTOCOL_IS_BE`.
 - Add binary test case to `json_test` when `FLATBUFFERS_PROTOCOL_IS_BE`.
 - Fix endian sensitive voffset access in json printer.
-
-The test `flatc_compat` is expected to fail with `FLATBUFFERS_PROTOCOL_IS_BE`
-because big endian flatbuffer encoding is not compatible with `flatc`.
+- Update `flatc_compat` to reverse acceptance of 'golden' little endian
+  reference buffer when `FLATBUFFERS_PROTOCOL_IS_BE`.
 
 ## [0.3.5a]
 - Fix regression introduced in 0.3.5 that caused double memory free on

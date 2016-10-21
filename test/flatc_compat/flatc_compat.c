@@ -189,16 +189,30 @@ int main(int argc, char *argv[])
      * v1.1`.
      */
     if (flatcc_verify_ok != ns(Monster_verify_as_root_with_identifier(buffer, size, "MONS"))) {
+#if FLATBUFFERS_PROTOCOL_IS_BE
+        fprintf(stderr, "flatc golden reference buffer was correctly rejected by flatcc verificiation\n"
+                "because flatc is little endian and flatcc has been compiled for big endian protocol format\n");
+        ret = 0;
+        goto done;
+#else
         fprintf(stderr, "could not verify foreign monster file\n");
         ret = -1;
         goto done;
+#endif
     }
+
+#if FLATBUFFERS_PROTOCOL_IS_BE
+    fprintf(stderr, "flatcc compiled with big endian protocol failed to reject reference little endian buffer\n");
+    ret = -1;
+    goto done;
+#else
     if (flatcc_verify_ok != ns(Monster_verify_as_root(buffer, size))) {
         fprintf(stderr, "could not verify foreign monster file with default identifier\n");
         ret = -1;
         goto done;
     }
     ret = verify_monster(buffer);
+#endif
 
 done:
     free(buffer);
