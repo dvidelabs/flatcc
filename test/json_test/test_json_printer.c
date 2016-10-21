@@ -3,6 +3,7 @@
 /* Only needed for verification. */
 #include "monster_test_json_printer.h"
 #include "flatcc/support/readfile.h"
+#include "flatcc_golden.c"
 
 #ifdef NDEBUG
 #define COMPILE_TYPE "(optimized)"
@@ -18,7 +19,7 @@
 /* A helper to simplify creating buffers vectors from C-arrays. */
 #define c_vec_len(V) (sizeof(V)/sizeof((V)[0]))
 
-const char *filename = "monsterdata_test.mon";
+const char *filename = 0; /* "monsterdata_test.mon"; */
 const char *golden_filename = "monsterdata_test.golden";
 const char *target_filename = "monsterdata_test.json.txt";
 
@@ -44,7 +45,18 @@ int test_print()
     /* Uses same formatting as golden reference file. */
     flatcc_json_printer_set_nonstrict(ctx);
 
-    buf = readfile(filename, FILE_SIZE_MAX, &size);
+    if (filename && strcmp(filename, "-")) {
+        buf = readfile(filename, FILE_SIZE_MAX, &size);
+    } else {
+#if FLATBUFFERS_PROTOCOL_IS_LE
+        buf = (const char *)flatcc_golden_le;
+        size = sizeof(flatcc_golden_le);
+#else
+        buf = (const char *)flatcc_golden_be;
+        size = sizeof(flatcc_golden_be);
+#endif
+    }
+
     if (!buf) {
         fprintf(stderr, "%s: could not read input flatbuffer file\n", filename);
         goto fail;
@@ -74,6 +86,9 @@ int test_print()
 
 done:
     flatcc_json_printer_clear(ctx);
+    if (!filename) {
+        buf = 0;
+    }
     if (buf) {
         free((void *)buf);
     }
@@ -95,7 +110,8 @@ fail:
 /* We take arguments so output file can be generated in build directory without copying sources. */
 #define usage \
 "wrong number of arguments:\n" \
-"usage: <program> [<input-filename> <reference-filename> <output-filename>]\n"
+"usage: <program> [(<input-filename>|'-') <reference-filename> <output-filename>]\n" \
+" noargs, or '-' use default binary buffer matching endianness of flatbuffer format\n"
 
 int main(int argc, const char *argv[])
 {
@@ -108,9 +124,6 @@ int main(int argc, const char *argv[])
         filename = argv[1];
         golden_filename = argv[2];
         target_filename = argv[3];
-    } else if (FLATBUFFERS_PROTOCOL_IS_BE) {
-        fprintf(stderr, "Please provide a big endian encoded binary file for printing\n");
-        exit(1);
-    }
+    } 
     return test_print();
 }

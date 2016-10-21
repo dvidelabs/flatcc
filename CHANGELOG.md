@@ -9,6 +9,7 @@
   over/underflow function in `include/flatcc/portable/pparsefp.h`.
 - Fix #12 infinite loop during flatbuffer build operations caused by
   rare vtable dedupe hash table collision chains.
+- Added `include/flatcc/support/cdump.h` tool for encoding buffers in C.
 
 Changes related to big endian support which do not affect little endian
 platforms with little endian wire format.
@@ -23,23 +24,15 @@ platforms with little endian wire format.
   endian platform.
 - Disable type hash tests when compiling flatbuffers in big endian wire
   format because this isn't currently supported.
-- Disable JSON printer test when `FLATBUFFERS_PROTOCOL_IS_BE` because
-  the binary used to print is in standard little endian format.
+- Update JSON printer test to handle `FLATBUFFERS_PROTOCOL_IS_BE`.
 - Fix emit test case. Incorrect assumption on acceptable null pointer
   breaks with null pointer conversion. Also add binary check when
   `FLATBUFFERS_PROTOCOL_IS_BE`.
 - Add binary test case to `json_test` when `FLATBUFFERS_PROTOCOL_IS_BE`.
 - Fix endian sensitive voffset access in json printer.
 
-Test cases that do and should break `FLATBUFFERS_PROTOCOL_IS_BE` because
-these tests rely on binary files in little endian format:
-
-- `flatc_compat`
-- `json_printer`
-
-However, these tests should still pass with the standard
-`FLATBUFFERS_PROTOCOL_IS_LE` format on both little and big endian
-platforms.
+The test `flatc_compat` is expected to fail with `FLATBUFFERS_PROTOCOL_IS_BE`
+because big endian flatbuffer encoding is not compatible with `flatc`.
 
 ## [0.3.5a]
 - Fix regression introduced in 0.3.5 that caused double memory free on
