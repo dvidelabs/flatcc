@@ -170,7 +170,12 @@ static inline void N ## _vec_sort(N ## _mutable_vec_t vec) { __ ## N ## __heap_s
 #define __flatbuffers_string_diff(x, y) __flatbuffers_string_n_cmp((x), (const char *)(y), flatbuffers_string_len(y))
 #define __flatbuffers_scalar_swap(vec, a, b, TE) { TE tmp = vec[b]; vec[b] = vec[a]; vec[a] = tmp; }
 #define __flatbuffers_string_swap(vec, a, b, TE)\
-{ TE tmp, d; d = (TE)((a - b) * sizeof(vec[0])); tmp = vec[b]; vec[b] = vec[a] + d; vec[a] = tmp - d; }
+{ TE ta, tb, d;\
+  d = (TE)((a - b) * sizeof(vec[0]));\
+  ta =  __flatbuffers_uoffset_read_from_pe(vec + b) - d;\
+  tb =  __flatbuffers_uoffset_read_from_pe(vec + a) + d;\
+  __flatbuffers_uoffset_write_to_pe(vec + a, ta);\
+  __flatbuffers_uoffset_write_to_pe(vec + b, tb); }
 #define __flatbuffers_define_sort_by_scalar_field(N, NK, TK, TE)\
   __flatbuffers_define_sort_by_field(N, NK, TK, TE, __flatbuffers_scalar_diff, __flatbuffers_scalar_swap)
 #define __flatbuffers_define_sort_by_string_field(N, NK)\
