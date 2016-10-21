@@ -3,6 +3,8 @@
 #include "monster_test_json_printer.h"
 #include "monster_test_verifier.h"
 
+#include "flatcc/support/hexdump.h"
+
 #undef ns
 #define ns(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Example, x)
 
@@ -56,6 +58,10 @@ done:
     flatcc_json_printer_clear(&printer);
     return ret;
 failed:
+    if (flatbuffer) {
+        hexdump("parsed buffer", flatbuffer, flatbuffer_size, stderr);
+    }
+
     ret = -1;
     goto done;
 }

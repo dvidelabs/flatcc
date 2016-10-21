@@ -59,6 +59,11 @@ static inline const void *read_uoffset_ptr(const void *p)
     return (uint8_t *)p + __flatbuffers_uoffset_read_from_pe(p);
 }
 
+static inline voffset_t read_voffset(const void *p, uoffset_t base)
+{
+    return __flatbuffers_voffset_read_from_pe((uint8_t *)p + base);
+}
+
 static inline const void *get_field_ptr(flatcc_json_printer_table_descriptor_t *td, int id)
 {
     int vo = (id + 2) * sizeof(voffset_t);
@@ -66,7 +71,7 @@ static inline const void *get_field_ptr(flatcc_json_printer_table_descriptor_t *
     if (vo >= td->vsize) {
         return 0;
     }
-    vo = *(voffset_t *)((uint8_t *)td->vtable + vo);
+    vo = read_voffset(td->vtable, vo);
     if (vo == 0) {
         return 0;
     }
