@@ -28,6 +28,7 @@ platforms with little endian wire format.
 - Fix emit test case. Incorrect assumption on acceptable null pointer
   breaks with null pointer conversion. Also add binary check when
   `FLATBUFFERS_PROTOCOL_IS_BE`.
+- Add binary test case to `json_test` when `FLATBUFFERS_PROTOCOL_IS_BE`.
 - Fix endian sensitive voffset access in json printer.
 
 Test cases that do and should break `FLATBUFFERS_PROTOCOL_IS_BE` because

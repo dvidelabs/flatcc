@@ -305,6 +305,7 @@ int main()
     TEST(   "{ name: \"Monster\", testnestedflatbuffer:{ \"name\": \"sub Monster\" } }",
             "{\"name\":\"Monster\",\"testnestedflatbuffer\":{\"name\":\"sub Monster\"}}");
 
+#if FLATBUFFERS_PROTOCOL_IS_LE
     TEST(   "{ name: \"Monster\", testnestedflatbuffer:"
             "[" /* start of nested flatbuffer, implicit size: 40 */
             "4,0,0,0," /* header: object offset = 4, no identifier */
@@ -315,6 +316,19 @@ int main()
             "]" /* end of nested flatbuffer */
             "}",
             "{\"name\":\"Monster\",\"testnestedflatbuffer\":{\"name\":\"sub Monster\"}}");
+#else
+    TEST(   "{ name: \"Monster\", testnestedflatbuffer:"
+            "[" /* start of nested flatbuffer, implicit size: 40 */
+            "0,0,0,4," /* header: object offset = 4, no identifier */
+            "255,255,255,248," /* vtable offset */
+            "0,0,0,16," /* offset to name */
+            "0,12,0,8,0,0,0,0,0,0,0,4," /* vtable */
+            "0,0,0,11,115,117,98,32,77,111,110,115,116,101,114,0" /* name = "sub Monster" */
+            "]" /* end of nested flatbuffer */
+            "}",
+            "{\"name\":\"Monster\",\"testnestedflatbuffer\":{\"name\":\"sub Monster\"}}");
+#endif
+
 
     return ret ? -1: 0;
 }
