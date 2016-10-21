@@ -9,17 +9,20 @@
 - Fix `pstatic_assert.h` missing fallback case.
 - Disable direct vector access test case when running on non-native
   endian platform.
-- Fix infinite loop during flatbuffer build operations caused by certain
-  vtable collision chains.
+- Fix #12 infinite loop during flatbuffer build operations caused by
+  rare vtable dedupe hash table collision chains.
 
 Changes related to big endian support which do not affect little endian
-platforms:
+platforms with little endian wire format.
 
 - Fix vtable conversion to protocol endian format. This keeps cached
   vtables entirely in native format and reduces hash collisions and only
   converts when emitting the vtable to a buffer location.
 - Fix structs created with parameter list resulting in double endian
   conversion back to native. 
+- Fix string swap used in sort due to endian sensitive diff math. 
+- Disable type hash tests when compiling flatbuffers in big endian wire
+  format because this isn't currently supported.
 
 ## [0.3.5a]
 - Fix regression introduced in 0.3.5 that caused double memory free on
