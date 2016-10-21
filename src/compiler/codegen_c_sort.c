@@ -79,7 +79,12 @@ int gen_sort(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sscalar_swap(vec, a, b, TE) { TE tmp = vec[b]; vec[b] = vec[a]; vec[a] = tmp; }\n"
         "#define __%sstring_swap(vec, a, b, TE)\\\n"
-        "{ TE tmp, d; d = (TE)((a - b) * sizeof(vec[0])); tmp = vec[b]; vec[b] = vec[a] + d; vec[a] = tmp - d; }\n",
+        "{ TE ta, tb, d;\\\n"
+        "  d = (TE)((a - b) * sizeof(vec[0]));\\\n"
+        "  ta =  __flatbuffers_uoffset_read_from_pe(vec + b) - d;\\\n"
+        "  tb =  __flatbuffers_uoffset_read_from_pe(vec + a) + d;\\\n"
+        "  __flatbuffers_uoffset_write_to_pe(vec + a, ta);\\\n"
+        "  __flatbuffers_uoffset_write_to_pe(vec + b, tb); }\n",
         out->nsc, out->nsc);
     fprintf(out->fp,
         "#define __%sdefine_sort_by_scalar_field(N, NK, TK, TE)\\\n"
