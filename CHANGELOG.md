@@ -25,6 +25,19 @@ platforms with little endian wire format.
   format because this isn't currently supported.
 - Disable JSON printer test when `FLATBUFFERS_PROTOCOL_IS_BE` because
   the binary used to print is in standard little endian format.
+- Fix emit test case. Incorrect assumption on acceptable null pointer
+  breaks with null pointer conversion. Also add binary check when
+  `FLATBUFFERS_PROTOCOL_IS_BE`.
+
+Test cases that do and should break `FLATBUFFERS_PROTOCOL_IS_BE` because
+these tests rely on binary files in little endian format:
+
+- `flatc_compat`
+- `json_printer`
+
+However, these tests should still pass with the standard
+`FLATBUFFERS_PROTOCOL_IS_LE` format on both little and big endian
+platforms.
 
 ## [0.3.5a]
 - Fix regression introduced in 0.3.5 that caused double memory free on
