@@ -3,12 +3,10 @@
 ## [0.3.6-pre]
 - Fix Windows detection in flatcc/support/elapsed.h used by benchmark.
 - Fix #8 surplus integer literal suffix in portable byteswap fallback.
+- Fix `pstatic_assert.h` missing fallback case.
 - Fix #9 return values from allocation can be zero without being an error.
 - Fix #11 by avoiding dependency on -lm (libmath) by providing a cleaner
   over/underflow function in `include/flatcc/portable/pparsefp.h`.
-- Fix `pstatic_assert.h` missing fallback case.
-- Disable direct vector access test case when running on non-native
-  endian platform.
 - Fix #12 infinite loop during flatbuffer build operations caused by
   rare vtable dedupe hash table collision chains.
 
@@ -21,8 +19,12 @@ platforms with little endian wire format.
 - Fix structs created with parameter list resulting in double endian
   conversion back to native. 
 - Fix string swap used in sort due to endian sensitive diff math. 
+- Disable direct vector access test case when running on non-native
+  endian platform.
 - Disable type hash tests when compiling flatbuffers in big endian wire
   format because this isn't currently supported.
+- Disable JSON printer test when `FLATBUFFERS_PROTOCOL_IS_BE` because
+  the binary used to print is in standard little endian format.
 
 ## [0.3.5a]
 - Fix regression introduced in 0.3.5 that caused double memory free on

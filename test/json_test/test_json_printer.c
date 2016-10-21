@@ -108,6 +108,9 @@ int main(int argc, const char *argv[])
         filename = argv[1];
         golden_filename = argv[2];
         target_filename = argv[3];
+    } else if (FLATBUFFERS_PROTOCOL_IS_BE) {
+        fprintf(stderr, "Please provide a big endian encoded binary file for printing\n");
+        exit(1);
     }
     return test_print();
 }
