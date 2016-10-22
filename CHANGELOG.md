@@ -10,6 +10,13 @@
 - Fix #12 infinite loop during flatbuffer build operations caused by
   rare vtable dedupe hash table collision chains.
 - Added `include/flatcc/support/cdump.h` tool for encoding buffers in C.
+- Buffer identifier strings now respect zero termination if shorter than
+  4 bytes similar to C++. Type hashes can therefore no longer be cast to
+  identifier strings reliably as they may contain null bytes - use typed
+  API calls. The `...type_identifier` strings are still generated
+  though.  Low-level `flatcc_builder` API operates with fixed size
+  identifier byte arrays and works the same for both identifier strings
+  and type hashes.
 
 Ongoing work:
 
@@ -21,6 +28,10 @@ platforms with little endian wire format.
   endian host platforms via `FLATBUFFERS_PROTOCOL_IS_LE/BE` in
   `include/flatcc/flatcc_types.h`. Use `flatbuffers_is_native_pe()` to
   see if the host native endian format matches the buffer protocol.
+  NOTE: file identifier at buffer offset 4 is always byteswapped
+  on BE encoded buffers but this is transparent as API assumes
+  same identifier strings on alway endian combinations. Type
+  hashes are swapped likewise and assumed native endian in API.
 
 In more detail:
 
@@ -32,8 +43,6 @@ In more detail:
 - Fix string swap used in sort due to endian sensitive diff math. 
 - Disable direct vector access test case when running on non-native
   endian platform.
-- Disable type hash tests when compiling flatbuffers in big endian wire
-  format because this isn't currently supported.
 - Update JSON printer test to handle `FLATBUFFERS_PROTOCOL_IS_BE`.
 - Fix emit test case. Incorrect assumption on acceptable null pointer
   breaks with null pointer conversion. Also add binary check when

@@ -215,8 +215,10 @@ __flatbuffers_define_string_sort()
 #define __flatbuffers_struct_struct_field(t, M) { return t ? &(t->M) : 0; }
 /* If fid is null, the function returns true without testing as buffer is not expected to have any id. */
 static inline int flatbuffers_has_identifier(const void *buffer, const char *fid)
-{ return fid == 0 || memcmp(fid, ((flatbuffers_uoffset_t *)buffer) + 1, FLATBUFFERS_IDENTIFIER_SIZE) == 0; }
-
+{ flatbuffers_thash_t id, id2 = 0; if (fid == 0) { return 1; };
+  strncpy((char *)&id2, fid, sizeof(id2));
+  id = __flatbuffers_thash_read_from_pe(((flatbuffers_uoffset_t *)buffer) + 1);
+  return id == 0 || id2 == 0 || id == id2; }
 static inline int flatbuffers_has_type_hash(const void *buffer, flatbuffers_thash_t type_hash)
 { return type_hash == 0 || (__flatbuffers_thash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1) == type_hash); }
 

@@ -140,14 +140,22 @@ typedef int flatcc_union_verifier_f(flatcc_table_verifier_descriptor_t *td,
  */
 int flatcc_verify_struct_as_root(const void *buf, size_t bufsiz, const char *fid,
         uint16_t align, size_t size);
+
+int flatcc_verify_struct_as_typed_root(const void *buf, size_t bufsiz, flatbuffers_thash_t thash,
+        uint16_t align, size_t size);
+
 int flatcc_verify_table_as_root(const void *buf, size_t bufsiz, const char *fid,
         flatcc_table_verifier_f *root_tvf);
 
+int flatcc_verify_table_as_typed_root(const void *buf, size_t bufsiz, flatbuffers_thash_t thash,
+        flatcc_table_verifier_f *root_tvf);
 /*
  * The buffer header is verified by any of the `_as_root` verifiers, but
  * this function may be used as a quick sanity check.
  */
 int flatcc_verify_buffer_header(const void *buf, size_t bufsiz, const char *fid);
+
+int flatcc_verify_typed_buffer_header(const void *buf, size_t bufsiz, flatbuffers_thash_t type_hash);
 
 /*
  * The following functions are typically called by a generated table

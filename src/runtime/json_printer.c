@@ -815,15 +815,22 @@ void flatcc_json_printer_struct_field(flatcc_json_printer_t *ctx,
 static int accept_header(flatcc_json_printer_t * ctx,
         const void *buf, size_t bufsiz, const char *fid)
 {
+    flatbuffers_thash_t id, id2 = 0;
+
     if (buf == 0 || bufsiz < offset_size + FLATBUFFERS_IDENTIFIER_SIZE) {
         RAISE_ERROR(bad_input);
         assert(0 && "buffer header too small");
         return 0;
     }
-    if (fid != 0 && 0 != memcmp((uint8_t *)buf + offset_size, fid, FLATBUFFERS_IDENTIFIER_SIZE)) {
-        RAISE_ERROR(bad_input);
-        assert(0 && "identifier mismatch");
-        return 0;
+    if (fid != 0) {
+        strncpy((char *)&id2, fid, FLATBUFFERS_IDENTIFIER_SIZE);
+        id2 = __flatbuffers_thash_cast_from_le(id2);
+        id = __flatbuffers_thash_read_from_pe((uint8_t *)buf + offset_size);
+        if (!(id2 == 0 || id == id2)) {
+            RAISE_ERROR(bad_input);
+            assert(0 && "identifier mismatch");
+            return 0;
+        }
     }
     return 1;
 }

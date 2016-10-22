@@ -138,7 +138,6 @@ static void gen_find(fb_output_t *out)
 static void gen_helpers(fb_output_t *out)
 {
     const char *nsc = out->nsc;
-    const char *nscup = out->nscup;
 
     fprintf(out->fp,
         /*
@@ -358,22 +357,30 @@ static void gen_helpers(fb_output_t *out)
     fprintf(out->fp,
             "/* If fid is null, the function returns true without testing as buffer is not expected to have any id. */\n"
             "static inline int %shas_identifier(const void *buffer, const char *fid)\n"
-            "{ return fid == 0 || memcmp(fid, ((%suoffset_t *)buffer) + 1, %s_IDENTIFIER_SIZE) == 0; }\n\n"
-            "static inline int %shas_type_hash(const void *buffer, %sthash_t type_hash)\n"
-            /* TODO: read_from_pe should be `to_pe` and if isn't supported, fix it in accessors or similar. Ditto in verifier. */
-            "{ return type_hash == 0 || (__%sthash_read_from_pe((%suoffset_t *)buffer + 1) == type_hash); }\n\n"
+            "{ %sthash_t id, id2 = 0; if (fid == 0) { return 1; };\n"
+            "  strncpy((char *)&id2, fid, sizeof(id2));\n"
+            "  /* Identifier strings are always considered little endian. */\n"
+            "  id2 = __%sthash_cast_from_le(id2);\n"
+            "  id = __%sthash_read_from_pe(((%suoffset_t *)buffer) + 1);\n"
+            "  return id2 == 0 || id == id2; }\n"
+            "static inline int %shas_type_hash(const void *buffer, %sthash_t thash)\n"
+            "{ return thash == 0 || (__%sthash_read_from_pe((%suoffset_t *)buffer + 1) == thash); }\n\n"
             "static inline %sthash_t %sget_type_hash(const void *buffer)\n"
             "{ return __%sthash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1); }\n\n"
             "#define %sverify_endian() %shas_identifier(\"\\x00\\x00\\x00\\x00\" \"1234\", \"1234\")\n",
-            nsc, nsc, nscup, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
 
     fprintf(out->fp,
             "/* Null file identifier accepts anything, otherwise fid should be 4 characters. */\n"
             "#define __%sread_root(T, K, buffer, fid)\\\n"
             "  ((!buffer || !%shas_identifier(buffer, fid)) ? 0 :\\\n"
             "  ((T ## _ ## K ## t)(((uint8_t *)buffer) +\\\n"
+            "    __%suoffset_read_from_pe(buffer))))\n"
+            "#define __%sread_typed_root(T, K, buffer, thash)\\\n"
+            "  ((!buffer || !%shas_type_hash(buffer, thash)) ? 0 :\\\n"
+            "  ((T ## _ ## K ## t)(((uint8_t *)buffer) +\\\n"
             "    __%suoffset_read_from_pe(buffer))))\n",
-            nsc, nsc, nsc);
+            nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "#define __%snested_buffer_as_root(C, N, T, K)\\\n"
             "static inline T ## _ ## K ## t C ## _ ## N ## _as_root_with_identifier(C ## _ ## table_t t, const char *fid)\\\n"
@@ -388,17 +395,16 @@ static void gen_helpers(fb_output_t *out)
             "#define __%sbuffer_as_root(N, K)\\\n"
             "static inline N ## _ ## K ## t N ## _as_root_with_identifier(const void *buffer, const char *fid)\\\n"
             "{ return __%sread_root(N, K, buffer, fid); }\\\n"
-            "static inline N ## _ ## K ## t N ## _as_root_with_type_hash(const void *buffer, flatbuffers_thash_t thash)\\\n"
-            "{ __flatbuffers_thash_write_to_pe(&thash, thash); return __%sread_root(N, K, buffer, thash ? (const char *)&thash : 0); }\\\n"
+            "static inline N ## _ ## K ## t N ## _as_root_with_type_hash(const void *buffer, %sthash_t thash)\\\n"
+            "{ return __%sread_typed_root(N, K, buffer, thash); }\\\n"
             "static inline N ## _ ## K ## t N ## _as_root(const void *buffer)\\\n"
             "{ const char *fid = N ## _identifier;\\\n"
             "  return __%sread_root(N, K, buffer, fid); }\\\n"
             "static inline N ## _ ## K ## t N ## _as_typed_root(const void *buffer)\\\n"
-            "{ const char *fid = N ## _type_identifier;\\\n"
-            "  return __%sread_root(N, K, buffer, fid); }\n"
+            "{ return __%sread_typed_root(N, K, buffer, N ## _type_hash); }\n"
             "#define __%sstruct_as_root(N) __%sbuffer_as_root(N, struct_)\n"
             "#define __%stable_as_root(N) __%sbuffer_as_root(N, table_)\n",
-            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp, "\n");
 }
 

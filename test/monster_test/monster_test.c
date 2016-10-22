@@ -1690,8 +1690,6 @@ int main(int argc, char *argv[])
         return -1;
     }
 #endif
-/* TODO: BE buffers do not work with type hashes. */
-#if FLATBUFFERS_PROTOCOL_IS_LE 
 #if 1
     if (test_typed_empty_monster(B)) {
         printf("TEST FAILED\n");
@@ -1709,9 +1707,6 @@ int main(int argc, char *argv[])
         printf("TEST FAILED\n");
         return -1;
     }
-#endif
-#else
-    printf("SKIPPING TYPE HASH TESTS WITH BIG ENDIAN PROTOCOL, FEATURE NOT SUPPORTED\n");
 #endif
 #if 1
     if (test_clone_slice(B)) {
