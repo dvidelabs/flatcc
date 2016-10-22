@@ -42,8 +42,8 @@ static inline int reflection_Type_verify_as_root_with_identifier(const void *buf
 }
 
 static inline int reflection_Type_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
-{ __flatbuffers_thash_write_to_pe(&thash, thash);
-  return flatcc_verify_table_as_root(buf, bufsiz, thash ? (const char *)&thash : 0, &__reflection_Type_table_verifier);
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &__reflection_Type_table_verifier);
 }
 
 static int __reflection_EnumVal_table_verifier(flatcc_table_verifier_descriptor_t *td)
@@ -71,8 +71,8 @@ static inline int reflection_EnumVal_verify_as_root_with_identifier(const void *
 }
 
 static inline int reflection_EnumVal_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
-{ __flatbuffers_thash_write_to_pe(&thash, thash);
-  return flatcc_verify_table_as_root(buf, bufsiz, thash ? (const char *)&thash : 0, &__reflection_EnumVal_table_verifier);
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &__reflection_EnumVal_table_verifier);
 }
 
 static int __reflection_Enum_table_verifier(flatcc_table_verifier_descriptor_t *td)
@@ -101,8 +101,8 @@ static inline int reflection_Enum_verify_as_root_with_identifier(const void *buf
 }
 
 static inline int reflection_Enum_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
-{ __flatbuffers_thash_write_to_pe(&thash, thash);
-  return flatcc_verify_table_as_root(buf, bufsiz, thash ? (const char *)&thash : 0, &__reflection_Enum_table_verifier);
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &__reflection_Enum_table_verifier);
 }
 
 static int __reflection_Field_table_verifier(flatcc_table_verifier_descriptor_t *td)
@@ -136,8 +136,8 @@ static inline int reflection_Field_verify_as_root_with_identifier(const void *bu
 }
 
 static inline int reflection_Field_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
-{ __flatbuffers_thash_write_to_pe(&thash, thash);
-  return flatcc_verify_table_as_root(buf, bufsiz, thash ? (const char *)&thash : 0, &__reflection_Field_table_verifier);
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &__reflection_Field_table_verifier);
 }
 
 static int __reflection_Object_table_verifier(flatcc_table_verifier_descriptor_t *td)
@@ -167,8 +167,8 @@ static inline int reflection_Object_verify_as_root_with_identifier(const void *b
 }
 
 static inline int reflection_Object_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
-{ __flatbuffers_thash_write_to_pe(&thash, thash);
-  return flatcc_verify_table_as_root(buf, bufsiz, thash ? (const char *)&thash : 0, &__reflection_Object_table_verifier);
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &__reflection_Object_table_verifier);
 }
 
 static int __reflection_Schema_table_verifier(flatcc_table_verifier_descriptor_t *td)
@@ -198,8 +198,8 @@ static inline int reflection_Schema_verify_as_root_with_identifier(const void *b
 }
 
 static inline int reflection_Schema_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
-{ __flatbuffers_thash_write_to_pe(&thash, thash);
-  return flatcc_verify_table_as_root(buf, bufsiz, thash ? (const char *)&thash : 0, &__reflection_Schema_table_verifier);
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &__reflection_Schema_table_verifier);
 }
 
 #include "flatcc/portable/pdiagnostic_pop.h"
