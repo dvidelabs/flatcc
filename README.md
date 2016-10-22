@@ -756,6 +756,23 @@ The `type_identifier` can be used anywhere the original 4 character
 file identifier would be used, but a buffer must choose which system, if any,
 to use. This will not affect the `file_extension`.
 
+NOTE: The generated `_type_identifier` strings should not normally be
+used when an identifier string is expected in the generated API because
+it may contain null bytes which will be zero padded after the first null
+before comparison. Use the API calls that take a type hash instead. The
+`type_identifier` can be used in low level `flatcc_builder` calls
+because it handles identifiers as a fixed byte array and handles type
+hashes and strings the same.
+
+NOTE: it is possible to compile the flatcc runtime to encode buffers in
+big endian format rather than the standard little endian format
+regardless of the host platforms endianness. If this is done, the
+identifier field in the buffer is always byte swapped regardless of the
+identifier method chosen. The API calls make this transparent, so "MONS"
+will be stored as "SNOM" but should still be verified as "MONS" in API
+calls. This safeguards against mixing little- and big-endian buffers.
+Likewise, type hashes are always tested in native (host) endian format.
+
 
 The
 [`flatcc/flatcc_identifier.h`](https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_identifier.h)
