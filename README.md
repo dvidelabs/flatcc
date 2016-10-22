@@ -14,6 +14,21 @@ or printing in less than 2 us for a 10 field mixed type message.
 
 See also experimental meson branch, and [sample client project](https://github.com/dvidelabs/flatcc-meson-sample)
 
+Upcoming changes:
+
+- support for big endian platforms - this now works in most cases except
+  for json parsing.
+- support for big endian encoded flatbuffers (on all endian platforms).
+  Be aware that at some point this could change such that non-standard
+  encodings will have different API name prefixes. For now the API
+  remains unchanged and requires recompilation with updated
+  `flatcc_types.h`.
+- type hashed file/buffer identifiers will likely see an API change
+  because currently numeric identifiers are simply converted to a string
+  but this needs a separate API call so string identifiers can be zero
+  terminated an such that type hashes changes endian format for big
+  endian encoded flatbuffers, which string identifiers won't.
+
 NOTE: see
 [CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md).
 There are occassionally minor breaking changes as API inconsistencies
