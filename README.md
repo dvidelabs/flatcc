@@ -23,11 +23,6 @@ Upcoming changes:
   encodings will have different API name prefixes. For now the API
   remains unchanged and requires recompilation with updated
   `flatcc_types.h`.
-- type hashed file/buffer identifiers will likely see an API change
-  because currently numeric identifiers are simply converted to a string
-  but this needs a separate API call so string identifiers can be zero
-  terminated an such that type hashes changes endian format for big
-  endian encoded flatbuffers, which string identifiers won't.
 
 NOTE: see
 [CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md).
