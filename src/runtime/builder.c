@@ -690,15 +690,11 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
         flatcc_builder_ref_t object_ref, uint16_t align, int is_nested)
 {
     flatcc_builder_ref_t buffer_ref;
-    uoffset_t header_pad, id_size;
+    uoffset_t header_pad, id_size = 0;
     uoffset_t object_offset, buffer_size, buffer_base;
     iov_state_t iov;
     flatcc_builder_identifier_t id_out = 0;
-    flatbuffers_thash_t thash;
     
-    memcpy(&thash, identifier, sizeof(thash));
-    thash = __flatbuffers_thash_cast_from_le(thash);
-
     if (align_to_block(B, &align, block_align, is_nested)) {
         return 0;
     }
@@ -707,6 +703,7 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
         assert(sizeof(flatcc_builder_identifier_t) == identifier_size);
         assert(sizeof(flatcc_builder_identifier_t) == field_size);
         memcpy(&id_out, identifier, identifier_size);
+        id_out = __flatbuffers_thash_cast_from_le(id_out);
         id_out = store_identifier(id_out);
     }
     id_size = id_out ? identifier_size : 0;
