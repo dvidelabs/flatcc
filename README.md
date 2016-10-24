@@ -16,13 +16,14 @@ See also experimental meson branch, and [sample client project](https://github.c
 
 Upcoming changes:
 
-- support for big endian platforms - this now works in most cases except
-  for json parsing.
+- support for big endian platforms - now passes all tests on AIX.
 - support for big endian encoded flatbuffers (on all endian platforms).
   Be aware that at some point this could change such that non-standard
   encodings will have different API name prefixes. For now the API
   remains unchanged and requires recompilation with updated
   `flatcc_types.h`.
+- size prefixed buffers - there will be minor breaking changes to
+  low-level builder api, adding a flags argument.
 
 NOTE: see
 [CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md).
