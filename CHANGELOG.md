@@ -17,6 +17,11 @@
   though.  Low-level `flatcc_builder` API operates with fixed size
   identifier byte arrays and works the same for both identifier strings
   and type hashes.
+- JSON code generators no longer use non-portable PRIszu print
+  modifiers. Fixes issue on IBM XLC AIX.
+- Deprecated support for PRIsz? print modifiers in
+  `include/flatcc/portable/pinttypes.h`, they would require much more
+  work to be portable.
 
 Ongoing work:
 
