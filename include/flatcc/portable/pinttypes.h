@@ -44,10 +44,8 @@
 
 # endif /* __STDC__ */
 
+#ifdef PORTABLE_USE_DEPRECATED_INTTYPES
 #ifndef PRIszu
-#ifndef PORTABLE_USE_DEPRECATED_INTTYPES
-#error PRIsz? modifiers disabled. Requires mucn more work to be portable.
-#endif
 #ifdef _MSC_VER
   #define PRIszd "Id"
   #define PRIszu "Iu"
@@ -62,6 +60,7 @@
   #define PRIpdd "td"
   #define PRIpdu "tu"
   #define PRIpdx "tx"
+#endif
 #endif
 #endif
 
