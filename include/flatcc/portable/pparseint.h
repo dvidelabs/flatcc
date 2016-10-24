@@ -48,7 +48,6 @@
 #ifndef UINT8_MAX
 #include <stdint.h>
 #endif
-#include "pinttypes.h"
 
 #define PARSE_INTEGER_UNSIGNED       0
 #define PARSE_INTEGER_SIGNED         1
