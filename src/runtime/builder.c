@@ -694,6 +694,10 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
     uoffset_t object_offset, buffer_size, buffer_base;
     iov_state_t iov;
     flatcc_builder_identifier_t id_out = 0;
+    flatbuffers_thash_t thash;
+    
+    memcpy(&thash, identifier, sizeof(thash));
+    thash = __flatbuffers_thash_cast_from_le(thash);
 
     if (align_to_block(B, &align, block_align, is_nested)) {
         return 0;
