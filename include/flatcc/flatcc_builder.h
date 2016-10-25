@@ -263,6 +263,7 @@ typedef struct __flatcc_builder_buffer_frame __flatcc_builder_buffer_frame_t;
 struct __flatcc_builder_buffer_frame {
     flatcc_builder_identifier_t identifier;
     flatcc_builder_ref_t mark;
+    int flags;
     size_t block_align;
 };
 
@@ -375,6 +376,8 @@ struct flatcc_builder {
     int level;
     /* Aggregate check for allocated frame and max_level. */
     int limit_level;
+    /* Track size prefixed buffer. */
+    int buffer_flags;
 
     /* Settings that may happen with no frame allocated. */
 
@@ -556,6 +559,11 @@ void flatcc_builder_set_max_level(flatcc_builder_t *B, int level);
  */
 void flatcc_builder_set_vtable_clustering(flatcc_builder_t *B, int enable);
 
+enum flatcc_builder_buffer_flags {
+    flatcc_builder_is_nested = 1,
+    flatcc_builder_with_size = 2,
+};
+
 /**
  * An alternative to start buffer, start struct/table ... end buffer.
  *
@@ -576,9 +584,25 @@ void flatcc_builder_set_vtable_clustering(flatcc_builder_t *B, int enable);
  * may return different after the call because it will be updated with
  * the `block_align` argument to `create_buffer` but that is ok).
  *
- * The buffer may be constructed as a nested buffer with `is_nested = 1`
- * or as a top level buffer with `is_nested = 0`. As a nested buffer a
- * ubyte vector header is placed before the block aligned buffer header.
+ * The buffer may be constructed as a nested buffer with the `is_nested
+ * = 1` flag. As a nested buffer a ubyte vector header is placed before
+ * the aligned buffer header. A top-level buffer will normally have
+ * flags set to 0.
+ *
+ * A top-level buffer may also be constructed with the `with_size = 2`
+ * flag for top level buffers. It adds a size prefix similar to
+ * `is_nested` but the size is part of the aligned buffer. A size
+ * prefixed top level buffer must be accessed with a size prefix aware
+ * reader, or the buffer given to a standard reader must point to after
+ * the size field while keeping the buffer aligned to the size field
+ * (this will depend on the readers API which may be an arbitrary other
+ * language).
+ *
+ * If the `with_size` is used with the `is_nested` flag, the size is
+ * added as usual and all fields remain aligned as before, but padding
+ * is adjusted to ensure the buffer is aligned to the size field so
+ * that, for example, the nested buffer with size can safely be copied
+ * to a new memory buffer for consumption.
  *
  * Generally, references may only be used within the same buffer
  * context. With `create_buffer` this becomes less precise. The rule
@@ -601,7 +625,7 @@ void flatcc_builder_set_vtable_clustering(flatcc_builder_t *B, int enable);
 flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
         const char identifier[FLATBUFFERS_IDENTIFIER_SIZE],
         uint16_t block_align,
-        flatcc_builder_ref_t ref, uint16_t align, int is_nested);
+        flatcc_builder_ref_t ref, uint16_t align, int flags);
 
 /**
  * Creates a struct within the current buffer without using any
@@ -618,7 +642,6 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
  * interface without being in a buffer and without being a valid
  * FlatBuffer.
  */
-
 flatcc_builder_ref_t flatcc_builder_create_struct(flatcc_builder_t *B,
         const void *data, size_t size, uint16_t align);
 
@@ -684,10 +707,13 @@ flatcc_builder_ref_t flatcc_builder_end_struct(flatcc_builder_t *B);
  * All alignment in all API calls must be between 1 and 256 and must be a
  * power of 2. This is not checked. Only if explicitly documented can it
  * also be 0 for a default value.
+ *
+ * `flags` can be `with_size` but `is_nested` is derived from context
+ * see also `create_buffer`.
  */
 int flatcc_builder_start_buffer(flatcc_builder_t *B,
         const char identifier[FLATBUFFERS_IDENTIFIER_SIZE],
-        uint16_t block_align);
+        uint16_t block_align, int flags);
 
 /**
  * The root object should be a struct or a table to conform to the
@@ -721,9 +747,9 @@ flatcc_builder_ref_t flatcc_builder_end_buffer(flatcc_builder_t *B, flatcc_build
  * `align = 64` and `size = 65` may share its last 64 byte block with
  * other content, but not if `block_align = 64`.
  *
- * Because the ubyte size field is not part of the aligned buffer,
- * significant space can be wasted if multiple blocks are added in
- * sequence with a large block size.
+ * Because the ubyte size field is not, by default, part of the aligned
+ * buffer, significant space can be wasted if multiple blocks are added
+ * in sequence with a large block size.
  *
  * In most cases the distinction between the two alignments is not
  * important, but it allows separate configuration of block internal
@@ -735,10 +761,15 @@ flatcc_builder_ref_t flatcc_builder_end_buffer(flatcc_builder_t *B, flatcc_build
  * emit the buffer through the emit interface, but may also add padding
  * up to block alignment. At top-level there will be no size field
  * header.
+ *
+ * If `with_size` flag is set, the buffer is aligned to size field and
+ * the above note about padding space no longer applies. The size field
+ * is added regardless. The `is_nested` flag has no effect since it is
+ * impplied.
  */
 flatcc_builder_ref_t flatcc_builder_embed_buffer(flatcc_builder_t *B,
         uint16_t block_align,
-        const void *data, size_t size, uint16_t align);
+        const void *data, size_t size, uint16_t align, int flags);
 
 /**
  * Applies to the innermost open buffer. The identifier may be null or

@@ -269,7 +269,11 @@ static int export_schema(flatcc_builder_t *B, fb_options_t *opts, fb_schema_t *S
 
     /* Build the schema. */
 
-    reflection_Schema_start_as_root(B);
+    if (opts->bgen_length_prefix) {
+        reflection_Schema_start_as_root_with_size(B);
+    } else {
+        reflection_Schema_start_as_root(B);
+    }
     if (S->file_identifier.type == vt_string) {
         reflection_Schema_file_ident_create(B,
                 S->file_identifier.s.s, S->file_identifier.s.len);
@@ -418,13 +422,6 @@ int fb_codegen_bfbs_to_file(fb_options_t *opts, fb_schema_t *S)
     if (!buffer) {
         printf("failed to generate binary schema\n");
         goto done;
-    }
-    if (opts->bgen_length_prefix) {
-        flatbuffers_uoffset_t length = __flatbuffers_uoffset_cast_to_pe((flatbuffers_uoffset_t)size);
-        if (sizeof(flatbuffers_uoffset_t) != fwrite(&length, 1, sizeof(length), fp)) {
-            fprintf(stderr, "could not write binary schema to file\n");
-            goto done;
-        }
     }
     if (size != fwrite(buffer, 1, size, fp)) {
         fprintf(stderr, "could not write binary schema to file\n");

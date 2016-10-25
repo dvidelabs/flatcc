@@ -435,7 +435,7 @@ repeat_nested:
         }
         is_vector = 0;
         is_scalar = 0;
-        println(out, "if (flatcc_builder_start_buffer(ctx->ctx, 0, 0)) goto failed;");
+        println(out, "if (flatcc_builder_start_buffer(ctx->ctx, 0, 0, 0)) goto failed;");
     }
     is_offset = !is_scalar && !is_struct && !is_union_type;
 
@@ -1437,10 +1437,10 @@ static int gen_root_table_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "ctx = ctx ? ctx : &parser;");
     println(out, "flatcc_json_parser_init(ctx, B, buf, buf + bufsiz, flags);");
     if (out->S->file_identifier.type == vt_string) {
-        println(out, "if (flatcc_builder_start_buffer(B, \"%.*s\", 0)) return -1;",
+        println(out, "if (flatcc_builder_start_buffer(B, \"%.*s\", 0, 0)) return -1;",
         out->S->file_identifier.s.len, out->S->file_identifier.s.s);
     } else {
-        println(out, "if (flatcc_builder_start_buffer(B, 0, 0)) return -1;");
+        println(out, "if (flatcc_builder_start_buffer(B, 0, 0, 0)) return -1;");
     }
     println(out, "%s_parse_json_table(ctx, buf, buf + bufsiz);", snt.text);
     println(out, "if (ctx->error) {"); indent();
@@ -1473,10 +1473,10 @@ static int gen_root_struct_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "ctx = ctx ? ctx : &ctx_;");
     println(out, "flatcc_json_parser_init(ctx, B, buf, buf + bufsiz, flags);");
     if (out->S->file_identifier.type == vt_string) {
-        println(out, "if (flatcc_builder_start_buffer(B, \"%.*s\", 0)) return -1;",
+        println(out, "if (flatcc_builder_start_buffer(B, \"%.*s\", 0, 0)) return -1;",
         out->S->file_identifier.s.len, out->S->file_identifier.s.s);
     } else {
-        println(out, "if (flatcc_builder_start_buffer(B, 0, 0)) return -1;");
+        println(out, "if (flatcc_builder_start_buffer(B, 0, 0, 0)) return -1;");
     }
     println(out, "buf = %s_parse_json_struct(ctx, buf, buf + bufsiz);", snt.text);
     println(out, "if (ctx->error) {"); indent();

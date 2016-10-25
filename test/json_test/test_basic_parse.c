@@ -97,7 +97,7 @@ const char *test(flatcc_builder_t *B, const char *buf, const char *end, int *ret
     ctx->line = 1;
     ctx->line_start = buf;
 
-    flatcc_builder_start_buffer(B, "TEST", 0);
+    flatcc_builder_start_buffer(B, "TEST", 0, 0);
 
     space(); match('{'); space();
     flatcc_builder_start_table(B, id_zulu + 1);

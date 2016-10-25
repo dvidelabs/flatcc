@@ -168,6 +168,7 @@ static int verify_field(flatcc_table_verifier_descriptor_t *td,
 {
     uoffset_t k, k2;
     voffset_t vte;
+    uoffset_t base = (uoffset_t)(size_t)td->buf;
 
     /*
      * Otherwise range check assumptions break, and normal access code likely also.
@@ -192,7 +193,7 @@ static int verify_field(flatcc_table_verifier_descriptor_t *td,
     verify(k2 <= td->tsize, flatcc_verify_error_table_field_out_of_range);
     /* This normally optimizes to nop. */
     verify(uoffset_size > voffset_size || k <= k2, flatcc_verify_error_table_field_size_overflow);
-    k += td->table;
+    k += td->table + base;
     verify(!(k & (align - 1)), flatcc_verify_error_table_field_not_aligned);
     /* We assume the table size has already been verified. */
     return flatcc_verify_ok;

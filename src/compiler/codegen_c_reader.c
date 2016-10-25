@@ -369,7 +369,10 @@ static void gen_helpers(fb_output_t *out)
             "{ return __%sthash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1); }\n\n"
             "#define %sverify_endian() %shas_identifier(\"\\x00\\x00\\x00\\x00\" \"1234\", \"1234\")\n",
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
-
+    fprintf(out->fp,
+            "static inline void *%sread_size_prefix(void *b, size_t *size_out)\n"
+            "{ if (size_out) { *size_out = (size_t)__%suoffset_read_from_pe(b); }\n"
+            "  return (uint8_t *)b + sizeof(%suoffset_t); }\n", nsc, nsc, nsc);
     fprintf(out->fp,
             "/* Null file identifier accepts anything, otherwise fid should be 4 characters. */\n"
             "#define __%sread_root(T, K, buffer, fid)\\\n"
