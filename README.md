@@ -122,8 +122,8 @@ Supported platforms:
 - Ubuntu gcc 4.4-4.8 and clang 3.5-3.8
 - OS-X current clang / gcc
 - Windows MSVC 2010, 2013, 2015, 2015 Win64 
-- IBM AIX big endian Power PC has been tested for release 0.4.0 but is
-  not part of regular release tests.
+- IBM XLC on AIX big endian Power PC has been tested for release 0.4.0
+  but is not part of regular release tests.
 
 The monster sample does not work with MSVC 2010 because it intentionally
 uses C99 style code to better follow the C++ version.
