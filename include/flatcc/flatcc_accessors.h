@@ -30,6 +30,14 @@ static inline T N ## _cast_from_pe(T v)                                     \
 { return (T) E ## W ## toh((uint ## W ## _t)v); }                           \
 static inline T N ## _cast_to_pe(T v)                                       \
 { return (T) hto ## E ## W((uint ## W ## _t)v); }                           \
+static inline T N ## _cast_from_le(T v)                                     \
+{ return (T) le ## W ## toh((uint ## W ## _t)v); }                          \
+static inline T N ## _cast_to_le(T v)                                       \
+{ return (T) htole ## W((uint ## W ## _t)v); }                              \
+static inline T N ## _cast_from_be(T v)                                     \
+{ return (T) be ## W ## toh((uint ## W ## _t)v); }                          \
+static inline T N ## _cast_to_be(T v)                                       \
+{ return (T) htobe ## W((uint ## W ## _t)v); }                              \
 __flatcc_basic_scalar_accessors_impl(N, T, W, E)
 
 #define __flatcc_define_real_accessors_impl(N, T, W, E)                     \
@@ -40,6 +48,18 @@ static inline T N ## _cast_from_pe(T v)                                     \
 static inline T N ## _cast_to_pe(T v)                                       \
 { union __ ## N ## _cast x;                                                 \
   x.v = v; x.u = hto ## E ## W(x.u); return x.v; }                          \
+static inline T N ## _cast_from_le(T v)                                     \
+{ union __ ## N ## _cast x;                                                 \
+  x.v = v; x.u = le ## W ## toh(x.u); return x.v; }                         \
+static inline T N ## _cast_to_le(T v)                                       \
+{ union __ ## N ## _cast x;                                                 \
+  x.v = v; x.u = htole ## W(x.u); return x.v; }                             \
+static inline T N ## _cast_from_be(T v)                                     \
+{ union __ ## N ## _cast x;                                                 \
+  x.v = v; x.u = be ## W ## toh(x.u); return x.v; }                         \
+static inline T N ## _cast_to_be(T v)                                       \
+{ union __ ## N ## _cast x;                                                 \
+  x.v = v; x.u = htobe ## W(x.u); return x.v; }                             \
 __flatcc_basic_scalar_accessors_impl(N, T, W, E)
 
 #define __flatcc_define_integer_accessors(N, T, W, E)                       \

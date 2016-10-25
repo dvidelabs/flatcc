@@ -256,13 +256,13 @@ static void export_root_type(flatcc_builder_t *B, fb_symbol_t * root_type,
 static int export_schema(flatcc_builder_t *B, fb_options_t *opts, fb_schema_t *S)
 {
     catalog_t catalog;
-    reflection_Object_ref_t *object_map;
+    reflection_Object_ref_t *object_map = 0;
 
     if (build_catalog(&catalog, S, opts->bgen_qualify_names, &S->root_schema->scope_index)) {
         return -1;
     }
 
-    if (!(object_map = malloc(catalog.nobjects * sizeof(object_map[0])))) {
+    if (catalog.nobjects > 0 && !(object_map = malloc(catalog.nobjects * sizeof(object_map[0])))) {
         clear_catalog(&catalog);
         return -1;
     }

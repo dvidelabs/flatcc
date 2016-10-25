@@ -508,16 +508,24 @@ int verify_monster(void *buffer)
         printf("Test4 vector is not the right length.\n");
         return -1;
     }
-    for (i = 0; i < 5; ++i) {
-        test = ns(Test_vec_at(testvec, i));
-        if (testvec_data[i].a != ns(Test_a(test))) {
-            printf("Test4 vec failed at index %d, member a\n", (int)i);
-            return -1;
+    /*
+     * This particular test requires that the in-memory
+     * array layout matches the array layout in the buffer.
+     */
+    if (flatbuffers_is_native_pe()) {
+        for (i = 0; i < 5; ++i) {
+            test = ns(Test_vec_at(testvec, i));
+            if (testvec_data[i].a != ns(Test_a(test))) {
+                printf("Test4 vec failed at index %d, member a\n", (int)i);
+                return -1;
+            }
+            if (testvec_data[i].b != ns(Test_b(test))) {
+                printf("Test4 vec failed at index %d, member a\n", (int)i);
+                return -1;
+            }
         }
-        if (testvec_data[i].b != ns(Test_b(test))) {
-            printf("Test4 vec failed at index %d, member a\n", (int)i);
-            return -1;
-        }
+    } else {
+        printf("SKIPPING DIRECT VECTOR ACCESS WITH NON-NATIVE ENDIAN PROTOCOL\n");
     }
     monsters = ns(Monster_testarrayoftables(monster));
     if (ns(Monster_vec_len(monsters)) != 8) {
@@ -1106,6 +1114,7 @@ int test_clone_slice(flatcc_builder_t *B)
     ns(Monster_ref_t) monster_ref;
     ns(Test_t) *t;
     ns(Test_struct_t) test4;
+    ns(Test_struct_t) elem4;
     void *buffer, *buf2;
     size_t size;
     int ret = -1;
@@ -1226,11 +1235,17 @@ int test_clone_slice(flatcc_builder_t *B)
         printf("struct vector test4 not cloned with correct length\n");
         goto done;
     }
-    if (ns(Test_vec_at(test4, 0))->a != 22) {
+    elem4 = ns(Test_vec_at(test4, 0));
+    if (ns(Test_a(elem4)) != 22) {
         printf("elem 0 of test4 not cloned\n");
         goto done;
     }
-    if (ns(Test_vec_at(test4, 1))->a != 44) {
+    if (flatbuffers_is_native_pe() && ns(Test_vec_at(test4, 0))->a != 22) {
+        printf("elem 0 of test4 not cloned, direct access\n");
+        goto done;
+    }
+    elem4 = ns(Test_vec_at(test4, 1));
+    if (ns(Test_a(elem4)) != 44) {
         printf("elem 1 of test4 not cloned\n");
         goto done;
     }
@@ -1239,7 +1254,8 @@ int test_clone_slice(flatcc_builder_t *B)
         printf("sliced struct vec not sliced\n");
         goto done;
     }
-    if (ns(Test_vec_at(test4, 0))->a != 44) {
+    elem4 = ns(Test_vec_at(test4, 0));
+    if (ns(Test_a(elem4)) != 44) {
         printf("sliced struct vec has wrong element\n");
         goto done;
     }
@@ -1651,19 +1667,7 @@ int main(int argc, char *argv[])
     }
 #endif
 #if 1
-    if (test_typed_table_with_emptystruct(B)) {
-        printf("TEST FAILED\n");
-        return -1;
-    }
-#endif
-#if 1
     if (test_empty_monster(B)) {
-        printf("TEST FAILED\n");
-        return -1;
-    }
-#endif
-#if 1
-    if (test_typed_empty_monster(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
@@ -1682,6 +1686,18 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_struct_buffer(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_typed_empty_monster(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_typed_table_with_emptystruct(B)) {
         printf("TEST FAILED\n");
         return -1;
     }

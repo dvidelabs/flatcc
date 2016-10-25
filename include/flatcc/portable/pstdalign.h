@@ -5,8 +5,10 @@
 
 #ifndef __cplusplus
 
-/* this whole header only works in C11 or with compiler extensions */
-#if !defined (__STD_VERSION) || __STDC_VERSION__ < 201112L
+#if (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) 
+/* C11 or newer */
+#include <stdalign.h>
+#else
 
 #if defined(__GNUC__) || defined (__IBMC__) || defined(__clang__)
 #define _Alignas(t) __attribute__((__aligned__(t)))
@@ -24,8 +26,6 @@
 #define __alignas_is_defined 1
 #define __alignof_is_defined 1
 
-#else
-#include <stdalign.h>
 #endif /* __STDC_VERSION__ */
 
 #endif /* __cplusplus */

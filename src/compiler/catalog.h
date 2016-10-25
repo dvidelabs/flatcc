@@ -180,7 +180,9 @@ static int build_catalog(catalog_t *catalog, fb_schema_t *schema, int qualify_na
     catalog->next_object = catalog->objects;
     catalog->next_enum = catalog->enums;
     catalog->next_name = catalog->name_table;
-    if (!catalog->objects || !catalog->enums || !catalog->name_table) {
+    if ((!catalog->objects && catalog->nobjects > 0) ||
+        (!catalog->enums && catalog->nenums > 0) ||
+        (!catalog->name_table && catalog->name_table_size > 0)) {
         clear_catalog(catalog);
         return -1;
     }

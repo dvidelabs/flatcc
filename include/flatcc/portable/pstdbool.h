@@ -7,7 +7,8 @@
 
 #include <stdbool.h>
 
-#elif defined __STDC__ && defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
+#elif (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+/* C99 or newer */
 
 #define bool _Bool
 #define true 1

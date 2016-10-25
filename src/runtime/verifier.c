@@ -56,10 +56,12 @@
 #define uoffset_t flatbuffers_uoffset_t
 #define soffset_t flatbuffers_soffset_t
 #define voffset_t flatbuffers_voffset_t
+#define thash_t flatbuffers_thash_t
 
 #define uoffset_size sizeof(uoffset_t)
 #define soffset_size sizeof(soffset_t)
 #define voffset_size sizeof(voffset_t)
+#define thash_size sizeof(thash_t)
 #define offset_size uoffset_size
 
 const char *flatcc_verify_error_string(int err)
@@ -93,6 +95,18 @@ const char *flatcc_verify_error_string(int err)
 static inline uoffset_t read_uoffset(const void *p, uoffset_t base)
 {
     return __flatbuffers_uoffset_read_from_pe((uint8_t *)p + base);
+}
+
+static inline thash_t read_thash_identifier(const char *identifier)
+{
+    flatbuffers_thash_t id = 0;
+    strncpy((char *)&id, identifier, sizeof(id));
+    return __flatbuffers_thash_cast_from_le(id);
+}
+
+static inline thash_t read_thash(const void *p, uoffset_t base)
+{
+    return __flatbuffers_thash_read_from_pe((uint8_t *)p + base);
 }
 
 static inline voffset_t read_voffset(const void *p, uoffset_t base)
@@ -360,6 +374,8 @@ int flatcc_verify_table_vector_field(flatcc_table_verifier_descriptor_t *td,
 
 int flatcc_verify_buffer_header(const void *buf, size_t bufsiz, const char *fid)
 {
+    thash_t id, id2;
+
     verify_runtime(!(((size_t)buf) & (offset_size - 1)), flatcc_verify_error_runtime_buffer_header_not_aligned);
     /* -8 ensures no scalar or offset field size can overflow. */
     verify_runtime(bufsiz <= FLATBUFFERS_UOFFSET_MAX - 8, flatcc_verify_error_runtime_buffer_size_too_large);
@@ -370,7 +386,33 @@ int flatcc_verify_buffer_header(const void *buf, size_t bufsiz, const char *fid)
      * - but such buffers aren't safe.
      */
     verify(bufsiz >= offset_size + FLATBUFFERS_IDENTIFIER_SIZE, flatcc_verify_error_buffer_header_too_small);
-    verify(fid == 0 || 0 == memcmp((uint8_t *)buf + offset_size, fid, FLATBUFFERS_IDENTIFIER_SIZE), flatcc_verify_error_identifier_mismatch);
+    if (fid != 0) {
+        id2 = read_thash_identifier(fid);
+        id = read_thash(buf, offset_size);
+        verify(id2 == 0 || id == id2, flatcc_verify_error_identifier_mismatch);
+    }
+    return flatcc_verify_ok;
+}
+
+int flatcc_verify_typed_buffer_header(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    thash_t id, id2;
+
+    verify_runtime(!(((size_t)buf) & (offset_size - 1)), flatcc_verify_error_runtime_buffer_header_not_aligned);
+    /* -8 ensures no scalar or offset field size can overflow. */
+    verify_runtime(bufsiz <= FLATBUFFERS_UOFFSET_MAX - 8, flatcc_verify_error_runtime_buffer_size_too_large);
+    /*
+     * Even if we specify no fid, the user might later. Therefore
+     * require space for it. Not all buffer generators will take this
+     * into account, so it is possible to fail an otherwise valid buffer
+     * - but such buffers aren't safe.
+     */
+    verify(bufsiz >= offset_size + FLATBUFFERS_IDENTIFIER_SIZE, flatcc_verify_error_buffer_header_too_small);
+    if (thash != 0) {
+        id2 = thash;
+        id = read_thash(buf, offset_size);
+        verify(id2 == 0 || id == id2, flatcc_verify_error_identifier_mismatch);
+    }
     return flatcc_verify_ok;
 }
 
@@ -380,9 +422,21 @@ int flatcc_verify_struct_as_root(const void *buf, size_t bufsiz, const char *fid
     return verify_struct((uoffset_t)bufsiz, read_uoffset(buf, 0), align, (uoffset_t)size);
 }
 
+int flatcc_verify_struct_as_typed_root(const void *buf, size_t bufsiz, flatbuffers_thash_t thash, uint16_t align, size_t size)
+{
+    check_result(flatcc_verify_typed_buffer_header(buf, bufsiz, thash));
+    return verify_struct((uoffset_t)bufsiz, read_uoffset(buf, 0), align, (uoffset_t)size);
+}
+
 int flatcc_verify_table_as_root(const void *buf, size_t bufsiz, const char *fid, flatcc_table_verifier_f *tvf)
 {
     check_result(flatcc_verify_buffer_header(buf, (uoffset_t)bufsiz, fid));
+    return verify_table(buf, (uoffset_t)bufsiz, 0, read_uoffset(buf, 0), FLATCC_VERIFIER_MAX_LEVELS, tvf);
+}
+
+int flatcc_verify_table_as_typed_root(const void *buf, size_t bufsiz, flatbuffers_thash_t thash, flatcc_table_verifier_f *tvf)
+{
+    check_result(flatcc_verify_typed_buffer_header(buf, (uoffset_t)bufsiz, thash));
     return verify_table(buf, (uoffset_t)bufsiz, 0, read_uoffset(buf, 0), FLATCC_VERIFIER_MAX_LEVELS, tvf);
 }
 

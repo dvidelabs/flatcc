@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include "codegen_c.h"
 #include "flatcc/flatcc_types.h"
-#include "flatcc/portable/pinttypes.h"
 #include "catalog.h"
 
 /* -DFLATCC_PORTABLE may help if inttypes.h is missing. */
@@ -451,9 +450,9 @@ repeat_nested:
             println(out, "if (flatcc_builder_start_offset_vector(ctx->ctx)) goto failed;");
         } else {
             println(out,
-                "if (flatcc_builder_start_vector(ctx->ctx, %"PRIszu", %hu, %"PRIszu"ULL)) goto failed;",
-                (size_t)member->size, (short)member->align,
-                (size_t)FLATBUFFERS_COUNT_MAX(member->size));
+                "if (flatcc_builder_start_vector(ctx->ctx, %"PRIu64", %hu, %"PRIu64"ULL)) goto failed;",
+                (uint64_t)member->size, (short)member->align,
+                (uint64_t)FLATBUFFERS_COUNT_MAX(member->size));
         }
         println(out, "buf = flatcc_json_parser_array_start(ctx, buf, end, &more);");
         println(out, "while (more) {"); indent();
@@ -483,12 +482,12 @@ repeat_nested:
     }
     if (is_struct_container) {
         /* `struct_base` is given as argument to struct parsers. */
-        println(out, "pval = (void *)((size_t)struct_base + %"PRIszu");", (size_t)member->offset);
+        println(out, "pval = (void *)((size_t)struct_base + %"PRIu64");", (uint64_t)member->offset);
     } else if (is_struct && !is_vector) {
         /* Same logic as scalars in tables, but scalars must be tested for default. */
         println(out,
-            "if (!(pval = flatcc_builder_table_add(ctx->ctx, %"PRIu64", %"PRIszu", %hu))) goto failed;",
-            (uint64_t)member->id, (size_t)member->size, (short)member->align);
+            "if (!(pval = flatcc_builder_table_add(ctx->ctx, %"PRIu64", %"PRIu64", %hu))) goto failed;",
+            (uint64_t)member->id, (uint64_t)member->size, (short)member->align);
     }
     if (is_scalar) {
         println(out, "buf = flatcc_json_parser_%s(ctx, (mark = buf), end, &val);", tname_prefix);
@@ -530,8 +529,8 @@ repeat_nested:
                 return -1;
             }
 #endif
-            println(out, "if (!(pval = flatcc_builder_table_add(ctx->ctx, %"PRIu64", %"PRIszu", %hu))) goto failed;",
-                    (uint64_t)member->id, (size_t)member->size, (short)member->align);
+            println(out, "if (!(pval = flatcc_builder_table_add(ctx->ctx, %"PRIu64", %"PRIu64", %hu))) goto failed;",
+                    (uint64_t)member->id, (uint64_t)member->size, (short)member->align);
 #if !FLATCC_JSON_PARSE_FORCE_DEFAULTS
 #endif
         }
@@ -565,8 +564,8 @@ repeat_nested:
         println(out, "buf = %s_parse_json_table(ctx, buf, end);", snref.text);
         println(out, "ref = flatcc_builder_end_table(ctx->ctx);");
     } else if (is_union) {
-        println(out, "buf = flatcc_json_parser_union(ctx, buf, end, %"PRIszu", %"PRIu64", %s_parse_json_union);",
-                (size_t)member->export_index, member->id, snref.text);
+        println(out, "buf = flatcc_json_parser_union(ctx, buf, end, %"PRIu64", %"PRIu64", %s_parse_json_union);",
+                (uint64_t)member->export_index, member->id, snref.text);
     } else if (is_union_type) {
         println(out, "static flatcc_json_parser_integral_symbol_f *symbolic_parsers[] = {");
         indent(); indent();
@@ -574,8 +573,8 @@ repeat_nested:
         println(out, "%s_local_%sjson_parser_enum,", out->S->basename, scope_name);
         println(out, "%s_global_json_parser_enum, 0 };", out->S->basename);
         unindent(); unindent();
-        println(out, "buf = flatcc_json_parser_union_type(ctx, buf, end, %"PRIszu", %"PRIu64", symbolic_parsers, %s_parse_json_union);",
-                (size_t)member->export_index, member->id, snref.text);
+        println(out, "buf = flatcc_json_parser_union_type(ctx, buf, end, %"PRIu64", %"PRIu64", symbolic_parsers, %s_parse_json_union);",
+                (uint64_t)member->export_index, member->id, snref.text);
     } else if (!is_vector) {
         gen_panic(out, "internal error: unexpected type for trie member\n");
         return -1;
@@ -1293,10 +1292,10 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
     }
     println(out, "");
 
-    println(out, "if (flatcc_builder_start_table(ctx->ctx, %"PRIszu")) goto failed;",
+    println(out, "if (flatcc_builder_start_table(ctx->ctx, %"PRIu64")) goto failed;",
         ct->count);
     if (trie.union_total) {
-        println(out, "if (end == flatcc_json_parser_prepare_unions(ctx, buf, end, %"PRIszu")) goto failed;", (size_t)trie.union_total);
+        println(out, "if (end == flatcc_json_parser_prepare_unions(ctx, buf, end, %"PRIu64")) goto failed;", (uint64_t)trie.union_total);
     }
     println(out, "buf = flatcc_json_parser_object_start(ctx, buf, end, &more);");
     println(out, "while (more) {"); indent();

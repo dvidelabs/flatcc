@@ -8,6 +8,7 @@
 #include "monster_test_reader.h"
 #include "monster_test_json_parser.h"
 #include "flatcc/support/hexdump.h"
+#include "flatcc/support/cdump.h"
 #include "flatcc/support/readfile.h"
 
 #if FLATCC_BENCHMARK
@@ -98,6 +99,8 @@ int test_parse()
     fprintf(stderr, "input size: %lu, output size: %lu\n",
             (unsigned long)in_size, (unsigned long)out_size);
     verify_parse(flatbuffer);
+
+    cdump("golden", flatbuffer, out_size, stdout);
 
     flatcc_builder_reset(B);
 #if FLATCC_BENCHMARK

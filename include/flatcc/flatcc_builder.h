@@ -114,6 +114,8 @@ typedef flatbuffers_soffset_t flatcc_builder_ref_t;
  */
 typedef flatbuffers_soffset_t flatcc_builder_vt_ref_t;
 
+typedef flatbuffers_uoffset_t flatcc_builder_identifier_t;
+
 /**
  * Hints to custom allocators so they can provide initial alloc sizes
  * etc. There will be at most one buffer for each allocation type per
@@ -259,7 +261,7 @@ typedef int flatcc_builder_alloc_fun(void *alloc_context,
 
 typedef struct __flatcc_builder_buffer_frame __flatcc_builder_buffer_frame_t;
 struct __flatcc_builder_buffer_frame {
-    char identifier[FLATBUFFERS_IDENTIFIER_SIZE];
+    flatcc_builder_identifier_t identifier;
     flatcc_builder_ref_t mark;
     size_t block_align;
 };
@@ -376,7 +378,7 @@ struct flatcc_builder {
 
     /* Settings that may happen with no frame allocated. */
 
-    char identifier[FLATBUFFERS_IDENTIFIER_SIZE];
+    flatcc_builder_identifier_t identifier;
 
     /* Settings that survive reset (emitter, alloc, and contexts also survive): */
 
@@ -622,7 +624,7 @@ flatcc_builder_ref_t flatcc_builder_create_struct(flatcc_builder_t *B,
 
 /**
  * Starts a struct and returns a pointer that should be used immediately
- * to fill in the struct in litte endian format, and when done,
+ * to fill in the struct in protocol endian format, and when done,
  * `end_struct` should be called. The returned reference should be used
  * as argument to `end_buffer`. See also `create_struct`.
  */
@@ -920,7 +922,7 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
         flatbuffers_voffset_t vt_size, uint32_t vt_hash);
 
 /*
- * Based on Knuts prime multiplier.
+ * Based on Knuth's prime multiplier.
  *
  * This is an incremental hash that is called with id and size of each
  * non-empty field, and finally with the two vtable header fields

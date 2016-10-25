@@ -10,9 +10,20 @@ link the project and execute a test case in less than 2 seconds (4 incl.
 flatcc clone), rebuild in less than 0.2 seconds and produce binaries
 between 15K and 60K, read small buffers in 30ns, build FlatBuffers in
 about 600ns, and with a larger executable handle optional json parsing
-or parsing in less than 2 us for a 10 field mixed type message.
+or printing in less than 2 us for a 10 field mixed type message.
 
 See also experimental meson branch, and [sample client project](https://github.com/dvidelabs/flatcc-meson-sample)
+
+Upcoming changes:
+
+- support for big endian platforms - now passes all tests on AIX.
+- support for big endian encoded flatbuffers (on all endian platforms).
+  Be aware that at some point this could change such that non-standard
+  encodings will have different API name prefixes. For now the API
+  remains unchanged and requires recompilation with updated
+  `flatcc_types.h`.
+- size prefixed buffers - there will be minor breaking changes to
+  low-level builder api, adding a flags argument.
 
 NOTE: see
 [CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md).
@@ -76,11 +87,6 @@ at runtime. While the `flatcc` approach is likely much faster and also
 easier to deploy, the `flatc` approach is likely more convenient when
 manually working with JSON such as editing game scenes. Both tools have
 their place. 
-
-The `flatcc` generated binary schema (`.bfbs`) files are also compatible
-with Googles `flatc` tool, except there is an option to store names with or
-without dotted namespace prefixes where `flatc` always store without a
-namespace.
 
 **NOTE: Big-endian platforms are untested but supported in principle.**
 
@@ -750,6 +756,23 @@ The type identifiers are defined like:
 The `type_identifier` can be used anywhere the original 4 character
 file identifier would be used, but a buffer must choose which system, if any,
 to use. This will not affect the `file_extension`.
+
+NOTE: The generated `_type_identifier` strings should not normally be
+used when an identifier string is expected in the generated API because
+it may contain null bytes which will be zero padded after the first null
+before comparison. Use the API calls that take a type hash instead. The
+`type_identifier` can be used in low level `flatcc_builder` calls
+because it handles identifiers as a fixed byte array and handles type
+hashes and strings the same.
+
+NOTE: it is possible to compile the flatcc runtime to encode buffers in
+big endian format rather than the standard little endian format
+regardless of the host platforms endianness. If this is done, the
+identifier field in the buffer is always byte swapped regardless of the
+identifier method chosen. The API calls make this transparent, so "MONS"
+will be stored as "SNOM" but should still be verified as "MONS" in API
+calls. This safeguards against mixing little- and big-endian buffers.
+Likewise, type hashes are always tested in native (host) endian format.
 
 
 The
