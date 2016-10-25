@@ -371,7 +371,7 @@ int main(int argc, const char *argv[])
     }
     if (!(opts.srcpaths = malloc(argc * sizeof(char *)))) {
         fprintf(stderr, "memory allocation failure\n");
-        free(opts.inpaths);
+        free((void *)opts.inpaths);
         exit(-1);
     }
  
