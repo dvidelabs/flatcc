@@ -170,6 +170,7 @@ elseif (MSVC) # using STREQUAL here conflicts with string interpretation changes
         # Disables monster sample build which uses C99 style variable decls.
         set (FLATCC_NEED_C89_VAR_DECLS true)
     endif()
+    set(FLATCC_PORTABLE true)
  elseif (CMAKE_C_COMPILER_ID STREQUAL "XL")
     # IBM's native XLC C compiler in extended C99 mode
 
