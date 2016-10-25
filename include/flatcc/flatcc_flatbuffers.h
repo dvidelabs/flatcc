@@ -8,6 +8,8 @@
 #include "flatcc/flatcc_portable.h"
 #endif
 #include "flatcc/portable/pwarnings.h"
+/* Some C11 compilers don't have a compliant <stdalign.h>. */
+#include "flatcc/portable/pstdalign.h"
 
 /*
  * Even -std=c11 supporting compilers depend on clib support for
