@@ -88,8 +88,7 @@ easier to deploy, the `flatc` approach is likely more convenient when
 manually working with JSON such as editing game scenes. Both tools have
 their place. 
 
-**NOTE: Big-endian platforms are untested but supported in principle.**
-
+** NOTE: Big-endian platforms are only supported as of release 0.4.0. **
 
 ## Reporting Bugs
 
@@ -101,7 +100,7 @@ set up a new temporary project using the `scripts/setup.sh` script.
 
 ## Status
 
-Main features supported as of 0.3.5:
+Main features supported as of 0.4.0
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -115,12 +114,16 @@ Main features supported as of 0.3.5:
 - thorough test cases
 - monster sample project
 - fast build times
+- support for big endian platforms.
+- support for big endian encoded flatbuffers on both le and be platforms.
 
 Supported platforms:
 
 - Ubuntu gcc 4.4-4.8 and clang 3.5-3.8
 - OS-X current clang / gcc
 - Windows MSVC 2010, 2013, 2015, 2015 Win64 
+- IBM AIX big endian Power PC has been tested for release 0.4.0 but is
+  not part of regular release tests.
 
 The monster sample does not work with MSVC 2010 because it intentionally
 uses C99 style code to better follow the C++ version.
@@ -1104,49 +1107,53 @@ bounds access. This also applies to related string operations.
 
 ## Endianness
 
-The generated code supports the `FLATBUFFERS_LITTLEENDIAN` flag defined
-by the `flatc` compiler and it can be used to force endianness. Big
-Endian will define it as 0. Other endian may lead to unexpected results.
-In most cases `FLATBUFFERS_LITTLEENDIAN` will be defined but in some
-cases a decision is made in runtime where the flag cannot be defined.
-This is likely just as fast, but `#if FLATBUFFERS_LITTLEENDIAN` can lead
-to wrong results alone - use `#if defined(FLATBUFFERS_LITTLEENDIAN) &&
-FLATBUFFERS_ENDIAN` to be sure the platform is recognized as little
-endian. The detection logic will set `FLATBUFFERS_LITTLEENDIAN` if at
-all possible and can be improved with the `pendian.h` file included by
-the `-DFLATCC_PORTABLE`.
+The `include/flatcc/portable/pendian_detect.h` file detects endianness
+for popular compilers and provides a runtime fallback detection for
+others. In most cases in the runtime detection will be optimized out
+at compile time in release builds.
 
-The user can always define `-DFLATBUFFERS_LITTLEENDIAN` as a compile
-time option and then this will take precedence.
+The `FLATBUFFERS_LITTLEENDIAN` flag is respected for compatibility with
+Googles `flatc` compiler, but it is recommended to avoid its use and
+work with the mostly standard flags defined and/or used in
+`pendian_detect.h`, or to provide for additional compiler support.
 
-It is recommended to use `flatbuffers_is_native_pe()` instead of testing
-`FLATBUFFERS_LITTLEENDIAN` whenever it can be avoided to use the
-proprocessor for several reasons:
+As of flatcc 0.4.0 there is support for flatbuffers running natively on
+big endian hosts. This has been tested on IBM AIX. However, always run
+tests against the system of interest - the release process does not cover
+automated tests on any BE platform.
 
-- if it isn't defined, the source won't compile at all
-- combined with `pendian.h` it provides endian swapping even without
-  preprocessor detection.
-- it is normally a constant similar to `FLATBUFFERS_LITTLEENDIAN`
-- it works even with undefined `FLATBUFFERS_LITTLEENDIAN`
-- compiler should optimize out even runtime detection
-- protocol might not always be little endian.
-- it is defined as a macro and can be checked for existence.
+As of flatcc 0.4.0 there is also support for compiling the flatbuffers
+runtime library with flatbuffers encoded in big endian format regardless
+of the host platforms endianness. Longer term this should probably be
+placed in a separate library with separate name prefixes or suffixes,
+but it is usuable as is. Redefine `FLATBUFFERS_PROTOCOL_IS_LE/BE`
+accordingly in `include/flatcc/flatcc_types.h`.
 
-`pe` means protocol endian. This suggests that `flatcc` output may be
-used for other protocols in the future, or for variations of
-flatbuffers. The main reason for this is the generated structs that can
-be very useful on other predefined network protols in big endian. Each
-struct has a `mystruct_copy_from_pe` method and similar to do these
-conversions. Internally flatcc optimizes struct conversions by testing
-`flatbuffers_is_native_pe()` in some heavier struct conversions.
+Note that standard flatbuffers are always encoded in little endian but
+in situations where all buffer producers and consumers are big endian,
+the BE encoding may be faster, depending on intrinsic byteswap support.
 
-In a few cases it may be relevant to test for `FLATBUFFERS_LITTLEENDIAN`
-but then code intended for general use should provide an alternitive for
-when the flag isn't defined.
+Flatbuffers encoded in big endian will have the optional file identifier
+byteswapped. The interface should make this transparent, but details
+are still being worked out. For example, a buffer should always verify
+the monster buffer has the identifier "MONS", but internally the buffer
+will store the identifier as "SNOM" on big endian encoded buffers.
 
-Even with correct endian detection, the code may break on platforms
-where `flatbuffers_is_native_pe()` is false because the necessary system
-headers could not found. In this case `-DFLATCC_PORTABLE` should help.
+Because buffers can be encode in two ways, `flatcc` uses the term
+`native` endianness and `protocol` endianess. `_pe` is suffix used to
+convert between native and protocol endianness without caring about
+whether host or buffer is little or big endian.
+
+If it is necessary to write application code that behaves differently if
+the native encoding differs from protocol encoding, use
+`flatbuffers_is_pe_native()`. This is a function, not a define, but for
+all practical purposes it will have same efficience while also
+supporting runtime endian detection where necessary.
+
+The flatbuffer environment only supports reading either big or little
+endian for the time being. To test which is supported, use the define
+`FLATBUFFERS_PROTOCOL_IS_LE` or `FLATBUFFERS_PROTOCOL_IS_BE`. They are
+defines as 1 and 0 respectively.
 
 
 ## Offset Sizes and Direction
