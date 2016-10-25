@@ -1239,23 +1239,35 @@ it detectable by `is_present`.
 
 ## Portability Layer
 
-Some aspects of the portablity layer is not required when -std=c11 is
-defined on a clang compiler where little endian is avaiable and easily
-detected, or where `<endian.h>` is available and easily detected.
-`flatbuffers_common_reader.h` contains a minimal portability abstraction
-that also works for some platforms even without C11, e.g. OS-X clang.
-The portablity file can be included before other headers, or by setting
-the compile time directives:
+The portable library is placed under `include/flatcc/portable` and is
+required by flatcc, but isn't strictly part of the `flatcc` project. It
+is intended as an independent light-weight header-only library to deal
+with compiler and platform variations. It is placed under the flatcc
+include path to simplify flatcc runtime distribution and to avoid
+name and versioning conflicts if used by other projects.
+
+The portably library includes the essential parts of the grisu3 library
+found in `external/grisu3`, but excludes the test cases.
+
+The license of portable is different from `flatcc`. It is mostly MIT or
+Apache depending on the original source of the various parts.
+
+A larger set of portable files is included if `FLATCC_PORTABLE` is
+defined by the user when building.
 
     cc -D FLATCC_PORTABLE -I include monster_test.c -o monster_test
 
-Also see the top of this file on how to include the actual portability layer
-when needed. Mandatory aspects of the portability layer are not
-sensitive to `FLATCC_PORTABLE`, these will be included as needed.
+Otherwise a targeted subset is
+included by `flatcc_flatbuffers.h` in order to deal with non-standard
+behavior of some C11 compilers.
+
+`pwarnings.h` is also always included so compiler specific warnings can
+be disabled where necessary.
 
 If a specific platform has been tested, it would be good with feedback
-and possibly patches to the portability layer so this can be documented
-for other users.
+and possibly patches to the portability layer so these can be made
+available to other users.
+
 
 ## Building
 
@@ -1534,21 +1546,6 @@ The runtime library may also be used by other languages. See comments
 in `include/flatcc/flatcc_builder.h`. JSON parsing is on example of an
 alternative use of the builder library so it may help to inspect the
 generated JSON parser source and runtime source.
-
-## The Portable Library
-
-The portable library is placed under `include/flatcc/portable` and is
-required by flatcc, but isn't strictly part of the `flatcc` project. It
-is intended as an independent light-weight header-only library to deal
-with compiler and platform variations. It is placed under the flatcc
-include path to simplify flatcc runtime distribution and to avoid
-name and versioning conflicts if used by other projects.
-
-The portably library includes the essential parts of the grisu3 library
-found in `external/grisu3`, but excludes the test cases.
-
-The license of portable is different from `flatcc`. It is mostly MIT or
-Apache depending on the original source of the various parts.
 
 
 ## Benchmark
