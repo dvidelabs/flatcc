@@ -20,6 +20,11 @@
 - Always include `pstdalign.h` in `flatcc_flatbuffers.h` because some
   C11 compilers fail to provide `stdalign.h`.
 
+- BREAKING: Size prefixed buffers added requires a minor change
+  to the low-level flatcc builder library with a flag argument to create
+  and start buffer calls. This should not affect user code.
+
+
 Changes related to big endian support which do not affect little endian
 platforms with little endian wire format.
 

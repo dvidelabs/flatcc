@@ -14,17 +14,6 @@ or printing in less than 2 us for a 10 field mixed type message.
 
 See also experimental meson branch, and [sample client project](https://github.com/dvidelabs/flatcc-meson-sample)
 
-Upcoming changes:
-
-- support for big endian platforms - now passes all tests on AIX.
-- support for big endian encoded flatbuffers (on all endian platforms).
-  Be aware that at some point this could change such that non-standard
-  encodings will have different API name prefixes. For now the API
-  remains unchanged and requires recompilation with updated
-  `flatcc_types.h`.
-- size prefixed buffers - there will be minor breaking changes to
-  low-level builder api, adding a flags argument.
-
 NOTE: see
 [CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md).
 There are occassionally minor breaking changes as API inconsistencies
@@ -114,8 +103,11 @@ Main features supported as of 0.4.0
 - thorough test cases
 - monster sample project
 - fast build times
+
+New in 0.4.0:
 - support for big endian platforms.
 - support for big endian encoded flatbuffers on both le and be platforms.
+- size prefixed buffers - see also `doc/builder.md`
 
 Supported platforms:
 

@@ -112,6 +112,25 @@ maintain allocated memory by also reduce memory consumption across
 multiple resets heuristically.
 
 
+## Size Prefixed Buffers
+
+Buffers can be created with a size prefix of type `uoffset_t`. When
+doing this, the buffer is aligned relative to the size prefix such that
+buffers can be stacked in a file and for example be accessed via memory
+mapping.
+
+The usual `create_as_root` and `start_as_root` has a variant called
+`create_as_root_with_size` and `start_as_root_with_size`.
+
+To read a buffer with a size prefix use:
+
+    size_t size;
+    buffer = flatbuffers_read_size_prefix(rawbuffer, &size);
+
+The size the size of the buffer excluding the size prefix. When
+verifying buffers the buffer and size arguments should be used. See also
+`monster_test.c` for an example.
+
 ## Namespaces
 
 The generated code is typically wrapped in a custom namespace and
