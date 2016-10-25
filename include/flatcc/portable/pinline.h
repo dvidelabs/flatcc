@@ -3,7 +3,8 @@
 
 #ifndef __cplusplus
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L /* C99 or newer */
+#if (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+/* C99 or newer */
 #elif _MSC_VER >= 1500 /* MSVC 9 or newer */
 #undef inline
 #define inline __inline
