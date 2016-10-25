@@ -22,17 +22,18 @@
 #elif defined(_MSC_VER)
 #define _Alignas(t) __declspec (align(t))
 #define _Alignof(t) __alignof(t)
-#define alignas _Alignas
-#define alignof _Alignof
-
-#define __alignas_is_defined 1
-#define __alignof_is_defined 1
 
 #else
 #error please update pstdalign.h with support for current compiler
 #endif
 
 #endif /* __STDC__ */
+
+#define alignas _Alignas
+#define alignof _Alignof
+
+#define __alignas_is_defined 1
+#define __alignof_is_defined 1
 
 #endif /* __cplusplus */
 #endif /* __alignas__is_defined */
