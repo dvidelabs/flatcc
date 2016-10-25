@@ -88,7 +88,7 @@ easier to deploy, the `flatc` approach is likely more convenient when
 manually working with JSON such as editing game scenes. Both tools have
 their place. 
 
-** NOTE: Big-endian platforms are only supported as of release 0.4.0. **
+**NOTE: Big-endian platforms are only supported as of release 0.4.0.**
 
 ## Reporting Bugs
 
