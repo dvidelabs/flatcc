@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.3.6-pre]
+## [0.4.0-pre]
 - Fix Windows detection in flatcc/support/elapsed.h used by benchmark.
 - Fix #8 surplus integer literal suffix in portable byteswap fallback.
 - Fix `pstatic_assert.h` missing fallback case.
@@ -10,33 +10,25 @@
 - Fix #12 infinite loop during flatbuffer build operations caused by
   rare vtable dedupe hash table collision chains.
 - Added `include/flatcc/support/cdump.h` tool for encoding buffers in C.
-- Buffer identifier strings now respect zero termination if shorter than
-  4 bytes similar to C++. Type hashes can therefore no longer be cast to
-  identifier strings reliably as they may contain null bytes - use typed
-  API calls. The `...type_identifier` strings are still generated
-  though.  Low-level `flatcc_builder` API operates with fixed size
-  identifier byte arrays and works the same for both identifier strings
-  and type hashes.
 - JSON code generators no longer use non-portable PRIszu print
   modifiers. Fixes issue on IBM XLC AIX.
 - Deprecated support for PRIsz? print modifiers in
   `include/flatcc/portable/pinttypes.h`, they would require much more
   work to be portable.
-
-Ongoing work:
+- Fix and clean up `__STDC__` version checks in portable library.
+- Improve IBM XLC support in `pstdalign.h`.
+- Always include `pstdalign.h` in `flatcc_flatbuffers.h` because some
+  C11 compilers fail to provide `stdalign.h`.
 
 Changes related to big endian support which do not affect little endian
 platforms with little endian wire format.
 
-- Support for big endian platforms such as IBM AIX power pc.
+- Support for big endian platforms, tested on IBM AIX Power PC.
 - Support for big endian encoded flatbuffers on both little and big
   endian host platforms via `FLATBUFFERS_PROTOCOL_IS_LE/BE` in
   `include/flatcc/flatcc_types.h`. Use `flatbuffers_is_native_pe()` to
   see if the host native endian format matches the buffer protocol.
-  NOTE: file identifier at buffer offset 4 is always byteswapped
-  on BE encoded buffers but this is transparent as API assumes
-  same identifier strings on alway endian combinations. Type
-  hashes are swapped likewise and assumed native endian in API.
+  NOTE: file identifier at buffer offset 4 is always byteswapped.
 
 In more detail:
 
