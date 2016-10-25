@@ -1102,7 +1102,7 @@ bounds access. This also applies to related string operations.
 
 The `include/flatcc/portable/pendian_detect.h` file detects endianness
 for popular compilers and provides a runtime fallback detection for
-others. In most cases in the runtime detection will be optimized out
+others. In most cases even the runtime detection will be optimized out
 at compile time in release builds.
 
 The `FLATBUFFERS_LITTLEENDIAN` flag is respected for compatibility with
@@ -1119,12 +1119,18 @@ As of flatcc 0.4.0 there is also support for compiling the flatbuffers
 runtime library with flatbuffers encoded in big endian format regardless
 of the host platforms endianness. Longer term this should probably be
 placed in a separate library with separate name prefixes or suffixes,
-but it is usuable as is. Redefine `FLATBUFFERS_PROTOCOL_IS_LE/BE`
+but it is usable as is. Redefine `FLATBUFFERS_PROTOCOL_IS_LE/BE`
 accordingly in `include/flatcc/flatcc_types.h`.
 
 Note that standard flatbuffers are always encoded in little endian but
 in situations where all buffer producers and consumers are big endian,
-the BE encoding may be faster, depending on intrinsic byteswap support.
+the non standard big endian encoding may be faster, depending on
+intrinsic byteswap support. As a curiosity, the `load_test` actually
+runs faster with big endian buffers on a little endian MacOS platform
+for reasons only the optimizer will know, but read performance of small
+buffers drop to 40% while writing buffers generally drops to 80-90%
+performance. For platforms without compiler intrinsics for byteswapping,
+this can be much worse.
 
 Flatbuffers encoded in big endian will have the optional file identifier
 byteswapped. The interface should make this transparent, but details
@@ -1133,9 +1139,10 @@ the monster buffer has the identifier "MONS", but internally the buffer
 will store the identifier as "SNOM" on big endian encoded buffers.
 
 Because buffers can be encode in two ways, `flatcc` uses the term
-`native` endianness and `protocol` endianess. `_pe` is suffix used to
-convert between native and protocol endianness without caring about
-whether host or buffer is little or big endian.
+`native` endianness and `protocol` endianess. `_pe` is a suffix used in
+various low level API calls to convert between native and protocol
+endianness without caring about whether host or buffer is little or big
+endian.
 
 If it is necessary to write application code that behaves differently if
 the native encoding differs from protocol encoding, use
