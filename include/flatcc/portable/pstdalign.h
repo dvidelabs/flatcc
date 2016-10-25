@@ -4,7 +4,7 @@
 #ifndef __alignas_is_defined
 #ifndef __cplusplus
 
-#if ((__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ < 7)) || defined(__IBMC__)
+#if ((defined(__GNUC__) && ((__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ < 7))) || defined(__IBMC__))
 #undef PORTABLE_C11_STDALIGN_MISSING
 #define PORTABLE_C11_STDALIGN_MISSING
 #endif
