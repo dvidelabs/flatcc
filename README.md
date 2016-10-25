@@ -1246,9 +1246,6 @@ with compiler and platform variations. It is placed under the flatcc
 include path to simplify flatcc runtime distribution and to avoid
 name and versioning conflicts if used by other projects.
 
-The portably library includes the essential parts of the grisu3 library
-found in `external/grisu3`, but excludes the test cases.
-
 The license of portable is different from `flatcc`. It is mostly MIT or
 Apache depending on the original source of the various parts.
 
@@ -1263,6 +1260,11 @@ behavior of some C11 compilers.
 
 `pwarnings.h` is also always included so compiler specific warnings can
 be disabled where necessary.
+
+The portable library includes the essential parts of the grisu3 library
+found in `external/grisu3`, but excludes the test cases. The JSON
+printer and parser relies on fast portable numeric print and parse
+operations based mostly on grisu3.
 
 If a specific platform has been tested, it would be good with feedback
 and possibly patches to the portability layer so these can be made
