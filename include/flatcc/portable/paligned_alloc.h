@@ -27,6 +27,11 @@
 #define PORTABLE_C11_ALIGNED_ALLOC_MISSING
 #endif
 
+#if defined(__IBMC__)
+#undef PORTABLE_C11_ALIGNED_ALLOC_MISSING
+#define PORTABLE_C11_ALIGNED_ALLOC_MISSING
+#endif
+
 #if !defined(PORTABLE_C11_STDALIGN_MISSING)
 #if ((defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) && \
     !defined(PORTABLE_C11_ALIGNED_ALLOC_MISSING))
