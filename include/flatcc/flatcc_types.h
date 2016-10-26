@@ -65,8 +65,8 @@
 #define FLATBUFFERS_TRUE 1
 #define FLATBUFFERS_FALSE 0
 
-#define FLATBUFFERS_PROTOCOL_IS_LE 1
-#define FLATBUFFERS_PROTOCOL_IS_BE 0
+#define FLATBUFFERS_PROTOCOL_IS_LE 0
+#define FLATBUFFERS_PROTOCOL_IS_BE 1
 
 typedef uint32_t flatbuffers_uoffset_t;
 typedef int32_t flatbuffers_soffset_t;
