@@ -20,7 +20,6 @@
 
 #include "flatcc/flatcc_builder.h"
 #include "flatcc/flatcc_emitter.h"
-#include "flatcc/portable/pstdalign.h" /* aligned_alloc */
 
 /*
  * `check` is designed to handle incorrect use errors that can be
