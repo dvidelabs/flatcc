@@ -17,12 +17,24 @@
  */
 
 #include <stdlib.h>
+/* Test for GCC < 4.8.4 */
+#if (!defined(__clang__) && \
+    defined(__GNUC__) && (__GNUC__ < 4 || \
+    (__GNUC__ == 4 && (__GNUC_MINOR__ < 8 || \
+        (__GNUC_MINOR__ == 8 && \
+            __GNUC_PATCHLEVEL__ < 4)))))
+#undef PORTABLE_C11_ALIGNED_ALLOC_MISSING
+#define PORTABLE_C11_ALIGNED_ALLOC_MISSING
+#endif
 
-#include "pstdalign.h"
+#if defined(__IBMC__)
+#undef PORTABLE_C11_ALIGNED_ALLOC_MISSING
+#define PORTABLE_C11_ALIGNED_ALLOC_MISSING
+#endif
 
 #if !defined(PORTABLE_C11_STDALIGN_MISSING)
 #if ((defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) && \
-    !defined(PORTABLE_C11_ALIGNED_ALLOC_MISSING)) || defined(__clang__)
+    !defined(PORTABLE_C11_ALIGNED_ALLOC_MISSING))
 
 #include <stdalign.h>
 
