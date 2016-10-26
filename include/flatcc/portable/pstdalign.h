@@ -10,16 +10,21 @@
 #ifndef __alignas_is_defined
 #ifndef __cplusplus
 
-#if ((defined(__GNUC__) && ((__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ < 7))) || defined(__IBMC__))
+#if (!defined(__clang__) && defined(__GNUC__) && \
+        ((__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ < 7)))
 #undef PORTABLE_C11_STDALIGN_MISSING
 #define PORTABLE_C11_STDALIGN_MISSING
 #endif
 
-#if (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) && \
-    !defined(PORTABLE_C11_STDALIGN_MISSING)
+#if defined(__IBMC__)
+#undef PORTABLE_C11_STDALIGN_MISSING
+#define PORTABLE_C11_STDALIGN_MISSING
+#endif
+
+#if ((defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) && \
+    !defined(PORTABLE_C11_STDALIGN_MISSING))
 /* C11 or newer */
 #include <stdalign.h>
-
 #else
 
 #if defined(__GNUC__) || defined (__IBMC__) || defined(__clang__)
