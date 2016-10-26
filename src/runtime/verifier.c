@@ -16,7 +16,7 @@
 #define FLATCC_VERIFIER_ASSERT_ON_ERROR 1
 #include <stdio.h>
 #define FLATCC_VERIFIER_ASSERT(cond, reason) \
-    if (!(cond)) { fprintf(stderr, "verifier assert: %s\n", (reason)); assert(0); }
+    if (!(cond)) { fprintf(stderr, "verifier assert: %s\n", flatcc_verify_error_string(reason)); assert(0); }
 #endif
 
 /* The runtime library does not use the global config file. */
@@ -168,6 +168,7 @@ static int verify_field(flatcc_table_verifier_descriptor_t *td,
 {
     uoffset_t k, k2;
     voffset_t vte;
+    uoffset_t base = (uoffset_t)(size_t)td->buf;
 
     /*
      * Otherwise range check assumptions break, and normal access code likely also.
@@ -192,7 +193,7 @@ static int verify_field(flatcc_table_verifier_descriptor_t *td,
     verify(k2 <= td->tsize, flatcc_verify_error_table_field_out_of_range);
     /* This normally optimizes to nop. */
     verify(uoffset_size > voffset_size || k <= k2, flatcc_verify_error_table_field_size_overflow);
-    k += td->table;
+    k += td->table + base;
     verify(!(k & (align - 1)), flatcc_verify_error_table_field_not_aligned);
     /* We assume the table size has already been verified. */
     return flatcc_verify_ok;

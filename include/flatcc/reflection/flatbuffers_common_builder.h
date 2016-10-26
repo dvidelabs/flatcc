@@ -21,25 +21,37 @@ typedef flatbuffers_ref_t flatbuffers_root_t;
 #define __flatbuffers_build_buffer(NS)\
 typedef NS ## ref_t NS ## buffer_ref_t;\
 static inline int NS ## buffer_start(NS ## builder_t *B, NS ##fid_t fid)\
-{ return flatcc_builder_start_buffer(B, fid, 0); }\
+{ return flatcc_builder_start_buffer(B, fid, 0, 0); }\
+static inline int NS ## buffer_start_with_size(NS ## builder_t *B, NS ##fid_t fid)\
+{ return flatcc_builder_start_buffer(B, fid, 0, flatcc_builder_with_size); }\
 static inline int NS ## buffer_start_aligned(NS ## builder_t *B, NS ##fid_t fid, uint16_t block_align)\
-{ return flatcc_builder_start_buffer(B, fid, block_align); }\
+{ return flatcc_builder_start_buffer(B, fid, block_align, 0); }\
+static inline int NS ## buffer_start_aligned_with_size(NS ## builder_t *B, NS ##fid_t fid, uint16_t block_align)\
+{ return flatcc_builder_start_buffer(B, fid, block_align, flatcc_builder_with_size); }\
 static inline NS ## buffer_ref_t NS ## buffer_end(NS ## builder_t *B, NS ## ref_t root)\
 { return flatcc_builder_end_buffer(B, root); }
 
 #define __flatbuffers_build_table_root(NS, N, FID, TFID)\
 static inline int N ## _start_as_root(NS ## builder_t *B)\
 { return NS ## buffer_start(B, FID) ? -1 : N ## _start(B); }\
+static inline int N ## _start_as_root_with_size(NS ## builder_t *B)\
+{ return NS ## buffer_start_with_size(B, FID) ? -1 : N ## _start(B); }\
 static inline int N ## _start_as_typed_root(NS ## builder_t *B)\
 { return NS ## buffer_start(B, TFID) ? -1 : N ## _start(B); }\
+static inline int N ## _start_as_typed_root_with_size(NS ## builder_t *B)\
+{ return NS ## buffer_start_with_size(B, TFID) ? -1 : N ## _start(B); }\
 static inline NS ## buffer_ref_t N ## _end_as_root(NS ## builder_t *B)\
 { return NS ## buffer_end(B, N ## _end(B)); }\
 static inline NS ## buffer_ref_t N ## _end_as_typed_root(NS ## builder_t *B)\
 { return NS ## buffer_end(B, N ## _end(B)); }\
 static inline NS ## buffer_ref_t N ## _create_as_root(NS ## builder_t *B __ ## N ## _formal_args)\
 { if (NS ## buffer_start(B, FID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }\
+static inline NS ## buffer_ref_t N ## _create_as_root_with_size(NS ## builder_t *B __ ## N ## _formal_args)\
+{ if (NS ## buffer_start_with_size(B, FID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }\
 static inline NS ## buffer_ref_t N ## _create_as_typed_root(NS ## builder_t *B __ ## N ## _formal_args)\
-{ if (NS ## buffer_start(B, TFID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }
+{ if (NS ## buffer_start(B, TFID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }\
+static inline NS ## buffer_ref_t N ## _create_as_typed_root_with_size(NS ## builder_t *B __ ## N ## _formal_args)\
+{ if (NS ## buffer_start_with_size(B, TFID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }
 
 #define __flatbuffers_build_table_prolog(NS, N, FID, TFID)\
 __flatbuffers_build_table_vector_ops(NS, N ## _vec, N)\
@@ -48,8 +60,12 @@ __flatbuffers_build_table_root(NS, N, FID, TFID)
 #define __flatbuffers_build_struct_root(NS, N, A, FID, TFID)\
 static inline N ## _t *N ## _start_as_root(NS ## builder_t *B)\
 { return NS ## buffer_start(B, FID) ? 0 : N ## _start(B); }\
+static inline N ## _t *N ## _start_as_root_with_size(NS ## builder_t *B)\
+{ return NS ## buffer_start_with_size(B, FID) ? 0 : N ## _start(B); }\
 static inline N ## _t *N ## _start_as_typed_root(NS ## builder_t *B)\
 { return NS ## buffer_start(B, TFID) ? 0 : N ## _start(B); }\
+static inline N ## _t *N ## _start_as_typed_root_with_size(NS ## builder_t *B)\
+{ return NS ## buffer_start_with_size(B, TFID) ? 0 : N ## _start(B); }\
 static inline NS ## buffer_ref_t N ## _end_as_root(NS ## builder_t *B)\
 { return NS ## buffer_end(B, N ## _end(B)); }\
 static inline NS ## buffer_ref_t N ## _end_as_typed_root(NS ## builder_t *B)\
@@ -61,9 +77,15 @@ static inline NS ## buffer_ref_t N ## _end_pe_as_typed_root(NS ## builder_t *B)\
 static inline NS ## buffer_ref_t N ## _create_as_root(NS ## builder_t *B __ ## N ## _formal_args)\
 { return flatcc_builder_create_buffer(B, FID, 0,\
   N ## _create(B __ ## N ## _call_args), A, 0); }\
+static inline NS ## buffer_ref_t N ## _create_as_root_with_size(NS ## builder_t *B __ ## N ## _formal_args)\
+{ return flatcc_builder_create_buffer(B, FID, 0,\
+  N ## _create(B __ ## N ## _call_args), A, flatcc_builder_with_size); }\
 static inline NS ## buffer_ref_t N ## _create_as_typed_root(NS ## builder_t *B __ ## N ## _formal_args)\
 { return flatcc_builder_create_buffer(B, TFID, 0,\
-  N ## _create(B __ ## N ## _call_args), A, 0); }
+  N ## _create(B __ ## N ## _call_args), A, 0); }\
+static inline NS ## buffer_ref_t N ## _create_as_typed_root_with_size(NS ## builder_t *B __ ## N ## _formal_args)\
+{ return flatcc_builder_create_buffer(B, TFID, 0,\
+  N ## _create(B __ ## N ## _call_args), A, flatcc_builder_with_size); }
 
 #define __flatbuffers_build_nested_table_root(NS, N, TN, FID, TFID)\
 static inline int N ## _start_as_root(NS ## builder_t *B)\
@@ -96,9 +118,10 @@ static inline int N ## _end_pe_as_root(NS ## builder_t *B)\
 { return N ## _add(B, NS ## buffer_end(B, TN ## _end_pe(B))); }\
 static inline int N ## _create_as_root(NS ## builder_t *B __ ## TN ## _formal_args)\
 { return N ## _add(B, flatcc_builder_create_buffer(B, FID, 0,\
+  TN ## _create(B __ ## TN ## _call_args), A, flatcc_builder_is_nested)); }\
 static inline int N ## _create_as_typed_root(NS ## builder_t *B __ ## TN ## _formal_args)\
 { return N ## _add(B, flatcc_builder_create_buffer(B, TFID, 0,\
-  TN ## _create(B __ ## TN ## _call_args), A, 1)); }\
+  TN ## _create(B __ ## TN ## _call_args), A, flatcc_builder_is_nested)); }\
 static inline int N ## _nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\
 { if (NS ## buffer_start(B, FID)) return -1;\
   return N ## _add(B, NS ## buffer_end(B, flatcc_builder_create_vector(B, data, size, 1,\

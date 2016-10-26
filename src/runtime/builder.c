@@ -20,6 +20,7 @@
 
 #include "flatcc/flatcc_builder.h"
 #include "flatcc/flatcc_emitter.h"
+#include "flatcc/portable/pstdalign.h" /* aligned_alloc */
 
 /*
  * `check` is designed to handle incorrect use errors that can be
@@ -667,15 +668,16 @@ static int align_to_block(flatcc_builder_t *B, uint16_t *align, uint16_t block_a
 
 flatcc_builder_ref_t flatcc_builder_embed_buffer(flatcc_builder_t *B,
         uint16_t block_align,
-        const void *data, size_t size, uint16_t align)
+        const void *data, size_t size, uint16_t align, int flags)
 {
     uoffset_t size_field, pad;
     iov_state_t iov;
+    int with_size = flags & flatcc_builder_with_size;
 
     if (align_to_block(B, &align, block_align, !is_top_buffer(B))) {
         return 0;
     }
-    pad = front_pad(B, (uoffset_t)size, align);
+    pad = front_pad(B, (uoffset_t)size + (with_size ? field_size : 0), align);
     size_field = store_uoffset((uoffset_t)size + pad);
     init_iov();
     /* Add ubyte vector size header if nested buffer. */
@@ -687,14 +689,16 @@ flatcc_builder_ref_t flatcc_builder_embed_buffer(flatcc_builder_t *B,
 
 flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
         const char identifier[identifier_size], uint16_t block_align,
-        flatcc_builder_ref_t object_ref, uint16_t align, int is_nested)
+        flatcc_builder_ref_t object_ref, uint16_t align, int flags)
 {
     flatcc_builder_ref_t buffer_ref;
     uoffset_t header_pad, id_size = 0;
     uoffset_t object_offset, buffer_size, buffer_base;
     iov_state_t iov;
     flatcc_builder_identifier_t id_out = 0;
-    
+    int is_nested = (flags & flatcc_builder_is_nested) != 0;
+    int with_size = (flags & flatcc_builder_with_size) != 0;
+
     if (align_to_block(B, &align, block_align, is_nested)) {
         return 0;
     }
@@ -707,16 +711,20 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
         id_out = store_identifier(id_out);
     }
     id_size = id_out ? identifier_size : 0;
-    header_pad = front_pad(B, field_size + id_size, align);
+    header_pad = front_pad(B, field_size + id_size + (with_size ? field_size : 0), align);
     init_iov();
     /* ubyte vectors size field wrapping nested buffer. */
-    push_iov_cond(&buffer_size, field_size, is_nested);
+    push_iov_cond(&buffer_size, field_size, is_nested || with_size);
     push_iov(&object_offset, field_size);
     /* Identifiers are not always present in buffer. */
     push_iov(&id_out, id_size);
     push_iov(_pad, header_pad);
-    buffer_base = (uoffset_t)B->emit_start - (uoffset_t)iov.len + (is_nested ? field_size : 0);
-    buffer_size = store_uoffset((uoffset_t)B->buffer_mark - buffer_base);
+    buffer_base = (uoffset_t)B->emit_start - (uoffset_t)iov.len + ((is_nested || with_size) ? field_size : 0);
+    if (is_nested) {
+        buffer_size = store_uoffset((uoffset_t)B->buffer_mark - buffer_base);
+    } else {
+        buffer_size = store_uoffset((uoffset_t)B->emit_end - buffer_base);
+    }
     object_offset = store_uoffset((uoffset_t)object_ref - buffer_base);
     if (0 == (buffer_ref = emit_front(B, &iov))) {
         check(0, "emitter rejected buffer content");
@@ -744,7 +752,7 @@ flatcc_builder_ref_t flatcc_builder_create_struct(flatcc_builder_t *B, const voi
 }
 
 int flatcc_builder_start_buffer(flatcc_builder_t *B,
-        const char identifier[identifier_size], uint16_t block_align)
+        const char identifier[identifier_size], uint16_t block_align, int flags)
 {
     /*
      * This saves the parent `min_align` in the align field since we
@@ -760,6 +768,8 @@ int flatcc_builder_start_buffer(flatcc_builder_t *B,
     /* Save the parent block align, and set proper defaults for this buffer. */
     frame(buffer.block_align) = B->block_align;
     B->block_align = block_align;
+    frame(buffer.flags = B->buffer_flags);
+    B->buffer_flags = flags;
     frame(buffer.mark) = B->buffer_mark;
     /* Allow vectors etc. to be constructed before buffer at root level. */
     B->buffer_mark = B->level == 1 ? 0 : B->emit_start;
@@ -776,11 +786,12 @@ flatcc_builder_ref_t flatcc_builder_end_buffer(flatcc_builder_t *B, flatcc_build
     check(frame(type) == flatcc_builder_buffer, "expected buffer frame");
     set_min_align(B, B->block_align);
     if (0 == (buffer_ref = flatcc_builder_create_buffer(B, (void *)&B->identifier,
-            B->block_align, root, B->min_align, !is_top_buffer(B)))) {
+            B->block_align, root, B->min_align, (B->buffer_flags & flatcc_builder_with_size) | !is_top_buffer(B)))) {
         return 0;
     }
     B->buffer_mark = frame(buffer.mark);
     B->identifier = frame(buffer.identifier);
+    B->buffer_flags = frame(buffer.flags);
     exit_frame(B);
     return buffer_ref;
 }
@@ -1672,6 +1683,10 @@ done:
     return buffer;
 }
 
+#ifndef aligned_free
+#define aligned_free free
+#endif
+
 void *flatcc_builder_finalize_aligned_buffer(flatcc_builder_t *B, size_t *size_out)
 {
     void * buffer;
@@ -1685,18 +1700,14 @@ void *flatcc_builder_finalize_aligned_buffer(flatcc_builder_t *B, size_t *size_o
     }
     align = flatcc_builder_get_buffer_alignment(B);
 
-#ifdef FLATBUFFERS_HAVE_ALIGNED_ALLOC
     size = (size + align - 1) & ~(align - 1);
     buffer = aligned_alloc(align, size);
-#else
-    buffer = (void *)(((size_t)malloc(size + align - 1) + align - 1) & ~(align - 1));
-#endif
 
     if (!buffer) {
         goto done;
     }
     if (!flatcc_builder_copy_buffer(B, buffer, size)) {
-        free(buffer);
+        aligned_free(buffer);
         buffer = 0;
         goto done;
     }

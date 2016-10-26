@@ -228,6 +228,9 @@ static inline flatbuffers_thash_t flatbuffers_get_type_hash(const void *buffer)
 { return __flatbuffers_thash_read_from_pe((flatbuffers_uoffset_t *)buffer + 1); }
 
 #define flatbuffers_verify_endian() flatbuffers_has_identifier("\x00\x00\x00\x00" "1234", "1234")
+static inline void *flatbuffers_read_size_prefix(void *b, size_t *size_out)
+{ if (size_out) { *size_out = (size_t)__flatbuffers_uoffset_read_from_pe(b); }
+  return (uint8_t *)b + sizeof(flatbuffers_uoffset_t); }
 /* Null file identifier accepts anything, otherwise fid should be 4 characters. */
 #define __flatbuffers_read_root(T, K, buffer, fid)\
   ((!buffer || !flatbuffers_has_identifier(buffer, fid)) ? 0 :\
