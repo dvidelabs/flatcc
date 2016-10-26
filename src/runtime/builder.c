@@ -20,6 +20,7 @@
 
 #include "flatcc/flatcc_builder.h"
 #include "flatcc/flatcc_emitter.h"
+#include "flatcc/portable/pstdalign.h" /* aligned_alloc */
 
 /*
  * `check` is designed to handle incorrect use errors that can be
@@ -1682,6 +1683,10 @@ done:
     return buffer;
 }
 
+#ifndef aligned_free
+#define aligned_free free
+#endif
+
 void *flatcc_builder_finalize_aligned_buffer(flatcc_builder_t *B, size_t *size_out)
 {
     void * buffer;
@@ -1695,18 +1700,14 @@ void *flatcc_builder_finalize_aligned_buffer(flatcc_builder_t *B, size_t *size_o
     }
     align = flatcc_builder_get_buffer_alignment(B);
 
-#ifdef FLATBUFFERS_HAVE_ALIGNED_ALLOC
     size = (size + align - 1) & ~(align - 1);
     buffer = aligned_alloc(align, size);
-#else
-    buffer = (void *)(((size_t)malloc(size + align - 1) + align - 1) & ~(align - 1));
-#endif
 
     if (!buffer) {
         goto done;
     }
     if (!flatcc_builder_copy_buffer(B, buffer, size)) {
-        free(buffer);
+        aligned_free(buffer);
         buffer = 0;
         goto done;
     }

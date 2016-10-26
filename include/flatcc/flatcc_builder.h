@@ -1543,7 +1543,10 @@ void *flatcc_builder_finalize_buffer(flatcc_builder_t *B, size_t *size_out);
  * If `size_out` is not null, it is set to the buffer size, or 0 if
  * operation failed.
  *
- * The returned buffer must be deallocated using `free`.
+ * The returned buffer must be deallocated using `aligned_free` which is
+ * implemented via `flatcc_flatbuffers.h`. `free` will usually work but
+ * is not portable to platforms without posix_memalign or C11
+ * aligned_alloc support.
  */
 void *flatcc_builder_finalize_aligned_buffer(flatcc_builder_t *B, size_t *size_out);
 

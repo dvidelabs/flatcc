@@ -901,8 +901,13 @@ int test_monster_with_size(flatcc_builder_t *B)
 
     gen_monster(B, 1);
 
-    frame = flatcc_builder_finalize_buffer(B, &size);
+    frame = flatcc_builder_finalize_aligned_buffer(B, &size);
     hexdump("monster table with size", frame, size, stderr);
+    if (((size_t)frame & 15)) {
+        printf("Platform did not provide 16 byte aligned allocation and needs special attention.");
+        printf("buffer address: %x\n", (flatbuffers_uoffset_t)frame);
+        return -1;
+    }
 
     buffer = flatbuffers_read_size_prefix(frame, &size2);
     esize = size - sizeof(flatbuffers_uoffset_t);
@@ -916,7 +921,8 @@ int test_monster_with_size(flatcc_builder_t *B)
     }
     ret = verify_monster(buffer);
 
-    free(frame);
+    /* Extension in `paligned_alloc.h` */
+    aligned_free(frame);
     return ret;
 }
 

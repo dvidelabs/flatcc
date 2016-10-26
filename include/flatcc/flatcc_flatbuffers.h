@@ -8,13 +8,19 @@
 #include "flatcc/flatcc_portable.h"
 #endif
 #include "flatcc/portable/pwarnings.h"
-/* Some C11 compilers don't have a compliant <stdalign.h>. */
+/* Needed by C99 compilers without FLATCC_PORTABLE. */
 #include "flatcc/portable/pstdalign.h"
 
 /*
- * Even -std=c11 supporting compilers depend on clib support for
- * `static_assert` which isn't always present, so we deal with this here
- * for all compilers.
+ * Implements `aligned_alloc` and `aligned_free`.
+ * Even with C11, this implements non-standard aligned_free needed for portable
+ * aligned_alloc implementations.
+ */
+#include "flatcc/portable/paligned_alloc.h"
+
+/*
+ * Even C11 compilers depend on clib support for `static_assert` which
+ * isn't always present, so we deal with this here for all compilers.
  */
 #include "flatcc/portable/pstatic_assert.h"
 
