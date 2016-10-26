@@ -58,7 +58,7 @@
 
 #elif !defined(PORTABLE_NO_POSIX_MEMALIGN)
 
-#ifdef __clang__
+#ifdef __GNUC__
 #include "mm_malloc.h"
 #endif
 
