@@ -15,8 +15,9 @@
 #if FLATCC_DEBUG_VERIFY
 #define FLATCC_VERIFIER_ASSERT_ON_ERROR 1
 #include <stdio.h>
-#define FLATCC_VERIFIER_ASSERT(cond, reason) \
-    if (!(cond)) { fprintf(stderr, "verifier assert: %s\n", flatcc_verify_error_string(reason)); assert(0); }
+#define FLATCC_VERIFIER_ASSERT(cond, reason)                                \
+    if (!(cond)) { fprintf(stderr, "verifier assert: %s\n",                 \
+        flatcc_verify_error_string(reason)); assert(0); return reason; }
 #endif
 
 /* The runtime library does not use the global config file. */
