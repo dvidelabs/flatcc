@@ -18,11 +18,9 @@
 
 #include <stdlib.h>
 
-#include "pstdalign.h"
-
 #if !defined(PORTABLE_C11_STDALIGN_MISSING)
 #if ((defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) && \
-    !defined(PORTABLE_C11_ALIGNED_ALLOC_MISSING)) || defined(__clang__)
+    && !defined(__GNUC__)) || defined(__clang__)
 
 #include <stdalign.h>
 
