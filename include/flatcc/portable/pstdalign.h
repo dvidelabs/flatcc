@@ -1,6 +1,12 @@
 #ifndef PSTDALIGN_H
 #define PSTDALIGN_H
 
+/*
+ * NOTE: aligned_alloc is defined via paligned_alloc.h
+ * and requires aligned_free to be fully portable although
+ * free also works on C11 and platforms with posix_memalign.
+ */
+
 #ifndef __alignas_is_defined
 #ifndef __cplusplus
 
@@ -37,4 +43,7 @@
 
 #endif /* __cplusplus */
 #endif /* __alignas__is_defined */
+
+#include "paligned_alloc.h"
+
 #endif /* PSTDALIGN_H */
