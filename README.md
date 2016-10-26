@@ -106,7 +106,7 @@ Main features supported as of 0.4.0
 
 New in 0.4.0:
 - support for big endian platforms.
-- support for big endian encoded flatbuffers on both le and be platforms.
+- support for big endian encoded flatbuffers on both le and be platforms. Enabled on `be` branch.
 - size prefixed buffers - see also `doc/builder.md`
 
 Supported platforms:
