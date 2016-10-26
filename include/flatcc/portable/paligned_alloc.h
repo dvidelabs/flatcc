@@ -2,7 +2,7 @@
 
 #ifndef __cplusplus
 
-/* 
+/*
  * NOTE: MSVC in general has no aligned alloc function that is
  * compatible with free and it is not trivial to implement a version
  * there is. Therefore, to remain portable, end user code needs to
@@ -21,8 +21,8 @@
 #include "pstdalign.h"
 
 #if !defined(PORTABLE_C11_STDALIGN_MISSING)
-#if (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) && \
-    !defined(PORTABLE_C11_ALIGNED_ALLOC_MISSING)
+#if ((defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) && \
+    !defined(PORTABLE_C11_ALIGNED_ALLOC_MISSING)) || defined(__clang__)
 
 #include <stdalign.h>
 
@@ -34,7 +34,6 @@
 #endif
 
 /* C11 or newer */
-/* aligned_alloc is defined in `<stdlib.h>` */
 #if !defined(aligned_alloc) && !defined(__aligned_alloc_is_defined)
 
 #if defined(_MSC_VER)
@@ -46,6 +45,10 @@
 #define __aligned_free_is_defined 1
 
 #elif !defined(PORTABLE_NO_POSIX_MEMALIGN)
+
+#ifdef __clang__
+#include "mm_malloc.h"
+#endif
 
 static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
 {
