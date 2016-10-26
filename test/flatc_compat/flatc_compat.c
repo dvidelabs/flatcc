@@ -6,6 +6,9 @@
 #include "flatcc/support/readfile.h"
 #include "flatcc/support/hexdump.h"
 
+#define align_up(alignment, size)                                           \
+    (((size) + (alignment) - 1) & ~((alignment) - 1))
+
 const char *filename = "monsterdata_test.mon";
 
 #undef ns
@@ -163,7 +166,7 @@ int main(int argc, char *argv[])
 {
     int ret;
     size_t size;
-    void *buffer;
+    void *buffer, *raw_buffer;
 
     if (argc != 1 && argc != 2) {
         fprintf(stderr, usage);
@@ -173,14 +176,17 @@ int main(int argc, char *argv[])
         filename = argv[1];
     }
 
-    buffer = readfile(filename, 1024, &size);
+    raw_buffer = readfile(filename, 1024, &size);
+    buffer = aligned_alloc(256, align_up(256, size));
+    memcpy(buffer, raw_buffer, size);
+    free(raw_buffer);
 
     if (!buffer) {
         fprintf(stderr, "could not read binary test file: %s\n", filename);
         return -1;
     }
     hexdump("monsterdata_test.mon", buffer, size, stderr);
-    /* 
+    /*
      * Not automated, but verifying size - 3 fails as expected because the last
      * object in the file is a string, and the zero termination fails.
      * size - 1 and size - 2 verifies because the buffers contains
@@ -215,6 +221,6 @@ int main(int argc, char *argv[])
 #endif
 
 done:
-    free(buffer);
+    aligned_free(buffer);
     return ret;
 }
