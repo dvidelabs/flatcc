@@ -106,7 +106,7 @@ int test_empty_monster(flatcc_builder_t *B)
     root = ns(Monster_end(B));
     flatbuffers_buffer_end(B, root);
 
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
 
     hexdump("empty monster table", buffer, size, stderr);
     if ((ret = verify_empty_monster(buffer))) {
@@ -131,7 +131,7 @@ int test_empty_monster(flatcc_builder_t *B)
     }
 
 done:
-    free(buffer);
+    aligned_free(buffer);
     return ret;
 }
 
@@ -153,7 +153,7 @@ int test_typed_empty_monster(flatcc_builder_t *B)
     flatbuffers_buffer_end(B, root);
 
 
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
 
     hexdump("empty typed monster table", buffer, size, stderr);
 
@@ -210,7 +210,7 @@ int test_typed_empty_monster(flatcc_builder_t *B)
     ret = 0;
 
 done:
-    free(buffer);
+    aligned_free(buffer);
     return ret;
 }
 
@@ -260,7 +260,7 @@ int test_table_with_emptystruct(flatcc_builder_t *B)
 
     ns(with_emptystruct_create_as_root)(B, empty);
 
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
 
     /*
      * We should expect an empty table with a vtable holding
@@ -271,7 +271,7 @@ int test_table_with_emptystruct(flatcc_builder_t *B)
      */
     hexdump("table with empty struct", buffer, size, stderr);
     ret = verify_table_with_emptystruct(buffer);
-    free(buffer);
+    aligned_free(buffer);
 
     return ret;
 }
@@ -881,7 +881,7 @@ int test_monster(flatcc_builder_t *B)
 
     gen_monster(B, 0);
 
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
     hexdump("monster table", buffer, size, stderr);
     if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
         printf("Monster buffer failed to verify, got: %s\n", flatcc_verify_error_string(ret));
@@ -889,7 +889,7 @@ int test_monster(flatcc_builder_t *B)
     }
     ret = verify_monster(buffer);
 
-    free(buffer);
+    aligned_free(buffer);
     return ret;
 }
 
@@ -1002,7 +1002,7 @@ int test_sort_find(flatcc_builder_t *B)
 
     ns(Monster_end_as_root(B));
 
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
 
     hexdump("unsorted monster buffer", buffer, size, stderr);
     mon = ns(Monster_as_root(buffer));
@@ -1098,7 +1098,7 @@ int test_sort_find(flatcc_builder_t *B)
     ret = 0;
 
 done:
-    free(buffer);
+    aligned_free(buffer);
     return ret;
 }
 
@@ -1169,7 +1169,7 @@ int test_clone_slice(flatcc_builder_t *B)
     ns(Monster_pos_start(B))->x = -42.3f;
 
     ns(Monster_end_as_root(B));
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
     hexdump("clone slice source buffer", buffer, size, stderr);
 
     mon = ns(Monster_as_root(buffer));
@@ -1305,7 +1305,7 @@ int test_clone_slice(flatcc_builder_t *B)
     ret = 0;
 
 done:
-    free(buffer);
+    aligned_free(buffer);
     return ret;
 }
 
@@ -1325,7 +1325,7 @@ int test_create_add_field(flatcc_builder_t *B)
     ns(Monster_enemy_add(B, 0));
     ns(Monster_end_as_root(B));
 
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
     mon = ns(Monster_as_root(buffer));
     if (ns(Monster_enemy_is_present(mon))) {
         printf("enemy should not be present when adding null\n");
@@ -1338,7 +1338,7 @@ int test_create_add_field(flatcc_builder_t *B)
     }
     ret = 0;
 done:
-    free(buffer);
+    aligned_free(buffer);
     return ret;
 }
 

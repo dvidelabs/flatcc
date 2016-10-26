@@ -60,6 +60,10 @@ static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
 {
     int err;
     void *p = 0;
+
+    if (alignment < sizeof(void *)) {
+        alignment = sizeof(void *);
+    }
     err = posix_memalign(&p, alignment, size);
     if (err && p) {
         free(p);
