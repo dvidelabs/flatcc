@@ -20,6 +20,14 @@
         flatcc_verify_error_string(reason)); assert(0); return reason; }
 #endif
 
+#ifdef FLATCC_TRACE_VERIFY
+#include <stdio.h>
+#define trace_verify(s, p) \
+    fprintf(stderr, "trace verify: %s: 0x%02x\n", (s), (unsigned)(size_t)(p));
+#else
+#define trace_verify(s, p) ((void)0)
+#endif
+
 /* The runtime library does not use the global config file. */
 
 /* This is a guideline, not an exact measure. */
@@ -171,6 +179,7 @@ static int verify_field(flatcc_table_verifier_descriptor_t *td,
     voffset_t vte;
     uoffset_t base = (uoffset_t)(size_t)td->buf;
 
+
     /*
      * Otherwise range check assumptions break, and normal access code likely also.
      * We don't require voffset_size < uoffset_size, but some checks are faster if true.
@@ -183,6 +192,11 @@ static int verify_field(flatcc_table_verifier_descriptor_t *td,
         verify(!required, flatcc_verify_error_required_field_missing);
         return flatcc_verify_ok;
     }
+    trace_verify("table buffer", td->buf);
+    trace_verify("table", td->table);
+    trace_verify("id", id);
+    trace_verify("vte", vte);
+
     /*
      * Note that we don't add td.table to k and we test against table
      * size not table end or buffer end. Otherwise it would not be safe
@@ -194,7 +208,11 @@ static int verify_field(flatcc_table_verifier_descriptor_t *td,
     verify(k2 <= td->tsize, flatcc_verify_error_table_field_out_of_range);
     /* This normally optimizes to nop. */
     verify(uoffset_size > voffset_size || k <= k2, flatcc_verify_error_table_field_size_overflow);
+    trace_verify("table + vte", vte + td->table);
     k += td->table + base;
+    trace_verify("entry: buf + table + vte", k);
+    trace_verify("align", align);
+    trace_verify("align masked entry", k & (align - 1));
     verify(!(k & (align - 1)), flatcc_verify_error_table_field_not_aligned);
     /* We assume the table size has already been verified. */
     return flatcc_verify_ok;
