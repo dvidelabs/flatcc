@@ -26,8 +26,7 @@
 /* C11 or newer */
 #include <stdalign.h>
 #else
-
-#if defined(__GNUC__) || defined (__IBMC__) || defined(__clang__)
+#if defined(__GNUC__) || defined(__IBM_ALIGNOF__) || defined(__clang__)
 #define _Alignas(t) __attribute__((__aligned__(t)))
 #define _Alignof(t) __alignof__(t)
 #elif defined(_MSC_VER)

@@ -106,7 +106,7 @@ Main features supported as of 0.4.0
 
 New in 0.4.0:
 - support for big endian platforms.
-- support for big endian encoded flatbuffers on both le and be platforms.
+- support for big endian encoded flatbuffers on both le and be platforms. Enabled on `be` branch.
 - size prefixed buffers - see also `doc/builder.md`
 
 Supported platforms:
@@ -125,15 +125,9 @@ it may require some work in the build configuration and possibly
 updates to the portable library. The above is simply what has been
 tested and configured.
 
-Use versions from 0.3.0 and up as there has been some minor breaking
-[interface changes](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030).
-Version 0.3.3 has a minor breaking change where the `verify_as_root` call
-must be renamed to `verify_as_root_with_identifier`, or drop the identifier
-argument.
-
 The portability layer has some features that are generally important for
 things like endian handling, and others to provide compatibility for
-non-C11 compliant compilers. Together this should support most C
+optional and missing C11 features. Together this should support most C
 compilers around, but relies on community feedback for maturity.
 
 The necessary size of the runtime include files can be reduced
@@ -632,15 +626,24 @@ construct overlapping datastructures such that in-place updates may
 cause subsequent invalid buffers. Therefore an untrusted buffer should
 never be updated in-place without first rewriting it to a new buffer.
 
-Note: prior to version 0.2.0, the verifier would fail on 0 and report
-success on non-zero value. As of 0.2.0, success is indicated by 0, and
-non-zero yields an error code that can be translated into a string.
-
 The CMake build system has build option to enable assertions in the
 verifier. This will break debug builds and not usually what is desired,
-but it can be very useful when debugging why a buffer is invalid.
+but it can be very useful when debugging why a buffer is invalid. Traces
+can also be enabled so table offset and field id can be reported.
 
 See also `include/flatcc/flatcc_verifier.h`.
+
+When verifying buffers returned directly from the builder, it may be
+necessary to use the `flatcc_builder_finalize_aligned_buffer` to ensure
+proper alignment and use `aligned_free` to free the buffer, see also
+`doc/builder.md`. Buffers may also be copied into aligned memory via
+mmap or using the portable layers `paligned_alloc.h` feature which is
+available when including generated headers.
+`test/flatc_compat/flatc_compat.c` is an example of how this can be
+done. For the majority of use cases, standard allocation would be
+sufficient, but for example standard 32-bit Windows only allocates on an
+8-byte boundary and can break the monster schema because it has 16-byte
+aligned fields.
 
 
 ## File and Type Identifiers
@@ -840,8 +843,7 @@ quoted in order to be compatible with Googles flatc tool for Flatbuffers
 
     color: "Green Red"
 
-The following is also accepted in flatcc 0.2.0, but subsequent releases
-only permits it if explicitly enabled at compile time.
+The following is only permitted if explicitly enabled at compile time.
 
     color: Green Red
 
