@@ -905,7 +905,7 @@ int test_monster_with_size(flatcc_builder_t *B)
     hexdump("monster table with size", frame, size, stderr);
     if (((size_t)frame & 15)) {
         printf("Platform did not provide 16 byte aligned allocation and needs special attention.");
-        printf("buffer address: %x\n", (flatbuffers_uoffset_t)frame);
+        printf("buffer address: %x\n", (flatbuffers_uoffset_t)(size_t)frame);
         return -1;
     }
 
