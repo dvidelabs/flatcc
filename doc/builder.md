@@ -131,6 +131,13 @@ The size the size of the buffer excluding the size prefix. When
 verifying buffers the buffer and size arguments should be used. See also
 `monster_test.c` for an example.
 
+Note that the size prefix ensures internal alignment but does not
+guarantee that the next buffer in a file can be appended directly
+because the next buffers alignment is unknown and becuase it potentially
+wastes padding bytes.  The buffer size at offset 0 can increased to the
+needed alignment as long as endianness is handled and the size of the
+size field is subtracted, and zeroes are appended as necesary.
+
 ## Namespaces
 
 The generated code is typically wrapped in a custom namespace and
