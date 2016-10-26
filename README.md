@@ -125,15 +125,9 @@ it may require some work in the build configuration and possibly
 updates to the portable library. The above is simply what has been
 tested and configured.
 
-Use versions from 0.3.0 and up as there has been some minor breaking
-[interface changes](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030).
-Version 0.3.3 has a minor breaking change where the `verify_as_root` call
-must be renamed to `verify_as_root_with_identifier`, or drop the identifier
-argument.
-
 The portability layer has some features that are generally important for
 things like endian handling, and others to provide compatibility for
-non-C11 compliant compilers. Together this should support most C
+optional and missing C11 features. Together this should support most C
 compilers around, but relies on community feedback for maturity.
 
 The necessary size of the runtime include files can be reduced
@@ -849,8 +843,7 @@ quoted in order to be compatible with Googles flatc tool for Flatbuffers
 
     color: "Green Red"
 
-The following is also accepted in flatcc 0.2.0, but subsequent releases
-only permits it if explicitly enabled at compile time.
+The following is only permitted if explicitly enabled at compile time.
 
     color: Green Red
 
