@@ -19,6 +19,10 @@
 - Improve IBM XLC support in `pstdalign.h`.
 - Always include `pstdalign.h` in `flatcc_flatbuffers.h` because some
   C11 compilers fail to provide `stdalign.h`.
+- Add `aligned_alloc` and `aligned_free` to `pstdalign.h`.
+- `flatcc_builder_finalize_aligned_buffer` now requires `aligned_free`
+  to be fully portable and no longer use unaligned malloc as fallback,
+  but still works with `free` on most platforms (not Windows).
 
 - BREAKING: Size prefixed buffers added requires a minor change
   to the low-level flatcc builder library with a flag argument to create
