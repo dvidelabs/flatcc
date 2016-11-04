@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.4.0-pre]
+## [0.4.0]
 - Fix Windows detection in flatcc/support/elapsed.h used by benchmark.
 - Fix #8 surplus integer literal suffix in portable byteswap fallback.
 - Fix `pstatic_assert.h` missing fallback case.
@@ -19,9 +19,6 @@
 - Improve IBM XLC support in `pstdalign.h`.
 - Always include `pstdalign.h` in `flatcc_flatbuffers.h` because some
   C11 compilers fail to provide `stdalign.h`.
-- BREAKING: Size prefixed buffers added requires a minor change
-  to the low-level flatcc builder library with a flag argument to create
-  and start buffer calls. This should not affect user code.
 - Buffer verifier used to mostly, but not always, verify buffer
   alignment relative to buffer start. With size prefixed buffers it is
   necessary to verify relative to the allocated buffer, which is also
@@ -31,6 +28,10 @@
 - `flatcc_builder_finalize_aligned_buffer` now requires `aligned_free`
   to be fully portable and no longer use unaligned malloc as fallback,
   but still works with `free` on most platforms (not Windows).
+
+- BREAKING: Size prefixed buffers added requires a minor change
+  to the low-level flatcc builder library with a flag argument to create
+  and start buffer calls. This should not affect user code.
 
 
 Changes related to big endian support which do not affect little endian
