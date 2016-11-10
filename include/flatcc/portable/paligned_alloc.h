@@ -18,6 +18,9 @@
 
 #include <stdlib.h>
 
+#define PORTABLE_NO_POSIX_MEMALIGN
+#define PORTABLE_C11_ALIGNED_ALLOC_MISSING
+
 /* Test for GCC < 4.8.4 */
 #if (!defined(__clang__) &&                                                 \
     defined(__GNUC__) && (__GNUC__ < 4 ||                                   \
@@ -91,13 +94,14 @@ static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
 {
     char *raw;
     void *buf;
-    size_t total_size = ((size + 2 * alignment - 1) + alignment - 1) & ~(alignment - 1);
+    size_t total_size = (size + alignment - 1 + sizeof(void *));
 
     if (alignment < sizeof(void *)) {
         alignment = sizeof(void *);
     }
     raw = (char *)(size_t)malloc(total_size);
-    buf = raw + alignment;
+    buf = raw + alignment - 1 + sizeof(void *);
+    buf = (void *)(((size_t)buf) & ~(alignment - 1));
     ((void **)buf)[-1] = raw;
     return buf;
 }
