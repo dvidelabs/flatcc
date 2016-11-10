@@ -33,6 +33,14 @@
 #define PORTABLE_C11_ALIGNED_ALLOC_MISSING
 #endif
 
+/* We assume non-gnu compilers have posix_memalign because we can't test for it. */
+#if !defined(__clang__) && defined(__GNUC__) 
+#if !defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE < 200112L
+#undef PORTABLE_NO_POSIX_MEMALIGN
+#define PORTABLE_NO_POSIX_MEMALIGN
+#endif
+#endif
+
 #if (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) && \
     !defined(PORTABLE_C11_ALIGNED_ALLOC_MISSING)
 /* C11 or newer */
@@ -89,11 +97,11 @@ static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
     }
     raw = (char *)(((size_t)malloc(size + 2 * alignment - 1) + alignment - 1) & ~(alignment - 1));
     buf = raw + alignment;
-    (void **)buf)[-1] = raw;
+    ((void **)buf)[-1] = raw;
     return buf;
 }
 
-static inline void *__portable_aligned_free(void *p)
+static inline void __portable_aligned_free(void *p)
 {
     free(((void **)p)[-1]);
 }
