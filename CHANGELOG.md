@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.4.1-pre]
+- Test for `posix_memalign` on GCC platforms and fix fallback
+  `aligned_alloc`.
+
 ## [0.4.0]
 - Fix Windows detection in flatcc/support/elapsed.h used by benchmark.
 - Fix #8 surplus integer literal suffix in portable byteswap fallback.
