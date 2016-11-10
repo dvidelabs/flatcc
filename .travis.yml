@@ -3,38 +3,44 @@ language: c
 matrix:
   include:
     - os: linux
-      dist: trusty
+      sudo: false
+      dist: precise
       compiler: gcc
     - os: linux
-      dist: trusty
+      sudo: false
+      dist: precise
       compiler: gcc-4.8
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['gcc-4.8']
     - os: linux
-      dist: trusty
+      sudo: false
+      dist: precise
       compiler: gcc-4.7
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['gcc-4.7']
     - os: linux
-      dist: trusty
+      sudo: false
+      dist: precise
       compiler: gcc-4.6
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['gcc-4.6']
     - os: linux
-      dist: trusty
+      sudo: false
+      dist: precise
       compiler: gcc-4.5
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['gcc-4.5']
     - os: linux
-      dist: trusty
+      sudo: false
+      dist: precise
       compiler: gcc-4.4
       addons:
         apt:
@@ -42,34 +48,40 @@ matrix:
           packages: ['gcc-4.4']
 
     - os: linux
+      sudo: false
+      dist: precise
       compiler: clang
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise']
           packages: ['clang']
     - os: linux
-      dist: trusty
+      sudo: false
+      dist: precise
       compiler: clang-3.8
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.8']
           packages: ['clang-3.8']
     - os: linux
-      dist: trusty
+      sudo: false
+      dist: precise
       compiler: clang-3.7
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
           packages: ['clang-3.7']
     - os: linux
-      dist: trusty
+      sudo: false
+      dist: precise
       compiler: clang-3.6
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
           packages: ['clang-3.6']
     - os: linux
-      dist: trusty
+      sudo: false
+      dist: precise
       compiler: clang-3.5
       addons:
         apt:
