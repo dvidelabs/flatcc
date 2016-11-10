@@ -18,34 +18,44 @@
 
 #include <stdlib.h>
 
-#define PORTABLE_NO_POSIX_MEMALIGN
-#define PORTABLE_C11_ALIGNED_ALLOC_MISSING
 
-/* Test for GCC < 4.8.4 */
-#if (!defined(__clang__) &&                                                 \
-    defined(__GNUC__) && (__GNUC__ < 4 ||                                   \
-    (__GNUC__ == 4 && (__GNUC_MINOR__ < 8 ||                                \
-        (__GNUC_MINOR__ == 8 &&                                             \
-            __GNUC_PATCHLEVEL__ < 4)))))
-#undef PORTABLE_C11_ALIGNED_ALLOC_MISSING
-#define PORTABLE_C11_ALIGNED_ALLOC_MISSING
+/*
+ * Define this to see which version is used so the fallback is not
+ * enganged unnecessarily:
+ *
+ * #define PORTABLE_DEBUG_ALIGNED_ALLOC
+ */
+
+#if !defined(PORTABLE_C11_ALIGNED_ALLOC)
+
+#if defined (__GLIBC__) && defined (_ISOC11_SOURCE)
+#define PORTABLE_C11_ALIGNED_ALLOC 1
+#elif defined(__clang__)
+#define PORTABLE_C11_ALIGNED_ALLOC 0
+#elif defined(__IBMC__)
+#define PORTABLE_C11_ALIGNED_ALLOC 0
+#elif (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L)
+#define PORTABLE_C11_ALIGNED_ALLOC 1
+#else
+#define PORTABLE_C11_ALIGNED_ALLOC 0
 #endif
 
-#if defined(__IBMC__)
-#undef PORTABLE_C11_ALIGNED_ALLOC_MISSING
-#define PORTABLE_C11_ALIGNED_ALLOC_MISSING
-#endif
+#endif /* PORTABLE_C11_ALIGNED_ALLOC */
 
-/* We assume non-gnu compilers have posix_memalign because we can't test for it. */
-#if !defined(__clang__) && defined(__GNUC__) 
-#if !defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE < 200112L
-#undef PORTABLE_NO_POSIX_MEMALIGN
-#define PORTABLE_NO_POSIX_MEMALIGN
+/* https://linux.die.net/man/3/posix_memalign */
+#if !defined(PORTABLE_POSIX_MEMALIGN)
+/* https://forum.kde.org/viewtopic.php?p=66274 */
+#if (defined _GNU_SOURCE) || ((_XOPEN_SOURCE + 0) >= 600) || (_POSIX_C_SOURCE + 0) >= 200112L 
+#define PORTABLE_POSIX_MEMALIGN 1
+#elif (__clang__)
+#define PORTABLE_POSIX_MEMALIGN 1
+#else
+#define PORTABLE_POSIX_MEMALIGN 0
 #endif
-#endif
+#endif /* PORTABLE_POSIX_MEMALIGN */
 
-#if (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) && \
-    !defined(PORTABLE_C11_ALIGNED_ALLOC_MISSING)
+/* https://forum.kde.org/viewtopic.php?p=66274 */
+#if (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L)
 /* C11 or newer */
 #include <stdalign.h>
 #endif
@@ -53,7 +63,11 @@
 /* C11 or newer */
 #if !defined(aligned_alloc) && !defined(__aligned_alloc_is_defined)
 
-#if defined(_MSC_VER)
+#if PORTABLE_C11_ALIGNED_ALLOC
+#ifdef PORTABLE_DEBUG_ALIGNED_ALLOC
+#error "DEBUG: C11_ALIGNED_ALLOC configured"
+#endif
+#elif defined(_MSC_VER)
 
 /* Aligned _aligned_malloc is not compatible with free. */
 #define aligned_alloc(alignment, size) _aligned_malloc(size, alignment)
@@ -61,7 +75,7 @@
 #define __aligned_alloc_is_defined 1
 #define __aligned_free_is_defined 1
 
-#elif !defined(PORTABLE_NO_POSIX_MEMALIGN)
+#elif PORTABLE_POSIX_MEMALIGN
 
 #ifdef __GNUC__
 #include "mm_malloc.h"
@@ -82,6 +96,10 @@ static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
     }
     return p;
 }
+
+#ifdef PORTABLE_DEBUG_ALIGNED_ALLOC
+#error "DEBUG: POSIX_MEMALIGN configured"
+#endif
 
 #define aligned_alloc(alignment, size) __portable_aligned_alloc(alignment, size)
 #define aligned_free(p) free(p)
@@ -108,13 +126,19 @@ static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
 
 static inline void __portable_aligned_free(void *p)
 {
-    free(((void **)p)[-1]);
+    char *raw = ((void **)p)[-1];
+
+    free(raw);
 }
 
 #define aligned_alloc(alignment, size) __portable_aligned_alloc(alignment, size)
 #define aligned_free(p) __portable_aligned_free(p)
 #define __aligned_alloc_is_defined 1
 #define __aligned_free_is_defined 1
+
+#ifdef PORTABLE_DEBUG_ALIGNED_ALLOC
+#error "DEBUG: aligned_alloc malloc fallback configured"
+#endif
 
 #endif
 
