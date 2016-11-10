@@ -1114,7 +1114,9 @@ runtime library with flatbuffers encoded in big endian format regardless
 of the host platforms endianness. Longer term this should probably be
 placed in a separate library with separate name prefixes or suffixes,
 but it is usable as is. Redefine `FLATBUFFERS_PROTOCOL_IS_LE/BE`
-accordingly in `include/flatcc/flatcc_types.h`.
+accordingly in `include/flatcc/flatcc_types.h`. This is already done in
+the `be` branch. This branch is not maintained but the master branch can
+be merged into it as needed.
 
 Note that standard flatbuffers are always encoded in little endian but
 in situations where all buffer producers and consumers are big endian,
