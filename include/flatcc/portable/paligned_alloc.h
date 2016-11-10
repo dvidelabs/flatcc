@@ -91,11 +91,12 @@ static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
 {
     char *raw;
     void *buf;
+    size_t total_size = ((size + 2 * alignment - 1) + alignment - 1) & ~(alignment - 1);
 
     if (alignment < sizeof(void *)) {
         alignment = sizeof(void *);
     }
-    raw = (char *)(((size_t)malloc(size + 2 * alignment - 1) + alignment - 1) & ~(alignment - 1));
+    raw = (char *)(size_t)malloc(total_size);
     buf = raw + alignment;
     ((void **)buf)[-1] = raw;
     return buf;
