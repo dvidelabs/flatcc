@@ -28,9 +28,9 @@
 
 #if !defined(PORTABLE_C11_ALIGNED_ALLOC)
 
-#if defined (__GLIBC__) && defined (_ISOC11_SOURCE)
-#define PORTABLE_C11_ALIGNED_ALLOC 1
-#elif defined(__clang__)
+#if defined (__GLIBC__)
+#define PORTABLE_C11_ALIGNED_ALLOC 0
+#elif defined (__clang__)
 #define PORTABLE_C11_ALIGNED_ALLOC 0
 #elif defined(__IBMC__)
 #define PORTABLE_C11_ALIGNED_ALLOC 0
