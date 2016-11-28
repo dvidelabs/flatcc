@@ -336,12 +336,13 @@ static inline const char *flatcc_json_parser_constant_start(flatcc_json_parser_t
 static inline const char *flatcc_json_parser_object_start(flatcc_json_parser_t *ctx, const char *buf, const char *end, int *more)
 {
     if (buf == end || *buf != '{') {
+        *more = 0;
         return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_expected_object);
     }
     buf = flatcc_json_parser_space(ctx, buf + 1, end);
     if (buf != end && *buf == '}') {
         *more = 0;
-        buf = flatcc_json_parser_space(ctx, buf + 1, end);
+        return flatcc_json_parser_space(ctx, buf + 1, end);
     }
     *more = 1;
     return buf;
@@ -381,12 +382,13 @@ static inline const char *flatcc_json_parser_object_end(flatcc_json_parser_t *ct
 static inline const char *flatcc_json_parser_array_start(flatcc_json_parser_t *ctx, const char *buf, const char *end, int *more)
 {
     if (buf == end || *buf != '[') {
+        *more = 0;
         return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_expected_array);
     }
     buf = flatcc_json_parser_space(ctx, buf + 1, end);
     if (buf != end && *buf == ']') {
         *more = 0;
-        buf = flatcc_json_parser_space(ctx, buf + 1, end);
+        return flatcc_json_parser_space(ctx, buf + 1, end);
     }
     *more = 1;
     return buf;
