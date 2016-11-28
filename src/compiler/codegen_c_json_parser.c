@@ -1101,9 +1101,8 @@ static int gen_global_scope_parser(fb_output_t *out)
     println(out, "{"); indent();
     if (n == 0) {
         println(out, "/* Global scope has no enum / union types to look up. */");
-        println(out, "*more = 0;");
         println(out, "return buf; /* unmatched; */");
-        println(out, "");
+        unindent(); println(out, "}");
     } else {
         println(out, "const char *unmatched = buf;");
         println(out, "const char *mark;");
