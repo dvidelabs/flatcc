@@ -3,6 +3,9 @@
 ## [0.4.1-pre]
 - Test for `posix_memalign` on GCC platforms and fix fallback
   `aligned_alloc`.
+- Fix JSON parser handling of empty objects and tables.
+- Fix JSON parser #17 - some fields would not be accepted as valid.
+
 
 ## [0.4.0]
 - Fix Windows detection in flatcc/support/elapsed.h used by benchmark.
