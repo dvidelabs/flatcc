@@ -908,6 +908,8 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
                 n = get_dict_tag(&trie->dict[x - 1], pos, &tag, &mask, &name, &len);
                 if (n == 8) {
                     has_prefix_key = 1;
+                } else {
+                    get_dict_tag(&trie->dict[x], pos, &tag, &mask, &name, &len);
                 }
             }
             /* `x` is now the smallest key that has a suffix at pos + 8.
