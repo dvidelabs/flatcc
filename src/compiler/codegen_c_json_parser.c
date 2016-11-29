@@ -894,7 +894,6 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
                 gen_prefix_trie(out, trie, a, b, pos);
                 return;
             }
-            get_dict_tag(&trie->dict[x], pos, &tag, &mask, &name, &len);
             /*
              * Test for special case where prefix [pos..pos+8) is also a
              * key. We cannot branch on any tag and need a decision on
@@ -908,10 +907,9 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
                 n = get_dict_tag(&trie->dict[x - 1], pos, &tag, &mask, &name, &len);
                 if (n == 8) {
                     has_prefix_key = 1;
-                } else {
-                    get_dict_tag(&trie->dict[x], pos, &tag, &mask, &name, &len);
                 }
             }
+            get_dict_tag(&trie->dict[x], pos, &tag, &mask, &name, &len);
             /* `x` is now the smallest key that has a suffix at pos + 8.
              * 'x - 1` may be a prefix key of [x..b]. */
             println(out, "if (w == 0x%"PRIx64") { /* prefix \"%.*s\" */",
