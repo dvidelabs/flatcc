@@ -341,5 +341,14 @@ int main()
     TEST(   "{ name: \"Monster\", testjsonprefixparsing: { aaaa: \"test\", aaaa12345: 17 } }",
             "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"aaaa\":\"test\",\"aaaa12345\":17}}" );
 
+    TEST(   "{ name: \"Monster\", testjsonprefixparsing: { bbbb: \"test\", bbbb1234: 19 } }",
+            "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"bbbb\":\"test\",\"bbbb1234\":19}}" );
+
+    TEST(   "{ name: \"Monster\", testjsonprefixparsing: { cccc: \"test\", cccc1234: 19, cccc12345: 17 } }",
+            "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"cccc\":\"test\",\"cccc1234\":19,\"cccc12345\":17}}" );
+
+    TEST(   "{ name: \"Monster\", testjsonprefixparsing: { dddd1234: 19, dddd12345: 17 } }",
+            "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"dddd1234\":19,\"dddd12345\":17}}" );
+
     return ret ? -1: 0;
 }
