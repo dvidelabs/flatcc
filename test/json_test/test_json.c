@@ -337,9 +337,9 @@ int main()
     TEST(   "{ name: \"Monster\", testarrayoftables: [] }",
             "{\"name\":\"Monster\",\"testarrayoftables\":[]}" );
 
-    /* Test issue #17 */
-    TEST(   "{ name: \"Monster\", testissue17: { aaaa: \"test\", aaaa12345: 17 } }",
-            "{\"name\":\"Monster\",\"testissue17\":{\"aaaa\":\"test\",\"aaaa12345\":17}}" );
+    /* Test JSON prefix parsing */
+    TEST(   "{ name: \"Monster\", testjsonprefixparsing: { aaaa: \"test\", aaaa12345: 17 } }",
+            "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"aaaa\":\"test\",\"aaaa12345\":17}}" );
 
     return ret ? -1: 0;
 }
