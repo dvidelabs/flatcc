@@ -329,6 +329,17 @@ int main()
             "{\"name\":\"Monster\",\"testnestedflatbuffer\":{\"name\":\"sub Monster\"}}");
 #endif
 
+    /* Test empty table */
+    TEST(   "{ name: \"Monster\", testempty: {} }",
+            "{\"name\":\"Monster\",\"testempty\":{}}" );
+
+    /* Test empty array */
+    TEST(   "{ name: \"Monster\", testarrayoftables: [] }",
+            "{\"name\":\"Monster\",\"testarrayoftables\":[]}" );
+
+    /* Test issue #17 */
+    TEST(   "{ name: \"Monster\", testissue17: { aaaa: \"test\", aaaa12345: 17 } }",
+            "{\"name\":\"Monster\",\"testissue17\":{\"aaaa\":\"test\",\"aaaa12345\":17}}" );
 
     return ret ? -1: 0;
 }
