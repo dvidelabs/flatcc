@@ -53,7 +53,6 @@ table Stat {
 table TestJSONPrefixParsing
 {
   aaaa: string;
-  aaaa1234: long;
   aaaa12345: uint;
 }
 
