@@ -54,6 +54,16 @@ table TestJSONPrefixParsing
 {
   aaaa: string;
   aaaa12345: uint;
+  
+  bbbb: string;
+  bbbb1234: long;
+  
+  cccc: string;
+  cccc1234: long;
+  cccc12345: uint;
+  
+  dddd1234: long;
+  dddd12345: uint;
 }
 
 table Monster {
