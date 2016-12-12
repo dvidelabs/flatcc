@@ -1102,6 +1102,128 @@ done:
     return ret;
 }
 
+int test_scan_by(flatcc_builder_t *B)
+{
+    size_t pos;
+    ns(Monster_table_t) mon;
+    ns(Monster_vec_t) monsters;
+    nsc(uint8_vec_t) inv;
+    void *buffer;
+    size_t size;
+    uint8_t invdata[] = { 6, 7, 1, 3, 4, 3, 2 };
+    int ret = -1;
+
+    flatcc_builder_reset(B);
+    ns(Monster_start_as_root(B));
+    ns(Monster_name_create_str(B, "MyMonster"));
+    ns(Monster_inventory_create(B, invdata, c_vec_len(invdata)));
+
+    ns(Monster_testarrayoftables_start(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_name_create_str(B, "TwoFace"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_name_create_str(B, "Joker"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_name_create_str(B, "Gulliver"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_name_create_str(B, "Alice"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_name_create_str(B, "Gulliver"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_end(B));
+
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+    mon = ns(Monster_as_root(buffer));
+    monsters = ns(Monster_testarrayoftables(mon));
+    assert(monsters);
+    inv = ns(Monster_inventory(mon));
+    assert(inv);
+
+    if (1 != ns(Monster_vec_scan(monsters, "Joker"))) {
+        printf("scan_by did not find the Joker\n");
+        goto done;
+    }
+    if (1 != ns(Monster_vec_scan_n(monsters, "Joker3", 5))) {
+        printf("scan_by did not find the Joker with n\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan_at(monsters, 2, "Joker"))) {
+        printf("scan_at found Joker past first occurence\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan(monsters, "Jingle"))) {
+        printf("not found not working\n");
+        goto done;
+    }
+    if (0 != (pos = ns(Monster_vec_scan(monsters, "TwoFace")))) {
+        printf("TwoFace not found\n");
+        goto done;
+    }
+    if (2 != (pos = ns(Monster_vec_scan_by_name(monsters, "Gulliver")))) {
+        printf("Gulliver not found\n");
+        goto done;
+    }
+    if (2 != (pos = ns(Monster_vec_scan_at_by_name(monsters, 2, "Gulliver")))) {
+        printf("Gulliver not found starting from Gulliver\n");
+        goto done;
+    }
+    if (4 != (pos = ns(Monster_vec_scan_at_by_name(monsters, 3, "Gulliver")))) {
+        printf("Another Gulliver not found\n");
+        goto done;
+    }
+
+    if (0 != (pos = nsc(uint8_vec_scan(inv, 6)))) {
+        printf("scan not working on first item of inventory\n");
+        goto done;
+    }
+    if (2 != (pos = nsc(uint8_vec_scan(inv, 1)))) {
+        printf("scan not working on middle item of inventory\n");
+        goto done;
+    }
+    if (nsc(not_found) != (pos = nsc(uint8_vec_scan_at(inv, 3, 1)))) {
+        printf("scan_at(item+1) not working on middle item of inventory\n");
+        goto done;
+    }
+    if (nsc(not_found) != (pos = nsc(uint8_vec_scan(inv, 5)))) {
+        printf("scan not working for repeating item of inventory\n");
+        goto done;
+    }
+    if (6 != (pos = nsc(uint8_vec_scan(inv, 2)))) {
+        printf("scan not working on last item of inventory\n");
+        goto done;
+    }
+    if (3 != (pos = nsc(uint8_vec_scan(inv, 3)))) {
+        printf("scan not working for repeating item of inventory\n");
+        goto done;
+    }
+    if (3 != (pos = nsc(uint8_vec_scan_at(inv, 3, 3)))) {
+        printf("scan_at(item) not working for repeating item of inventory\n");
+        goto done;
+    }
+    if (5 != (pos = nsc(uint8_vec_scan_at(inv, 4, 3)))) {
+        printf("scan_at(item+1) not working for repeating item of inventory\n");
+        goto done;
+    }
+
+    ret = 0;
+
+done:
+    aligned_free(buffer);
+    return ret;
+}
+
 int test_basic_sort(flatcc_builder_t *B)
 {
     ns(Monster_table_t) mon;
@@ -1776,6 +1898,12 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_sort_find(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_scan_by(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
