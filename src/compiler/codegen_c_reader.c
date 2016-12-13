@@ -562,7 +562,7 @@ static inline void print_doc(fb_output_t *out, const char *indent, fb_doc_t *doc
         if (ln != doc->ident->linenum) {
             if (first) {
                 /* Not all C compilers understand // comments. */
-                fprintf(out->fp, "%s/**", indent);
+                fprintf(out->fp, "%s/** ", indent);
                 ln = doc->ident->linenum;
             } else {
                 fprintf(out->fp, "\n%s * ", indent);
