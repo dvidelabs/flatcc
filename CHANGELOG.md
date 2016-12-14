@@ -5,6 +5,8 @@
   `aligned_alloc`.
 - Fix JSON parser handling of empty objects and tables.
 - Fix JSON parser #17 - some fields would not be accepted as valid.
+- Add support for scan similar to find in reader API, but for O(logN)
+  unsorted search, or search by a secondary key.
 
 
 ## [0.4.0]
