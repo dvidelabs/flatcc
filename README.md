@@ -1217,9 +1217,10 @@ As of v0.4.1 `<table_name>_vec_scan_by_<field_name>` and the default
 linear search that does not require the vector to be sorted. This is
 especially useful for searching by a secondary key.
 `_scan_at/scan_range[_by_<field_name>]` enables the search to start from
-a given index to an exclusive end index. The start index must be valid
-or at least the end value, including `not_found`. The end may be larger
-than the vector length, including `not_found == (size_t)-1`.
+a given index to an exclusive end index. If the start index may be out
+of range or larger than end, in which case the search returns
+`not_found`, likewise the end may be larger than `_vec_len` includinf
+`not_found == (size_t)-1`. 
 
 See also `doc/builder.md` and `test/monster_test/monster_test.c`.
 
