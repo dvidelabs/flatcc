@@ -1212,6 +1212,15 @@ by providing `<table_name>_vec_sort_by_<field_name>` and
 first field maps to `<table_name>_vec_sort` and `<table_name>_vec_find`.
 Obviously the chosen find method must match the chosen sort method.
 
+As of v0.4.1 `<table_name>_vec_scan_by_<field_name>` and the default
+`<table_name>_vec_scan` is also provided similar to `find`, but as a
+linear search that does not require the vector to be sorted. This is
+especially useful for searching by a secondary key.
+`_scan_at/scan_range[_by_<field_name>]` enables the search to start from
+a given index to an exclusive end index. The start index must be valid
+or at least the end value, including `not_found`. The end may be larger
+than the vector length, including `not_found == (size_t)-1`.
+
 See also `doc/builder.md` and `test/monster_test/monster_test.c`.
 
 
