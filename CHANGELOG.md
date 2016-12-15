@@ -6,7 +6,7 @@
 - Fix JSON parser handling of empty objects and tables.
 - Fix JSON parser #17 - some fields would not be accepted as valid.
 - Fix #21, rare uncompilable doc comment in schema.
-- Add support for scan similar to find in reader API, but for O(logN)
+- Add support for scan similar to find in reader API, but for O(N)
   unsorted search, or search by a secondary key.
 
 
