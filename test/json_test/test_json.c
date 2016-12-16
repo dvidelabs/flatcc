@@ -196,15 +196,23 @@ int error_case_tests()
                 flatcc_json_parser_error_unknown_symbol );
     TEST_ERROR( "{ name: \"Monster\", test_type: Monster, test: { name: \"Joker\", colour: \"Red\" } } }",
                 flatcc_json_parser_error_unknown_symbol );
-    TEST_ERROR( "{ name: \"Monster\", test_array_of_tables: [ { nickname: \"Joker\", color: \"Red\" } ] }",
+    TEST_ERROR( "{ name: \"Monster\", testarrayoftables: [ { nickname: \"Joker\", color: \"Red\" } ] }",
                 flatcc_json_parser_error_unknown_symbol );
-    TEST_ERROR( "{ name: \"Monster\", test_array_of_tables: [ { name: \"Joker\", colour: \"Red\" } ] }",
+    TEST_ERROR( "{ name: \"Monster\", testarrayoftables: [ { name: \"Joker\", colour: \"Red\" } ] }",
                 flatcc_json_parser_error_unknown_symbol );
-    TEST_ERROR( "{ name: \"Monster\", test_array_of_tables: [ { name: \"Joker\", color: \"Red\", "
-                "test_type: Monster, test: { nickname: \"Harley\", color: \"Blue\" } } ] }",
+    TEST_ERROR( "{ name: \"Monster\", testarrayoftables: ["
+                "{ name: \"Joker\", color: \"Red\", test_type: Monster, test: { nickname: \"Harley\", color: \"Blue\" } } ] }",
                 flatcc_json_parser_error_unknown_symbol );
-    TEST_ERROR( "{ name: \"Monster\", test_array_of_tables: [ { name: \"Joker\", color: \"Red\", "
-                "test_type: Monster, test: { name: \"Harley\", colour: \"Blue\" } } ] }",
+    TEST_ERROR( "{ name: \"Monster\", testarrayoftables: ["
+                "{ name: \"Joker\", color: \"Red\", test_type: Monster, test: { name: \"Harley\", colour: \"Blue\" } } ] }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ name: \"Monster\", testarrayoftables: ["
+                "{ name: \"Joker\", test_type: Monster, test: { nickname: \"Harley\" } },"
+                "{ name: \"Bonnie\", test_type: Monster, test: { name: \"Clyde\" } } ] }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ name: \"Monster\", testarrayoftables: ["
+                "{ name: \"Joker\", test_type: Monster, test: { name: \"Harley\" } },"
+                "{ name: \"Bonnie\", test_type: Monster, test: { nickname: \"Clyde\" } } ] }",
                 flatcc_json_parser_error_unknown_symbol );
 
     return ret;
