@@ -1102,6 +1102,20 @@ done:
     return ret;
 }
 
+static size_t count_monsters(ns(Monster_vec_t) monsters, const char *name)
+{
+    size_t i;
+    size_t count = 0;
+
+    for (i = ns(Monster_vec_scan)(monsters, name);
+         i != nsc(not_found);
+         i = ns(Monster_vec_scan_from)(monsters, i + 1, name)) {
+        ++count;
+    }
+
+    return count;
+}
+
 int test_scan_by(flatcc_builder_t *B)
 {
     size_t pos;
@@ -1159,28 +1173,67 @@ int test_scan_by(flatcc_builder_t *B)
         printf("scan_by did not find the Joker with n\n");
         goto done;
     }
-    if (nsc(not_found) != ns(Monster_vec_scan_at(monsters, 2, "Joker"))) {
-        printf("scan_at found Joker past first occurence\n");
+    if (nsc(not_found) != ns(Monster_vec_scan_from(monsters, 2, "Joker"))) {
+        printf("scan_from found Joker past first occurence\n");
         goto done;
     }
     if (nsc(not_found) != ns(Monster_vec_scan(monsters, "Jingle"))) {
         printf("not found not working\n");
         goto done;
     }
-    if (0 != (pos = ns(Monster_vec_scan(monsters, "TwoFace")))) {
+    if (0 != ns(Monster_vec_scan(monsters, "TwoFace"))) {
         printf("TwoFace not found\n");
         goto done;
     }
-    if (2 != (pos = ns(Monster_vec_scan_by_name(monsters, "Gulliver")))) {
+    if (2 != ns(Monster_vec_scan_by_name(monsters, "Gulliver"))) {
         printf("Gulliver not found\n");
         goto done;
     }
-    if (2 != (pos = ns(Monster_vec_scan_at_by_name(monsters, 2, "Gulliver")))) {
+    if (2 != ns(Monster_vec_scan_from_by_name(monsters, 2, "Gulliver"))) {
         printf("Gulliver not found starting from Gulliver\n");
         goto done;
     }
-    if (4 != (pos = ns(Monster_vec_scan_at_by_name(monsters, 3, "Gulliver")))) {
+    if (4 != ns(Monster_vec_scan_from_by_name(monsters, 3, "Gulliver"))) {
         printf("Another Gulliver not found\n");
+        goto done;
+    }
+
+    if (nsc(not_found) != ns(Monster_vec_scan_range(monsters, 1, 3, "Jingle"))) {
+        printf("not found in subrange not working\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan_range(monsters, 1, 3, "TwoFace"))) {
+        printf("subrange doesn't limit low bound\n");
+        goto done;
+    }
+    if (1 != ns(Monster_vec_scan_range(monsters, 1, 3, "Joker"))) {
+        printf("scan in subrange did not find Joker\n");
+        goto done;
+    }
+    if (2 != ns(Monster_vec_scan_range_by_name(monsters, 1, 3, "Gulliver"))) {
+        printf("scan in subrange did not find Gulliver\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan_range_by_name(monsters, 1, 3, "Alice"))) {
+        printf("subrange doesn't limit upper bound\n");
+        goto done;
+    }
+
+
+    if (1 != count_monsters(monsters, "Joker")) {
+        printf("number of Jokers is not 1\n");
+        goto done;
+    }
+    if (0 != count_monsters(monsters, "Jingle")) {
+        printf("number of Jingles is not 0\n");
+        goto done;
+    }
+    if (1 != count_monsters(monsters, "TwoFace")) {
+        printf("number of TwoFace is not 1\n");
+        goto done;
+    }
+    if (2 != count_monsters(monsters, "Gulliver")) {
+        printf("number of Gullivers is not 2\n");
         goto done;
     }
 
@@ -1192,8 +1245,8 @@ int test_scan_by(flatcc_builder_t *B)
         printf("scan not working on middle item of inventory\n");
         goto done;
     }
-    if (nsc(not_found) != (pos = nsc(uint8_vec_scan_at(inv, 3, 1)))) {
-        printf("scan_at(item+1) not working on middle item of inventory\n");
+    if (nsc(not_found) != (pos = nsc(uint8_vec_scan_from(inv, 3, 1)))) {
+        printf("scan_from(item+1) not working on middle item of inventory\n");
         goto done;
     }
     if (nsc(not_found) != (pos = nsc(uint8_vec_scan(inv, 5)))) {
@@ -1208,12 +1261,12 @@ int test_scan_by(flatcc_builder_t *B)
         printf("scan not working for repeating item of inventory\n");
         goto done;
     }
-    if (3 != (pos = nsc(uint8_vec_scan_at(inv, 3, 3)))) {
-        printf("scan_at(item) not working for repeating item of inventory\n");
+    if (3 != (pos = nsc(uint8_vec_scan_from(inv, 3, 3)))) {
+        printf("scan_from(item) not working for repeating item of inventory\n");
         goto done;
     }
-    if (5 != (pos = nsc(uint8_vec_scan_at(inv, 4, 3)))) {
-        printf("scan_at(item+1) not working for repeating item of inventory\n");
+    if (5 != (pos = nsc(uint8_vec_scan_from(inv, 4, 3)))) {
+        printf("scan_from(item+1) not working for repeating item of inventory\n");
         goto done;
     }
 
