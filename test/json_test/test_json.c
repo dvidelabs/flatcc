@@ -8,9 +8,10 @@
 #undef ns
 #define ns(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Example, x)
 
-int test_json(char *json, char *expect, int parse_flags, int print_flags, int line)
+int test_json(char *json, char *expect, int expect_err, int parse_flags, int print_flags, int line)
 {
     int ret = -1;
+    int err;
     void *flatbuffer = 0;
     char *buf = 0;
     size_t flatbuffer_size, buf_size;
@@ -24,15 +25,38 @@ int test_json(char *json, char *expect, int parse_flags, int print_flags, int li
     flatcc_json_printer_init_dynamic_buffer(&printer, 0);
     flatcc_json_printer_set_flags(&printer, print_flags);
 
-    if ((ret = monster_test_parse_json(B, &parser, json, strlen(json), parse_flags))) {
-        fprintf(stderr, "%d: json test: parse failed: %s\n", line, flatcc_json_parser_error_string(ret));
-        fprintf(stderr, "%s\n", json);
+    err = monster_test_parse_json(B, &parser, json, strlen(json), parse_flags);
+    if (err != expect_err) {
+        if (expect_err)
+        {
+            if( err )
+            {
+                fprintf(stderr, "%d: json test: parse failed with: %s\n", line, flatcc_json_parser_error_string(err));
+                fprintf(stderr, "but expected to fail with: %s\n", flatcc_json_parser_error_string(expect_err));
+                fprintf(stderr, "%s\n", json);
+            }
+            else
+            {
+                fprintf(stderr, "%d: json test: parse successful, but expected to fail with: %s\n", line, flatcc_json_parser_error_string(expect_err));
+                fprintf(stderr, "%s\n", json);
+            }
+        }
+        else
+        {
+            fprintf(stderr, "%d: json test: parse failed: %s\n", line, flatcc_json_parser_error_string(err));
+            fprintf(stderr, "%s\n", json);
+        }
         for (i = 0; i < parser.pos - 1; ++i) {
             fprintf(stderr, " ");
         }
         fprintf(stderr, "^\n");
         goto failed;
     }
+    if (expect_err) {
+        ret = 0;
+        goto done;
+    }
+
     flatbuffer = flatcc_builder_finalize_buffer(B, &flatbuffer_size);
     if ((ret = ns(Monster_verify_as_root(flatbuffer, flatbuffer_size)))) {
         fprintf(stderr, "%s:%d: buffer verification failed: %s\n", __FILE__, line, flatcc_verify_error_string(ret));
@@ -67,10 +91,13 @@ failed:
 }
 
 #define TEST(x, y) \
-    ret |= test_json((x), (y), 0, 0, __LINE__);
+    ret |= test_json((x), (y), 0, 0, 0, __LINE__);
+
+#define TEST_ERROR(x, err) \
+    ret |= test_json((x), 0, err, 0, 0, __LINE__);
 
 #define TEST_FLAGS(fparse, fprint, x, y) \
-    ret |= test_json((x), (y), (fparse), (fprint), __LINE__);
+    ret |= test_json((x), (y), 0, (fparse), (fprint), __LINE__);
 
 int edge_case_tests()
 {
@@ -159,6 +186,30 @@ int edge_case_tests()
     return ret;
 }
 
+int error_case_tests()
+{
+    int ret = 0;
+
+    TEST_ERROR( "{ nickname: \"Monster\" }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ name: \"Monster\", test_type: Monster, test: { nickname: \"Joker\", color: \"Red\" } } }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ name: \"Monster\", test_type: Monster, test: { name: \"Joker\", colour: \"Red\" } } }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ name: \"Monster\", test_array_of_tables: [ { nickname: \"Joker\", color: \"Red\" } ] }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ name: \"Monster\", test_array_of_tables: [ { name: \"Joker\", colour: \"Red\" } ] }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ name: \"Monster\", test_array_of_tables: [ { name: \"Joker\", color: \"Red\", "
+                "test_type: Monster, test: { nickname: \"Harley\", color: \"Blue\" } } ] }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ name: \"Monster\", test_array_of_tables: [ { name: \"Joker\", color: \"Red\", "
+                "test_type: Monster, test: { name: \"Harley\", colour: \"Blue\" } } ] }",
+                flatcc_json_parser_error_unknown_symbol );
+
+    return ret;
+}
+
 /*
  * Here we cover some border cases around unions and flag
  * enumerations, and nested buffers.
@@ -172,6 +223,7 @@ int main()
     int ret = 0;
 
     ret |= edge_case_tests();
+    ret |= error_case_tests();
 
     /* Allow trailing comma. */
     TEST(   "{ name: \"Monster\", }",
