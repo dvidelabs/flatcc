@@ -1217,13 +1217,13 @@ As of v0.4.1 `<table_name>_vec_scan_by_<field_name>` and the default
 `<table_name>_vec_scan` are also provided, similar to `find`, but as a
 linear search that does not require the vector to be sorted. This is
 especially useful for searching by a secondary key (multiple keys is a
-non-starndard flatcc feature). `_scan_from` searches from a given index
+non-standard flatcc feature). `_scan_from` searches from a given index
 and `_scan_range` scans between an inclusive first index and exclusive
 last index. If the first index is out of range or equal to or larger
-than last, the search returns `not_found`. `_scan_range` is identical to
-`_scan_from` when the last index is at least the vector length, up to
-and including `flatbuffers_not_found == (size_t)-1`. The scan operation is
-O(N).
+than last, the search returns `flatbuffers_not_found`. `_scan_range` is
+identical to `_scan_from` when the last index is at least the vector
+length, up to and including `flatbuffers_not_found == (size_t)-1`. The
+scan operation is O(N).
 
 Basic types such as `uint8_vec` also have search operations.
 
