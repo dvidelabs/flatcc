@@ -1193,7 +1193,7 @@ correctly.  By not checking error codes, this logic also optimizes out
 for better performance.
 
 
-## Sorting and Finding
+## Searching and Sorting
 
 The builder API does not support sorting due to the complexity of
 customizable emitters, but the reader API does support sorting so a
@@ -1205,22 +1205,23 @@ external memory or recursion. Due to the lack of external memory, the
 sort is not stable. The corresponding find operation returns the lowest
 index of any matching key, or `flatbuffers_not_found`.
 
-When configured in `config.h`, the `flatcc` compiler allows multiple
-keyed fields unlike Googles `flatc` compiler. This works transparently
-by providing `<table_name>_vec_sort_by_<field_name>` and
-`<table_name>_vec_find_by_<field_name>` methods for all keyed fields. The
-first field maps to `<table_name>_vec_sort` and `<table_name>_vec_find`.
-Obviously the chosen find method must match the chosen sort method.
+When configured in `config.h` (the default), the `flatcc` compiler
+allows multiple keyed fields unlike Googles `flatc` compiler. This works
+transparently by providing `<table_name>_vec_sort_by_<field_name>` and
+`<table_name>_vec_find_by_<field_name>` methods for all keyed fields.
+The first field maps to `<table_name>_vec_sort` and
+`<table_name>_vec_find`. Obviously the chosen find method must match
+the chosen sort method. The find operation is O(logN).
 
 As of v0.4.1 `<table_name>_vec_scan_by_<field_name>` and the default
 `<table_name>_vec_scan` is also provided similar to `find`, but as a
 linear search that does not require the vector to be sorted. This is
-especially useful for searching by a secondary key.
-`_scan_at/scan_range[_by_<field_name>]` enables the search to start from
-a given index to an exclusive end index. If the start index is out of
-range or larger than end for `scan_range`, the search returns
-`not_found`. Likewise the end may be larger than `_vec_len` including
-`not_found == (size_t)-1`. 
+especially useful for searching by a secondary key.  `_scan_from`
+searches from a given index and `_scan_range` scans between inclusive
+first index and exclusive last index. If the first index is out of range
+or larger than end for `scan_range`, the search returns `not_found`.
+Likewise the end may be larger than `_vec_len` including `not_found ==
+(size_t)-1`. The scan operation is O(N).
 
 Basic types such as `uint8_vec` also have search operations.
 
