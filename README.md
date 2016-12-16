@@ -1220,9 +1220,10 @@ especially useful for searching by a secondary key (multiple keys is a
 non-starndard flatcc feature). `_scan_from` searches from a given index
 and `_scan_range` scans between an inclusive first index and exclusive
 last index. If the first index is out of range or equal to or larger
-than last, the search returns `not_found`.  Likewise the end may be
-larger than `_vec_len` including `not_found == (size_t)-1`. The scan
-operation is O(N).
+than last, the search returns `not_found`. `_scan_range` is identical to
+`_scan_from` when the last index is at least the vector length, up to
+and including `flatbuffers_not_found == (size_t)-1`. The scan operation is
+O(N).
 
 Basic types such as `uint8_vec` also have search operations.
 
