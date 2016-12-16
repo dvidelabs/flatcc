@@ -562,6 +562,7 @@ repeat_nested:
         println(out, "buf = flatcc_json_parser_string_end(ctx, buf, end);");
     } else if (is_table) {
         println(out, "buf = %s_parse_json_table(ctx, buf, end);", snref.text);
+        println(out, "if (ctx->error) return buf; /* Quick fix, should be investigated further */");
         println(out, "ref = flatcc_builder_end_table(ctx->ctx);");
     } else if (is_union) {
         println(out, "buf = flatcc_json_parser_union(ctx, buf, end, %"PRIu64", %"PRIu64", %s_parse_json_union);",
