@@ -256,7 +256,7 @@
  * not just ones marked as key.
  */
 
-#ifndef FLATCC_GENERATE_SCAN_FOR_ALL_FIELDS
+#ifndef FLATCC_ALLOW_SCAN_FOR_ALL_FIELDS
 #define FLATCC_ALLOW_SCAN_FOR_ALL_FIELDS 1
 #endif
 
