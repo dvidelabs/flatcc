@@ -885,6 +885,11 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                 "__%sstruct_scalar_field(t, %.*s, %s%s)\n",
                 tname_ns, tname, snt.text, n, s, snt.text,
                 nsc, n, s, nsc, tname_prefix);
+            if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                fprintf(out->fp,
+                        "__%sdefine_scan_by_scalar_field(%s, %.*s, %s%s)\n",
+                        nsc, snt.text, n, s, tname_ns, tname);
+            }
             if (member->metadata_flags & fb_f_key) {
                 if (already_has_key) {
                     fprintf(out->fp, "/* Note: this is not the first field with a key on this struct. */\n");
@@ -892,9 +897,6 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                 fprintf(out->fp,     "/* Note: find only works on vectors sorted by this field. */\n");
                 fprintf(out->fp,
                         "__%sdefine_find_by_scalar_field(%s, %.*s, %s%s)\n",
-                        nsc, snt.text, n, s, tname_ns, tname);
-                fprintf(out->fp,
-                        "__%sdefine_scan_by_scalar_field(%s, %.*s, %s%s)\n",
                         nsc, snt.text, n, s, tname_ns, tname);
                 if (out->opts->cgen_sort) {
                     fprintf(out->fp,
@@ -928,6 +930,11 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                     "__%sstruct_scalar_field(t, %.*s, %s%s)\n",
                     snref.text, snt.text, n, s, snt.text,
                     nsc, n, s, nsc, tname_prefix);
+                if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                    fprintf(out->fp,
+                            "__%sdefine_scan_by_scalar_field(%s, %.*s, %s_enum_t)\n",
+                            nsc, snt.text, n, s, snref.text);
+                }
                 if (member->metadata_flags & fb_f_key) {
                     if (already_has_key) {
                         fprintf(out->fp, "/* Note: this is not the first field with a key on this table. */\n");
@@ -935,9 +942,6 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                     fprintf(out->fp,     "/* Note: find only works on vectors sorted by this field. */\n");
                     fprintf(out->fp,
                             "__%sdefine_find_by_scalar_field(%s, %.*s, %s_enum_t)\n",
-                            nsc, snt.text, n, s, snref.text);
-                    fprintf(out->fp,
-                            "__%sdefine_scan_by_scalar_field(%s, %.*s, %s_enum_t)\n",
                             nsc, snt.text, n, s, snref.text);
                     if (out->opts->cgen_sort) {
                         fprintf(out->fp,
@@ -1225,6 +1229,11 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 gen_panic(out, "internal error: unexpected scalar table default value");
                 continue;
             }
+            if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                fprintf(out->fp,
+                        "__%sdefine_scan_by_scalar_field(%s, %.*s, %s%s)\n",
+                        nsc, snt.text, n, s, tname_ns, tname);
+            }
             if (member->metadata_flags & fb_f_key) {
                 if (already_has_key) {
                     fprintf(out->fp, "/* Note: this is not the first field with a key on this table. */\n");
@@ -1232,9 +1241,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 fprintf(out->fp,     "/* Note: find only works on vectors sorted by this field. */\n");
                 fprintf(out->fp,
                         "__%sdefine_find_by_scalar_field(%s, %.*s, %s%s)\n",
-                        nsc, snt.text, n, s, tname_ns, tname);
-                fprintf(out->fp,
-                        "__%sdefine_scan_by_scalar_field(%s, %.*s, %s%s)\n",
                         nsc, snt.text, n, s, tname_ns, tname);
                 if (out->opts->cgen_sort) {
                     fprintf(out->fp,
@@ -1277,15 +1283,17 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 "__%svector_field(%sstring_t, %llu, t, %u)\n",
                 nsc, snt.text, n, s, snt.text,
                 nsc, nsc, llu(member->id), r);
+            if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                fprintf(out->fp,
+                    "__%sdefine_scan_by_string_field(%s, %.*s)\n",
+                    nsc, snt.text, n, s);
+            }
             if (member->metadata_flags & fb_f_key) {
                 if (already_has_key) {
                     fprintf(out->fp, "/* Note: this is not the first field with a key on this table. */\n");
                 }
                 fprintf(out->fp,
                     "__%sdefine_find_by_string_field(%s, %.*s)\n",
-                    nsc, snt.text, n, s);
-                fprintf(out->fp,
-                    "__%sdefine_scan_by_string_field(%s, %.*s)\n",
                     nsc, snt.text, n, s);
                 if (out->opts->cgen_sort) {
                     fprintf(out->fp,
@@ -1360,6 +1368,11 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                     gen_panic(out, "internal error: unexpected enum type referenced by table");
                     continue;
                 }
+                if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                    fprintf(out->fp,
+                            "__%sdefine_scan_by_scalar_field(%s, %.*s, %s_enum_t)\n",
+                            nsc, snt.text, n, s, snref.text);
+                }
                 if (member->metadata_flags & fb_f_key) {
                     if (already_has_key) {
                         fprintf(out->fp, "/* Note: this is not the first field with a key on this table. */\n");
@@ -1367,9 +1380,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                     fprintf(out->fp,     "/* Note: find only works on vectors sorted by this field. */\n");
                     fprintf(out->fp,
                             "__%sdefine_find_by_scalar_field(%s, %.*s, %s_enum_t)\n",
-                            nsc, snt.text, n, s, snref.text);
-                    fprintf(out->fp,
-                            "__%sdefine_scan_by_scalar_field(%s, %.*s, %s_enum_t)\n",
                             nsc, snt.text, n, s, snref.text);
                     if (out->opts->cgen_sort) {
                         fprintf(out->fp,

@@ -19,6 +19,7 @@ void flatcc_init_options(flatcc_options_t *opts)
     opts->allow_enum_key = FLATCC_ALLOW_ENUM_KEY;
     opts->allow_enum_struct_field = FLATCC_ALLOW_ENUM_STRUCT_FIELD;
     opts->allow_multiple_key_fields = FLATCC_ALLOW_MULTIPLE_KEY_FIELDS;
+    opts->allow_scan_for_all_fields = FLATCC_ALLOW_SCAN_FOR_ALL_FIELDS;
     opts->allow_string_key = FLATCC_ALLOW_STRING_KEY;
     opts->allow_struct_field_deprecate = FLATCC_ALLOW_STRUCT_FIELD_DEPRECATE;
     opts->allow_struct_field_key = FLATCC_ALLOW_STRUCT_FIELD_KEY;
