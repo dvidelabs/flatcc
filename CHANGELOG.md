@@ -6,9 +6,12 @@
 - Fix JSON parser handling of empty objects and tables.
 - Fix JSON parser #17 - some fields would not be accepted as valid.
 - Fix #21, rare uncompilable doc comment in schema.
-- Quick fix crash on unknown union fields (#27, #30).
+- Fix #30, avoid crash on certain table parser error cases.
 - Add support for scan similar to find in reader API, but for O(N)
   unsorted search, or search by a secondary key.
+
+- Ongoing: enable scan on all table and struct fields, not just keyed
+  fields.
 
 
 ## [0.4.0]
