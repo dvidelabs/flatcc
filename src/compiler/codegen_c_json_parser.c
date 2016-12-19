@@ -455,6 +455,7 @@ repeat_nested:
                 (uint64_t)FLATBUFFERS_COUNT_MAX(member->size));
         }
         println(out, "buf = flatcc_json_parser_array_start(ctx, buf, end, &more);");
+        /* Note that we reuse `more` which is safe because it is updated at the end of the main loop. */
         println(out, "while (more) {"); indent();
     }
     if (is_scalar) {
@@ -497,7 +498,7 @@ repeat_nested:
         unindent(); println(out, "}");
         if (!is_struct_container && !is_vector) {
 #if !FLATCC_JSON_PARSE_FORCE_DEFAULTS
-            /* We need create check for default value and create table field if not default. */
+            /* We need to create a check for the default value and create a table field if not the default. */
             switch(member->value.type) {
             case vt_bool:
             case vt_uint:
@@ -562,7 +563,7 @@ repeat_nested:
         println(out, "buf = flatcc_json_parser_string_end(ctx, buf, end);");
     } else if (is_table) {
         println(out, "buf = %s_parse_json_table(ctx, buf, end);", snref.text);
-        println(out, "if (ctx->error) return buf; /* Quick fix, should be investigated further */");
+        println(out, "if (buf == end) goto failed;");
         println(out, "ref = flatcc_builder_end_table(ctx->ctx);");
     } else if (is_union) {
         println(out, "buf = flatcc_json_parser_union(ctx, buf, end, %"PRIu64", %"PRIu64", %s_parse_json_union);",

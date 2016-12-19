@@ -398,7 +398,11 @@ static inline const char *flatcc_json_parser_array_end(flatcc_json_parser_t *ctx
         const char *end, int *more)
 {
     buf = flatcc_json_parser_space(ctx, buf, end);
-    if (buf != end && *buf != ',') {
+    if (buf == end) {
+        *more = 0;
+        return buf;
+    }
+    if (*buf != ',') {
         *more = 0;
         if (*buf != ']') {
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_unbalanced_array);
