@@ -190,6 +190,18 @@ static void gen_scan(fb_output_t *out)
         "}\n",
         nsc, nsc);
     fprintf(out->fp,
+        "#define __%srscan_by_field(b, e, A, V, E, L, K, Kn, T, D)\\\n"
+        "{ T v; size_t i = e;\\\n"
+        "  while (i-- > b) {\\\n"
+        "    v = A(E(V, i));\\\n"
+        "    if (D(v, (K), (Kn)) == 0) {\\\n"
+        "       return i;\\\n"
+        "    }\\\n"
+        "  }\\\n"
+        "  return %snot_found;\\\n"
+        "}\n",
+        nsc, nsc);
+    fprintf(out->fp,
         "#define __%sscan_by_scalar_field(b, e, A, V, E, L, K, T)\\\n"
         "__%sscan_by_field(b, e, A, V, E, L, K, 0, T, __%sscalar_cmp)\n"
         "#define __%sscan_by_string_field(b, e, A, V, E, L, K)\\\n"
@@ -199,19 +211,36 @@ static void gen_scan(fb_output_t *out)
         nsc, nsc, nsc, nsc, nsc,
         nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
+        "#define __%srscan_by_scalar_field(b, e, A, V, E, L, K, T)\\\n"
+        "__%srscan_by_field(b, e, A, V, E, L, K, 0, T, __%sscalar_cmp)\n"
+        "#define __%srscan_by_string_field(b, e, A, V, E, L, K)\\\n"
+        "__%srscan_by_field(b, e, A, V, E, L, K, 0, %sstring_t, __%sstring_cmp)\n"
+        "#define __%srscan_by_string_n_field(b, e, A, V, E, L, K, Kn)\\\n"
+        "__%srscan_by_field(b, e, A, V, E, L, K, Kn, %sstring_t, __%sstring_n_cmp)\n",
+        nsc, nsc, nsc, nsc, nsc,
+        nsc, nsc, nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
         "#define __%sdefine_scan_by_scalar_field(N, NK, TK)\\\n"
         "static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec, TK key)\\\n"
         "__%sscan_by_scalar_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\\\n"
         "static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, TK key)\\\n"
-        "__%sscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\n",
-        nsc, nsc, nsc, nsc);
+        "__%sscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\\\n"
+        "static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec, TK key)\\\n"
+        "__%srscan_by_scalar_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\\\n"
+        "static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, TK key)\\\n"
+        "__%srscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\n",
+        nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_scalar_scan(N, T)\\\n"
         "static inline size_t N ## _vec_scan(N ## _vec_t vec, T key)\\\n"
         "__%sscan_by_scalar_field(0, N ## _vec_len(vec), __%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
         "static inline size_t N ## _vec_scan_ex(N ## _vec_t vec, size_t begin, size_t end, T key)\\\n"
-        "__%sscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), __%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\n",
-        nsc, nsc, nsc, nsc, nsc, nsc);
+        "__%sscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), __%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
+        "static inline size_t N ## _vec_rscan(N ## _vec_t vec, T key)\\\n"
+        "__%srscan_by_scalar_field(0, N ## _vec_len(vec), __%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
+        "static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec, size_t begin, size_t end, T key)\\\n"
+        "__%srscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), __%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\n",
+        nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_scan_by_string_field(N, NK) \\\n"
         "static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec, const char *s)\\\n"
@@ -221,14 +250,26 @@ static void gen_scan(fb_output_t *out)
         "static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s)\\\n"
         "__%sscan_by_string_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\\\n"
         "static inline size_t N ## _vec_scan_ex_n_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\\\n"
-        "__%sscan_by_string_n_field(begin, __%smin( end, N ## _vec_len(vec) ), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\n",
-        nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+        "__%sscan_by_string_n_field(begin, __%smin( end, N ## _vec_len(vec) ), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\\\n"
+        "static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec, const char *s)\\\n"
+        "__%srscan_by_string_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\\\n"
+        "static inline size_t N ## _vec_rscan_n_by_ ## NK(N ## _vec_t vec, const char *s, int n)\\\n"
+        "__%srscan_by_string_n_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\\\n"
+        "static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s)\\\n"
+        "__%srscan_by_string_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\\\n"
+        "static inline size_t N ## _vec_rscan_ex_n_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\\\n"
+        "__%srscan_by_string_n_field(begin, __%smin( end, N ## _vec_len(vec) ), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\n",
+        nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_default_scan_by_scalar_field(N, NK, TK)\\\n"
         "static inline size_t N ## _vec_scan(N ## _vec_t vec, TK key)\\\n"
         "{ return N ## _vec_scan_by_ ## NK(vec, key); }\\\n"
         "static inline size_t N ## _vec_scan_ex(N ## _vec_t vec, size_t begin, size_t end, TK key)\\\n"
-        "{ return N ## _vec_scan_ex_by_ ## NK(vec, begin, end, key); }\n",
+        "{ return N ## _vec_scan_ex_by_ ## NK(vec, begin, end, key); }\\\n"
+        "static inline size_t N ## _vec_rscan(N ## _vec_t vec, TK key)\\\n"
+        "{ return N ## _vec_rscan_by_ ## NK(vec, key); }\\\n"
+        "static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec, size_t begin, size_t end, TK key)\\\n"
+        "{ return N ## _vec_rscan_ex_by_ ## NK(vec, begin, end, key); }\n",
         nsc);
     fprintf(out->fp,
         "#define __%sdefine_default_scan_by_string_field(N, NK) \\\n"
@@ -239,7 +280,15 @@ static void gen_scan(fb_output_t *out)
         "static inline size_t N ## _vec_scan_ex(N ## _vec_t vec, size_t begin, size_t end, const char *s)\\\n"
         "{ return N ## _vec_scan_ex_by_ ## NK(vec, begin, end, s); }\\\n"
         "static inline size_t N ## _vec_scan_ex_n(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\\\n"
-        "{ return N ## _vec_scan_ex_n_by_ ## NK(vec, begin, end, s, n); }\n",
+        "{ return N ## _vec_scan_ex_n_by_ ## NK(vec, begin, end, s, n); }\\\n"
+        "static inline size_t N ## _vec_rscan(N ## _vec_t vec, const char *s)\\\n"
+        "{ return N ## _vec_rscan_by_ ## NK(vec, s); }\\\n"
+        "static inline size_t N ## _vec_rscan_n(N ## _vec_t vec, const char *s, int n)\\\n"
+        "{ return N ## _vec_rscan_n_by_ ## NK(vec, s, n); }\\\n"
+        "static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec, size_t begin, size_t end, const char *s)\\\n"
+        "{ return N ## _vec_rscan_ex_by_ ## NK(vec, begin, end, s); }\\\n"
+        "static inline size_t N ## _vec_rscan_ex_n(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\\\n"
+        "{ return N ## _vec_rscan_ex_n_by_ ## NK(vec, begin, end, s, n); }\n",
         nsc);
 }
 

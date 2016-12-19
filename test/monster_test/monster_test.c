@@ -1169,6 +1169,10 @@ int test_scan_by(flatcc_builder_t *B)
         printf("scan_by did not find the Joker\n");
         goto done;
     }
+    if (1 != ns(Monster_vec_rscan(monsters, "Joker"))) {
+        printf("rscan_by did not find the Joker\n");
+        goto done;
+    }
     if (1 != ns(Monster_vec_scan_n(monsters, "Joker3", 5))) {
         printf("scan_by did not find the Joker with n\n");
         goto done;
@@ -1186,6 +1190,10 @@ int test_scan_by(flatcc_builder_t *B)
         goto done;
     }
     if (2 != ns(Monster_vec_scan_by_name(monsters, "Gulliver"))) {
+        printf("Gulliver not found\n");
+        goto done;
+    }
+    if (4 != ns(Monster_vec_rscan_by_name(monsters, "Gulliver"))) {
         printf("Gulliver not found\n");
         goto done;
     }
