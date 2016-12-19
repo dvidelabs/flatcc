@@ -1109,7 +1109,7 @@ static size_t count_monsters(ns(Monster_vec_t) monsters, const char *name)
 
     for (i = ns(Monster_vec_scan)(monsters, name);
          i != nsc(not_found);
-         i = ns(Monster_vec_scan_from)(monsters, i + 1, name)) {
+         i = ns(Monster_vec_scan_ex)(monsters, i + 1, nsc(end), name)) {
         ++count;
     }
 
@@ -1173,7 +1173,7 @@ int test_scan_by(flatcc_builder_t *B)
         printf("scan_by did not find the Joker with n\n");
         goto done;
     }
-    if (nsc(not_found) != ns(Monster_vec_scan_from(monsters, 2, "Joker"))) {
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, 2, nsc(end), "Joker"))) {
         printf("scan_from found Joker past first occurence\n");
         goto done;
     }
@@ -1189,32 +1189,32 @@ int test_scan_by(flatcc_builder_t *B)
         printf("Gulliver not found\n");
         goto done;
     }
-    if (2 != ns(Monster_vec_scan_from_by_name(monsters, 2, "Gulliver"))) {
+    if (2 != ns(Monster_vec_scan_ex_by_name(monsters, 2, nsc(end), "Gulliver"))) {
         printf("Gulliver not found starting from Gulliver\n");
         goto done;
     }
-    if (4 != ns(Monster_vec_scan_from_by_name(monsters, 3, "Gulliver"))) {
+    if (4 != ns(Monster_vec_scan_ex_by_name(monsters, 3, nsc(end), "Gulliver"))) {
         printf("Another Gulliver not found\n");
         goto done;
     }
 
-    if (nsc(not_found) != ns(Monster_vec_scan_range(monsters, 1, 3, "Jingle"))) {
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, 1, 3, "Jingle"))) {
         printf("not found in subrange not working\n");
         goto done;
     }
-    if (nsc(not_found) != ns(Monster_vec_scan_range(monsters, 1, 3, "TwoFace"))) {
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, 1, 3, "TwoFace"))) {
         printf("subrange doesn't limit low bound\n");
         goto done;
     }
-    if (1 != ns(Monster_vec_scan_range(monsters, 1, 3, "Joker"))) {
+    if (1 != ns(Monster_vec_scan_ex(monsters, 1, 3, "Joker"))) {
         printf("scan in subrange did not find Joker\n");
         goto done;
     }
-    if (2 != ns(Monster_vec_scan_range_by_name(monsters, 1, 3, "Gulliver"))) {
+    if (2 != ns(Monster_vec_scan_ex_by_name(monsters, 1, 3, "Gulliver"))) {
         printf("scan in subrange did not find Gulliver\n");
         goto done;
     }
-    if (nsc(not_found) != ns(Monster_vec_scan_range_by_name(monsters, 1, 3, "Alice"))) {
+    if (nsc(not_found) != ns(Monster_vec_scan_ex_by_name(monsters, 1, 3, "Alice"))) {
         printf("subrange doesn't limit upper bound\n");
         goto done;
     }
@@ -1245,7 +1245,7 @@ int test_scan_by(flatcc_builder_t *B)
         printf("scan not working on middle item of inventory\n");
         goto done;
     }
-    if (nsc(not_found) != (pos = nsc(uint8_vec_scan_from(inv, 3, 1)))) {
+    if (nsc(not_found) != (pos = nsc(uint8_vec_scan_ex(inv, 3, nsc(end), 1)))) {
         printf("scan_from(item+1) not working on middle item of inventory\n");
         goto done;
     }
@@ -1261,11 +1261,11 @@ int test_scan_by(flatcc_builder_t *B)
         printf("scan not working for repeating item of inventory\n");
         goto done;
     }
-    if (3 != (pos = nsc(uint8_vec_scan_from(inv, 3, 3)))) {
+    if (3 != (pos = nsc(uint8_vec_scan_ex(inv, 3, nsc(end), 3)))) {
         printf("scan_from(item) not working for repeating item of inventory\n");
         goto done;
     }
-    if (5 != (pos = nsc(uint8_vec_scan_from(inv, 4, 3)))) {
+    if (5 != (pos = nsc(uint8_vec_scan_ex(inv, 4, nsc(end), 3)))) {
         printf("scan_from(item+1) not working for repeating item of inventory\n");
         goto done;
     }
