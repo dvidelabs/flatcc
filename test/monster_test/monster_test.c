@@ -5,6 +5,7 @@
 
 #include "flatcc/support/hexdump.h"
 #include "flatcc/support/elapsed.h"
+#include "../../config/config.h"
 
 /*
  * Convenience macro to deal with long namespace names,
@@ -1116,12 +1117,13 @@ static size_t count_monsters(ns(Monster_vec_t) monsters, const char *name)
     return count;
 }
 
-int test_scan_by(flatcc_builder_t *B)
+int test_scan(flatcc_builder_t *B)
 {
     size_t pos;
     ns(Monster_table_t) mon;
     ns(Monster_vec_t) monsters;
     nsc(uint8_vec_t) inv;
+    nsc(string_vec_t) strings;
     void *buffer;
     size_t size;
     uint8_t invdata[] = { 6, 7, 1, 3, 4, 3, 2 };
@@ -1131,6 +1133,9 @@ int test_scan_by(flatcc_builder_t *B)
     ns(Monster_start_as_root(B));
     ns(Monster_name_create_str(B, "MyMonster"));
     ns(Monster_inventory_create(B, invdata, c_vec_len(invdata)));
+
+    ns(Monster_testarrayofstring_start(B));
+    ns(Monster_testarrayofstring_end(B));
 
     ns(Monster_testarrayoftables_start(B));
 
@@ -1164,6 +1169,8 @@ int test_scan_by(flatcc_builder_t *B)
     assert(monsters);
     inv = ns(Monster_inventory(mon));
     assert(inv);
+    strings = ns(Monster_testarrayofstring(mon));
+    assert(strings);
 
     if (1 != ns(Monster_vec_scan(monsters, "Joker"))) {
         printf("scan_by did not find the Joker\n");
@@ -1174,6 +1181,10 @@ int test_scan_by(flatcc_builder_t *B)
         goto done;
     }
     if (1 != ns(Monster_vec_scan_n(monsters, "Joker3", 5))) {
+        printf("scan_by did not find the Joker with n\n");
+        goto done;
+    }
+    if (1 != ns(Monster_vec_rscan_n(monsters, "Joker3", 5))) {
         printf("scan_by did not find the Joker with n\n");
         goto done;
     }
@@ -1197,7 +1208,19 @@ int test_scan_by(flatcc_builder_t *B)
         printf("Gulliver not found\n");
         goto done;
     }
+    if (4 != ns(Monster_vec_rscan_n_by_name(monsters, "Gulliver42", 8))) {
+        printf("Gulliver not found with n\n");
+        goto done;
+    }
+    if (2 != ns(Monster_vec_rscan_ex_n_by_name(monsters, 1, 3, "Gulliver42", 8))) {
+        printf("Gulliver not found with n\n");
+        goto done;
+    }
     if (2 != ns(Monster_vec_scan_ex_by_name(monsters, 2, nsc(end), "Gulliver"))) {
+        printf("Gulliver not found starting from Gulliver\n");
+        goto done;
+    }
+    if (2 != ns(Monster_vec_scan_ex_n_by_name(monsters, 2, nsc(end), "Gulliver42", 8))) {
         printf("Gulliver not found starting from Gulliver\n");
         goto done;
     }
@@ -1223,10 +1246,64 @@ int test_scan_by(flatcc_builder_t *B)
         goto done;
     }
     if (nsc(not_found) != ns(Monster_vec_scan_ex_by_name(monsters, 1, 3, "Alice"))) {
-        printf("subrange doesn't limit upper bound\n");
+        printf("subrange doesn't limit upper bound in scan\n");
         goto done;
     }
 
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex(monsters, 1, 3, "Jingle"))) {
+        printf("not found in subrange not working with rscan\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex(monsters, 1, 3, "TwoFace"))) {
+        printf("subrange doesn't limit lower bound in rscan\n");
+        goto done;
+    }
+    if (1 != ns(Monster_vec_rscan_ex(monsters, 1, 3, "Joker"))) {
+        printf("rscan in subrange did not find Joker\n");
+        goto done;
+    }
+    if (2 != ns(Monster_vec_rscan_ex_by_name(monsters, 1, 3, "Gulliver"))) {
+        printf("rscan in subrange did not find Gulliver\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex_by_name(monsters, 1, 3, "Alice"))) {
+        printf("subrange doesn't limit upper bound in rscan\n");
+        goto done;
+    }
+
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, 0, 0, "TwoFace"))) {
+        printf("TwoFace is found in empty range\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, 0, 0, "Joker"))) {
+        printf("Joker is found in empty range\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, 1, 1, "Joker"))) {
+        printf("Joker is found in another empty range\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, ns(Monster_vec_len(monsters)), nsc(end), "TwoFace"))) {
+        printf("TwoFace is found in empty range in the end\n");
+        goto done;
+    }
+
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex(monsters, 0, 0, "TwoFace"))) {
+        printf("TwoFace is found in empty range\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex(monsters, 0, 0, "Joker"))) {
+        printf("Joker is found in empty range\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex(monsters, 1, 1, "Joker"))) {
+        printf("Joker is found in another empty range\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex(monsters, ns(Monster_vec_len(monsters)), nsc(end), "TwoFace"))) {
+        printf("TwoFace is found in empty range in the end\n");
+        goto done;
+    }
 
     if (1 != count_monsters(monsters, "Joker")) {
         printf("number of Jokers is not 1\n");
@@ -1245,6 +1322,7 @@ int test_scan_by(flatcc_builder_t *B)
         goto done;
     }
 
+
     if (0 != (pos = nsc(uint8_vec_scan(inv, 6)))) {
         printf("scan not working on first item of inventory\n");
         goto done;
@@ -1254,7 +1332,7 @@ int test_scan_by(flatcc_builder_t *B)
         goto done;
     }
     if (nsc(not_found) != (pos = nsc(uint8_vec_scan_ex(inv, 3, nsc(end), 1)))) {
-        printf("scan_from(item+1) not working on middle item of inventory\n");
+        printf("scan_ex(item+1) not working on middle item of inventory\n");
         goto done;
     }
     if (nsc(not_found) != (pos = nsc(uint8_vec_scan(inv, 5)))) {
@@ -1270,13 +1348,39 @@ int test_scan_by(flatcc_builder_t *B)
         goto done;
     }
     if (3 != (pos = nsc(uint8_vec_scan_ex(inv, 3, nsc(end), 3)))) {
-        printf("scan_from(item) not working for repeating item of inventory\n");
+        printf("scan_ex(item) not working for repeating item of inventory\n");
         goto done;
     }
     if (5 != (pos = nsc(uint8_vec_scan_ex(inv, 4, nsc(end), 3)))) {
-        printf("scan_from(item+1) not working for repeating item of inventory\n");
+        printf("scan_ex(item+1) not working for repeating item of inventory\n");
         goto done;
     }
+    if (5 != (pos = nsc(uint8_vec_rscan(inv, 3)))) {
+        printf("rscan not working for repeating item of inventory\n");
+        goto done;
+    }
+    if (3 != (pos = nsc(uint8_vec_rscan_ex(inv, 1, 4, 3)))) {
+        printf("rscan_ex not working for repeating item of inventory\n");
+        goto done;
+    }
+
+    /* Test that all scan functions are generated for string arrays */
+    nsc(string_vec_scan(strings, "Hello"));
+    nsc(string_vec_scan_ex(strings, 0, nsc(end), "Hello"));
+    nsc(string_vec_scan_n(strings, "Hello", 4));
+    nsc(string_vec_scan_ex_n(strings, 0, nsc(end), "Hello", 4));
+    nsc(string_vec_rscan(strings, "Hello"));
+    nsc(string_vec_rscan_ex(strings, 0, nsc(end), "Hello"));
+    nsc(string_vec_rscan_n(strings, "Hello", 4));
+    nsc(string_vec_rscan_ex_n(strings, 0, nsc(end), "Hello", 4));
+
+#if FLATCC_ALLOW_SCAN_FOR_ALL_FIELDS
+    /* Check for presence of scan for non-key fields */
+    ns(Monster_vec_scan_by_hp(monsters, 13));
+    ns(Monster_vec_scan_ex_by_hp(monsters, 1, nsc(end), 42));
+    ns(Monster_vec_rscan_by_hp(monsters, 1));
+    ns(Monster_vec_rscan_ex_by_hp(monsters, 0, 2, 42));
+#endif
 
     ret = 0;
 
@@ -1964,7 +2068,7 @@ int main(int argc, char *argv[])
     }
 #endif
 #if 1
-    if (test_scan_by(B)) {
+    if (test_scan(B)) {
         printf("TEST FAILED\n");
         return -1;
     }

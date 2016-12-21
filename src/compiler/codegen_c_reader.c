@@ -513,10 +513,20 @@ static void gen_helpers(fb_output_t *out)
             "static inline size_t %sstring_vec_scan_ex(%sstring_vec_t vec, size_t begin, size_t end, const char *s)\n"
             "__%sscan_by_string_field(begin, __%smin(end, %sstring_vec_len(vec)), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s)\n"
             "static inline size_t %sstring_vec_scan_ex_n(%sstring_vec_t vec, size_t begin, size_t end, const char *s, size_t n)\n"
-            "__%sscan_by_string_n_field(begin, __%smin(end, %sstring_vec_len(vec)), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s, n)\n",
+            "__%sscan_by_string_n_field(begin, __%smin(end, %sstring_vec_len(vec)), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s, n)\n"
+            "static inline size_t %sstring_vec_rscan(%sstring_vec_t vec, const char *s)\n"
+            "__%srscan_by_string_field(0, %sstring_vec_len(vec), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s)\n"
+            "static inline size_t %sstring_vec_rscan_n(%sstring_vec_t vec, const char *s, size_t n)\n"
+            "__%srscan_by_string_n_field(0, %sstring_vec_len(vec), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s, n)\n"
+            "static inline size_t %sstring_vec_rscan_ex(%sstring_vec_t vec, size_t begin, size_t end, const char *s)\n"
+            "__%srscan_by_string_field(begin, __%smin(end, %sstring_vec_len(vec)), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s)\n"
+            "static inline size_t %sstring_vec_rscan_ex_n(%sstring_vec_t vec, size_t begin, size_t end, const char *s, size_t n)\n"
+            "__%srscan_by_string_n_field(begin, __%smin(end, %sstring_vec_len(vec)), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s, n)\n",
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
-            nsc, nsc);
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
+            nsc, nsc, nsc, nsc);
     if (out->opts->cgen_sort) {
         fprintf(out->fp, "__%sdefine_string_sort()\n", nsc);
     }
