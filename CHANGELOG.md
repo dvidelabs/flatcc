@@ -9,6 +9,7 @@
 - Fix #30, avoid crash on certain table parser error cases.
 - Add support for scan similar to find in reader API, but for O(N)
   unsorted search, or search by a secondary key.
+- Add unaligned write to punaligned for completeness.
 
 - Ongoing: enable scan on all table and struct fields, not just keyed
   fields.
