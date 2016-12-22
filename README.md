@@ -1219,12 +1219,12 @@ linear search that does not require the vector to be sorted. This is
 especially useful for searching by a secondary key (multiple keys is a
 non-standard flatcc feature). `_scan_ex` searches a sub-range [a, b)
 where b is an exclusive index. `b = flatbuffers_end == flatbuffers_not_found
-== (size_t)-1` may be used when searching from a position to the end or
-to a previously searched position.
+== (size_t)-1` may be used when searching from a position to the end,
+and `b` can also conveniently be the result of a previous search.
 
 `rscan` searches in the opposite direction starting from the last
 element. `rscan_ex` accepts the same range arguments as `scan_ex`. If
-`a >= b or a > len` the range is considered empty and
+`a >= b or a >= len` the range is considered empty and
 `flatbuffers_not_found` is returned. `[r]scan[_ex]_n[_by_name]` is for
 length terminated string keys. See `monster_test.c` for examples.
 
