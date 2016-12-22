@@ -33,6 +33,7 @@ struct flatcc_options {
     int allow_enum_key;
     int allow_enum_struct_field;
     int allow_multiple_key_fields;
+    int allow_scan_for_all_fields;
     int allow_string_key;
     int allow_struct_field_deprecate;
     int allow_struct_field_key;
