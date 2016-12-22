@@ -59,13 +59,13 @@
 #define unaligned_write_32(p, v) (*(uint32_t*)(p) = (uint32_t)(v))
 #define unaligned_write_64(p, v) (*(uint64_t*)(p) = (uint64_t)(v))
 
-#define unaligned_write_htole16(p, v) (*(uint64_t*)(p) = le16toh(v))
-#define unaligned_write_hotle32(p, v) (*(uint64_t*)(p) = le32toh(v))
-#define unaligned_write_htole64(p, v) (*(uint64_t*)(p) = le64toh(v))
+#define unaligned_write_htole16(p, v) (*(uint16_t*)(p) = htole16(v))
+#define unaligned_write_htole32(p, v) (*(uint32_t*)(p) = htole32(v))
+#define unaligned_write_htole64(p, v) (*(uint64_t*)(p) = htole64(v))
 
-#define unaligned_write_htobe16(p, v) (*(uint64_t*)(p) = be16toh(v))
-#define unaligned_write_htobe32(p, v) (*(uint64_t*)(p) = be32toh(v))
-#define unaligned_write_htobe64(p, v) (*(uint64_t*)(p) = be64toh(v))
+#define unaligned_write_htobe16(p, v) (*(uint16_t*)(p) = htobe16(v))
+#define unaligned_write_htobe32(p, v) (*(uint32_t*)(p) = htobe32(v))
+#define unaligned_write_htobe64(p, v) (*(uint64_t*)(p) = htobe64(v))
 
 #else
 
