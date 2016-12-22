@@ -3,6 +3,15 @@
 ## [0.4.1-pre]
 - Test for `posix_memalign` on GCC platforms and fix fallback
   `aligned_alloc`.
+- Fix JSON parser handling of empty objects and tables.
+- Fix JSON parser #17 - some fields would not be accepted as valid.
+- Fix #21, rare uncompilable doc comment in schema.
+- Fix #30, avoid crash on certain table parser error cases.
+- Add support for scan similar to find in reader API, but for O(N)
+  unsorted search, or search by a secondary key, and in sub-ranges.
+- Optionally, and by default, allow scan by any field (#29), not just keys.
+- Add unaligned write to punaligned for completeness.
+
 
 ## [0.4.0]
 - Fix Windows detection in flatcc/support/elapsed.h used by benchmark.

@@ -455,6 +455,7 @@ repeat_nested:
                 (uint64_t)FLATBUFFERS_COUNT_MAX(member->size));
         }
         println(out, "buf = flatcc_json_parser_array_start(ctx, buf, end, &more);");
+        /* Note that we reuse `more` which is safe because it is updated at the end of the main loop. */
         println(out, "while (more) {"); indent();
     }
     if (is_scalar) {
@@ -497,7 +498,7 @@ repeat_nested:
         unindent(); println(out, "}");
         if (!is_struct_container && !is_vector) {
 #if !FLATCC_JSON_PARSE_FORCE_DEFAULTS
-            /* We need create check for default value and create table field if not default. */
+            /* We need to create a check for the default value and create a table field if not the default. */
             switch(member->value.type) {
             case vt_bool:
             case vt_uint:
@@ -562,6 +563,7 @@ repeat_nested:
         println(out, "buf = flatcc_json_parser_string_end(ctx, buf, end);");
     } else if (is_table) {
         println(out, "buf = %s_parse_json_table(ctx, buf, end);", snref.text);
+        println(out, "if (buf == end) goto failed;");
         println(out, "ref = flatcc_builder_end_table(ctx->ctx);");
     } else if (is_union) {
         println(out, "buf = flatcc_json_parser_union(ctx, buf, end, %"PRIu64", %"PRIu64", %s_parse_json_union);",
@@ -894,7 +896,6 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
                 gen_prefix_trie(out, trie, a, b, pos);
                 return;
             }
-            get_dict_tag(&trie->dict[x], pos, &tag, &mask, &name, &len);
             /*
              * Test for special case where prefix [pos..pos+8) is also a
              * key. We cannot branch on any tag and need a decision on
@@ -910,6 +911,7 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
                     has_prefix_key = 1;
                 }
             }
+            get_dict_tag(&trie->dict[x], pos, &tag, &mask, &name, &len);
             /* `x` is now the smallest key that has a suffix at pos + 8.
              * 'x - 1` may be a prefix key of [x..b]. */
             println(out, "if (w == 0x%"PRIx64") { /* prefix \"%.*s\" */",
@@ -1101,9 +1103,8 @@ static int gen_global_scope_parser(fb_output_t *out)
     println(out, "{"); indent();
     if (n == 0) {
         println(out, "/* Global scope has no enum / union types to look up. */");
-        println(out, "*more = 0;");
         println(out, "return buf; /* unmatched; */");
-        println(out, "");
+        unindent(); println(out, "}");
     } else {
         println(out, "const char *unmatched = buf;");
         println(out, "const char *mark;");

@@ -1114,7 +1114,9 @@ runtime library with flatbuffers encoded in big endian format regardless
 of the host platforms endianness. Longer term this should probably be
 placed in a separate library with separate name prefixes or suffixes,
 but it is usable as is. Redefine `FLATBUFFERS_PROTOCOL_IS_LE/BE`
-accordingly in `include/flatcc/flatcc_types.h`.
+accordingly in `include/flatcc/flatcc_types.h`. This is already done in
+the `be` branch. This branch is not maintained but the master branch can
+be merged into it as needed.
 
 Note that standard flatbuffers are always encoded in little endian but
 in situations where all buffer producers and consumers are big endian,
@@ -1191,7 +1193,7 @@ correctly.  By not checking error codes, this logic also optimizes out
 for better performance.
 
 
-## Sorting and Finding
+## Searching and Sorting
 
 The builder API does not support sorting due to the complexity of
 customizable emitters, but the reader API does support sorting so a
@@ -1203,12 +1205,34 @@ external memory or recursion. Due to the lack of external memory, the
 sort is not stable. The corresponding find operation returns the lowest
 index of any matching key, or `flatbuffers_not_found`.
 
-When configured in `config.h`, the `flatcc` compiler allows multiple
-keyed fields unlike Googles `flatc` compiler. This works transparently
-by providing `<table_name>_vec_sort_by_<field_name>` and
-`<table_name>_vec_find_by_<field_name>` methods for all keyed fields. The
-first field maps to `<table_name>_vec_sort` and `<table_name>_vec_find`.
-Obviously the chosen find method must match the chosen sort method.
+When configured in `config.h` (the default), the `flatcc` compiler
+allows multiple keyed fields unlike Googles `flatc` compiler. This works
+transparently by providing `<table_name>_vec_sort_by_<field_name>` and
+`<table_name>_vec_find_by_<field_name>` methods for all keyed fields.
+The first field maps to `<table_name>_vec_sort` and
+`<table_name>_vec_find`. Obviously the chosen find method must match
+the chosen sort method. The find operation is O(logN).
+
+As of v0.4.1 `<table_name>_vec_scan_by_<field_name>` and the default
+`<table_name>_vec_scan` are also provided, similar to `find`, but as a
+linear search that does not require the vector to be sorted. This is
+especially useful for searching by a secondary key (multiple keys is a
+non-standard flatcc feature). `_scan_ex` searches a sub-range [a, b)
+where b is an exclusive index. `b = flatbuffers_end == flatbuffers_not_found
+== (size_t)-1` may be used when searching from a position to the end,
+and `b` can also conveniently be the result of a previous search.
+
+`rscan` searches in the opposite direction starting from the last
+element. `rscan_ex` accepts the same range arguments as `scan_ex`. If
+`a >= b or a >= len` the range is considered empty and
+`flatbuffers_not_found` is returned. `[r]scan[_ex]_n[_by_name]` is for
+length terminated string keys. See `monster_test.c` for examples.
+
+Note that `find` requires `key` attribute in the schema. `scan` is also
+available on keyed fields. By default `flatcc` will also enable scan by
+any other field but this can be disabled by a compile time flag.
+
+Basic types such as `uint8_vec` also have search operations.
 
 See also `doc/builder.md` and `test/monster_test/monster_test.c`.
 

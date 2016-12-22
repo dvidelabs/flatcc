@@ -33,6 +33,11 @@ option(FLATCC_INSTALL "enable build of runtime library only" OFF)
 # experience issues, and this option can then help.
 option(FLATCC_TEST "enable tests" ON)
 
+# Use with debug build with testing enabled only. Enables generation
+# of coverage information during build and run. Adds target "coverage"
+# which collects data and makes HTML report in build directory
+option(FLATCC_COVERAGE "enable coverage" OFF)
+
 # Affects the flatbuffer verify operation. Normally a verify should just
 # quickly reject invalid buffers but for troubleshooting, assertions can
 # enabled. This requires rebuilding the runtime library and will likely
@@ -82,6 +87,18 @@ endif()
 
 if (FLATCC_TEST)
     enable_testing()
+endif()
+
+if (NOT FLATCC_TEST)
+    set(FLATCC_COVERAGE off)
+endif()
+
+if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
+    set(FLATCC_COVERAGE off)
+endif()
+
+if (FLATCC_COVERAGE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -DNDEBUG")
 endif()
 
 if (FLATCC_DEBUG_VERIFY)
@@ -226,6 +243,12 @@ endif()
 if (FLATCC_TEST)
     add_subdirectory(test)
     add_subdirectory(samples)
+endif()
+
+if (FLATCC_COVERAGE)
+    add_custom_target(coverage
+        COMMAND lcov --capture --directory src --output-file coverage.info
+        COMMAND genhtml coverage.info --output-directory coverage)
 endif()
 
 set_target_properties(${dist_targets}

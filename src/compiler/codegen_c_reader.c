@@ -67,6 +67,7 @@ static void gen_find(fb_output_t *out)
 
     /*
      * E: Element accessor (elem = E(vector, index)).
+     * L: Length accessor (length = L(vector)).
      * A: Field accessor (or the identity function), result must match the diff function D's first arg.
      * V: The vector to search (assuming sorted).
      * T: The scalar, enum or string key type, (either the element, or a field of the element).
@@ -79,8 +80,10 @@ static void gen_find(fb_output_t *out)
     fprintf(out->fp,
         "#include <string.h>\n"
         "static size_t %snot_found = (size_t)-1;\n"
-        "#define __%sidentity(n) (n)\n",
-        nsc, nsc);
+        "static size_t %send = (size_t)-1;\n"
+        "#define __%sidentity(n) (n)\n"
+        "#define __%smin(a, b) ((a) < (b) ? (a) : (b))\n",
+        nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "/* Subtraction doesn't work for unsigned types. */\n"
         "#define __%sscalar_cmp(x, y, n) ((x) < (y) ? -1 : (x) > (y))\n"
@@ -92,7 +95,7 @@ static void gen_find(fb_output_t *out)
         nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "/* A = identity if searching scalar vectors rather than key fields. */\n"
-        "/* Returns lowest matching index not_found. */\n"
+        "/* Returns lowest matching index or not_found. */\n"
         "#define __%sfind_by_field(A, V, E, L, K, Kn, T, D)\\\n"
         "{ T v; size_t a = 0, b, m; if (!(b = L(V))) { return %snot_found; }\\\n"
         "  --b;\\\n"
@@ -133,6 +136,160 @@ static void gen_find(fb_output_t *out)
         "static inline size_t N ## _vec_find(N ## _vec_t vec, T key)\\\n"
         "__%sfind_by_scalar_field(__%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\n",
         nsc, nsc, nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_find_by_string_field(N, NK) \\\n"
+        "/* Note: find only works on vectors sorted by this field. */\\\n"
+        "static inline size_t N ## _vec_find_by_ ## NK(N ## _vec_t vec, const char *s)\\\n"
+        "__%sfind_by_string_field(N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\\\n"
+        "static inline size_t N ## _vec_find_n_by_ ## NK(N ## _vec_t vec, const char *s, int n)\\\n"
+        "__%sfind_by_string_n_field(N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\n",
+        nsc, nsc, nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_default_find_by_scalar_field(N, NK, TK)\\\n"
+        "static inline size_t N ## _vec_find(N ## _vec_t vec, TK key)\\\n"
+        "{ return N ## _vec_find_by_ ## NK(vec, key); }\n",
+        nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_default_find_by_string_field(N, NK) \\\n"
+        "static inline size_t N ## _vec_find(N ## _vec_t vec, const char *s)\\\n"
+        "{ return N ## _vec_find_by_ ## NK(vec, s); }\\\n"
+        "static inline size_t N ## _vec_find_n(N ## _vec_t vec, const char *s, int n)\\\n"
+        "{ return N ## _vec_find_n_by_ ## NK(vec, s, n); }\n",
+        nsc);
+}
+
+/* Linearly finds first occurrence of matching key, doesn't require vector to be sorted. */
+static void gen_scan(fb_output_t *out)
+{
+    const char *nsc = out->nsc;
+
+    /*
+     * E: Element accessor (elem = E(vector, index)).
+     * L: Length accessor (length = L(vector)).
+     * A: Field accessor (or the identity function), result must match the diff function D's first arg.
+     * V: The vector to search (assuming sorted).
+     * T: The scalar, enum or string key type, (either the element, or a field of the element).
+     * K: The search key.
+     * Kn: optional key length so external strings do not have to be zero terminated.
+     * D: the diff function D(v, K, Kn) :: v - <K, Kn>
+     *
+     * returns index (0..len - 1), or not_found (-1).
+     */
+    fprintf(out->fp,
+        "/* A = identity if searching scalar vectors rather than key fields. */\n"
+        "/* Returns lowest matching index or not_found. */\n"
+        "#define __%sscan_by_field(b, e, A, V, E, L, K, Kn, T, D)\\\n"
+        "{ T v; size_t i;\\\n"
+        "  for (i = b; i < e; ++i) {\\\n"
+        "    v = A(E(V, i));\\\n"
+        "    if (D(v, (K), (Kn)) == 0) {\\\n"
+        "       return i;\\\n"
+        "    }\\\n"
+        "  }\\\n"
+        "  return %snot_found;\\\n"
+        "}\n",
+        nsc, nsc);
+    fprintf(out->fp,
+        "#define __%srscan_by_field(b, e, A, V, E, L, K, Kn, T, D)\\\n"
+        "{ T v; size_t i = e;\\\n"
+        "  while (i-- > b) {\\\n"
+        "    v = A(E(V, i));\\\n"
+        "    if (D(v, (K), (Kn)) == 0) {\\\n"
+        "       return i;\\\n"
+        "    }\\\n"
+        "  }\\\n"
+        "  return %snot_found;\\\n"
+        "}\n",
+        nsc, nsc);
+    fprintf(out->fp,
+        "#define __%sscan_by_scalar_field(b, e, A, V, E, L, K, T)\\\n"
+        "__%sscan_by_field(b, e, A, V, E, L, K, 0, T, __%sscalar_cmp)\n"
+        "#define __%sscan_by_string_field(b, e, A, V, E, L, K)\\\n"
+        "__%sscan_by_field(b, e, A, V, E, L, K, 0, %sstring_t, __%sstring_cmp)\n"
+        "#define __%sscan_by_string_n_field(b, e, A, V, E, L, K, Kn)\\\n"
+        "__%sscan_by_field(b, e, A, V, E, L, K, Kn, %sstring_t, __%sstring_n_cmp)\n",
+        nsc, nsc, nsc, nsc, nsc,
+        nsc, nsc, nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+        "#define __%srscan_by_scalar_field(b, e, A, V, E, L, K, T)\\\n"
+        "__%srscan_by_field(b, e, A, V, E, L, K, 0, T, __%sscalar_cmp)\n"
+        "#define __%srscan_by_string_field(b, e, A, V, E, L, K)\\\n"
+        "__%srscan_by_field(b, e, A, V, E, L, K, 0, %sstring_t, __%sstring_cmp)\n"
+        "#define __%srscan_by_string_n_field(b, e, A, V, E, L, K, Kn)\\\n"
+        "__%srscan_by_field(b, e, A, V, E, L, K, Kn, %sstring_t, __%sstring_n_cmp)\n",
+        nsc, nsc, nsc, nsc, nsc,
+        nsc, nsc, nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_scan_by_scalar_field(N, NK, TK)\\\n"
+        "static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec, TK key)\\\n"
+        "__%sscan_by_scalar_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\\\n"
+        "static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, TK key)\\\n"
+        "__%sscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\\\n"
+        "static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec, TK key)\\\n"
+        "__%srscan_by_scalar_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\\\n"
+        "static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, TK key)\\\n"
+        "__%srscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\n",
+        nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_scalar_scan(N, T)\\\n"
+        "static inline size_t N ## _vec_scan(N ## _vec_t vec, T key)\\\n"
+        "__%sscan_by_scalar_field(0, N ## _vec_len(vec), __%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
+        "static inline size_t N ## _vec_scan_ex(N ## _vec_t vec, size_t begin, size_t end, T key)\\\n"
+        "__%sscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), __%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
+        "static inline size_t N ## _vec_rscan(N ## _vec_t vec, T key)\\\n"
+        "__%srscan_by_scalar_field(0, N ## _vec_len(vec), __%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
+        "static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec, size_t begin, size_t end, T key)\\\n"
+        "__%srscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), __%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\n",
+        nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_scan_by_string_field(N, NK) \\\n"
+        "static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec, const char *s)\\\n"
+        "__%sscan_by_string_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\\\n"
+        "static inline size_t N ## _vec_scan_n_by_ ## NK(N ## _vec_t vec, const char *s, int n)\\\n"
+        "__%sscan_by_string_n_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\\\n"
+        "static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s)\\\n"
+        "__%sscan_by_string_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\\\n"
+        "static inline size_t N ## _vec_scan_ex_n_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\\\n"
+        "__%sscan_by_string_n_field(begin, __%smin( end, N ## _vec_len(vec) ), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\\\n"
+        "static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec, const char *s)\\\n"
+        "__%srscan_by_string_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\\\n"
+        "static inline size_t N ## _vec_rscan_n_by_ ## NK(N ## _vec_t vec, const char *s, int n)\\\n"
+        "__%srscan_by_string_n_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\\\n"
+        "static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s)\\\n"
+        "__%srscan_by_string_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\\\n"
+        "static inline size_t N ## _vec_rscan_ex_n_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\\\n"
+        "__%srscan_by_string_n_field(begin, __%smin( end, N ## _vec_len(vec) ), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\n",
+        nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_default_scan_by_scalar_field(N, NK, TK)\\\n"
+        "static inline size_t N ## _vec_scan(N ## _vec_t vec, TK key)\\\n"
+        "{ return N ## _vec_scan_by_ ## NK(vec, key); }\\\n"
+        "static inline size_t N ## _vec_scan_ex(N ## _vec_t vec, size_t begin, size_t end, TK key)\\\n"
+        "{ return N ## _vec_scan_ex_by_ ## NK(vec, begin, end, key); }\\\n"
+        "static inline size_t N ## _vec_rscan(N ## _vec_t vec, TK key)\\\n"
+        "{ return N ## _vec_rscan_by_ ## NK(vec, key); }\\\n"
+        "static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec, size_t begin, size_t end, TK key)\\\n"
+        "{ return N ## _vec_rscan_ex_by_ ## NK(vec, begin, end, key); }\n",
+        nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_default_scan_by_string_field(N, NK) \\\n"
+        "static inline size_t N ## _vec_scan(N ## _vec_t vec, const char *s)\\\n"
+        "{ return N ## _vec_scan_by_ ## NK(vec, s); }\\\n"
+        "static inline size_t N ## _vec_scan_n(N ## _vec_t vec, const char *s, int n)\\\n"
+        "{ return N ## _vec_scan_n_by_ ## NK(vec, s, n); }\\\n"
+        "static inline size_t N ## _vec_scan_ex(N ## _vec_t vec, size_t begin, size_t end, const char *s)\\\n"
+        "{ return N ## _vec_scan_ex_by_ ## NK(vec, begin, end, s); }\\\n"
+        "static inline size_t N ## _vec_scan_ex_n(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\\\n"
+        "{ return N ## _vec_scan_ex_n_by_ ## NK(vec, begin, end, s, n); }\\\n"
+        "static inline size_t N ## _vec_rscan(N ## _vec_t vec, const char *s)\\\n"
+        "{ return N ## _vec_rscan_by_ ## NK(vec, s); }\\\n"
+        "static inline size_t N ## _vec_rscan_n(N ## _vec_t vec, const char *s, int n)\\\n"
+        "{ return N ## _vec_rscan_n_by_ ## NK(vec, s, n); }\\\n"
+        "static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec, size_t begin, size_t end, const char *s)\\\n"
+        "{ return N ## _vec_rscan_ex_by_ ## NK(vec, begin, end, s); }\\\n"
+        "static inline size_t N ## _vec_rscan_ex_n(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\\\n"
+        "{ return N ## _vec_rscan_ex_n_by_ ## NK(vec, begin, end, s, n); }\n",
+        nsc);
 }
 
 static void gen_helpers(fb_output_t *out)
@@ -303,6 +460,7 @@ static void gen_helpers(fb_output_t *out)
             "typedef const void *%sgeneric_table_t;\n",
             nsc);
     gen_find(out);
+    gen_scan(out);
     if (out->opts->cgen_sort) {
         gen_sort(out);
     } else {
@@ -314,8 +472,9 @@ static void gen_helpers(fb_output_t *out)
             "typedef T *N ## _mutable_vec_t;\\\n"
             "__%sdefine_scalar_vec_len(N)\\\n"
             "__%sdefine_scalar_vec_at(N, T)\\\n"
-            "__%sdefine_scalar_find(N, T)\\\n",
-            nsc, nsc, nsc, nsc);
+            "__%sdefine_scalar_find(N, T)\\\n"
+            "__%sdefine_scalar_scan(N, T)\\\n",
+            nsc, nsc, nsc, nsc, nsc);
     if (out->opts->cgen_sort) {
         fprintf(out->fp, "\\\n__%sdefine_scalar_sort(N, T)\n", nsc);
     }
@@ -346,6 +505,28 @@ static void gen_helpers(fb_output_t *out)
             "static inline size_t %sstring_vec_find_n(%sstring_vec_t vec, const char *s, size_t n)\n"
             "__%sfind_by_string_n_field(__%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s, n)\n",
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+            "static inline size_t %sstring_vec_scan(%sstring_vec_t vec, const char *s)\n"
+            "__%sscan_by_string_field(0, %sstring_vec_len(vec), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s)\n"
+            "static inline size_t %sstring_vec_scan_n(%sstring_vec_t vec, const char *s, size_t n)\n"
+            "__%sscan_by_string_n_field(0, %sstring_vec_len(vec), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s, n)\n"
+            "static inline size_t %sstring_vec_scan_ex(%sstring_vec_t vec, size_t begin, size_t end, const char *s)\n"
+            "__%sscan_by_string_field(begin, __%smin(end, %sstring_vec_len(vec)), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s)\n"
+            "static inline size_t %sstring_vec_scan_ex_n(%sstring_vec_t vec, size_t begin, size_t end, const char *s, size_t n)\n"
+            "__%sscan_by_string_n_field(begin, __%smin(end, %sstring_vec_len(vec)), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s, n)\n"
+            "static inline size_t %sstring_vec_rscan(%sstring_vec_t vec, const char *s)\n"
+            "__%srscan_by_string_field(0, %sstring_vec_len(vec), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s)\n"
+            "static inline size_t %sstring_vec_rscan_n(%sstring_vec_t vec, const char *s, size_t n)\n"
+            "__%srscan_by_string_n_field(0, %sstring_vec_len(vec), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s, n)\n"
+            "static inline size_t %sstring_vec_rscan_ex(%sstring_vec_t vec, size_t begin, size_t end, const char *s)\n"
+            "__%srscan_by_string_field(begin, __%smin(end, %sstring_vec_len(vec)), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s)\n"
+            "static inline size_t %sstring_vec_rscan_ex_n(%sstring_vec_t vec, size_t begin, size_t end, const char *s, size_t n)\n"
+            "__%srscan_by_string_n_field(begin, __%smin(end, %sstring_vec_len(vec)), __%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s, n)\n",
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
+            nsc, nsc, nsc, nsc);
     if (out->opts->cgen_sort) {
         fprintf(out->fp, "__%sdefine_string_sort()\n", nsc);
     }
@@ -562,7 +743,7 @@ static inline void print_doc(fb_output_t *out, const char *indent, fb_doc_t *doc
         if (ln != doc->ident->linenum) {
             if (first) {
                 /* Not all C compilers understand // comments. */
-                fprintf(out->fp, "%s/**", indent);
+                fprintf(out->fp, "%s/** ", indent);
                 ln = doc->ident->linenum;
             } else {
                 fprintf(out->fp, "\n%s * ", indent);
@@ -746,6 +927,11 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                 "__%sstruct_scalar_field(t, %.*s, %s%s)\n",
                 tname_ns, tname, snt.text, n, s, snt.text,
                 nsc, n, s, nsc, tname_prefix);
+            if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                fprintf(out->fp,
+                        "__%sdefine_scan_by_scalar_field(%s, %.*s, %s%s)\n",
+                        nsc, snt.text, n, s, tname_ns, tname);
+            }
             if (member->metadata_flags & fb_f_key) {
                 if (already_has_key) {
                     fprintf(out->fp, "/* Note: this is not the first field with a key on this struct. */\n");
@@ -761,8 +947,11 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                 }
                 if (!already_has_key) {
                     fprintf(out->fp,
-                        "#define %s_vec_find %s_vec_find_by_%.*s\n",
-                        snt.text, snt.text, n, s);
+                        "__%sdefine_default_find_by_scalar_field(%s, %.*s, %s%s)\n",
+                        nsc, snt.text, n, s, tname_ns, tname);
+                    fprintf(out->fp,
+                        "__%sdefine_default_scan_by_scalar_field(%s, %.*s, %s%s)\n",
+                        nsc, snt.text, n, s, tname_ns, tname);
                     if (out->opts->cgen_sort) {
                         fprintf(out->fp,
                             "#define %s_vec_sort %s_vec_sort_by_%.*s\n",
@@ -783,6 +972,11 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                     "__%sstruct_scalar_field(t, %.*s, %s%s)\n",
                     snref.text, snt.text, n, s, snt.text,
                     nsc, n, s, nsc, tname_prefix);
+                if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                    fprintf(out->fp,
+                            "__%sdefine_scan_by_scalar_field(%s, %.*s, %s_enum_t)\n",
+                            nsc, snt.text, n, s, snref.text);
+                }
                 if (member->metadata_flags & fb_f_key) {
                     if (already_has_key) {
                         fprintf(out->fp, "/* Note: this is not the first field with a key on this table. */\n");
@@ -798,8 +992,11 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                     }
                     if (!already_has_key) {
                         fprintf(out->fp,
-                            "#define %s_vec_find %s_vec_find_by_%.*s\n",
-                            snt.text, snt.text, n, s);
+                            "__%sdefine_default_find_by_scalar_field(%s, %.*s, %s_enum_t)\n",
+                            nsc, snt.text, n, s, snref.text);
+                        fprintf(out->fp,
+                            "__%sdefine_default_scan_by_scalar_field(%s, %.*s, %s_enum_t)\n",
+                            nsc, snt.text, n, s, snref.text);
                         if (out->opts->cgen_sort) {
                             fprintf(out->fp,
                                 "#define %s_vec_sort %s_vec_sort_by_%.*s\n",
@@ -1074,6 +1271,11 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 gen_panic(out, "internal error: unexpected scalar table default value");
                 continue;
             }
+            if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                fprintf(out->fp,
+                        "__%sdefine_scan_by_scalar_field(%s, %.*s, %s%s)\n",
+                        nsc, snt.text, n, s, tname_ns, tname);
+            }
             if (member->metadata_flags & fb_f_key) {
                 if (already_has_key) {
                     fprintf(out->fp, "/* Note: this is not the first field with a key on this table. */\n");
@@ -1089,8 +1291,11 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 }
                 if (!already_has_key) {
                     fprintf(out->fp,
-                        "#define %s_vec_find %s_vec_find_by_%.*s\n",
-                        snt.text, snt.text, n, s);
+                        "__%sdefine_default_find_by_scalar_field(%s, %.*s, %s%s)\n",
+                        nsc, snt.text, n, s, tname_ns, tname);
+                    fprintf(out->fp,
+                        "__%sdefine_default_scan_by_scalar_field(%s, %.*s, %s%s)\n",
+                        nsc, snt.text, n, s, tname_ns, tname);
                     if (out->opts->cgen_sort) {
                         fprintf(out->fp,
                             "#define %s_vec_sort %s_vec_sort_by_%.*s\n",
@@ -1120,19 +1325,18 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 "__%svector_field(%sstring_t, %llu, t, %u)\n",
                 nsc, snt.text, n, s, snt.text,
                 nsc, nsc, llu(member->id), r);
+            if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                fprintf(out->fp,
+                    "__%sdefine_scan_by_string_field(%s, %.*s)\n",
+                    nsc, snt.text, n, s);
+            }
             if (member->metadata_flags & fb_f_key) {
                 if (already_has_key) {
                     fprintf(out->fp, "/* Note: this is not the first field with a key on this table. */\n");
                 }
-                fprintf(out->fp,     "/* Note: find only works on vectors sorted by this field. */\n");
                 fprintf(out->fp,
-                    "static inline size_t %s_vec_find_by_%.*s(%s_vec_t vec, const char *s)\n"
-                    "__%sfind_by_string_field(%s_%.*s, vec, %s_vec_at, %s_vec_len, s)\n",
-                    snt.text, n, s, snt.text, nsc, snt.text, n, s, snt.text, snt.text);
-                fprintf(out->fp,
-                    "static inline size_t %s_vec_find_n_by_%.*s(%s_vec_t vec, const char *s, int n)\n"
-                    "__%sfind_by_string_n_field(%s_%.*s, vec, %s_vec_at, %s_vec_len, s, n)\n",
-                    snt.text, n, s, snt.text, nsc, snt.text, n, s, snt.text, snt.text);
+                    "__%sdefine_find_by_string_field(%s, %.*s)\n",
+                    nsc, snt.text, n, s);
                 if (out->opts->cgen_sort) {
                     fprintf(out->fp,
                         "__%sdefine_sort_by_string_field(%s, %.*s)\n",
@@ -1140,14 +1344,15 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 }
                 if (!already_has_key) {
                     fprintf(out->fp,
-                        "#define %s_vec_find %s_vec_find_by_%.*s\n"
-                        "#define %s_vec_find_n %s_vec_find_n_by_%.*s\n",
-                        snt.text, snt.text, n, s,
-                        snt.text, snt.text, n, s);
+                        "__%sdefine_default_find_by_string_field(%s, %.*s)\n",
+                        nsc, snt.text, n, s);
+                    fprintf(out->fp,
+                        "__%sdefine_default_scan_by_string_field(%s, %.*s)\n",
+                        nsc, snt.text, n, s);
                     if (out->opts->cgen_sort) {
                         fprintf(out->fp,
-                                "#define %s_vec_sort %s_vec_sort_by_%.*s\n",
-                                snt.text, snt.text, n, s);
+                            "#define %s_vec_sort %s_vec_sort_by_%.*s\n",
+                            snt.text, snt.text, n, s);
                     }
                     already_has_key = 1;
                 }
@@ -1205,6 +1410,11 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                     gen_panic(out, "internal error: unexpected enum type referenced by table");
                     continue;
                 }
+                if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                    fprintf(out->fp,
+                            "__%sdefine_scan_by_scalar_field(%s, %.*s, %s_enum_t)\n",
+                            nsc, snt.text, n, s, snref.text);
+                }
                 if (member->metadata_flags & fb_f_key) {
                     if (already_has_key) {
                         fprintf(out->fp, "/* Note: this is not the first field with a key on this table. */\n");
@@ -1220,8 +1430,11 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                     }
                     if (!already_has_key) {
                         fprintf(out->fp,
-                            "#define %s_vec_find %s_vec_find_by_%.*s\n",
-                            snt.text, snt.text, n, s);
+                                "__%sdefine_default_find_by_scalar_field(%s, %.*s, %s_enum_t)\n",
+                                nsc, snt.text, n, s, snref.text);
+                        fprintf(out->fp,
+                                "__%sdefine_default_scan_by_scalar_field(%s, %.*s, %s_enum_t)\n",
+                                nsc, snt.text, n, s, snref.text);
                         if (out->opts->cgen_sort) {
                             fprintf(out->fp,
                                     "#define %s_vec_sort %s_vec_sort_by_%.*s\n",
