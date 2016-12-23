@@ -545,6 +545,16 @@ static void gen_helpers(fb_output_t *out)
         fprintf(out->fp, "__%sdefine_string_sort()\n", nsc);
     }
     fprintf(out->fp,
+        "#define __%sdefine_struct_scalar_field(ID, N, NK, TK, T)\\\n"
+        "static inline T N ## _ ## NK (N ## _struct_t t)\\\n"
+        "{ return t ? __%sread_scalar(TK, &(t->NK)) : 0; }",
+        nsc, nsc);
+    if (out->opts->allow_scan_for_all_fields) {
+        fprintf(out->fp, "\\\n__%sdefine_scan_by_scalar_field(N, NK, T)\n", nsc);
+    } else {
+        fprintf(out->fp, "\n");
+    }
+    fprintf(out->fp,
             "#define __%sstruct_scalar_field(t, M, N)\\\n"
             "{ return t ? __%sread_scalar(N, &(t->M)) : 0; }\n"
             "#define __%sstruct_struct_field(t, M) { return t ? &(t->M) : 0; }\n",
@@ -937,11 +947,10 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
             tname = scalar_type_name(member->type.st);
             tname_prefix = scalar_type_prefix(member->type.st);
             fprintf(out->fp,
-                "static inline %s%s %s_%.*s(%s_struct_t t)\n"
-                "__%sstruct_scalar_field(t, %.*s, %s%s)\n",
-                tname_ns, tname, snt.text, n, s, snt.text,
-                nsc, n, s, nsc, tname_prefix);
-            if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                "__%sdefine_struct_scalar_field(%llu, %s, %.*s, %s%s, %s%s)\n",
+                nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname);
+            break;
+            if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                 fprintf(out->fp,
                         "__%sdefine_scan_by_scalar_field(%s, %.*s, %s%s)\n",
                         nsc, snt.text, n, s, tname_ns, tname);
@@ -982,11 +991,9 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
             case fb_is_enum:
                 tname_prefix = scalar_type_prefix(member->type.ct->type.st);
                 fprintf(out->fp,
-                    "static inline %s_enum_t %s_%.*s(%s_struct_t t)\n"
-                    "__%sstruct_scalar_field(t, %.*s, %s%s)\n",
-                    snref.text, snt.text, n, s, snt.text,
-                    nsc, n, s, nsc, tname_prefix);
-                if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                    "__%sdefine_struct_scalar_field(%llu, %s, %.*s, %s, %s_enum_t)\n",
+                    nsc, llu(member->id), snt.text, n, s, snref.text, snref.text);
+                if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                     fprintf(out->fp,
                             "__%sdefine_scan_by_scalar_field(%s, %.*s, %s_enum_t)\n",
                             nsc, snt.text, n, s, snref.text);
