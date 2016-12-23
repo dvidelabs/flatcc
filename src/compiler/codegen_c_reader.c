@@ -422,6 +422,13 @@ static void gen_helpers(fb_output_t *out)
         "#define __%stable_field(T, ID, t, r) __%soffset_field(T, ID, t, r, 0)\n",
         nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
+        "#define __%sdefine_table_field(ID, N, NK, T, r)\\\n"
+        "static inline T N ## _ ## NK(N ## _table_t t)\\\n"
+        "__%stable_field(T, ID, t, r)\\\n"
+        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
+        "{ __%sread_vt(ID, offset, t) return offset != 0; }\n",
+        nsc, nsc, nsc);
+    fprintf(out->fp,
         "#define __%sdefine_string_field(ID, N, NK, r)\\\n"
         "static inline %sstring_t N ## _ ## NK(N ## _table_t t)\\\n"
         "__%svector_field(%sstring_t, ID, t, r)\\\n"
@@ -1399,11 +1406,10 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                     nsc, snref.text, llu(member->id), r);
                 break;
             case fb_is_table:
+                has_is_present = 1;
                 fprintf(out->fp,
-                    "static inline %s_table_t %s_%.*s(%s_table_t t)\n"
-                    "__%stable_field(%s_table_t, %llu, t, %u)\n",
-                    snref.text, snt.text, n, s, snt.text,
-                    nsc, snref.text, llu(member->id), r);
+                    "__%sdefine_table_field(%llu, %s, %.*s, %s_table_t, %u)\n",
+                    nsc, llu(member->id), snt.text, n, s, snref.text, r);
                 break;
             case fb_is_enum:
                 has_is_present = 1;
