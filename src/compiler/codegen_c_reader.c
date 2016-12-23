@@ -422,6 +422,18 @@ static void gen_helpers(fb_output_t *out)
         "#define __%stable_field(T, ID, t, r) __%soffset_field(T, ID, t, r, 0)\n",
         nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
+        "#define __%sdefine_string_field(ID, N, NK, r)\\\n"
+        "static inline %sstring_t N ## _ ## NK(N ## _table_t t)\\\n"
+        "__%svector_field(%sstring_t, ID, t, r)\\\n"
+        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
+        "{ __%sread_vt(ID, offset, t) return offset != 0; }",
+        nsc, nsc, nsc, nsc, nsc);
+        if (out->opts->allow_scan_for_all_fields) {
+            fprintf(out->fp, "\\\n__%sdefine_scan_by_string_field(N, NK)\n", nsc);
+        } else {
+            fprintf(out->fp, "\n");
+        }
+    fprintf(out->fp,
         "#define __%svec_len(vec)\\\n"
         "{ return (vec) ? (size_t)__%suoffset_read_from_pe((flatbuffers_uoffset_t *)vec - 1) : 0; }\n"
         "#define __%sstring_len(s) __%svec_len(s)\n",
@@ -545,7 +557,7 @@ static void gen_helpers(fb_output_t *out)
         fprintf(out->fp, "__%sdefine_string_sort()\n", nsc);
     }
     fprintf(out->fp,
-        "#define __%sdefine_struct_scalar_field(ID, N, NK, TK, T)\\\n"
+        "#define __%sdefine_struct_scalar_field(N, NK, TK, T)\\\n"
         "static inline T N ## _ ## NK (N ## _struct_t t)\\\n"
         "{ return t ? __%sread_scalar(TK, &(t->NK)) : 0; }",
         nsc, nsc);
@@ -554,11 +566,7 @@ static void gen_helpers(fb_output_t *out)
     } else {
         fprintf(out->fp, "\n");
     }
-    fprintf(out->fp,
-            "#define __%sstruct_scalar_field(t, M, N)\\\n"
-            "{ return t ? __%sread_scalar(N, &(t->M)) : 0; }\n"
-            "#define __%sstruct_struct_field(t, M) { return t ? &(t->M) : 0; }\n",
-            nsc, nsc, nsc);
+    fprintf(out->fp, "#define __%sstruct_struct_field(t, M) { return t ? &(t->M) : 0; }\n", nsc);
     fprintf(out->fp,
             "/* If fid is null, the function returns true without testing as buffer is not expected to have any id. */\n"
             "static inline int %shas_identifier(const void *buffer, const char *fid)\n"
@@ -947,8 +955,8 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
             tname = scalar_type_name(member->type.st);
             tname_prefix = scalar_type_prefix(member->type.st);
             fprintf(out->fp,
-                "__%sdefine_struct_scalar_field(%llu, %s, %.*s, %s%s, %s%s)\n",
-                nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname);
+                "__%sdefine_struct_scalar_field(%s, %.*s, %s%s, %s%s)\n",
+                nsc, snt.text, n, s, nsc, tname_prefix, tname_ns, tname);
             break;
             if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                 fprintf(out->fp,
@@ -991,8 +999,8 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
             case fb_is_enum:
                 tname_prefix = scalar_type_prefix(member->type.ct->type.st);
                 fprintf(out->fp,
-                    "__%sdefine_struct_scalar_field(%llu, %s, %.*s, %s, %s_enum_t)\n",
-                    nsc, llu(member->id), snt.text, n, s, snref.text, snref.text);
+                    "__%sdefine_struct_scalar_field(%s, %.*s, %s, %s_enum_t)\n",
+                    nsc, snt.text, n, s, snref.text, snref.text);
                 if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                     fprintf(out->fp,
                             "__%sdefine_scan_by_scalar_field(%s, %.*s, %s_enum_t)\n",
@@ -1335,12 +1343,11 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             }
             break;
         case vt_string_type:
+            has_is_present = 1;
             fprintf(out->fp,
-                "static inline %sstring_t %s_%.*s(%s_table_t t)\n"
-                "__%svector_field(%sstring_t, %llu, t, %u)\n",
-                nsc, snt.text, n, s, snt.text,
-                nsc, nsc, llu(member->id), r);
-            if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                "__%sdefine_string_field(%llu, %s, %.*s, %u)\n",
+                nsc, llu(member->id), snt.text, n, s, r);
+            if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                 fprintf(out->fp,
                     "__%sdefine_scan_by_string_field(%s, %.*s)\n",
                     nsc, snt.text, n, s);
