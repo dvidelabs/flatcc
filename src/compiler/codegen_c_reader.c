@@ -220,15 +220,15 @@ static void gen_scan(fb_output_t *out)
         nsc, nsc, nsc, nsc, nsc,
         nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
-        "#define __%sdefine_scan_by_scalar_field(N, NK, TK)\\\n"
-        "static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec, TK key)\\\n"
-        "__%sscan_by_scalar_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\\\n"
-        "static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, TK key)\\\n"
-        "__%sscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\\\n"
-        "static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec, TK key)\\\n"
-        "__%srscan_by_scalar_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\\\n"
-        "static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, TK key)\\\n"
-        "__%srscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\n",
+        "#define __%sdefine_scan_by_scalar_field(N, NK, T)\\\n"
+        "static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec, T key)\\\n"
+        "__%sscan_by_scalar_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
+        "static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, T key)\\\n"
+        "__%sscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
+        "static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec, T key)\\\n"
+        "__%srscan_by_scalar_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
+        "static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, T key)\\\n"
+        "__%srscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, T)\n",
         nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_scalar_scan(N, T)\\\n"
@@ -371,12 +371,26 @@ static void gen_helpers(fb_output_t *out)
             "#define __%sfield_present(ID, t) { __%sread_vt(ID, offset, t) return offset != 0; }\n",
             nsc, nsc);
     fprintf(out->fp,
-        "#define __%sscalar_field(N, ID, V, t)\\\n"
+        "#define __%sunion_type_field(N, ID, V, t)\\\n"
         "{\\\n"
         "    __%sread_vt(ID, offset, t)\\\n"
         "    return offset ? __%sread_scalar_at_byteoffset(N, t, offset) : V;\\\n"
         "}\n",
         nsc, nsc, nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_scalar_field(ID, N, NK, TK, T, V)\\\n"
+        "static inline T N ## _ ## NK (N ## _table_t t)\\\n"
+        "{ __%sread_vt(ID, offset, t)\\\n"
+        "  return offset ? __%sread_scalar_at_byteoffset(TK, t, offset) : V;\\\n"
+        "}\\\n"
+        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
+        "{ __%sread_vt(ID, offset, t) return offset != 0; }",
+        nsc, nsc, nsc, nsc);
+        if (out->opts->allow_scan_for_all_fields) {
+            fprintf(out->fp, "\\\n__%sdefine_scan_by_scalar_field(N, NK, T)\n", nsc);
+        } else {
+            fprintf(out->fp, "\n");
+        }
     fprintf(out->fp,
         "#define __%sstruct_field(T, ID, t, r)\\\n"
         "{\\\n"
@@ -1086,7 +1100,7 @@ static void gen_enum(fb_output_t *out, fb_compound_type_t *ct)
         case vt_int:
             fprintf(out->fp,
                     "#define %s_%.*s ((%s_%s_t)%lld%s)\n",
-                    snt.text, n, s, snt.text, kind, llu(member->value.i), suffix);
+                    snt.text, n, s, snt.text, kind, lld(member->value.i), suffix);
             break;
         case vt_bool:
             fprintf(out->fp,
@@ -1178,7 +1192,7 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
     fb_symbol_t *sym;
     const char *s, *tname, *tname_ns, *tname_prefix;
     int n, r;
-    int already_has_key, current_key_processed;
+    int already_has_key, current_key_processed, has_is_present;
     const char *nsc = out->nsc;
     fb_scoped_name_t snt;
     fb_scoped_name_t snref;
@@ -1216,6 +1230,7 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
 
     already_has_key = 0;
     for (sym = ct->members; sym; sym = sym->link) {
+        has_is_present = 0;
         current_key_processed = 0;
         member = (fb_member_t *)sym;
         present_id = member->id;
@@ -1235,43 +1250,36 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
         r = (member->metadata_flags & fb_f_required) != 0;
         switch (member->type.type) {
         case vt_scalar_type:
+            has_is_present = 1;
             tname_ns = scalar_type_ns(member->type.st, nsc);
             tname = scalar_type_name(member->type.st);
             tname_prefix = scalar_type_prefix(member->type.st);
             switch (member->value.type) {
             case vt_uint:
                 fprintf(out->fp,
-                    "static inline %s%s %s_%.*s(%s_table_t t)\n"
-                    "__%sscalar_field(%s%s, %llu, %llu, t)\n",
-                    tname_ns, tname, snt.text, n, s, snt.text,
-                    nsc, nsc, tname_prefix, llu(member->id), llu(member->value.u));
+                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %llu)\n",
+                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, llu(member->value.u));
                 break;
             case vt_int:
                 fprintf(out->fp,
-                    "static inline %s%s %s_%.*s(%s_table_t t)\n"
-                    "__%sscalar_field(%s%s, %llu, %lld, t)\n",
-                    tname_ns, tname, snt.text, n, s, snt.text,
-                    nsc, nsc, tname_prefix, llu(member->id), lld(member->value.i));
+                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %llu)\n",
+                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, llu(member->value.u));
                 break;
             case vt_bool:
                 fprintf(out->fp,
-                    "static inline %s%s %s_%.*s(%s_table_t t)\n"
-                    "__%sscalar_field(%s%s, %llu, %u, t)\n",
-                    tname_ns, tname, snt.text, n, s, snt.text,
-                    nsc, nsc, tname_prefix, llu(member->id), member->value.b);
+                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %llu)\n",
+                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, llu(member->value.u));
                 break;
             case vt_float:
                 fprintf(out->fp,
-                    "static inline %s%s %s_%.*s(%s_table_t t)\n"
-                    "__%sscalar_field(%s%s, %llu, %lf, t)\n",
-                    tname_ns, tname, snt.text, n, s, snt.text,
-                    nsc, nsc, tname_prefix, llu(member->id), member->value.f);
+                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %llu)\n",
+                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, llu(member->value.u));
                 break;
             default:
                 gen_panic(out, "internal error: unexpected scalar table default value");
                 continue;
             }
-            if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+            if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                 fprintf(out->fp,
                         "__%sdefine_scan_by_scalar_field(%s, %.*s, %s%s)\n",
                         nsc, snt.text, n, s, tname_ns, tname);
@@ -1384,33 +1392,28 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                     nsc, snref.text, llu(member->id), r);
                 break;
             case fb_is_enum:
+                has_is_present = 1;
                 switch (member->value.type) {
                 case vt_uint:
                     fprintf(out->fp,
-                        "static inline %s_enum_t %s_%.*s(%s_table_t t)\n"
-                        "__%sscalar_field(%s, %llu, %llu, t)\n",
-                        snref.text, snt.text, n, s, snt.text,
-                        nsc, snref.text, llu(member->id), llu(member->value.u));
+                        "__%sdefine_scalar_field(%llu, %s, %.*s, %s, %s_enum_t, %llu)\n",
+                        nsc, llu(member->id), snt.text, n, s, snref.text, snref.text, llu(member->value.u));
                     break;
                 case vt_int:
                     fprintf(out->fp,
-                        "static inline %s_enum_t %s_%.*s(%s_table_t t)\n"
-                        "__%sscalar_field(%s, %llu, %lld, t)\n",
-                        snref.text, snt.text, n, s, snt.text,
-                        nsc, snref.text, llu(member->id), lld(member->value.i));
+                        "__%sdefine_scalar_field(%llu, %s, %.*s, %s, %s_enum_t, %lld)\n",
+                        nsc, llu(member->id), snt.text, n, s, snref.text, snref.text, lld(member->value.i));
                     break;
                 case vt_bool:
                     fprintf(out->fp,
-                        "static inline %s_enum_t %s_%.*s(%s_table_t t)\n"
-                        "__%sscalar_field(%s, %llu, %u, t)\n",
-                        snref.text, snt.text, n, s, snt.text,
-                        nsc, snref.text, llu(member->id), member->value.b);
+                        "__%sdefine_scalar_field(%llu, %s, %.*s, %s, %s_enum_t, %u)\n",
+                        nsc, llu(member->id), snt.text, n, s, snref.text, snref.text, member->value.b);
                     break;
                 default:
                     gen_panic(out, "internal error: unexpected enum type referenced by table");
                     continue;
                 }
-                if (out->opts->allow_scan_for_all_fields || (member->metadata_flags & fb_f_key)) {
+                if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                     fprintf(out->fp,
                             "__%sdefine_scan_by_scalar_field(%s, %.*s, %s_enum_t)\n",
                             nsc, snt.text, n, s, snref.text);
@@ -1449,7 +1452,7 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 present_id--;
                 fprintf(out->fp,
                     "static inline %s_union_type_t %s_%.*s_type(%s_table_t t)\n"
-                    "__%sscalar_field(%s, %llu, 0, t)\n",
+                    "__%sunion_type_field(%s, %llu, 0, t)\n",
                     snref.text, snt.text, n, s, snt.text,
                     nsc, snref.text, llu(member->id) - 1);
                 fprintf(out->fp,
@@ -1499,10 +1502,12 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             gen_panic(out, "internal error: unexpected table member type during code generation");
             break;
         }
-        fprintf(out->fp,
-                "static inline int %s_%.*s_is_present(%s_table_t t)\n"
-                "__%sfield_present(%llu, t)\n",
-                snt.text, n, s, snt.text, nsc, llu(present_id));
+        if (!has_is_present) {
+            fprintf(out->fp,
+                    "static inline int %s_%.*s_is_present(%s_table_t t)\n"
+                    "__%sfield_present(%llu, t)\n",
+                    snt.text, n, s, snt.text, nsc, llu(present_id));
+        }
         if ((member->metadata_flags & fb_f_key) && !current_key_processed) {
             fprintf(out->fp,
                 "/* Note: field has key, but there is no support for find by fields of this type. */\n");
