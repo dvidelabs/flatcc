@@ -422,6 +422,13 @@ static void gen_helpers(fb_output_t *out)
         "#define __%stable_field(T, ID, t, r) __%soffset_field(T, ID, t, r, 0)\n",
         nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
+        "#define __%sdefine_vector_field(ID, N, NK, T, r)\\\n"
+        "static inline T N ## _ ## NK(N ## _table_t t)\\\n"
+        "__%svector_field(T, ID, t, r)\\\n"
+        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
+        "{ __%sread_vt(ID, offset, t) return offset != 0; }\n",
+        nsc, nsc, nsc);
+    fprintf(out->fp,
         "#define __%sdefine_table_field(ID, N, NK, T, r)\\\n"
         "static inline T N ## _ ## NK(N ## _table_t t)\\\n"
         "__%stable_field(T, ID, t, r)\\\n"
@@ -1340,11 +1347,10 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             /* They all use a namespace. */
             tname = scalar_vector_type_name(member->type.st);
             tname_ns = nsc;
+            has_is_present = 1;
             fprintf(out->fp,
-                "static inline %s%s %s_%.*s(%s_table_t t)\n"
-                "__%svector_field(%s%s, %llu, t, %u)\n",
-                tname_ns, tname, snt.text, n, s, snt.text,
-                nsc, tname_ns, tname, llu(member->id), r);
+                "__%sdefine_vector_field(%llu, %s, %.*s, %s%s, %u)\n",
+                nsc, llu(member->id), snt.text, n, s, tname_ns, tname, r);
             if (member->nest) {
                 gen_nested_root(out, &member->nest->symbol, &ct->symbol, &member->symbol);
             }
@@ -1389,11 +1395,10 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             }
             break;
         case vt_vector_string_type:
+            has_is_present = 1;
             fprintf(out->fp,
-                "static inline %sstring_vec_t %s_%.*s(%s_table_t t)\n"
-                "__%svector_field(%sstring_vec_t, %llu, t, %u)\n",
-                nsc, snt.text, n, s, snt.text,
-                nsc, nsc, llu(member->id), r);
+                "__%sdefine_vector_field(%llu, %s, %.*s, %sstring_vec_t, %u)\n",
+                nsc, llu(member->id), snt.text, n, s, nsc, r);
             break;
         case vt_compound_type_ref:
             fb_compound_name(member->type.ct, &snref);
@@ -1490,25 +1495,10 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             fb_compound_name(member->type.ct, &snref);
             switch (member->type.ct->symbol.kind) {
             case fb_is_struct:
-                fprintf(out->fp,
-                    "static inline %s_vec_t %s_%.*s(%s_table_t t)\n"
-                    "__%svector_field(%s_vec_t, %llu, t, %u)\n",
-                    snref.text, snt.text, n, s, snt.text,
-                    nsc, snref.text, llu(member->id), r);
                 break;
             case fb_is_table:
-                fprintf(out->fp,
-                    "static inline %s_vec_t %s_%.*s(%s_table_t t)\n"
-                    "__%svector_field(%s_vec_t, %llu, t, %u)\n",
-                    snref.text, snt.text, n, s, snt.text,
-                    nsc, snref.text, llu(member->id), r);
                 break;
             case fb_is_enum:
-                fprintf(out->fp,
-                    "static inline %s_vec_t %s_%.*s(%s_table_t t)\n"
-                    "__%svector_field(%s_vec_t, %llu, t, %u)\n",
-                    snref.text, snt.text, n, s, snt.text,
-                    nsc, snref.text, llu(member->id), r);
                 break;
             case fb_is_union:
                 gen_panic(out, "internal error: unexpected vector of union present in table");
@@ -1517,6 +1507,10 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 gen_panic(out, "internal error: unexpected vector compound type in table during code generation");
                 break;
             }
+            has_is_present = 1;
+            fprintf(out->fp,
+                "__%sdefine_vector_field(%llu, %s, %.*s, %s_vec_t, %u)\n",
+                nsc, llu(member->id), snt.text, n, s, snref.text, r);
             break;
         default:
             gen_panic(out, "internal error: unexpected table member type during code generation");
