@@ -596,7 +596,10 @@ static void gen_helpers(fb_output_t *out)
     } else {
         fprintf(out->fp, "\n");
     }
-    fprintf(out->fp, "#define __%sstruct_struct_field(t, M) { return t ? &(t->M) : 0; }\n", nsc);
+    fprintf(out->fp,
+            "#define __%sdefine_struct_struct_field(N, NK, T)\\\n"
+            "static inline T N ## _ ## NK(N ## _struct_t t) { return t ? &(t->NK) : 0; }\n",
+            nsc);
     fprintf(out->fp,
             "/* If fid is null, the function returns true without testing as buffer is not expected to have any id. */\n"
             "static inline int %shas_identifier(const void *buffer, const char *fid)\n"
@@ -1072,12 +1075,11 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                  * or null if container struct is null.
                  */
                 fprintf(out->fp,
-                    "static inline %s_struct_t %s_%.*s(%s_struct_t t)\n"
-                    "__%sstruct_struct_field(t, %.*s)\n",
-                    snref.text, snt.text, n, s, snt.text,
-                    nsc, n, s);
+                    "__%sdefine_struct_struct_field(%s, %.*s, %s_struct_t)\n",
+                    nsc, snt.text, n, s, snref.text);
                 break;
             }
+
         }
         if ((member->metadata_flags & fb_f_key) && !current_key_processed) {
             fprintf(out->fp,
@@ -1089,6 +1091,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
             already_has_key = 1;
         }
     }
+    fprintf(out->fp, "\n");
 }
 
 /*
