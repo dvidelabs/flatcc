@@ -393,7 +393,7 @@ static void gen_helpers(fb_output_t *out)
         "  return offset ? __%sread_scalar_at_byteoffset(TK, t, offset) : V;\\\n"
         "}\\\n"
         "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
-        "{ __%sread_vt(ID, offset, t) return offset != 0; }",
+        "__%sfield_present(ID, t)",
         nsc, nsc, nsc, nsc);
         if (out->opts->allow_scan_for_all_fields) {
             fprintf(out->fp, "\\\n__%sdefine_scan_by_scalar_field(N, NK, T)\n", nsc);
@@ -435,28 +435,28 @@ static void gen_helpers(fb_output_t *out)
         "static inline T N ## _ ## NK(N ## _table_t t)\\\n"
         "__%sstruct_field(T, ID, t, r)\\\n"
         "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
-        "{ __%sread_vt(ID, offset, t) return offset != 0; }\n",
+        "__%sfield_present(ID, t)\n",
         nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_vector_field(ID, N, NK, T, r)\\\n"
         "static inline T N ## _ ## NK(N ## _table_t t)\\\n"
         "__%svector_field(T, ID, t, r)\\\n"
         "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
-        "{ __%sread_vt(ID, offset, t) return offset != 0; }\n",
+        "__%sfield_present(ID, t)\n",
         nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_table_field(ID, N, NK, T, r)\\\n"
         "static inline T N ## _ ## NK(N ## _table_t t)\\\n"
         "__%stable_field(T, ID, t, r)\\\n"
         "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
-        "{ __%sread_vt(ID, offset, t) return offset != 0; }\n",
+        "__%sfield_present(ID, t)\n",
         nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_string_field(ID, N, NK, r)\\\n"
         "static inline %sstring_t N ## _ ## NK(N ## _table_t t)\\\n"
         "__%svector_field(%sstring_t, ID, t, r)\\\n"
         "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
-        "{ __%sread_vt(ID, offset, t) return offset != 0; }",
+        "__%sfield_present(ID, t)",
         nsc, nsc, nsc, nsc, nsc);
         if (out->opts->allow_scan_for_all_fields) {
             fprintf(out->fp, "\\\n__%sdefine_scan_by_string_field(N, NK)\n", nsc);
@@ -1088,7 +1088,6 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
              */
             already_has_key = 1;
         }
-        fprintf(out->fp, "\n");
     }
 }
 
@@ -1237,7 +1236,7 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
     fb_symbol_t *sym;
     const char *s, *tname, *tname_ns, *tname_prefix;
     int n, r;
-    int already_has_key, current_key_processed, has_is_present;
+    int already_has_key, current_key_processed;
     const char *nsc = out->nsc;
     fb_scoped_name_t snt;
     fb_scoped_name_t snref;
@@ -1275,7 +1274,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
 
     already_has_key = 0;
     for (sym = ct->members; sym; sym = sym->link) {
-        has_is_present = 0;
         current_key_processed = 0;
         member = (fb_member_t *)sym;
         present_id = member->id;
@@ -1295,7 +1293,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
         r = (member->metadata_flags & fb_f_required) != 0;
         switch (member->type.type) {
         case vt_scalar_type:
-            has_is_present = 1;
             tname_ns = scalar_type_ns(member->type.st, nsc);
             tname = scalar_type_name(member->type.st);
             tname_prefix = scalar_type_prefix(member->type.st);
@@ -1363,7 +1360,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             /* They all use a namespace. */
             tname = scalar_vector_type_name(member->type.st);
             tname_ns = nsc;
-            has_is_present = 1;
             fprintf(out->fp,
                 "__%sdefine_vector_field(%llu, %s, %.*s, %s%s, %u)\n",
                 nsc, llu(member->id), snt.text, n, s, tname_ns, tname, r);
@@ -1372,7 +1368,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             }
             break;
         case vt_string_type:
-            has_is_present = 1;
             fprintf(out->fp,
                 "__%sdefine_string_field(%llu, %s, %.*s, %u)\n",
                 nsc, llu(member->id), snt.text, n, s, r);
@@ -1411,7 +1406,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             }
             break;
         case vt_vector_string_type:
-            has_is_present = 1;
             fprintf(out->fp,
                 "__%sdefine_vector_field(%llu, %s, %.*s, %sstring_vec_t, %u)\n",
                 nsc, llu(member->id), snt.text, n, s, nsc, r);
@@ -1420,19 +1414,16 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             fb_compound_name(member->type.ct, &snref);
             switch (member->type.ct->symbol.kind) {
             case fb_is_struct:
-                has_is_present = 1;
                 fprintf(out->fp,
                     "__%sdefine_struct_field(%llu, %s, %.*s, %s_struct_t, %u)\n",
                     nsc, llu(member->id), snt.text, n, s, snref.text, r);
                 break;
             case fb_is_table:
-                has_is_present = 1;
                 fprintf(out->fp,
                     "__%sdefine_table_field(%llu, %s, %.*s, %s_table_t, %u)\n",
                     nsc, llu(member->id), snt.text, n, s, snref.text, r);
                 break;
             case fb_is_enum:
-                has_is_present = 1;
                 switch (member->value.type) {
                 case vt_uint:
                     fprintf(out->fp,
@@ -1490,25 +1481,10 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 break;
             case fb_is_union:
                 present_id--;
-#if 1
-                has_is_present = 1;
                 fprintf(out->fp,
                     "__%sdefine_union_field(%llu, %s, %.*s, %u)\n",
                     nsc, llu(member->id), snt.text, n, s, r);
                 break;
-#else
-                fprintf(out->fp,
-                    "static inline %s_union_type_t %s_%.*s_type(%s_table_t t)\n"
-                    "__%sunion_type_field(%llu, t)\n",
-                    snref.text, snt.text, n, s, snt.text,
-                    nsc, llu(member->id) - 1);
-                fprintf(out->fp,
-                    "static inline %sgeneric_table_t %s_%.*s(%s_table_t t)\n"
-                    "__%stable_field(%sgeneric_table_t, %llu, t, %u)\n",
-                    nsc, snt.text, n, s, snt.text,
-                    nsc, nsc, llu(member->id), r);
-                    break;
-#endif
             default:
                 gen_panic(out, "internal error: unexpected compound type in table during code generation");
                 break;
@@ -1530,7 +1506,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 gen_panic(out, "internal error: unexpected vector compound type in table during code generation");
                 break;
             }
-            has_is_present = 1;
             fprintf(out->fp,
                 "__%sdefine_vector_field(%llu, %s, %.*s, %s_vec_t, %u)\n",
                 nsc, llu(member->id), snt.text, n, s, snref.text, r);
@@ -1538,12 +1513,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
         default:
             gen_panic(out, "internal error: unexpected table member type during code generation");
             break;
-        }
-        if (!has_is_present) {
-            fprintf(out->fp,
-                    "static inline int %s_%.*s_is_present(%s_table_t t)\n"
-                    "__%sfield_present(%llu, t)\n",
-                    snt.text, n, s, snt.text, nsc, llu(present_id));
         }
         if ((member->metadata_flags & fb_f_key) && !current_key_processed) {
             fprintf(out->fp,
@@ -1554,7 +1523,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
              */
             already_has_key = 1;
         }
-        fprintf(out->fp, "\n");
     }
 }
 
