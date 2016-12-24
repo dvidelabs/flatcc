@@ -336,7 +336,6 @@ __flatbuffers_define_scalar_vec_len(N)\
 __flatbuffers_define_scalar_vec_at(N, T)\
 __flatbuffers_define_scalar_find(N, T)\
 __flatbuffers_define_scalar_scan(N, T)\
-\
 __flatbuffers_define_scalar_sort(N, T)
 
 #define __flatbuffers_define_integer_type(N, T, W)\
