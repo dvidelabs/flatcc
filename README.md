@@ -89,7 +89,7 @@ set up a new temporary project using the `scripts/setup.sh` script.
 
 ## Status
 
-Main features supported as of 0.4.0
+Main features supported as of 0.4.1
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -103,9 +103,7 @@ Main features supported as of 0.4.0
 - thorough test cases
 - monster sample project
 - fast build times
-
-New in 0.4.0:
-- support for big endian platforms.
+- support for big endian platforms (as of 0.4.0)
 - support for big endian encoded flatbuffers on both le and be platforms. Enabled on `be` branch.
 - size prefixed buffers - see also `doc/builder.md`
 
@@ -221,14 +219,12 @@ binary.
 
 ## Generated Files
 
-In earlier releases it was attempted to generate all code needed for
-read-only buffer access. Now a library of include files is always
-required (`include/flatcc`) because the original approach lead to
-excessive code duplication. The generated code for building flatbuffers,
-and for parsing and printing flatbuffers, all need to link with the
-runtime library `libflatccrt.a`. The verifier and builder headers depend
-on the reader header. The generated reader only depends on library
-header files.
+The generated code for building flatbuffers,
+and for parsing and printing flatbuffers, all need access to
+`include/flatcc`. The reader does no rely on any library but all other
+generated files rely on the `libflatccrt.a` runtime library. Note that
+`libflatcc.a` is only required if the flatcc compiler itself is required
+as a library.
 
 The reader and builder rely on generated common reader and builder
 header files. These common file makes it possible to change the global
