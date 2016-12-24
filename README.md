@@ -513,7 +513,9 @@ as soon as they complete rather than merging all pages into a single
 buffer using `flatcc_builder_finalize_buffer`, or the simplistic
 `flatcc_builder_get_direct_buffer` which returns null if the buffer is
 too large. See also documentation comments in `flatcc_builder.h` and
-`flatcc_emitter.h`.
+`flatcc_emitter.h`. See also `flatc_builder_finalize_aligned_buffer` in
+`builder.h` and `builder.md` when malloc aligned buffers are
+insufficent.
 
 
     #include "monster_test_builder.h"

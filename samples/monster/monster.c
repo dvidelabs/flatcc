@@ -310,24 +310,35 @@ int main(int argc, char *argv[])
     // Initialize the builder object.
     flatcc_builder_init(&builder);
     test_assert(0 == create_monster_bottom_up(&builder, 0));
+
     // Allocate and extract a readable buffer from internal builder heap.
     // The returned buffer must be deallocated using `free`.
     // NOTE: Finalizing the buffer does NOT change the builder, it
     // just creates a snapshot of the builder content.
-    buf = flatcc_builder_finalize_buffer(&builder, &size);
+    // NOTE2: finalize_buffer uses malloc while finalize_aligned_buffer
+    // uses a portable aligned allocation method. Often the malloc
+    // version is sufficient, but won't work for all schema on all
+    // systems. If the buffer is written to disk or network, but not
+    // accessed in memory, `finalize_buffer` is also sufficient.
+    buf = flatcc_builder_finalize_aligned_buffer(&builder, &size);
+    //buf = flatcc_builder_finalize_buffer(&builder, &size);
+
     // We now have a FlatBuffer we can store on disk or send over a network.
     // ** file/network code goes here :) **
     // Instead, we're going to access it right away (as if we just received it).
     //access_monster_buffer(buf);
-    free(buf);
+
+    aligned_free(buf);
+    //free(buf);
+    //
     // The builder object can optionally be reused after a reset which
     // is faster than creating a new builder. Subsequent use might
     // entirely avoid temporary allocations until finalizing the buffer.
     flatcc_builder_reset(&builder);
     test_assert(0 == create_monster_bottom_up(&builder, 1));
-    buf = flatcc_builder_finalize_buffer(&builder, &size);
+    buf = flatcc_builder_finalize_aligned_buffer(&builder, &size);
     access_monster_buffer(buf);
-    free(buf);
+    aligned_free(buf);
     flatcc_builder_reset(&builder);
     create_monster_top_down(&builder);
     buf = flatcc_builder_finalize_buffer(&builder, &size);

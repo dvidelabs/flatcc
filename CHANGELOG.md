@@ -13,7 +13,8 @@
 - More compact code generation for reader (hiding scan methods).
 - Use __flatbuffers_utype_t for union type in reader instead of uint8_t.
 - Add unaligned write to punaligned for completeness.
-
+- Promote use of `flatcc_builder_finalize_aligned_buffer` in doc and
+  samples over `flatcc_builder_finalize_buffer`.
 
 ## [0.4.0]
 - Fix Windows detection in flatcc/support/elapsed.h used by benchmark.
