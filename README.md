@@ -238,12 +238,9 @@ abstractions and eventually have a set of predefined files for types
 beyond the standard 32-bit unsigned offset (`uoffset_t`). The runtime
 library is specific to one set of type definitions.
 
-Reader code is reasonably straight forward and the generated code is
-more readable than the builder code because the generated functions
-headers are not buried in macros. Refer to `monster_test.c` and the
-generated files for detailed guidance on use. The monster schema used in
-this project is a slight adaptation to the original to test some
-additional edge cases.
+Refer to `monster_test.c` and the generated files for detailed guidance
+on use. The monster schema used in this project is a slight adaptation
+to the original to test some additional edge cases.
 
 For building flatbuffers a separate builder header file is generated per
 schema. It requires a `flatbuffers_common_builder.h` file also generated
