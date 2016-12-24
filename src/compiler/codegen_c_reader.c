@@ -371,12 +371,21 @@ static void gen_helpers(fb_output_t *out)
             "#define __%sfield_present(ID, t) { __%sread_vt(ID, offset, t) return offset != 0; }\n",
             nsc, nsc);
     fprintf(out->fp,
-        "#define __%sunion_type_field(N, ID, V, t)\\\n"
+        "#define __%sunion_type_field(ID, t)\\\n"
         "{\\\n"
         "    __%sread_vt(ID, offset, t)\\\n"
-        "    return offset ? __%sread_scalar_at_byteoffset(N, t, offset) : V;\\\n"
+        "    return offset ? __%sread_scalar_at_byteoffset(__%sutype, t, offset) : 0;\\\n"
         "}\n",
-        nsc, nsc, nsc);
+        nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_union_field(ID, N, NK, r)\\\n"
+        "static inline %sutype_t N ## _ ## NK ## _type(N ## _table_t t)\\\n"
+        "__%sunion_type_field(((ID) - 1), t)\\\n"
+        "static inline %sgeneric_table_t N ## _ ## NK(N ## _table_t t)\\\n"
+        "__%stable_field(%sgeneric_table_t, ID, t, r)\\\n"
+        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
+        "__%sfield_present(ID, t)\n",
+        nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_scalar_field(ID, N, NK, TK, T, V)\\\n"
         "static inline T N ## _ ## NK (N ## _table_t t)\\\n"
@@ -1481,17 +1490,25 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 break;
             case fb_is_union:
                 present_id--;
+#if 1
+                has_is_present = 1;
+                fprintf(out->fp,
+                    "__%sdefine_union_field(%llu, %s, %.*s, %u)\n",
+                    nsc, llu(member->id), snt.text, n, s, r);
+                break;
+#else
                 fprintf(out->fp,
                     "static inline %s_union_type_t %s_%.*s_type(%s_table_t t)\n"
-                    "__%sunion_type_field(%s, %llu, 0, t)\n",
+                    "__%sunion_type_field(%llu, t)\n",
                     snref.text, snt.text, n, s, snt.text,
-                    nsc, snref.text, llu(member->id) - 1);
+                    nsc, llu(member->id) - 1);
                 fprintf(out->fp,
                     "static inline %sgeneric_table_t %s_%.*s(%s_table_t t)\n"
                     "__%stable_field(%sgeneric_table_t, %llu, t, %u)\n",
                     nsc, snt.text, n, s, snt.text,
                     nsc, nsc, llu(member->id), r);
                     break;
+#endif
             default:
                 gen_panic(out, "internal error: unexpected compound type in table during code generation");
                 break;
