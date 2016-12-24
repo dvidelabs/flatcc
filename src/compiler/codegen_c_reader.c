@@ -1307,18 +1307,18 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 break;
             case vt_int:
                 fprintf(out->fp,
-                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %llu)\n",
-                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, llu(member->value.u));
+                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %lld)\n",
+                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, lld(member->value.i));
                 break;
             case vt_bool:
                 fprintf(out->fp,
-                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %llu)\n",
-                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, llu(member->value.u));
+                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %u)\n",
+                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, member->value.b);
                 break;
             case vt_float:
                 fprintf(out->fp,
-                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %llu)\n",
-                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, llu(member->value.u));
+                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %lf)\n",
+                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, member->value.f);
                 break;
             default:
                 gen_panic(out, "internal error: unexpected scalar table default value");
