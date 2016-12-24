@@ -10,6 +10,8 @@
 - Add support for scan similar to find in reader API, but for O(N)
   unsorted search, or search by a secondary key, and in sub-ranges.
 - Optionally, and by default, allow scan by any field (#29), not just keys.
+- More compact code generation for reader (hiding scan methods).
+- Use __flatbuffers_utype_t for union type in reader instead of uint8_t.
 - Add unaligned write to punaligned for completeness.
 
 
