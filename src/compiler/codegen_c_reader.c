@@ -529,10 +529,12 @@ static void gen_helpers(fb_output_t *out)
             "__%sdefine_scalar_vec_len(N)\\\n"
             "__%sdefine_scalar_vec_at(N, T)\\\n"
             "__%sdefine_scalar_find(N, T)\\\n"
-            "__%sdefine_scalar_scan(N, T)\\\n",
+            "__%sdefine_scalar_scan(N, T)",
             nsc, nsc, nsc, nsc, nsc);
     if (out->opts->cgen_sort) {
         fprintf(out->fp, "\\\n__%sdefine_scalar_sort(N, T)\n", nsc);
+    } else {
+        fprintf(out->fp, "\n");
     }
     fprintf(out->fp, "\n");
     /* Elaborate on the included basic type system. */
