@@ -57,12 +57,12 @@
 
 /* Guarded to allow inclusion of pstdint.h first, if stdint.h is not supported. */
 #ifndef UINT8_MAX
-#include <stdint.h> // uint64_t etc.
+#include <stdint.h> /* uint64_t etc. */
 #endif
-#include <assert.h> // assert
+#include <assert.h> /* assert */
 
 #ifdef _MSC_VER
-#pragma warning(disable : 4204) // nonstandard extension used : non-constant aggregate initializer
+#pragma warning(disable : 4204) /* nonstandard extension used : non-constant aggregate initializer */
 #endif
 
 #define GRISU3_D64_SIGN             0x8000000000000000ULL
@@ -73,7 +73,7 @@
 #define GRISU3_D64_EXP_BIAS         1075
 #define GRISU3_D64_DENORM_EXP       (-GRISU3_D64_EXP_BIAS + 1)
 #define GRISU3_DIY_FP_FRACT_SIZE    64
-#define GRISU3_D_1_LOG2_10          0.30102999566398114 // 1 / lg(10)
+#define GRISU3_D_1_LOG2_10          0.30102999566398114 /* 1 / lg(10) */
 #define GRISU3_MIN_TARGET_EXP       -60
 #define GRISU3_MASK32               0xFFFFFFFFULL
 #define GRISU3_MIN_CACHED_EXP       -348
@@ -245,7 +245,7 @@ static grisu3_diy_fp_t grisu3_diy_fp_multiply(grisu3_diy_fp_t x, grisu3_diy_fp_t
     ac = a*c; bc = b*c;
     ad = a*d; bd = b*d;
     tmp = (bd >> 32) + (ad & GRISU3_MASK32) + (bc & GRISU3_MASK32);
-    tmp += 1U << 31; // round
+    tmp += 1U << 31; /* round */
     r.f = ac + (ad >> 32) + (bc >> 32) + (tmp >> 32);
     r.e = x.e + y.e + 64;
     return r;
@@ -298,13 +298,13 @@ static double grisu3_cast_double_from_diy_fp(grisu3_diy_fp_t n)
     return grisu3_cast_double_from_uint64((v.f & frac_mask) | (e_biased << exp_pos));
 }
 
-// pow10_cache[i] = 10^(i-1)
+/* pow10_cache[i] = 10^(i-1) */
 static const unsigned int grisu3_pow10_cache[] = { 0, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
 
 static int grisu3_largest_pow10(uint32_t n, int n_bits, uint32_t *power)
 {
     int guess = ((n_bits + 1) * 1233 >> 12) + 1/*skip first entry*/;
-    if (n < grisu3_pow10_cache[guess]) --guess; // We don't have any guarantees that 2^n_bits <= n.
+    if (n < grisu3_pow10_cache[guess]) --guess; /* We don't have any guarantees that 2^n_bits <= n. */
     *power = grisu3_pow10_cache[guess];
     return guess;
 }
