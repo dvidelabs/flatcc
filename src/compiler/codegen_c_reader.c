@@ -722,6 +722,12 @@ static void gen_pretext(fb_output_t *out)
             nscup, nsc);
     fb_gen_c_includes(out, "_reader.h", "_READER_H");
 
+    /*
+     * Must be in included in every file using static_assert to ensure
+     * static_assert_scope.h counter can avoid conflicts.
+     */
+    fprintf(out->fp,
+                "#include \"flatcc/flatcc_flatbuffers.h\"\n");
     if (!do_pad) {
         fprintf(out->fp,
                 "#ifndef alignas\n"

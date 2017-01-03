@@ -6,6 +6,7 @@
 #ifndef FLATBUFFERS_COMMON_READER_H
 #include "flatbuffers_common_reader.h"
 #endif
+#include "flatcc/flatcc_flatbuffers.h"
 #ifndef alignas
 #include <stdalign.h>
 #endif

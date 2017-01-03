@@ -15,6 +15,7 @@
 - Add unaligned write to punaligned for completeness.
 - Promote use of `flatcc_builder_finalize_aligned_buffer` in doc and
   samples over `flatcc_builder_finalize_buffer`.
+- Add scope counter to pstatic_assert.h to avoid line number conflicts.
 
 ## [0.4.0]
 - Fix Windows detection in flatcc/support/elapsed.h used by benchmark.
