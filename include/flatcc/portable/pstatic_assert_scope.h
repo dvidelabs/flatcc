@@ -1,7 +1,6 @@
 /*
  * january, 2017, ported to portable library by mikkelfj.
- * Based on dbgtools static assert counter, but with renamed macros and
- * added __COUNTER__ guard.
+ * Based on dbgtools static assert counter, but with renamed macros.
  */
 
 /*
@@ -52,7 +51,6 @@
  * int d = __PSTATIC_ASSERT_COUNTER; // 3
  */
 
-#ifndef __COUNTER__
 #ifndef __PSTATIC_ASSERT_COUNTER
 #  define __PSTATIC_ASSERT_COUNTER_0 0
 #  define __PSTATIC_ASSERT_COUNTER_1
@@ -280,4 +278,3 @@
 #define __PSTATIC_ASSERT_COUNTER_JOIN_DIGITS_MACRO(digit0,digit1,digit2,digit3) __PSTATIC_ASSERT_COUNTER_JOIN_DIGITS_MACRO_(digit0,digit1,digit2,digit3)
 #undef  __PSTATIC_ASSERT_COUNTER
 #define __PSTATIC_ASSERT_COUNTER __PSTATIC_ASSERT_COUNTER_JOIN_DIGITS_MACRO(__PSTATIC_ASSERT_COUNTER_3,__PSTATIC_ASSERT_COUNTER_2,__PSTATIC_ASSERT_COUNTER_1,__PSTATIC_ASSERT_COUNTER_0)
-#endif /* __COUNTER__ */

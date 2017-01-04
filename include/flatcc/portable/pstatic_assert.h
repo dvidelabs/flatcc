@@ -1,8 +1,3 @@
-/* Outside include guard. */
-#ifndef __COUNTER__
-#include "pstatic_assert_scope.h"
-#endif
-
 #ifndef PSTATIC_ASSERT_H
 #define PSTATIC_ASSERT_H
 
@@ -25,6 +20,7 @@
 #ifdef __COUNTER__
 #define static_assert(e, msg) enum { __PSTATIC_ASSERT_CONCAT(__COUNTER__, __LINE__) = 1/(!!(e)) }
 #else
+#include "pstatic_assert_scope.h"
 #define static_assert(e, msg) enum { __PSTATIC_ASSERT_CONCAT(__PSTATIC_ASSERT_COUNTER, __LINE__) = 1/(!!(e)) }
 #endif
 
@@ -32,3 +28,8 @@
 #endif /* static_assert */
 
 #endif /* PSTATIC_ASSERT_H */
+
+/* Update scope counter outside of include guard. */
+#ifdef __PSTATIC_ASSERT_COUNTER
+#include "pstatic_assert_scope.h"
+#endif
