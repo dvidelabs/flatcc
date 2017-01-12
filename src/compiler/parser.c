@@ -1059,11 +1059,6 @@ static void parse_schema_decl(fb_parser_t *P)
         error_tok_as_string(P, P->token, "unexpected control character in schema definition", "?", 1);
         break;
     case LEX_TOK_COMMENT_CTRL:
-        if (lex_isblank(P->token->text[0])) {
-            /* This also strips tabs in doc comments. */
-            next(P);
-            break;
-        }
         error_tok_as_string(P, P->token, "unexpected control character in comment", "?", 1);
         break;
     case LEX_TOK_COMMENT_UNTERMINATED:
@@ -1181,8 +1176,14 @@ static void inject_token(fb_token_t *t, const char *lex, long id)
 /* By default emitted as lex_emit_other which would be ignored. */
 #define lex_emit_comment_unterminated(pos)                                  \
     push_token((fb_parser_t*)context, LEX_TOK_COMMENT_UNTERMINATED, pos, pos)
+
 #define lex_emit_comment_ctrl(pos)                                          \
-    push_token((fb_parser_t*)context, LEX_TOK_COMMENT_CTRL, pos, pos + 1)
+    if (lex_isblank(*pos)) {                                                \
+        push_comment((fb_parser_t*)context, pos, pos + 1);                  \
+    } else {                                                                \
+        push_token((fb_parser_t*)context, LEX_TOK_COMMENT_CTRL,             \
+                pos, pos + 1);                                              \
+    }
 
 /*
  * Provide hook to lexer for emitting tokens. We can override many
