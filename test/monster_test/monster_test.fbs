@@ -6,6 +6,12 @@ struct InGlobalNamespace {}
 
 namespace MyGame.Example;
 
+enum SUBTYPE:int {
+XREF = -12,
+BIN_ARRAY = -11,
+REGION = -10,
+}
+
 attribute "priority";
 
 enum Color:byte (bit_flags) { Red = 0, Green, Blue = 3, }
