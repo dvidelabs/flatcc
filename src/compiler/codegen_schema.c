@@ -215,7 +215,6 @@ static void export_enums(flatcc_builder_t *B, enum_entry_t *enums, int nenums,
     int i, is_union;
     fb_compound_type_t *ct;
     fb_symbol_t *sym;
-    reflection_Enum_ref_t *vec;
 
     reflection_Schema_enums_start(B);
     for (i = 0; i < nenums; ++i) {
