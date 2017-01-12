@@ -7,10 +7,24 @@ struct InGlobalNamespace {}
 namespace MyGame.Example;
 
 // test case for negative enum values
-enum negative_enum:int {
+enum neg_enum:int {
   neg1 = -12,
   neg2 = -11,
   neg3 = -10,
+}
+
+enum int_enum:int {
+    intneg = -02,
+    intneg2 = -1,
+    int1 = 02,
+    int2 = 42,
+}
+
+// test for hex constants
+enum hex_enum:int {
+    hexneg = -0x02,
+    hex1 = 0x3,
+    hex2 = 0x7eafbeaf,
 }
 
 attribute "priority";

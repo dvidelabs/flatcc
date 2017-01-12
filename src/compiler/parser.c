@@ -146,9 +146,10 @@ void error_ref_sym(fb_parser_t *P, fb_ref_t *ref, const char *msg, fb_symbol_t *
  * use C string escapes but control characters must be detected.
  */
 #define LEX_C_STRING
+
 /* Hex and octal notation not allowed in flatbuffer schema. Scientific
  * notation is supported, and the lexer handles this by default. */
-//#define LEX_C_NUMERIC
+#define LEX_HEX_NUMERIC
 
 #define lex_isblank(c) ((c) == ' ' || (c) == '\t')
 
@@ -449,6 +450,30 @@ static void read_integer_value(fb_parser_t *P, fb_token_t *t, fb_value_t *v, int
     }
 }
 
+static void read_hex_value(fb_parser_t *P, fb_token_t *t, fb_value_t *v, int sign)
+{
+    int status;
+
+    v->type = vt_uint;
+    /* The token does not store the sign internally. */
+    parse_hex_integer(t->text, t->len, &v->u, &status);
+    if (status != PARSE_INTEGER_UNSIGNED) {
+        v->type = vt_invalid;
+        error_tok(P, t, "invalid hex integer format");
+    }
+    if (sign) {
+        v->i = -(int64_t)v->u;
+        v->type = vt_int;
+#ifdef FLATCC_FAIL_ON_INT_SIGN_OVERFLOW
+        /* Sometimes we might want this, so don't fail by default. */
+        if (v->i > 0) {
+            v->type = vt_invalid;
+            error_tok(P, t, "sign overflow in hex integer format");
+        }
+#endif
+    }
+}
+
 static void read_float_value(fb_parser_t *P, fb_token_t *t, fb_value_t *v, int sign)
 {
     char *end;
@@ -562,6 +587,9 @@ static void parse_value(fb_parser_t *P, fb_value_t *v, int flags, const char *er
     t = P->token;
 
     switch (t->id) {
+    case LEX_TOK_HEX:
+        read_hex_value(P, t, v, sign != 0);
+        break;
     case LEX_TOK_INT:
         read_integer_value(P, t, v, sign != 0);
         break;
