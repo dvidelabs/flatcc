@@ -218,11 +218,10 @@ static void export_enums(flatcc_builder_t *B, enum_entry_t *enums, int nenums,
     reflection_Enum_ref_t *vec;
 
     reflection_Schema_enums_start(B);
-    vec = reflection_Schema_enums_extend(B, nenums);
     for (i = 0; i < nenums; ++i) {
         ct = enums[i].ct;
         is_union = ct->symbol.kind == fb_is_union;
-        reflection_Enum_start(B);
+        reflection_Enum_vec_push_start(B);
         reflection_Enum_name_create_str(B, enums[i].name);
         reflection_Enum_values_start(B);
         for (sym = ct->members; sym; sym = sym->link) {
@@ -231,7 +230,7 @@ static void export_enums(flatcc_builder_t *B, enum_entry_t *enums, int nenums,
         reflection_Enum_values_end(B);
         reflection_Enum_is_union_add(B, is_union);
         reflection_Enum_underlying_type_add(B, export_type(B, ct->type));
-        vec[i] = reflection_Enum_end(B);
+        reflection_Enum_vec_push_end(B);
     }
     reflection_Schema_enums_end(B);
 }
