@@ -115,6 +115,88 @@ static const char *parse_integer(const char *buf, int len, uint64_t *value, int 
     return buf;
 }
 
+/*
+ * Parse hex values like 0xff, -0xff, 0XdeAdBeaf42, cannot be trailed by '.', 'p', or 'P'.
+ * Overflows if string is more than 16 valid hex digits. Otherwise similar to parse_integer.
+ */
+static const char *parse_hex_integer(const char *buf, int len, uint64_t *value, int *status)
+{
+    uint64_t x = 0;
+    const char *k, *k2, *end = buf + len;
+    int sign, status_;
+    unsigned char c;
+
+    if (!status) {
+        status = &status_;
+    }
+    if (buf == end) {
+        *status = PARSE_INTEGER_END;
+        return buf;
+    }
+    sign = *buf == '-';
+    buf += sign;
+    if (end - buf < 2 || buf[0] != '0' || (buf[1] | 0x20) != 'x') {
+        *status = PARSE_INTEGER_UNMATCHED;
+        return buf - sign;
+    }
+    buf += 2;
+    k = buf;
+    k2 = end;
+    if (end - buf > 16) {
+        k2 = buf + 16;
+    }
+    while (buf != k2) {
+        c = *buf;
+        if (c >= '0' && c <= '9') {
+            x = x * 16 + c - '0';
+        } else {
+            /* Lower case. */
+            c |= 0x20;
+            if (c >= 'a' && c <= 'f') {
+                x = x * 16 + c - 'a' + 10;
+            } else {
+                break;
+            }
+        }
+        ++buf;
+    }
+    if (buf == k) {
+        if (sign) {
+            *status = PARSE_INTEGER_INVALID;
+            return 0;
+        } else {
+            /* No number was matched, but it isn't an invalid number either. */
+            *status = PARSE_INTEGER_UNMATCHED;
+            return buf;
+        }
+    }
+    if (buf == end) {
+        goto done;
+    }
+    c = *buf;
+    if (buf == k2) {
+        if (c >= '0' && c <= '9') {
+            *status = sign ? PARSE_INTEGER_UNDERFLOW : PARSE_INTEGER_OVERFLOW;
+            return 0;
+        }
+        c |= 0x20;
+        if (c >= 'a' && c <= 'f') {
+            *status = sign ? PARSE_INTEGER_UNDERFLOW : PARSE_INTEGER_OVERFLOW;
+            return 0;
+        }
+    }
+    switch (c) {
+    case '.': case 'p': case 'P':
+        *status = PARSE_INTEGER_INVALID;
+        return 0;
+    }
+done:
+    *value = x;
+    *status = sign;
+    return buf;
+}
+
+
 #define __portable_define_parse_unsigned(NAME, TYPE, LIMIT)                 \
 static inline const char *parse_ ## NAME                                    \
         (const char *buf, int len, TYPE *value, int *status)                \
@@ -126,6 +208,33 @@ static inline const char *parse_ ## NAME                                    \
         status = &status_;                                                  \
     }                                                                       \
     buf = parse_integer(buf, len, &x, status);                              \
+    switch (*status) {                                                      \
+    case PARSE_INTEGER_UNSIGNED:                                            \
+        if (x <= LIMIT) {                                                   \
+            *value = (TYPE)x;                                               \
+            return buf;                                                     \
+        }                                                                   \
+        *status = PARSE_INTEGER_OVERFLOW;                                   \
+        return 0;                                                           \
+    case PARSE_INTEGER_SIGNED:                                              \
+        *status = PARSE_INTEGER_UNDERFLOW;                                  \
+        return 0;                                                           \
+    default:                                                                \
+        return buf;                                                         \
+    }                                                                       \
+}
+
+#define __portable_define_parse_hex_unsigned(NAME, TYPE, LIMIT)             \
+static inline const char *parse_hex_ ## NAME                                \
+        (const char *buf, int len, TYPE *value, int *status)                \
+{                                                                           \
+    int status_ = 0;                                                        \
+    uint64_t x;                                                             \
+                                                                            \
+    if (!status) {                                                          \
+        status = &status_;                                                  \
+    }                                                                       \
+    buf = parse_hex_integer(buf, len, &x, status);                          \
     switch (*status) {                                                      \
     case PARSE_INTEGER_UNSIGNED:                                            \
         if (x <= LIMIT) {                                                   \
@@ -174,9 +283,51 @@ static inline const char *parse_ ## NAME                                    \
     }                                                                       \
 }
 
+/* This assumes two's complement. */
+#define __portable_define_parse_hex_signed(NAME, TYPE, LIMIT)               \
+static inline const char *parse_hex_ ## NAME                                \
+        (const char *buf, int len, TYPE *value, int *status)                \
+{                                                                           \
+    int status_ = 0;                                                        \
+    uint64_t x;                                                             \
+                                                                            \
+    if (!status) {                                                          \
+        status = &status_;                                                  \
+    }                                                                       \
+    buf = parse_hex_integer(buf, len, &x, status);                          \
+    switch (*status) {                                                      \
+    case PARSE_INTEGER_UNSIGNED:                                            \
+        if (x <= LIMIT) {                                                   \
+            *value = (TYPE)x;                                               \
+            return buf;                                                     \
+        }                                                                   \
+        *status = PARSE_INTEGER_OVERFLOW;                                   \
+        return 0;                                                           \
+    case PARSE_INTEGER_SIGNED:                                              \
+        if (x <= (uint64_t)(LIMIT) + 1) {                                   \
+            *value = (TYPE)-(int64_t)x;                                     \
+            return buf;                                                     \
+        }                                                                   \
+        *status = PARSE_INTEGER_UNDERFLOW;                                  \
+        return 0;                                                           \
+    default:                                                                \
+        return buf;                                                         \
+    }                                                                       \
+}
+
 static inline const char *parse_uint64(const char *buf, int len, uint64_t *value, int *status)
 {
     buf = parse_integer(buf, len, value, status);
+    if (*status == PARSE_INTEGER_SIGNED) {
+        *status = PARSE_INTEGER_UNDERFLOW;
+        return 0;
+    }
+    return buf;
+}
+
+static inline const char *parse_hex_uint64(const char *buf, int len, uint64_t *value, int *status)
+{
+    buf = parse_hex_integer(buf, len, value, status);
     if (*status == PARSE_INTEGER_SIGNED) {
         *status = PARSE_INTEGER_UNDERFLOW;
         return 0;
@@ -191,11 +342,25 @@ __portable_define_parse_signed(int16, int16_t, INT16_MAX)
 __portable_define_parse_unsigned(uint8, uint8_t, UINT8_MAX)
 __portable_define_parse_signed(int8, int8_t, INT8_MAX)
 
+__portable_define_parse_hex_signed(int64, int64_t, INT64_MAX)
+__portable_define_parse_hex_signed(int32, int32_t, INT32_MAX)
+__portable_define_parse_hex_unsigned(uint16, uint16_t, UINT16_MAX)
+__portable_define_parse_hex_signed(int16, int16_t, INT16_MAX)
+__portable_define_parse_hex_unsigned(uint8, uint8_t, UINT8_MAX)
+__portable_define_parse_hex_signed(int8, int8_t, INT8_MAX)
+
 __portable_define_parse_unsigned(ushort, unsigned short, USHRT_MAX)
 __portable_define_parse_signed(short, short, SHRT_MAX)
 __portable_define_parse_unsigned(uint, unsigned int, UINT_MAX)
 __portable_define_parse_signed(int, int, INT_MAX)
 __portable_define_parse_unsigned(ulong, unsigned long, ULONG_MAX)
 __portable_define_parse_signed(long, unsigned long, LONG_MAX)
+
+__portable_define_parse_hex_unsigned(ushort, unsigned short, USHRT_MAX)
+__portable_define_parse_hex_signed(short, short, SHRT_MAX)
+__portable_define_parse_hex_unsigned(uint, unsigned int, UINT_MAX)
+__portable_define_parse_hex_signed(int, int, INT_MAX)
+__portable_define_parse_hex_unsigned(ulong, unsigned long, ULONG_MAX)
+__portable_define_parse_hex_signed(long, unsigned long, LONG_MAX)
 
 #endif /* PPARSEINT_H */
