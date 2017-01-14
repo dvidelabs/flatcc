@@ -147,8 +147,7 @@ void error_ref_sym(fb_parser_t *P, fb_ref_t *ref, const char *msg, fb_symbol_t *
  */
 #define LEX_C_STRING
 
-/* Hex and octal notation not allowed in flatbuffer schema. Scientific
- * notation is supported, and the lexer handles this by default. */
+/* Accept numbers like -0x42 as integer literals. */
 #define LEX_HEX_NUMERIC
 
 #define lex_isblank(c) ((c) == ' ' || (c) == '\t')
