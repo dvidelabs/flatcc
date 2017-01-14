@@ -989,7 +989,7 @@ static int gen_required_table_fields(fb_output_t *out, fb_compound_type_t *ct)
     if (index > 0) {
         fprintf(out->fp, ", 0 };\n");
     } else {
-        fprintf(out->fp, "0 };\n");
+        fprintf(out->fp, " 0 };\n");
     }
     return index;
 }
