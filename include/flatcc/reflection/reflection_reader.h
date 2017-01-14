@@ -39,23 +39,23 @@ typedef flatbuffers_uoffset_t *reflection_Schema_mutable_vec_t;
 
 typedef int8_t reflection_BaseType_enum_t;
 __flatbuffers_define_integer_type(reflection_BaseType, reflection_BaseType_enum_t, 8)
-#define reflection_BaseType_None ((reflection_BaseType_enum_t)0)
-#define reflection_BaseType_UType ((reflection_BaseType_enum_t)1)
-#define reflection_BaseType_Bool ((reflection_BaseType_enum_t)2)
-#define reflection_BaseType_Byte ((reflection_BaseType_enum_t)3)
-#define reflection_BaseType_UByte ((reflection_BaseType_enum_t)4)
-#define reflection_BaseType_Short ((reflection_BaseType_enum_t)5)
-#define reflection_BaseType_UShort ((reflection_BaseType_enum_t)6)
-#define reflection_BaseType_Int ((reflection_BaseType_enum_t)7)
-#define reflection_BaseType_UInt ((reflection_BaseType_enum_t)8)
-#define reflection_BaseType_Long ((reflection_BaseType_enum_t)9)
-#define reflection_BaseType_ULong ((reflection_BaseType_enum_t)10)
-#define reflection_BaseType_Float ((reflection_BaseType_enum_t)11)
-#define reflection_BaseType_Double ((reflection_BaseType_enum_t)12)
-#define reflection_BaseType_String ((reflection_BaseType_enum_t)13)
-#define reflection_BaseType_Vector ((reflection_BaseType_enum_t)14)
-#define reflection_BaseType_Obj ((reflection_BaseType_enum_t)15)
-#define reflection_BaseType_Union ((reflection_BaseType_enum_t)16)
+#define reflection_BaseType_None ((reflection_BaseType_enum_t)INT8_C(0))
+#define reflection_BaseType_UType ((reflection_BaseType_enum_t)INT8_C(1))
+#define reflection_BaseType_Bool ((reflection_BaseType_enum_t)INT8_C(2))
+#define reflection_BaseType_Byte ((reflection_BaseType_enum_t)INT8_C(3))
+#define reflection_BaseType_UByte ((reflection_BaseType_enum_t)INT8_C(4))
+#define reflection_BaseType_Short ((reflection_BaseType_enum_t)INT8_C(5))
+#define reflection_BaseType_UShort ((reflection_BaseType_enum_t)INT8_C(6))
+#define reflection_BaseType_Int ((reflection_BaseType_enum_t)INT8_C(7))
+#define reflection_BaseType_UInt ((reflection_BaseType_enum_t)INT8_C(8))
+#define reflection_BaseType_Long ((reflection_BaseType_enum_t)INT8_C(9))
+#define reflection_BaseType_ULong ((reflection_BaseType_enum_t)INT8_C(10))
+#define reflection_BaseType_Float ((reflection_BaseType_enum_t)INT8_C(11))
+#define reflection_BaseType_Double ((reflection_BaseType_enum_t)INT8_C(12))
+#define reflection_BaseType_String ((reflection_BaseType_enum_t)INT8_C(13))
+#define reflection_BaseType_Vector ((reflection_BaseType_enum_t)INT8_C(14))
+#define reflection_BaseType_Obj ((reflection_BaseType_enum_t)INT8_C(15))
+#define reflection_BaseType_Union ((reflection_BaseType_enum_t)INT8_C(16))
 
 static inline const char *reflection_BaseType_name(reflection_BaseType_enum_t value)
 {
@@ -96,9 +96,9 @@ static inline reflection_Type_table_t reflection_Type_vec_at(reflection_Type_vec
 __flatbuffers_offset_vec_at(reflection_Type_table_t, vec, i, 0)
 __flatbuffers_table_as_root(reflection_Type)
 
-__flatbuffers_define_scalar_field(0, reflection_Type, base_type, reflection_BaseType, reflection_BaseType_enum_t, 0)
-__flatbuffers_define_scalar_field(1, reflection_Type, element, reflection_BaseType, reflection_BaseType_enum_t, 0)
-__flatbuffers_define_scalar_field(2, reflection_Type, index, flatbuffers_int32, int32_t, -1)
+__flatbuffers_define_scalar_field(0, reflection_Type, base_type, reflection_BaseType, reflection_BaseType_enum_t, (0))
+__flatbuffers_define_scalar_field(1, reflection_Type, element, reflection_BaseType, reflection_BaseType_enum_t, (0))
+__flatbuffers_define_scalar_field(2, reflection_Type, index, flatbuffers_int32, int32_t, INT32_C(-1))
 
 struct reflection_EnumVal_table { uint8_t unused__; };
 
@@ -114,7 +114,7 @@ __flatbuffers_offset_vec_at(reflection_EnumVal_table_t, vec, i, 0)
 __flatbuffers_table_as_root(reflection_EnumVal)
 
 __flatbuffers_define_string_field(0, reflection_EnumVal, name, 1)
-__flatbuffers_define_scalar_field(1, reflection_EnumVal, value, flatbuffers_int64, int64_t, 0)
+__flatbuffers_define_scalar_field(1, reflection_EnumVal, value, flatbuffers_int64, int64_t, INT64_C(0))
 /* Note: find only works on vectors sorted by this field. */
 __flatbuffers_define_find_by_scalar_field(reflection_EnumVal, value, int64_t)
 __flatbuffers_define_sort_by_scalar_field(reflection_EnumVal, value, int64_t, flatbuffers_uoffset_t)
@@ -143,7 +143,7 @@ __flatbuffers_define_default_find_by_string_field(reflection_Enum, name)
 __flatbuffers_define_default_scan_by_string_field(reflection_Enum, name)
 #define reflection_Enum_vec_sort reflection_Enum_vec_sort_by_name
 __flatbuffers_define_vector_field(1, reflection_Enum, values, reflection_EnumVal_vec_t, 1)
-__flatbuffers_define_scalar_field(2, reflection_Enum, is_union, flatbuffers_bool, flatbuffers_bool_t, 0)
+__flatbuffers_define_scalar_field(2, reflection_Enum, is_union, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 __flatbuffers_define_table_field(3, reflection_Enum, underlying_type, reflection_Type_table_t, 1)
 
 struct reflection_Field_table { uint8_t unused__; };
@@ -166,13 +166,13 @@ __flatbuffers_define_default_find_by_string_field(reflection_Field, name)
 __flatbuffers_define_default_scan_by_string_field(reflection_Field, name)
 #define reflection_Field_vec_sort reflection_Field_vec_sort_by_name
 __flatbuffers_define_table_field(1, reflection_Field, type, reflection_Type_table_t, 1)
-__flatbuffers_define_scalar_field(2, reflection_Field, id, flatbuffers_uint16, uint16_t, 0)
-__flatbuffers_define_scalar_field(3, reflection_Field, offset, flatbuffers_uint16, uint16_t, 0)
-__flatbuffers_define_scalar_field(4, reflection_Field, default_integer, flatbuffers_int64, int64_t, 0)
+__flatbuffers_define_scalar_field(2, reflection_Field, id, flatbuffers_uint16, uint16_t, UINT16_C(0))
+__flatbuffers_define_scalar_field(3, reflection_Field, offset, flatbuffers_uint16, uint16_t, UINT16_C(0))
+__flatbuffers_define_scalar_field(4, reflection_Field, default_integer, flatbuffers_int64, int64_t, INT64_C(0))
 __flatbuffers_define_scalar_field(5, reflection_Field, default_real, flatbuffers_double, double, 0.000000)
-__flatbuffers_define_scalar_field(6, reflection_Field, deprecated, flatbuffers_bool, flatbuffers_bool_t, 0)
-__flatbuffers_define_scalar_field(7, reflection_Field, required, flatbuffers_bool, flatbuffers_bool_t, 0)
-__flatbuffers_define_scalar_field(8, reflection_Field, key, flatbuffers_bool, flatbuffers_bool_t, 0)
+__flatbuffers_define_scalar_field(6, reflection_Field, deprecated, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+__flatbuffers_define_scalar_field(7, reflection_Field, required, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+__flatbuffers_define_scalar_field(8, reflection_Field, key, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 
 struct reflection_Object_table { uint8_t unused__; };
 
@@ -194,9 +194,9 @@ __flatbuffers_define_default_find_by_string_field(reflection_Object, name)
 __flatbuffers_define_default_scan_by_string_field(reflection_Object, name)
 #define reflection_Object_vec_sort reflection_Object_vec_sort_by_name
 __flatbuffers_define_vector_field(1, reflection_Object, fields, reflection_Field_vec_t, 1)
-__flatbuffers_define_scalar_field(2, reflection_Object, is_struct, flatbuffers_bool, flatbuffers_bool_t, 0)
-__flatbuffers_define_scalar_field(3, reflection_Object, minalign, flatbuffers_int32, int32_t, 0)
-__flatbuffers_define_scalar_field(4, reflection_Object, bytesize, flatbuffers_int32, int32_t, 0)
+__flatbuffers_define_scalar_field(2, reflection_Object, is_struct, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+__flatbuffers_define_scalar_field(3, reflection_Object, minalign, flatbuffers_int32, int32_t, INT32_C(0))
+__flatbuffers_define_scalar_field(4, reflection_Object, bytesize, flatbuffers_int32, int32_t, INT32_C(0))
 
 struct reflection_Schema_table { uint8_t unused__; };
 

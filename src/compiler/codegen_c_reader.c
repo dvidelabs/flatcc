@@ -5,10 +5,6 @@
 #include "codegen_c.h"
 #include "codegen_c_sort.h"
 
-#define llu(x) (long long unsigned int)(x)
-#define lld(x) (long long int)(x)
-
-
 /*
  * Use of file identifiers for undeclared roots is fuzzy, but we need an
  * identifer for all, so we use the one defined for the current schema
@@ -1111,7 +1107,8 @@ static void gen_enum(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_member_t *member;
     fb_symbol_t *sym;
-    const char *tname, *tname_ns, *suffix, *s, *kind;
+    const char *tname, *tname_ns, *s, *kind;
+    fb_literal_t literal;
     int n, w;
     int is_union;
     fb_scoped_name_t snt;
@@ -1124,7 +1121,6 @@ static void gen_enum(fb_output_t *out, fb_compound_type_t *ct)
 
     tname_ns = scalar_type_ns(ct->type.st, nsc);
     tname = scalar_type_name(ct->type.st);
-    suffix = scalar_suffix(ct->type.st);
 
     w = (int)ct->size * 8;
 
@@ -1142,30 +1138,14 @@ static void gen_enum(fb_output_t *out, fb_compound_type_t *ct)
         member = (fb_member_t *)sym;
         print_doc(out, "", member->doc);
         symbol_name(&member->symbol, &n, &s);
+        print_literal(ct->type.st, &member->value, literal);
         /*
          * This must be a define, not a static const integer, otherwise it
          * won't work in switch statements - except with GNU extensions.
          */
-        switch (member->value.type) {
-        case vt_uint:
-            fprintf(out->fp,
-                    "#define %s_%.*s ((%s_%s_t)%llu%s)\n",
-                    snt.text, n, s, snt.text, kind, llu(member->value.u), suffix);
-            break;
-        case vt_int:
-            fprintf(out->fp,
-                    "#define %s_%.*s ((%s_%s_t)%lld%s)\n",
-                    snt.text, n, s, snt.text, kind, lld(member->value.i), suffix);
-            break;
-        case vt_bool:
-            fprintf(out->fp,
-                    "#define %s_%.*s ((%s_%s_t)%u)\n",
-                    snt.text, n, s, snt.text, kind, member->value.b);
-            break;
-        default:
-            gen_panic(out, "internal error: unexpected value type in enum");
-            break;
-        }
+        fprintf(out->fp,
+                "#define %s_%.*s ((%s_%s_t)%s)\n",
+                snt.text, n, s, snt.text, kind, literal);
     }
     fprintf(out->fp, "\n");
 
@@ -1252,6 +1232,7 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
     fb_scoped_name_t snt;
     fb_scoped_name_t snref;
     uint64_t present_id;
+    fb_literal_t literal;
 
     assert(ct->symbol.kind == fb_is_table);
 
@@ -1307,31 +1288,10 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             tname_ns = scalar_type_ns(member->type.st, nsc);
             tname = scalar_type_name(member->type.st);
             tname_prefix = scalar_type_prefix(member->type.st);
-            switch (member->value.type) {
-            case vt_uint:
-                fprintf(out->fp,
-                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %llu)\n",
-                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, llu(member->value.u));
-                break;
-            case vt_int:
-                fprintf(out->fp,
-                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %lld)\n",
-                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, lld(member->value.i));
-                break;
-            case vt_bool:
-                fprintf(out->fp,
-                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %u)\n",
-                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, member->value.b);
-                break;
-            case vt_float:
-                fprintf(out->fp,
-                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %lf)\n",
-                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, member->value.f);
-                break;
-            default:
-                gen_panic(out, "internal error: unexpected scalar table default value");
-                continue;
-            }
+            print_literal(member->type.st, &member->value, literal);
+            fprintf(out->fp,
+                "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %s)\n",
+                nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, literal);
             if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                 fprintf(out->fp,
                         "__%sdefine_scan_by_scalar_field(%s, %.*s, %s%s)\n",
@@ -1435,26 +1395,10 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                     nsc, llu(member->id), snt.text, n, s, snref.text, r);
                 break;
             case fb_is_enum:
-                switch (member->value.type) {
-                case vt_uint:
-                    fprintf(out->fp,
-                        "__%sdefine_scalar_field(%llu, %s, %.*s, %s, %s_enum_t, %llu)\n",
-                        nsc, llu(member->id), snt.text, n, s, snref.text, snref.text, llu(member->value.u));
-                    break;
-                case vt_int:
-                    fprintf(out->fp,
-                        "__%sdefine_scalar_field(%llu, %s, %.*s, %s, %s_enum_t, %lld)\n",
-                        nsc, llu(member->id), snt.text, n, s, snref.text, snref.text, lld(member->value.i));
-                    break;
-                case vt_bool:
-                    fprintf(out->fp,
-                        "__%sdefine_scalar_field(%llu, %s, %.*s, %s, %s_enum_t, %u)\n",
-                        nsc, llu(member->id), snt.text, n, s, snref.text, snref.text, member->value.b);
-                    break;
-                default:
-                    gen_panic(out, "internal error: unexpected enum type referenced by table");
-                    continue;
-                }
+                print_literal(member->type.ct->type.st, &member->value, literal);
+                fprintf(out->fp,
+                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s, %s_enum_t, %s)\n",
+                    nsc, llu(member->id), snt.text, n, s, snref.text, snref.text, literal);
                 if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                     fprintf(out->fp,
                             "__%sdefine_scan_by_scalar_field(%s, %.*s, %s_enum_t)\n",

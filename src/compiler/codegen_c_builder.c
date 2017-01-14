@@ -2,9 +2,6 @@
 
 #include "codegen_c.h"
 
-#define llu(x) (long long unsigned int)(x)
-#define lld(x) (long long int)(x)
-
 int fb_gen_common_c_builder_header(fb_output_t *out)
 {
     const char *nsc = out->nsc;
@@ -1221,6 +1218,7 @@ static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
     int n;
     fb_scoped_name_t snt;
     fb_scoped_name_t snref;
+    fb_literal_t literal;
 
     fb_clear(snt);
     fb_clear(snref);
@@ -1238,35 +1236,11 @@ static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
             tname_ns = scalar_type_ns(member->type.st, nsc);
             tname = scalar_type_name(member->type.st);
             tprefix = scalar_type_prefix(member->type.st);
-            switch (member->value.type) {
-            case vt_uint:
-                fprintf(out->fp,
-                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %llu)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
-                    llu(member->size), member->align, llu(member->value.u));
-                break;
-            case vt_int:
-                fprintf(out->fp,
-                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %lld)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
-                    llu(member->size), member->align, lld(member->value.i));
-                break;
-            case vt_bool:
-                fprintf(out->fp,
-                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %u)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
-                    llu(member->size), member->align, (unsigned)member->value.b);
-                break;
-            case vt_float:
-                fprintf(out->fp,
-                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %.17g)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
-                    llu(member->size), member->align, member->value.f);
-                break;
-            default:
-                gen_panic(out, "internal error: unexpected scalar table default value");
-                continue;
-            }
+            print_literal(member->type.st, &member->value, literal);
+            fprintf(out->fp,
+                "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %s)\n",
+                nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
+                llu(member->size), member->align, literal);
             break;
         case vt_vector_type:
             tname_ns = scalar_type_ns(member->type.st, nsc);
@@ -1319,29 +1293,11 @@ static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
                     nsc, llu(member->id), nsc, snt.text, n, s, snref.text);
                 break;
             case fb_is_enum:
-                switch (member->value.type) {
-                case vt_uint:
-                    fprintf(out->fp,
-                        "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %llu, %u, %llu)\n",
-                        nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text,
-                        llu(member->size), member->align, llu(member->value.u));
-                    break;
-                case vt_int:
-                    fprintf(out->fp,
-                        "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %llu, %u, %lli)\n",
-                        nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text,
-                        llu(member->size), member->align, lld(member->value.i));
-                    break;
-                case vt_bool:
-                    fprintf(out->fp,
-                        "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %llu, %u, %u)\n",
-                        nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text,
-                        llu(member->size), member->align, (unsigned)member->value.b);
-                    break;
-                default:
-                    gen_panic(out, "internal error: unexpected enum type referenced by table");
-                    continue;
-                }
+                print_literal(member->type.ct->type.st, &member->value, literal);
+                fprintf(out->fp,
+                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %llu, %u, %s)\n",
+                    nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text,
+                    llu(member->size), member->align, literal);
                 break;
             case fb_is_union:
                 fprintf(out->fp,

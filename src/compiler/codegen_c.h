@@ -14,6 +14,9 @@
 #define gen_panic(context, msg) fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, msg), assert(0), exit(-1)
 #endif
 
+#define llu(x) (long long unsigned int)(x)
+#define lld(x) (long long int)(x)
+
 static inline void token_name(fb_token_t *t, int *n, const char **s) {
     *n = t->len;
     *s = t->text;
@@ -90,7 +93,7 @@ static inline const char *scalar_type_prefix(fb_scalar_type_t scalar_type)
         tname = "double";
         break;
     default:
-        gen_panic(out, "internal error: unexpected type during code generation");
+        gen_panic(0, "internal error: unexpected type during code generation");
         tname = __FLATCC_ERROR_TYPE;
         break;
     }
@@ -135,7 +138,7 @@ static inline const char *scalar_type_name(fb_scalar_type_t scalar_type)
         tname = "double";
         break;
     default:
-        gen_panic(out, "internal error: unexpected type during code generation");
+        gen_panic(0, "internal error: unexpected type during code generation");
         tname = __FLATCC_ERROR_TYPE;
         break;
     }
@@ -180,11 +183,84 @@ static inline const char *scalar_vector_type_name(fb_scalar_type_t scalar_type)
         tname = "double_vec_t";
         break;
     default:
-        gen_panic(out, "internal error: unexpected type during code generation");
+        gen_panic(0, "internal error: unexpected type during code generation");
         tname = __FLATCC_ERROR_TYPE;
         break;
     }
     return tname;
+}
+
+/* Only for integers. */
+static inline const char *scalar_cast(fb_scalar_type_t scalar_type)
+{
+    const char *cast;
+    switch (scalar_type) {
+    case fb_ulong:
+        cast = "UINT64_C";
+        break;
+    case fb_uint:
+        cast = "UINT32_C";
+        break;
+    case fb_ushort:
+        cast = "UINT16_C";
+        break;
+    case fb_ubyte:
+        cast = "UINT8_C";
+        break;
+    case fb_bool:
+        cast = "UINT8_C";
+        break;
+    case fb_long:
+        cast = "INT64_C";
+        break;
+    case fb_int:
+        cast = "INT32_C";
+        break;
+    case fb_short:
+        cast = "INT16_C";
+        break;
+    case fb_byte:
+        cast = "INT8_C";
+        break;
+    default:
+        gen_panic(0, "internal error: unexpected type during code generation");
+        cast = "";
+        break;
+    }
+    return cast;
+}
+
+typedef char fb_literal_t[100];
+
+static inline size_t print_literal(fb_scalar_type_t scalar_type, const fb_value_t *value, fb_literal_t literal)
+{
+    const char *cast;
+
+    switch (value->type) {
+    case vt_uint:
+        cast = scalar_cast(scalar_type);
+        return sprintf(literal, "%s(%llu)", cast, llu(value->u));
+        break;
+    case vt_int:
+        cast = scalar_cast(scalar_type);
+        return sprintf(literal, "%s(%lld)", cast, lld(value->i));
+        break;
+    case vt_bool:
+        cast = scalar_cast(scalar_type);
+        return sprintf(literal, "%s(%u)", cast, (unsigned)value->b);
+        break;
+    case vt_float:
+        if (scalar_type == fb_float) {
+            return sprintf(literal, "%ff", (float)value->f);
+        } else {
+            return sprintf(literal, "%lf", (double)value->f);
+        }
+        break;
+    default:
+        gen_panic(0, "internal error: unexpected type during code generation");
+        *literal = 0;
+        return 0;
+    }
 }
 
 static inline const char *scalar_suffix(fb_scalar_type_t scalar_type)
@@ -223,7 +299,7 @@ static inline const char *scalar_suffix(fb_scalar_type_t scalar_type)
     case fb_float:
         suffix = "F";
     default:
-        gen_panic(out, "internal error: unexpected type during code generation");
+        gen_panic(0, "internal error: unexpected type during code generation");
         suffix = "";
         break;
     }
