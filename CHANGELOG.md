@@ -16,10 +16,12 @@
 - Promote use of `flatcc_builder_finalize_aligned_buffer` in doc and
   samples over `flatcc_builder_finalize_buffer`.
 - Add scope counter to pstatic_assert.h to avoid line number conflicts.
-- Fix for large numeric constants in json parser (part of #35)
+- Fix compiler error/warning for negative enums in generated JSON parser (#35).
+- Fix potential compiler error/warnings for large enum/defaults in
+  generated reader/builder (#35).
 - Fix tab character in C++ style comments (#34)
 - Fix incorrect api usage in binary schema builder (#32)
-- Support hex constants in fbs schema (flatc also supports these now).
+- Support hex constants in fbs schema (flatc also supports these now) (#33).
 
 
 ## [0.4.0]
