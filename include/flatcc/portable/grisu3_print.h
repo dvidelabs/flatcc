@@ -41,8 +41,8 @@
 #ifndef GRISU3_PRINT_H
 #define GRISU3_PRINT_H
 
-#include <stdio.h> // sprintf
-#include <assert.h> // assert
+#include <stdio.h> /* sprintf */
+#include <assert.h> /* assert */
 
 #include "grisu3_math.h"
 
@@ -109,11 +109,11 @@ static int grisu3_digit_gen(grisu3_diy_fp_t low, grisu3_diy_fp_t w, grisu3_diy_f
         p2 *= 10;
         unit *= 10;
         unsafe_interval.f *= 10;
-        // Integer division by one.
+        /* Integer division by one. */
         digit = (int)(p2 >> -one.e);
         buffer[*length] = (char)('0' + digit);
         ++*length;
-        p2 &= one.f - 1;  // Modulo by one.
+        p2 &= one.f - 1; /* Modulo by one. */
         --*kappa;
         if (p2 < unsafe_interval.f) return grisu3_round_weed(buffer, *length, grisu3_diy_fp_minus(too_high, w).f * unit, unsafe_interval.f, p2, one.f, unit);
     }
@@ -125,14 +125,14 @@ static int grisu3(double v, char *buffer, int *length, int *d_exp)
     grisu3_diy_fp_t dfp = grisu3_cast_diy_fp_from_double(v);
     grisu3_diy_fp_t w = grisu3_diy_fp_normalize(dfp);
 
-    // normalize boundaries
+    /* normalize boundaries */
     grisu3_diy_fp_t t = { (dfp.f << 1) + 1, dfp.e - 1 };
     grisu3_diy_fp_t b_plus = grisu3_diy_fp_normalize(t);
     grisu3_diy_fp_t b_minus;
-    grisu3_diy_fp_t c_mk; // Cached power of ten: 10^-k
+    grisu3_diy_fp_t c_mk; /* Cached power of ten: 10^-k */
     uint64_t u64 = grisu3_cast_uint64_from_double(v);
-    assert(v > 0 && v <= 1.7976931348623157e308); // Grisu only handles strictly positive finite numbers.
-    if (!(u64 & GRISU3_D64_FRACT_MASK) && (u64 & GRISU3_D64_EXP_MASK) != 0) { b_minus.f = (dfp.f << 2) - 1; b_minus.e =  dfp.e - 2;} // lower boundary is closer?
+    assert(v > 0 && v <= 1.7976931348623157e308); /* Grisu only handles strictly positive finite numbers. */
+    if (!(u64 & GRISU3_D64_FRACT_MASK) && (u64 & GRISU3_D64_EXP_MASK) != 0) { b_minus.f = (dfp.f << 2) - 1; b_minus.e =  dfp.e - 2;} /* lower boundary is closer? */
     else { b_minus.f = (dfp.f << 1) - 1; b_minus.e = dfp.e - 1; }
     b_minus.f = b_minus.f << (b_minus.e - b_plus.e);
     b_minus.e = b_plus.e;
@@ -184,53 +184,54 @@ static int grisu3_print_double(double v, char *dst)
     char *s2 = dst;
     assert(dst);
 
-    // Prehandle NaNs
+    /* Prehandle NaNs */
     if ((u64 << 1) > 0xFFE0000000000000ULL) return sprintf(dst, "NaN(%08X%08X)", (uint32_t)(u64 >> 32), (uint32_t)u64);
-    // Prehandle negative values.
+    /* Prehandle negative values. */
     if ((u64 & GRISU3_D64_SIGN) != 0) { *s2++ = '-'; v = -v; u64 ^= GRISU3_D64_SIGN; }
-    // Prehandle zero.
+    /* Prehandle zero. */
     if (!u64) { *s2++ = '0'; *s2 = '\0'; return (int)(s2 - dst); }
-    // Prehandle infinity.
+    /* Prehandle infinity. */
     if (u64 == GRISU3_D64_EXP_MASK) { *s2++ = 'i'; *s2++ = 'n'; *s2++ = 'f'; *s2 = '\0'; return (int)(s2 - dst); }
 
     success = grisu3(v, s2, &len, &d_exp);
-    // If grisu3 was not able to convert the number to a string, then use old sprintf (suboptimal).
+    /* If grisu3 was not able to convert the number to a string, then use old sprintf (suboptimal). */
     if (!success) return sprintf(s2, "%.17g", v) + (int)(s2 - dst);
 
-    // We now have an integer string of form "151324135" and a base-10 exponent for that number.
-    // Next, decide the best presentation for that string by whether to use a decimal point, or the scientific exponent notation 'e'.
-    // We don't pick the absolute shortest representation, but pick a balance between readability and shortness, e.g.
-    // 1.545056189557677e-308 could be represented in a shorter form
-    // 1545056189557677e-323 but that would be somewhat unreadable.
+    /* We now have an integer string of form "151324135" and a base-10 exponent for that number. */
+    /* Next, decide the best presentation for that string by whether to use a decimal point, or the scientific exponent notation 'e'. */
+    /* We don't pick the absolute shortest representation, but pick a balance between readability and shortness, e.g. */
+    /* 1.545056189557677e-308 could be represented in a shorter form */
+    /* 1545056189557677e-323 but that would be somewhat unreadable. */
     decimals = GRISU3_MIN(-d_exp, GRISU3_MAX(1, len-1));
 
-    // mikkelfj:
-    // fix zero prefix .1 => 0.1, important for JSON export.
-    // prefer unscientific notation at same length:
-    // -1.2345e-4 over -1.00012345,
-    // -1.0012345 over -1.2345e-3
+    /* mikkelfj:
+     * fix zero prefix .1 => 0.1, important for JSON export.
+     * prefer unscientific notation at same length:
+     * -1.2345e-4 over -1.00012345,
+     * -1.0012345 over -1.2345e-3
+     */
     if (d_exp < 0 && (len + d_exp) > -3 && len <= -d_exp)
     {
-        // mikkelfj: fix zero prefix .1 => 0.1, and short exponents 1.3e-2 => 0.013.
+        /* mikkelfj: fix zero prefix .1 => 0.1, and short exponents 1.3e-2 => 0.013. */
         memmove(s2 + 2 - d_exp - len, s2, len);
         s2[0] = '0';
         s2[1] = '.';
         for (i = 2; i < 2-d_exp-len; ++i) s2[i] = '0';
         len += i;
     }
-    else if (d_exp < 0 && len > 1) // Add decimal point?
+    else if (d_exp < 0 && len > 1) /* Add decimal point? */
     {
         for(i = 0; i < decimals; ++i) s2[len-i] = s2[len-i-1];
         s2[len++ - decimals] = '.';
         d_exp += decimals;
-        // Need scientific notation as well?
+        /* Need scientific notation as well? */
         if (d_exp != 0) { s2[len++] = 'e'; len += grisu3_i_to_str(d_exp, s2+len); }
     }
-    // Add scientific notation?
+    /* Add scientific notation? */
     else if (d_exp < 0 || d_exp > 2) { s2[len++] = 'e'; len += grisu3_i_to_str(d_exp, s2+len); }
-    // Add zeroes instead of scientific notation?
+    /* Add zeroes instead of scientific notation? */
     else if (d_exp > 0) { while(d_exp-- > 0) s2[len++] = '0'; }
-    s2[len] = '\0'; // grisu3 doesn't null terminate, so ensure termination.
+    s2[len] = '\0'; /* grisu3 doesn't null terminate, so ensure termination. */
     return (int)(s2+len-dst);
 }
 

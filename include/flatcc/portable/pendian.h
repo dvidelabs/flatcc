@@ -57,7 +57,7 @@
 #define bswap16 swap16
 #define bswap32 swap32
 #define bswap64 swap64
-#elif defined(__GNUC__)  // Supported since at least GCC 4.4
+#elif defined(__GNUC__)  /* Supported since at least GCC 4.4 */
 #define bswap32 __builtin_bswap32
 #define bswap64 __builtin_bswap64
 #endif

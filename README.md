@@ -89,7 +89,7 @@ set up a new temporary project using the `scripts/setup.sh` script.
 
 ## Status
 
-Main features supported as of 0.4.0
+Main features supported as of 0.4.1
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -103,9 +103,7 @@ Main features supported as of 0.4.0
 - thorough test cases
 - monster sample project
 - fast build times
-
-New in 0.4.0:
-- support for big endian platforms.
+- support for big endian platforms (as of 0.4.0)
 - support for big endian encoded flatbuffers on both le and be platforms. Enabled on `be` branch.
 - size prefixed buffers - see also `doc/builder.md`
 
@@ -221,14 +219,12 @@ binary.
 
 ## Generated Files
 
-In earlier releases it was attempted to generate all code needed for
-read-only buffer access. Now a library of include files is always
-required (`include/flatcc`) because the original approach lead to
-excessive code duplication. The generated code for building flatbuffers,
-and for parsing and printing flatbuffers, all need to link with the
-runtime library `libflatccrt.a`. The verifier and builder headers depend
-on the reader header. The generated reader only depends on library
-header files.
+The generated code for building flatbuffers,
+and for parsing and printing flatbuffers, all need access to
+`include/flatcc`. The reader does no rely on any library but all other
+generated files rely on the `libflatccrt.a` runtime library. Note that
+`libflatcc.a` is only required if the flatcc compiler itself is required
+as a library.
 
 The reader and builder rely on generated common reader and builder
 header files. These common file makes it possible to change the global
@@ -238,12 +234,9 @@ abstractions and eventually have a set of predefined files for types
 beyond the standard 32-bit unsigned offset (`uoffset_t`). The runtime
 library is specific to one set of type definitions.
 
-Reader code is reasonably straight forward and the generated code is
-more readable than the builder code because the generated functions
-headers are not buried in macros. Refer to `monster_test.c` and the
-generated files for detailed guidance on use. The monster schema used in
-this project is a slight adaptation to the original to test some
-additional edge cases.
+Refer to `monster_test.c` and the generated files for detailed guidance
+on use. The monster schema used in this project is a slight adaptation
+to the original to test some additional edge cases.
 
 For building flatbuffers a separate builder header file is generated per
 schema. It requires a `flatbuffers_common_builder.h` file also generated
@@ -516,7 +509,9 @@ as soon as they complete rather than merging all pages into a single
 buffer using `flatcc_builder_finalize_buffer`, or the simplistic
 `flatcc_builder_get_direct_buffer` which returns null if the buffer is
 too large. See also documentation comments in `flatcc_builder.h` and
-`flatcc_emitter.h`.
+`flatcc_emitter.h`. See also `flatc_builder_finalize_aligned_buffer` in
+`builder.h` and `builder.md` when malloc aligned buffers are
+insufficent.
 
 
     #include "monster_test_builder.h"

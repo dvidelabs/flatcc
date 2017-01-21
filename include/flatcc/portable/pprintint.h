@@ -441,10 +441,12 @@ __define_print_int_simple(print_long, print_ulong, long, unsigned long)
 
 #ifdef PPRINTINT_BENCH
 int main() {
-    int64_t count = 10000000; // 10^7
-    //int64_t base = 0;
-    //int64_t base = 10000000000000000; // 10^16
-    //int64_t base = 1000000000; // 10^9
+    int64_t count = 10000000; /* 10^7 */
+#if 0
+    int64_t base = 0;
+    int64_t base = 10000000000000000; /* 10^16 */
+    int64_t base = 1000000000; /* 10^9 */
+#endif
     int64_t base = INT64_MIN - count/2;
     char buf[100];
     int i, k = 0, n = 0;

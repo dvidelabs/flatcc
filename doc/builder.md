@@ -37,6 +37,12 @@ the emitter and we can use a default finalizer only because we use the
 default emitter - it allocates and populates a linear buffer from a
 paged emitter ring buffer.
 
+Note that in must cases `flatcc_builder_finalize_buffer` is sufficient,
+but to be strictly portable, use
+`flatcc_builder_finalize_aligned_buffer` and `aligned_free`.
+`aligned_free` is often implemented as `free` in `flatcc/portable` but
+not on all platforms.
+
 Generally we use the monster example with various extensions, but to
 show a simple complete example we use a very simple schema (`myschema.fbs`):
 
@@ -57,14 +63,16 @@ show a simple complete example we use a very simple schema (`myschema.fbs`):
         mytable_create_as_root(B, 1, 2);
 
         /* Retrieve buffer - see also `flatcc_builder_get_direct_buffer`. */
-        buffer = flatcc_builder_finalize_buffer(B, &size);
+        /* buffer = flatcc_builder_finalize_buffer(B, &size); */
+        buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
 
         /* This is read-only buffer access. */
         mt = mytable_as_root(buffer);
         assert(mytable_myfield1(mt) == 1);
         assert(mytable_myfield2(mt) == 2);
 
-        free(buffer);
+        /* free(buffer); */
+        aligned_free(buffer);
 
         /*
          * Reset, but keep allocated stack etc.,

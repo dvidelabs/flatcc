@@ -5,11 +5,11 @@
 /*
  * NOTE: MSVC in general has no aligned alloc function that is
  * compatible with free and it is not trivial to implement a version
- * there is. Therefore, to remain portable, end user code needs to
+ * which is. Therefore, to remain portable, end user code needs to
  * use `aligned_free` which is not part of C11 but defined in this header.
  *
- * The same issue may be present on some Unix systems not providing
- * posix_memalign, but we do not currently support this.
+ * The same issue is present on some Unix systems not providing
+ * posix_memalign.
  *
  * For C11 compliant compilers and compilers with posix_memalign,
  * it is valid to use free instead of aligned_free with the above

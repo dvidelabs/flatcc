@@ -94,7 +94,7 @@ int test_parse()
         goto failed;
     }
     fprintf(stderr, "%s: successfully parsed %d lines\n", filename, ctx.line);
-    flatbuffer = flatcc_builder_finalize_buffer(B, &out_size);
+    flatbuffer = flatcc_builder_finalize_aligned_buffer(B, &out_size);
     hexdump("parsed monsterdata_test.golden", flatbuffer, out_size, stdout);
     fprintf(stderr, "input size: %lu, output size: %lu\n",
             (unsigned long)in_size, (unsigned long)out_size);
@@ -129,7 +129,7 @@ int test_parse()
 
 done:
     if (flatbuffer) {
-        free(flatbuffer);
+        aligned_free(flatbuffer);
     }
     if (buf) {
         free((void *)buf);

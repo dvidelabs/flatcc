@@ -450,7 +450,7 @@ repeat_nested:
             println(out, "if (flatcc_builder_start_offset_vector(ctx->ctx)) goto failed;");
         } else {
             println(out,
-                "if (flatcc_builder_start_vector(ctx->ctx, %"PRIu64", %hu, %"PRIu64"ULL)) goto failed;",
+                "if (flatcc_builder_start_vector(ctx->ctx, %"PRIu64", %hu, UINT64_C(%"PRIu64"))) goto failed;",
                 (uint64_t)member->size, (short)member->align,
                 (uint64_t)FLATBUFFERS_COUNT_MAX(member->size));
         }
@@ -638,7 +638,7 @@ static void gen_enum_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     case fb_ushort:
     case fb_uint:
     case fb_ulong:
-        println(out, "*value = %"PRIu64", *value_sign = 0;",
+        println(out, "*value = UINT64_C(%"PRIu64"), *value_sign = 0;",
                 member->value.u);
         break;
     case fb_byte:
@@ -646,9 +646,9 @@ static void gen_enum_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     case fb_int:
     case fb_long:
         if (member->value.i < 0) {
-            println(out, "*value = %"PRIu64", *value_sign = 1;", member->value.i);
+            println(out, "*value = UINT64_C(%"PRIu64"), *value_sign = 1;", member->value.i);
         } else {
-            println(out, "*value = %"PRIu64", *value_sign = 0;", member->value.i);
+            println(out, "*value = UINT64_C(%"PRIu64"), *value_sign = 0;", member->value.i);
         }
         break;
     default:

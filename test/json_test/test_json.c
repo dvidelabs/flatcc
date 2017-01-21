@@ -56,8 +56,7 @@ int test_json(char *json, char *expect, int expect_err, int parse_flags, int pri
         ret = 0;
         goto done;
     }
-
-    flatbuffer = flatcc_builder_finalize_buffer(B, &flatbuffer_size);
+    flatbuffer = flatcc_builder_finalize_aligned_buffer(B, &flatbuffer_size);
     if ((ret = ns(Monster_verify_as_root(flatbuffer, flatbuffer_size)))) {
         fprintf(stderr, "%s:%d: buffer verification failed: %s\n", __FILE__, line, flatcc_verify_error_string(ret));
         goto failed;
@@ -76,7 +75,7 @@ int test_json(char *json, char *expect, int expect_err, int parse_flags, int pri
     ret = 0;
 done:
     if (flatbuffer) {
-        free(flatbuffer);
+        aligned_free(flatbuffer);
     }
     flatcc_builder_clear(B);
     flatcc_json_printer_clear(&printer);

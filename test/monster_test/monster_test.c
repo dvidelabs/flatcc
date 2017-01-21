@@ -91,6 +91,39 @@ int verify_empty_monster(void *buffer)
     return 0;
 }
 
+int test_enums(flatcc_builder_t *B)
+{
+    if (ns(neg_enum_neg1) != -12) {
+        printf("neg_enum_neg1 should be -12, was %d\n", ns(neg_enum_neg1));
+        return -1;
+    }
+    if (ns(neg_enum_neg2) != -11) {
+        printf("neg_enum_neg1 should be -11, was %d\n", ns(neg_enum_neg2));
+        return -1;
+    }
+    if (ns(int_enum_int1) != 2) {
+        printf("int_enum_int1 should be 2\n");
+        return -1;
+    }
+    if (ns(int_enum_int2) != 42) {
+        printf("int_enum_int2 should be 42\n");
+        return -1;
+    }
+    if (ns(hex_enum_hexneg) != -2) {
+        printf("enum hexneg should be -2\n");
+        return -1;
+    }
+    if (ns(hex_enum_hex1) != 3) {
+        printf("hex_enum_hex1 should be 3\n");
+        return -1;
+    }
+    if (ns(hex_enum_hex2) != INT32_C(0x7eafbeaf)) {
+        printf("hex_enum_hex2 should be 0x7eafbeaf\n");
+        return -1;
+    }
+    return 0;
+}
+
 int test_empty_monster(flatcc_builder_t *B)
 {
     int ret;
@@ -1985,6 +2018,12 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_table_with_emptystruct(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_enums(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
