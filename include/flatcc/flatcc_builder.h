@@ -354,8 +354,8 @@ struct flatcc_builder {
     flatcc_builder_alloc_fun *alloc;
     /* Buffers indexed by `alloc_type` */
     flatcc_iovec_t buffers[FLATCC_BUILDER_ALLOC_BUFFER_COUNT];
-    /* Number of slots in ht - 1. */
-    size_t ht_mask;
+    /* Number of slots in ht given as 1 << ht_width. */
+    size_t ht_width;
 
     /* The location in vb to add next cached vtable. */
     flatbuffers_uoffset_t vb_end;
@@ -965,9 +965,12 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
 #define FLATCC_BUILDER_INIT_VT_HASH(hash) { (hash) = (uint32_t)0x2f693b52UL; }
 #endif
 #ifndef FLATCC_BUILDER_UPDATE_VT_HASH
-#define FLATCC_BUILDER_UPDATE_VT_HASH(hash, id, offset)\
+#define FLATCC_BUILDER_UPDATE_VT_HASH(hash, id, offset) \
         { (hash) = (((((uint32_t)id ^ (hash)) * (uint32_t)2654435761UL)\
                 ^ (uint32_t)(offset)) * (uint32_t)2654435761UL); }
+#endif
+#ifndef FLATCC_BUILDER_BUCKET_VT_HASH
+#define FLATCC_BUILDER_BUCKET_VT_HASH(hash, width) (((uint32_t)(hash)) >> (32 - (width)))
 #endif
 #endif
 
@@ -982,9 +985,14 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
 #define FLATCC_BUILDER_INIT_VT_HASH(hash) { (hash) = 5381; }
 #endif
 #ifndef FLATCC_BUILDER_UPDATE_VT_HASH
-#define FLATCC_BUILDER_UPDATE_VT_HASH(hash, id, offset)\
+#define FLATCC_BUILDER_UPDATE_VT_HASH(hash, id, offset) \
         { (hash) = ((((hash) << 5) ^ (id)) << 5) ^ (offset); }
 #endif
+#ifndef FLATCC_BUILDER_BUCKET_VT_HASH
+#define FLATCC_BUILDER_BUCKET_VT_HASH(hash, width) (((1 << (width)) - 1) & (hash))
+#endif
+
+
 
 /**
  * Normally use `start_table` instead of this call.

@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.4.2-pre]
+- Fix minor memory leak in flatcc compiler.
+- Reduce collisions in builders vtable hash.
+
 ## [0.4.1]
 - Test for `posix_memalign` on GCC platforms and fix fallback
   `aligned_alloc`.

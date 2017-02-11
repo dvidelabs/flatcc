@@ -329,7 +329,7 @@ static int alloc_ht(flatcc_builder_t *B)
 {
     iovec_t *buf = B->buffers + flatcc_builder_alloc_ht;
 
-    size_t size;
+    size_t size, k;
     /* Allocate null entry so we can check for return errors. */
     assert(B->vd_end == 0);
     if (!reserve_buffer(B, flatcc_builder_alloc_vd, B->vd_end, sizeof(vtable_descriptor_t), 0)) {
@@ -343,7 +343,10 @@ static int alloc_ht(flatcc_builder_t *B)
     while (size * 2 <= buf->iov_len) {
         size *= 2;
     }
-    B->ht_mask = size / field_size - 1;
+    size /= field_size;
+    for (k = 0; (UINT32_C(1) << k) < size; ++k) {
+    }
+    B->ht_width = k;
     return 0;
 }
 
@@ -351,20 +354,21 @@ static inline uoffset_t *lookup_ht(flatcc_builder_t *B, uint32_t hash)
 {
     uoffset_t *T;
 
-    if (B->ht_mask == 0) {
+    if (B->ht_width == 0) {
         if (alloc_ht(B)) {
             return 0;
         }
     }
     T = B->buffers[flatcc_builder_alloc_ht].iov_base;
-    return &T[hash & B->ht_mask];
+
+    return &T[FLATCC_BUILDER_BUCKET_VT_HASH(hash, B->ht_width)];
 }
 
 void flatcc_builder_flush_vtable_cache(flatcc_builder_t *B)
 {
     iovec_t *buf = B->buffers + flatcc_builder_alloc_ht;
 
-    if (B->ht_mask == 0) {
+    if (B->ht_width == 0) {
         return;
     }
     memset(buf->iov_base, 0, buf->iov_len);
