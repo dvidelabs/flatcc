@@ -3,6 +3,7 @@
 ## [0.4.2-pre]
 - Fix minor memory leak in flatcc compiler.
 - Reduce collisions in builders vtable hash.
+- Fix missing `<mm_malloc.h>` for some GCC versions in `paligned_alloc.h` (#40)
 
 ## [0.4.1]
 - Test for `posix_memalign` on GCC platforms and fix fallback

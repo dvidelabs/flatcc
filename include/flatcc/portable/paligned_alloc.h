@@ -77,8 +77,8 @@
 
 #elif PORTABLE_POSIX_MEMALIGN
 
-#ifdef __GNUC__
-#include "mm_malloc.h"
+#if defined(__GNUC__) && __GNUCC__ < 5
+extern int posix_memalign (void **, size_t, size_t);
 #endif
 
 static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
