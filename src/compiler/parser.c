@@ -1393,8 +1393,6 @@ void fb_clear_parser(fb_parser_t *P)
         free((void *)P->schema.basename);
     }
     if (P->schema.basenameup) {
-        /* Add self to set of visible schema. */
-        ptr_set_insert_item(&P->schema.visible_schema, &P->schema, ht_keep);
         free((void *)P->schema.basenameup);
     }
     if (P->schema.errorname) {

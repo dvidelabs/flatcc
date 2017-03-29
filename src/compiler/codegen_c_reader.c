@@ -726,7 +726,7 @@ static void gen_pretext(fb_output_t *out)
                 "#include \"flatcc/flatcc_flatbuffers.h\"\n");
     if (!do_pad) {
         fprintf(out->fp,
-                "#ifndef alignas\n"
+                "#ifndef __alignas_is_defined\n"
                 "#include <stdalign.h>\n"
                 "#endif\n");
     }
