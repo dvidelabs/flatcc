@@ -15,6 +15,12 @@ back to strtod and related. The `pgrisu3` folder is header only and
 excludes test cases found in the main grisu3 project the files were
 extracted from.
 
+Integer conversion is not just an optimization. It is more difficult
+than it would appear to portably parse an integer of known size such as
+`uint64_t` up to at most n bytes which is needed for safe parsing. At
+the same time, the sometimes significant performance gains warrants
+custom implementations that might as well be done once and for all.
+
 Files can be included individually, or portable.h may be included to get
 all functionality. If the compiler is C11 compliant, portable.h will not
 include anything, except: it will provide a patch for static assertions
