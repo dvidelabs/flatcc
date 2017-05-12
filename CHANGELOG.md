@@ -1,13 +1,13 @@
 # Change Log
 
 ## [0.4.2-pre]
+- Fix SIGNIFICANT bug miscalculating the number of builder frames in
+  use. Nesting 8 levels would cause memory corruption (#41).
 - Fix minor memory leak in flatcc compiler.
 - Reduce collisions in builders vtable hash.
 - Remove broken dependency on `<mm_malloc.h>` for some GCC versions in
   `paligned_alloc.h` (#40)
 - Allow C++ files to include `pstdalign.h` and `paligned_alloc.h` (#39)
-- Fix SIGNIFICANT bug miscalculating the number of builder framses in
-  use. Nesting 8 levels would cause memory corruption (#41).
 
 ## [0.4.1]
 - Test for `posix_memalign` on GCC platforms and fix fallback

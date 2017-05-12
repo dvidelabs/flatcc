@@ -89,7 +89,14 @@ set up a new temporary project using the `scripts/setup.sh` script.
 
 ## Status
 
-Main features supported as of 0.4.1
+0.4.2 is featurewise on par with 0.4.1 but improves compatibility with
+C++ in portable headers and fixes `aligned_alloc` for older GCC
+versions. 0.4.2. also fixes a memory corruption bug when building with a
+nesting level of 8 or above (number of open buffers, tables, and
+vectors).
+
+
+Main features supported as of 0.4.2
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
