@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.4.2-pre]
+## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
   use. Nesting 8 levels would cause memory corruption (#41).
 - Fix minor memory leak in flatcc compiler.
