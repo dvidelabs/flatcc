@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.4.3-pre]
+- Fix issue with initbuild.sh for custom builds (#43)
+
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
   use. Nesting 8 levels would cause memory corruption (#41).
