@@ -52,7 +52,7 @@ static void print_type_identifier(fb_output_t *out, const char *name, uint32_t t
     }
     *p = '\0';
     fprintf(out->fp,
-        "#define %s_type_identifier (*((flatbuffers_fid_t *) \"%s\"))\n",
+        "#define %s_type_identifier \"%s\"\n",
         name, buf);
 }
 
@@ -734,7 +734,7 @@ static void gen_pretext(fb_output_t *out)
     if (out->S->file_identifier.type == vt_string) {
         fprintf(out->fp,
             "#undef %sidentifier\n"
-            "#define %sidentifier (*((flatbuffers_fid_t *) \"%.*s\"))\n",
+            "#define %sidentifier \"%.*s\"\n",
             nsc,
             nsc, out->S->file_identifier.s.len, out->S->file_identifier.s.s);
     } else {
