@@ -78,7 +78,7 @@ const char *flatcc_json_parser_error_string(int err);
  */
 typedef struct flatcc_json_parser_ctx flatcc_json_parser_t;
 struct flatcc_json_parser_ctx {
-    void *ctx;
+    flatcc_builder_t *ctx;
     const char *line_start;
     int flags;
 #if FLATCC_JSON_PARSE_ALLOW_UNQUOTED
