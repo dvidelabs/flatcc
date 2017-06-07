@@ -11,6 +11,7 @@
 - Remove broken dependency on `<mm_malloc.h>` for some GCC versions in
   `paligned_alloc.h` (#40)
 - Allow C++ files to include `pstdalign.h` and `paligned_alloc.h` (#39)
+- Add casts to aid clean C++ builds (#47)
 
 ## [0.4.1]
 - Test for `posix_memalign` on GCC platforms and fix fallback
