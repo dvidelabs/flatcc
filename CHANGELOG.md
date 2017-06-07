@@ -2,6 +2,7 @@
 
 ## [0.4.3-pre]
 - Fix issue with initbuild.sh for custom builds (#43)
+- Add casts to aid clean C++ builds (#47)
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
@@ -11,7 +12,6 @@
 - Remove broken dependency on `<mm_malloc.h>` for some GCC versions in
   `paligned_alloc.h` (#40)
 - Allow C++ files to include `pstdalign.h` and `paligned_alloc.h` (#39)
-- Add casts to aid clean C++ builds (#47)
 
 ## [0.4.1]
 - Test for `posix_memalign` on GCC platforms and fix fallback
