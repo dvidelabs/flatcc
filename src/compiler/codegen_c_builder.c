@@ -33,9 +33,9 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sbuild_buffer(NS)\\\n"
         "typedef NS ## ref_t NS ## buffer_ref_t;\\\n"
-        "static inline int NS ## buffer_start(NS ## builder_t *B, NS ##fid_t fid)\\\n"
+        "static inline int NS ## buffer_start(NS ## builder_t *B, const NS ##fid_t fid)\\\n"
         "{ return flatcc_builder_start_buffer(B, fid, 0, 0); }\\\n"
-        "static inline int NS ## buffer_start_with_size(NS ## builder_t *B, NS ##fid_t fid)\\\n"
+        "static inline int NS ## buffer_start_with_size(NS ## builder_t *B, const NS ##fid_t fid)\\\n"
         "{ return flatcc_builder_start_buffer(B, fid, 0, flatcc_builder_with_size); }\\\n"
         "static inline int NS ## buffer_start_aligned(NS ## builder_t *B, NS ##fid_t fid, uint16_t block_align)\\\n"
         "{ return flatcc_builder_start_buffer(B, fid, block_align, 0); }\\\n"
