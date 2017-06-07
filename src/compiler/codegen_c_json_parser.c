@@ -1395,7 +1395,7 @@ static int gen_union_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "if(!(ref = flatcc_builder_end_table(ctx->ctx))) goto failed;");
     println(out, "if (!(pref = flatcc_builder_table_add_offset(ctx->ctx, id))) goto failed;");
     println(out, "*pref = ref;");
-    println(out, "if (!(ptype = flatcc_builder_table_add(ctx->ctx, id - 1, 1, 1))) goto failed;");
+    println(out, "if (!(ptype = (uint8_t *)flatcc_builder_table_add(ctx->ctx, id - 1, 1, 1))) goto failed;");
     println(out, "*ptype = type;");
     unindent(); println(out, "}");
     println(out, "return buf;");
