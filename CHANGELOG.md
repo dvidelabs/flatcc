@@ -3,6 +3,8 @@
 ## [0.4.3-pre]
 - Fix issue with initbuild.sh for custom builds (#43)
 - Add casts to aid clean C++ builds (#47)
+- Add missing const specifier in generated `buffer_start` methods - removes C++
+  warnings (#48)
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
