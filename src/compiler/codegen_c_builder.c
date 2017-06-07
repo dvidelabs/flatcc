@@ -442,7 +442,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sbuild_struct_field(ID, NS, N, TN, S, A)\\\n"
         "static inline TN ## _t *N ## _start(NS ## builder_t *B)\\\n"
-        "{ return (TN ## _t *) flatcc_builder_table_add(B, ID, S, A); }\\\n"
+        "{ return (TN ## _t *)flatcc_builder_table_add(B, ID, S, A); }\\\n"
         "static inline int N ## _end(NS ## builder_t *B)\\\n"
         "{ if (!NS ## is_native_pe()) { TN ## _to_pe(flatcc_builder_table_edit(B, S)); } return 0; }\\\n"
         "static inline int N ## _end_pe(NS ## builder_t *B) { return 0; }\\\n"
