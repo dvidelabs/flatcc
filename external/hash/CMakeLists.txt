@@ -3,12 +3,12 @@ cmake_minimum_required (VERSION 3.0.2)
 project (HashTest)
 
 SET(CMAKE_C_FLAGS_DEBUG "-g")
-SET(CMAKE_C_FLAGS_RELEASE "-O4 -DNDEBUG")
+SET(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
 
-add_executable (hash_test hash_test.c str_set.c token_map.c cmetrohash64.c)
-add_executable (hash_test_32 hash_test.c str_set.c token_map.c PMurHash.c)
-add_executable (hash_test_rh hash_test.c str_set.c token_map.c cmetrohash64.c)
-add_executable (hash_test_srh hash_test.c str_set.c token_map.c cmetrohash64.c)
+add_executable (hash_test hash_test.c str_set.c token_map.c ht32.c ht64.c ht32rh.c ht64rh.c ht32srh.c ht64srh.c cmetrohash64.c)
+add_executable (hash_test_32 hash_test.c str_set.c token_map.c ht32.c ht64.c ht32rh.c ht64rh.c ht32srh.c ht64srh.c PMurHash.c)
+add_executable (hash_test_rh hash_test.c str_set.c token_map.c ht32.c ht64.c ht32rh.c ht64rh.c ht32srh.c ht64srh.c cmetrohash64.c)
+add_executable (hash_test_srh hash_test.c str_set.c token_map.c ht32.c ht64.c ht32rh.c ht64rh.c ht32srh.c ht64srh.c cmetrohash64.c)
 
 target_compile_definitions(hash_test_32 PRIVATE
     -DHT_HASH_32)

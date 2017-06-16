@@ -29,7 +29,7 @@
  * of a hash chain. By inspiration by Paul Khuong we also keep hashes
  * sorted within a chain so binary or expential search is possible.
  *
- * For a given table size we fold the hash key by roting K-1 bits M
+ * For a given table size we fold the hash key by rotating K-1 bits M
  * positions, where K is the hash word size in bits, and M is the index
  * width in bits. The upper bit is set to 1. This transformation enables
  * global sorting and still use the highest quality bits in a typical
@@ -75,8 +75,13 @@ static inline size_t __ht_bucket_count(hash_table_t *ht)
 /* M is log2 of table size. */
 static inline size_t __ht_fold_hash(size_t hash, int M)
 {
-    /* Ensure hash does not conflict with sentinel value. */
-    if (hash == HT_HASH_MAX) {
+    /* 
+     * Ensure hash does not conflict with sentinel values.
+     * MAX codes for empty slots, and MAX - 1 is never used
+     * which makes it safe to search for any hash + 1 when
+     * searching the next larger entry.
+     */
+    if (hash >= HT_HASH_MAX - 1) {
         /* Won't affect bucket index and will survive table resize. */
         hash = HT_HASH_MAX - HT_HASH_MSB / 2;
     }
@@ -133,11 +138,10 @@ static inline ssize_t __ht_bucket_dist(size_t index, size_t fhash, int M)
  * e0 is floor of search incl., e1 is start of search and e2 is
  * inclusive ceiling. The range is sorted but wraps so the the minimum
  * is not at the floor necessarily.  A match is the first entry with a
- * hash <= the search key. It can find first empty slot (max hash
- * value), or first equal match of some search key. e2 and e0 should not
- * be tested in advance because it would hurt cache performance.
+ * hash >= the search key. e2 and e0 should not be tested in advance
+ * because it would hurt cache performance.
  *
- * We make certain assumtpions on the array:
+ * We make certain assumptions on the array:
  * - all hash keys are sorted, except MAX_KEY may occur between other
  *   keys.
  * - there cannot be a MAX_KEY between e1 and some later key that is
@@ -157,6 +161,10 @@ static inline ssize_t __ht_bucket_dist(size_t index, size_t fhash, int M)
  * - A hash value equal to the maximum value has the msb bit cleared
  *   before rotating the hash value to ensure it lands in the same
  *   bucket and does not conflict with missing hash entries.
+ *
+ * The function cannot find empty slots by search for max hash key
+ * because empty entries are not sorted.
+ *
  */
 static inline ht_entry_t *__ht_find_hash(ht_entry_t *e0, ht_entry_t *e1, ht_entry_t *e2, size_t hash)
 {
@@ -185,12 +193,9 @@ static inline ht_entry_t *__ht_find_hash(ht_entry_t *e0, ht_entry_t *e1, ht_entr
                 e2 = e1;
                 /*
                  * Wrapped keys are smaller than other keys
-                 * by clearing msb, but handle search for max key
-                 * (empty entry) differently.
+                 * by clearing msb.
                  */
-                if (hash != HT_HASH_MAX) {
-                    hash &= ~HT_HASH_MSB;
-                }
+                hash &= ~HT_HASH_MSB;
                 if (e->hash >= hash) {
                     return e;
                 }
@@ -283,14 +288,14 @@ static inline ht_entry_t *__ht_find_hash(ht_entry_t *e0, ht_entry_t *e1, ht_entr
  * for such a value.
  */
 static ht_entry_t *__ht_find_match(ht_entry_t *T, ht_entry_t *e1, ht_entry_t *e2,
-        size_t fhash, const void *key, size_t len)
+        size_t fhash, const void *key, size_t len, int *found)
 {
     ht_entry_t *e;
 
     e = __ht_find_hash(T, e1, e2, fhash);
     if (e >= e1) {
         while (e->hash == fhash) {
-            if (ht_match(key, len, e->item)) {
+            if ((*found = ht_match(key, len, e->item))) {
                 return e;
             }
             if (++e > e2) {
@@ -301,18 +306,25 @@ static ht_entry_t *__ht_find_match(ht_entry_t *T, ht_entry_t *e1, ht_entry_t *e2
     }
     fhash = fhash & ~HT_HASH_MSB;
     while (e->hash == fhash) {
-        if (ht_match(key, len, e->item)) {
+        if ((*found = ht_match(key, len, e->item))) {
             return e;
         }
         ++e;
     }
+    *found = 0;
     return e;
 }
 
 /* Makes space at location e if not already available. */
-static inline void __ht_alloc_entry(ht_entry_t *T, ht_entry_t *e, ht_entry_t *e2)
+static inline void __ht_alloc_entry(hash_table_t *ht, ht_entry_t *T, ht_entry_t *e, ht_entry_t *e2)
 {
     ht_entry_t *u;
+
+    assert(T != 0);
+    assert(ht->table == T);
+    assert(e >= T);
+    assert(e <= e2);
+    assert(e2 - T < __ht_bucket_count(ht));
 
     /*
      * Find first free entry. This is significantly more efficient
@@ -323,11 +335,23 @@ static inline void __ht_alloc_entry(ht_entry_t *T, ht_entry_t *e, ht_entry_t *e2
      * for really bad hash functions do we benefit greatly and as
      * mentioned still stuffer linear move.
      */
-    u = __ht_find_hash(T, e, e2, HT_HASH_MAX);
+    u = e;
+    while (u->hash != HT_HASH_MAX) {
+        if (u == e2) {
+            u = T;
+        } else {
+            ++u;
+        }
+    }
     if (u < e) {
-        memmove(e + 1, e, (e2 - e + 1) * sizeof(*e));
+        assert(u >= T);
         memmove(T + 1, T, (u - T) * sizeof(*e));
+        T->hash = e2->hash & ~HT_HASH_MSB;
+        T->item = e2->item;
+        memmove(e + 1, e, (e2 - e) * sizeof(*e));
     } else {
+        assert(u <= e2);
+        assert(e + 1 + (u - e) - T <= __ht_bucket_count(ht));
         memmove(e + 1, e, (u - e) * sizeof(*e));
     }
 }
@@ -390,11 +414,12 @@ static int ht_resize(hash_table_t *ht, size_t count)
             hash = __ht_unfold_hash(e->hash, M);
             fhash = __ht_fold_hash(hash, M2);
             u1 = T2 + __ht_bucket_index(hash, M2);
+            /* Safe because HT_HASH_MAX - 1 does not exist. */
             u = __ht_find_hash(T2, u1, u2, fhash + 1);
             if (u < u1) {
                 fhash &= ~HT_HASH_MSB;
             }
-            __ht_alloc_entry(T2, u, u2);
+            __ht_alloc_entry(&ht2, T2, u, u2);
             u->hash = fhash;
             u->item = e->item;
         }
@@ -402,7 +427,7 @@ static int ht_resize(hash_table_t *ht, size_t count)
     }
     ht2.count = ht->count;
     ht_clear(ht);
-    memcpy(ht, &ht2, sizeof(*ht));
+    *ht = ht2;
     return 0;
 }
 
@@ -412,14 +437,13 @@ static ht_item_t ht_find(hash_table_t *ht, const void *key, size_t len)
     int M = (int)ht->buckets;
     size_t hash = HT_HASH_FUNCTION(key, len);
     size_t fhash = __ht_fold_hash(hash, M);
+    int found;
 
     T = ht->table;
     e1 = T + __ht_bucket_index(hash, M);
     e2 = T + __ht_bucket_count(ht) - 1;
-    e = __ht_find_hash(T, e1, e2, fhash);
-
-    e = __ht_find_match(T, e, e2, fhash, key, len);
-    if (e->hash == fhash) {
+    e = __ht_find_match(T, e1, e2, fhash, key, len, &found);
+    if (found) {
         return e->item;
     }
     return 0;
@@ -431,6 +455,7 @@ static ht_item_t ht_insert(hash_table_t *ht, const void *key, size_t len, ht_ite
     ht_item_t old_item;
     int M;
     size_t hash, fhash, buckets;
+    int found;
 
     buckets = __ht_bucket_count(ht);
     if (ht->count >= buckets * (HT_LOAD_FACTOR_FRAC) / 256) {
@@ -448,14 +473,11 @@ static ht_item_t ht_insert(hash_table_t *ht, const void *key, size_t len, ht_ite
     e2 = T + buckets - 1;
     e1 = T + __ht_bucket_index(hash, M);
     if (mode == ht_multi) {
-        /*
-         * fhash + 1 could potentially overflow but then it would become
-         * HT_HASH_MAX, which is still what we want.
-         */
+        /* Safe because HT_HASH_MAX - 1 does not exist. */
         e = __ht_find_hash(T, e1, e2, fhash + 1);
     } else {
-        e = __ht_find_match(T, e1, e2, fhash, key, len);
-        if (e->hash == fhash) {
+        e = __ht_find_match(T, e1, e2, fhash, key, len, &found);
+        if (found) {
             old_item = e->item;
             if (mode == ht_replace) {
                 e->item = item;
@@ -466,7 +488,7 @@ static ht_item_t ht_insert(hash_table_t *ht, const void *key, size_t len, ht_ite
     if (e < e1) {
         fhash &= ~HT_HASH_MSB;
     }
-    __ht_alloc_entry(T, e, e2);
+    __ht_alloc_entry(ht, T, e, e2);
     e->hash = fhash;
     e->item = item;
     ++ht->count;
@@ -481,12 +503,13 @@ static ht_item_t ht_remove(hash_table_t *ht, const void *key, size_t len)
     size_t hash = HT_HASH_FUNCTION(key, len);
     size_t fhash = __ht_fold_hash(hash, M);
     ssize_t dist;
+    int found;
 
     T = ht->table;
     e2 = T + __ht_bucket_count(ht);
     e1 = T + __ht_bucket_index(hash, M);
-    e = __ht_find_match(T, e1, e2, fhash, key, len);
-    if (e->hash != fhash) {
+    e = __ht_find_match(T, e1, e2, fhash, key, len, &found);
+    if (found) {
         return 0;
     }
     old_item = e->item;
