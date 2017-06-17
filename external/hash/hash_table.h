@@ -71,7 +71,7 @@ struct hash_table {
 enum hash_table_insert_mode {
     ht_replace = 0,
     ht_keep = 1,
-    ht_unique = 3,
+    ht_unique = 2,
     ht_multi = 3,
 };
 
@@ -96,6 +96,33 @@ typedef HT_ITEM HT_NAME##_item_t;                                           \
                                                                             \
 /* Prototype for user supplied callback when visiting all elements. */      \
 typedef void HT_NAME##_visitor_f(void *context, HT_ITEM item);              \
+                                                                            \
+extern const HT_NAME##_item_t HT_NAME##_missing;                            \
+extern const HT_NAME##_item_t HT_NAME##_nomem;                              \
+extern const HT_NAME##_item_t HT_NAME##_deleted;                            \
+                                                                            \
+static inline int HT_NAME##_is_valid(HT_ITEM item)                          \
+{                                                                           \
+    return                                                                  \
+        item != HT_NAME##_missing &&                                        \
+        item != HT_NAME##_nomem &&                                          \
+        item != HT_NAME##_deleted;                                          \
+}                                                                           \
+                                                                            \
+static inline int HT_NAME##_is_missing(HT_ITEM item)                        \
+{                                                                           \
+    return item == HT_NAME##_missing;                                       \
+}                                                                           \
+                                                                            \
+static inline int HT_NAME##_is_nomem(HT_ITEM item)                          \
+{                                                                           \
+    return item == HT_NAME##_nomem;                                         \
+}                                                                           \
+                                                                            \
+static inline int HT_NAME##_is_deleted(HT_ITEM item)                        \
+{                                                                           \
+    return item == HT_NAME##_deleted;                                       \
+}                                                                           \
                                                                             \
 /*                                                                          \
  * Allocates enough buckets to represent count elements without resizing.   \
@@ -172,7 +199,7 @@ HT_PRIV int HT_NAME##_resize(HT_NAME##_t *ht, size_t count);                \
  *   down. Linear and Quadratic probing do handle this, albeit slow.        \
  *                                                                          \
  * The inserted item cannot have the value HT_MISSING and depending on      \
- * implementation also not HT_DELETED and HT_ALLOC_FAILED, but the          \
+ * implementation also not HT_DELETED and HT_NOMEM, but the                 \
  * definitions are type specific.                                           \
  */                                                                         \
 HT_PRIV HT_ITEM HT_NAME##_insert(HT_NAME##_t *ht,                           \

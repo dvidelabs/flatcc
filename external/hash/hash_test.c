@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 
 /* Not used here, just included to catch compiler errors and warnings. */
 #include "hash.h"
@@ -35,12 +36,10 @@
 #include "ht32.h"
 #include "ht64rh.h"
 #include "ht32rh.h"
-#include "ht64srh.h"
-#include "ht32srh.h"
 
 #include "ht_trace.h"
 
-#define test_assert(x) if (!(x)) { printf("Test failed at %s:%d\n", __FILE__, __LINE__); exit(1); }
+#define test_assert(x) if (!(x)) { printf("Test failed at %s:%d\n", __FILE__, __LINE__); assert(0); exit(1); }
 
 
 str_set_t S;
@@ -265,9 +264,9 @@ void test_token_map()
 void test_ht32()
 {
     uint32_t keys[100];
-    int i;
+    int i, j;
     ht32_t ht;
-    uint32_t *x;
+    uint32_t *x, *y;
 
     ht32_init(&ht, 10);
     for (i = 0; i < 100; ++i) {
@@ -281,15 +280,28 @@ void test_ht32()
         test_assert(x != 0);
         test_assert(*x == i + 3398);
     }
+    for (i = 0; i < 100; ++i) {
+        y = ht32_remove_item(&ht, &keys[i]);
+        test_assert(y != ht32_missing);
+        for (j = 0; j < 100; ++j) {
+            x = ht32_find_item(&ht, &keys[j]);
+            if (j > i) {
+                test_assert(x != ht32_missing);
+                test_assert(*x == j + 3398);
+            } else {
+                test_assert(x == ht32_missing);
+            }
+        }
+    }
     ht32_clear(&ht);
 }
 
 void test_ht64()
 {
     uint64_t keys[100];
-    int i;
+    int i, j;
     ht64_t ht;
-    uint64_t *x;
+    uint64_t *x, *y;
 
     ht64_init(&ht, 10);
     for (i = 0; i < 100; ++i) {
@@ -303,15 +315,28 @@ void test_ht64()
         test_assert(x != 0);
         test_assert(*x == i + 3398);
     }
+    for (i = 0; i < 100; ++i) {
+        y = ht64_remove_item(&ht, &keys[i]);
+        test_assert(y != ht64_missing);
+        for (j = 0; j < 100; ++j) {
+            x = ht64_find_item(&ht, &keys[j]);
+            if (j > i) {
+                test_assert(x != ht64_missing);
+                test_assert(*x == j + 3398);
+            } else {
+                test_assert(x == ht64_missing);
+            }
+        }
+    }
     ht64_clear(&ht);
 }
 
 void test_ht32rh()
 {
     uint32_t keys[100];
-    int i;
+    int i, j;
     ht32rh_t ht;
-    uint32_t *x;
+    uint32_t *x, *y;
 
     ht32rh_init(&ht, 10);
     for (i = 0; i < 100; ++i) {
@@ -325,15 +350,28 @@ void test_ht32rh()
         test_assert(x != 0);
         test_assert(*x == i + 3398);
     }
+    for (i = 0; i < 100; ++i) {
+        y = ht32rh_remove_item(&ht, &keys[i]);
+        test_assert(y != ht32rh_missing);
+        for (j = 0; j < 100; ++j) {
+            x = ht32rh_find_item(&ht, &keys[j]);
+            if (j > i) {
+                test_assert(x != ht32rh_missing);
+                test_assert(*x == j + 3398);
+            } else {
+                test_assert(x == ht32rh_missing);
+            }
+        }
+    }
     ht32rh_clear(&ht);
 }
 
 void test_ht64rh()
 {
     uint64_t keys[100];
-    int i;
+    int i, j;
     ht64rh_t ht;
-    uint64_t *x;
+    uint64_t *x, *y;
 
     ht64rh_init(&ht, 10);
     for (i = 0; i < 100; ++i) {
@@ -347,53 +385,21 @@ void test_ht64rh()
         test_assert(x != 0);
         test_assert(*x == i + 3398);
     }
+    for (i = 0; i < 100; ++i) {
+        y = ht64rh_remove_item(&ht, &keys[i]);
+        test_assert(y != ht64rh_missing);
+        for (j = 0; j < 100; ++j) {
+            x = ht64rh_find_item(&ht, &keys[j]);
+            if (j > i) {
+                test_assert(x != ht64rh_missing);
+                test_assert(*x == j + 3398);
+            } else {
+                test_assert(x == ht64rh_missing);
+            }
+        }
+    }
     ht64rh_clear(&ht);
 }
-
-void test_ht32srh()
-{
-    uint32_t keys[100];
-    int i;
-    ht32srh_t ht;
-    uint32_t *x;
-
-    ht32srh_init(&ht, 10);
-    for (i = 0; i < 100; ++i) {
-        keys[i] = i + 3398;
-    }
-    for (i = 0; i < 100; ++i) {
-        x = ht32srh_insert_item(&ht, &keys[i], ht_unique);
-    }
-    for (i = 0; i < 100; ++i) {
-        x = ht32srh_find_item(&ht, &keys[i]);
-        test_assert(x != 0);
-        test_assert(*x == i + 3398);
-    }
-    ht32srh_clear(&ht);
-}
-
-void test_ht64srh()
-{
-    uint64_t keys[100];
-    int i;
-    ht64srh_t ht;
-    uint64_t *x;
-
-    ht64srh_init(&ht, 10);
-    for (i = 0; i < 100; ++i) {
-        keys[i] = i + 3398;
-    }
-    for (i = 0; i < 100; ++i) {
-        x = ht64srh_insert_item(&ht, &keys[i], ht_unique);
-    }
-    for (i = 0; i < 100; ++i) {
-        x = ht64srh_find_item(&ht, &keys[i]);
-        test_assert(x != 0);
-        test_assert(*x == i + 3398);
-    }
-    ht64srh_clear(&ht);
-}
-
 
 int main(int argc, char *argv[])
 {
@@ -406,8 +412,6 @@ int main(int argc, char *argv[])
     test_ht64();
     test_ht32rh();
     test_ht64rh();
-    test_ht32srh();
-    test_ht64srh();
 
     printf("all tests passed\n");
 

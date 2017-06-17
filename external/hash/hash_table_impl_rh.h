@@ -187,7 +187,7 @@ ht_item_t ht_insert(hash_table_t *ht,
     if (ht->count >= ht->buckets * (HT_LOAD_FACTOR_FRAC) / 256) {
         if (ht_resize(ht, ht->count * 2)) {
             HT_PANIC("robin hood hash table failed to allocate memory during resize");
-            return HT_ALLOC_FAILED;
+            return HT_NOMEM;
         }
     }
     T = ht->table;
@@ -246,7 +246,7 @@ ht_item_t ht_insert(hash_table_t *ht,
         if (ht->count * 10 < ht->buckets) {
             HT_PANIC("FATAL: hash table resize on low utilization would explode\n"\
                    "  possible collision DoS or bad hash function");
-            return HT_ALLOC_FAILED;
+            return HT_NOMEM;
         }
         if (ht_resize(ht, ht->count * 2)) {
             HT_PANIC("FATAL: hash table resize failed and left hash table inconsistent");\
@@ -255,7 +255,7 @@ ht_item_t ht_insert(hash_table_t *ht,
              * because we have updated to an inconsistent
              * state.
              */
-            return HT_ALLOC_FAILED;
+            return HT_NOMEM;
         }
     }
     return item;

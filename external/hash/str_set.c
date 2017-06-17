@@ -27,10 +27,8 @@
 #include "str_set.h"
 #include "hash_table_def.h"
 DEFINE_HASH_TABLE(str_set)
-#if defined(STR_SET_SRH)
+#if defined(STR_SET_RH)
 #include "hash_table_impl_rh.h"
-#elif defined(STR_SET_SRH)
-#include "hash_table_impl_srh.h"
 #else
 #include "hash_table_impl.h"
 #endif
