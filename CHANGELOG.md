@@ -5,8 +5,8 @@
 - Add casts to aid clean C++ builds (#47)
 - Add missing const specifier in generated `buffer_start` methods - removes C++
   warnings (#48)
-- Update external/hash, fix bugs in sorted robin hood hash - no impact on
-  flatcc.
+- Update external/hash, remove buggy Sorted Robin Hash that wasn't
+  faster anyway - no impact on flatcc.
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
