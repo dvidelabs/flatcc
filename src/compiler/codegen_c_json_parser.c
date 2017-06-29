@@ -951,8 +951,9 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
      * This is normal early branch with a key `a < x < b` such that
      * any shared prefix ranges do not span x.
      */
-    k = get_dict_suffix_len(&trie->dict[x], pos);
-    if (!k && b == a + 1) {
+    if (b == a + 1 &&
+        get_dict_suffix_len(&trie->dict[a], pos) == 0 &&
+        get_dict_suffix_len(&trie->dict[b], pos) == 0) {
         /*
         * If we have two keys that terminate in this tag, there is no
         * need to do a branch test before matching exactly.
