@@ -87,6 +87,20 @@ table TestJSONPrefixParsing
   dddd12345: uint;
 }
 
+// when there are two keys ending in same 8 character group
+table TestJSONPrefixParsing2
+{
+    aaaa_bbbb_steps: long;
+    aaaa_bbbb_start_: uint;
+}
+
+// when there are two keys ending in different 8 character group
+table TestJSONPrefixParsing3
+{
+    aaaa_bbbb_steps: long;
+    aaaa_bbbb_start_steps: uint;
+}
+
 table Monster {
   pos:Vec3 (id: 0);
   hp:short = 100 (id: 2);
@@ -115,6 +129,8 @@ table Monster {
   testhashs64_fnv1a:long (id:22, hash:"fnv1a_64");
   testhashu64_fnv1a:ulong (id:23, hash:"fnv1a_64");
   testjsonprefixparsing:TestJSONPrefixParsing (id:25);
+  testjsonprefixparsing_2:TestJSONPrefixParsing2 (id:26);
+  testjsonprefixparsing_3:TestJSONPrefixParsing3 (id:27);
 }
 
 root_type MyGame.Example.Monster;
