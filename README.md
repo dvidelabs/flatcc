@@ -1464,7 +1464,8 @@ project on a new platform.
 
 By default libraries are built statically.
 
-Occasionally there are requests (#42) for also building shared
+Occasionally there are requests
+[#42](https://github.com/dvidelabs/flatcc/pull/42) for also building shared
 libraries. It is not clear how to build both static and shared libraries
 at the same time without choosing some unconvential naming scheme that
 might affect install targets unexpectedly.
