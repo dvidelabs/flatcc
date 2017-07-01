@@ -24,7 +24,7 @@ or printing in less than 2 us for a 10 field mixed type message.
     * [Reading a Buffer](#reading-a-buffer)
     * [Compiling for Read-Only](#compiling-for-read-only)
     * [Building a Buffer](#building-a-buffer)
-* [Verifying a Buffer](#verifying-a-buffer)
+    * [Verifying a Buffer](#verifying-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
     * [File Identifiers](#file-identifiers)
     * [Type Identifiers](#type-identifiers)
@@ -636,7 +636,7 @@ obvious from the filenames except that JSON parsing also requires the
 builder and emitter source files.
 
 
-## Verifying a Buffer
+### Verifying a Buffer
 
 A buffer can be verified to ensure it does not contain any ranges that
 point outside the the given buffer size, that all data structures are
