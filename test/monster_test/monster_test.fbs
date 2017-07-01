@@ -129,8 +129,8 @@ table Monster {
   testhashs64_fnv1a:long (id:22, hash:"fnv1a_64");
   testhashu64_fnv1a:ulong (id:23, hash:"fnv1a_64");
   testjsonprefixparsing:TestJSONPrefixParsing (id:25);
-  testjsonprefixparsing_2:TestJSONPrefixParsing2 (id:26);
-  testjsonprefixparsing_3:TestJSONPrefixParsing3 (id:27);
+  testjsonprefixparsing2:TestJSONPrefixParsing2 (id:26);
+  testjsonprefixparsing3:TestJSONPrefixParsing3 (id:27);
 }
 
 root_type MyGame.Example.Monster;

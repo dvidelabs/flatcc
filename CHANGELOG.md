@@ -7,8 +7,7 @@
   warnings (#48)
 - Update external/hash, remove buggy Sorted Robin Hash that wasn't
   faster anyway - no impact on flatcc.
-- Fix JSON parser optimization that should only have been applied when
-  two keys sharing a prefix ends in the same 8-character group (#50).
+- Fix JSON parsing bug where some names are prefixes of others (#50).
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in

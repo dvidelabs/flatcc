@@ -409,11 +409,11 @@ int main()
     TEST(   "{ name: \"Monster\", testjsonprefixparsing: { dddd1234: 19, dddd12345: 17 } }",
             "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"dddd1234\":19,\"dddd12345\":17}}" );
 
-    TEST(   "{ name: \"Monster\", testjsonprefixparsing_2: { aaaa_bbbb_steps: 19, aaaa_bbbb_start_: 17 } }",
-            "{\"name\":\"Monster\",\"testjsonprefixparsing_2\":{\"aaaa_bbbb_steps\":19,\"aaaa_bbbb_start_\":17}}" );
+    TEST(   "{ name: \"Monster\", testjsonprefixparsing2: { aaaa_bbbb_steps: 19, aaaa_bbbb_start_: 17 } }",
+            "{\"name\":\"Monster\",\"testjsonprefixparsing2\":{\"aaaa_bbbb_steps\":19,\"aaaa_bbbb_start_\":17}}" );
 
-    TEST(   "{ name: \"Monster\", testjsonprefixparsing_3: { aaaa_bbbb_steps: 19, aaaa_bbbb_start_steps: 17 } }",
-            "{\"name\":\"Monster\",\"testjsonprefixparsing_3\":{\"aaaa_bbbb_steps\":19,\"aaaa_bbbb_start_steps\":17}}" );
+    TEST(   "{ name: \"Monster\", testjsonprefixparsing3: { aaaa_bbbb_steps: 19, aaaa_bbbb_start_steps: 17 } }",
+            "{\"name\":\"Monster\",\"testjsonprefixparsing3\":{\"aaaa_bbbb_steps\":19,\"aaaa_bbbb_start_steps\":17}}" );
 
     return ret ? -1: 0;
 }
