@@ -889,9 +889,9 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
 {
     int x, k;
     uint64_t tag = 0, mask = 0;
-    const char *name;
+    const char *name = "";
     int len = 0, has_prefix_key = 0, prefix_guard = 0, has_descend;
-    int label = 0; 
+    int label = 0;
 
     println(out, "/* debug: gen_trie [%d..%d] pos %d */", a, b, pos);
 
