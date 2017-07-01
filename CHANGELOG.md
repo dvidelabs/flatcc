@@ -8,6 +8,7 @@
 - Update external/hash, remove buggy Sorted Robin Hash that wasn't
   faster anyway - no impact on flatcc.
 - Fix JSON parsing bug where some names are prefixes of others (#50).
+- A Table of Contents in README :-)
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
