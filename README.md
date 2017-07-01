@@ -21,9 +21,9 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Generated Files](#generated-files)
 * [Using flatcc](#using-flatcc)
 * [Quickstart](#quickstart)
-* [Quickstart - reading a buffer](#quickstart---reading-a-buffer)
-* [Quickstart - compiling for read-only](#quickstart---compiling-for-read-only)
-* [Quickstart - building a buffer](#quickstart---building-a-buffer)
+    * [Reading a Buffer](#reading-a-buffer)
+    * [Compiling for Read-Only](#compiling-for-read-only)
+    * [Building a Buffer](#building-a-buffer)
 * [Verifying a Buffer](#verifying-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
     * [File Identifiers](#file-identifiers)
@@ -409,7 +409,7 @@ than general FlatBuffers concepts.
 You can still use the setup tool to create an empty project and
 follow along, but there are no assumptions about that in the text below.
 
-## Quickstart - reading a buffer
+### Reading a Buffer
 
 Here we provide a quick example of read-only access to Monster flatbuffer -
 it is an adapted extract of the `monster_test.c` file.
@@ -493,7 +493,7 @@ Namespaces can be long so we optionally use a macro to manage this.
     /* main() {...} */
 
 
-## Quickstart - compiling for read-only
+### Compiling for Read-Only
 
 Assuming our above file is `monster_example.c` the following are a few
 ways to compile the project for read-only - compilation with runtime
@@ -511,7 +511,7 @@ flag includes additional files to support compilers lacking c11
 features.
 
 
-## Quickstart - building a buffer
+### Building a Buffer
 
 Here we provide a very limited example of how to build a buffer - only a few
 fields are updated. Pleaser refer to `monster_test.c` and the doc directory
