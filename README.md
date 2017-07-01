@@ -44,6 +44,7 @@ or printing in less than 2 us for a 10 field mixed type message.
     * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
     * [Windows Build (MSVC)](#windows-build-msvc)
     * [Cross-compilation](#cross-compilation)
+    * [Shared Libraries](#shared-libraries)
 * [Distribution](#distribution)
     * [Unix Files](#unix-files)
     * [Windows Files](#windows-files)
@@ -1457,6 +1458,23 @@ project.
 Note that no tests will be built nor run with `FLATCC_RTONLY` enabled.
 It is highly recommended to at least run the `tests/monster_test`
 project on a new platform.
+
+
+### Shared Libraries
+
+By default libraries are built statically.
+
+Occasionally there are requests (#42) for also building shared
+libraries. It is not clear how to build both static and shared libraries
+at the same time without choosing some unconvential naming scheme that
+might affect install targets unexpectedly.
+
+CMake supports building shared libraries out of the box using the
+standard library name using the following option:
+
+    CMAKE ... -DBUILD_SHARED_LIBS=ON ...
+
+See also [CMake Gold: Static + shared](http://cgold.readthedocs.io/en/latest/tutorials/libraries/static-shared.html).
 
 
 ## Distribution
