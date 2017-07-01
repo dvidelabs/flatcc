@@ -1,28 +1,27 @@
+# The builder interface
 
 <!-- vim-markdown-toc GFM -->
-* [The builder interface.](#the-builder-interface)
-    * [Preface](#preface)
-    * [Introduction](#introduction)
-    * [Size Prefixed Buffers](#size-prefixed-buffers)
-    * [Namespaces](#namespaces)
-    * [Error Codes](#error-codes)
-    * [Endinaness](#endinaness)
-    * [Buffers](#buffers)
-    * [Tables](#tables)
-    * [Strings](#strings)
-    * [Structs](#structs)
-    * [Nested buffers](#nested-buffers)
-    * [Scalars and Enums](#scalars-and-enums)
-    * [Vectors](#vectors)
-    * [Error Handling](#error-handling)
-    * [Limitations](#limitations)
-    * [Sorting Vectors](#sorting-vectors)
-    * [Example of different interface type users](#example-of-different-interface-type-users)
-    * [Special Emitters](#special-emitters)
+* [Preface](#preface)
+* [Introduction](#introduction)
+* [Size Prefixed Buffers](#size-prefixed-buffers)
+* [Namespaces](#namespaces)
+* [Error Codes](#error-codes)
+* [Endinaness](#endinaness)
+* [Buffers](#buffers)
+* [Tables](#tables)
+* [Strings](#strings)
+* [Structs](#structs)
+* [Nested buffers](#nested-buffers)
+* [Scalars and Enums](#scalars-and-enums)
+* [Vectors](#vectors)
+* [Error Handling](#error-handling)
+* [Limitations](#limitations)
+* [Sorting Vectors](#sorting-vectors)
+* [Example of different interface type users](#example-of-different-interface-type-users)
+* [Special Emitters](#special-emitters)
 
 <!-- vim-markdown-toc -->
 
-# The builder interface.
 
 ## Preface
 

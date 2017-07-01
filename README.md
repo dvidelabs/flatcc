@@ -164,7 +164,7 @@ Main features supported as of 0.4.2
 - fast build times
 - support for big endian platforms (as of 0.4.0)
 - support for big endian encoded flatbuffers on both le and be platforms. Enabled on `be` branch.
-- size prefixed buffers - see also `doc/builder.md`
+- size prefixed buffers - see also [builder interfade referece]
 
 Supported platforms:
 
@@ -330,7 +330,7 @@ once, if so desired.
 
 The typeless builder library is documented in `flatcc_builder.h` and
 `flatcc_emitter.h` while the generated typed builder api for C is
-documented in `doc/builder.md`.
+documented in [builder interfade referece].
 
 
 ## Using flatcc
@@ -403,9 +403,8 @@ To write your own schema files please follow the main FlatBuffers
 project documentation on [writing schema
 files](https://google.github.io/flatbuffers/flatbuffers_guide_writing_schema.html).
 
-The [builder interface
-reference](https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md)
-may be useful after studying the monster sample and quickstart below.
+The [builder interfade referece] may be useful after studying the
+monster sample and quickstart below.
 
 When looking for advanced examples such as sorting vectors and finding
 elements by a key, you should find these in the
@@ -569,8 +568,8 @@ buffer using `flatcc_builder_finalize_buffer`, or the simplistic
 `flatcc_builder_get_direct_buffer` which returns null if the buffer is
 too large. See also documentation comments in `flatcc_builder.h` and
 `flatcc_emitter.h`. See also `flatc_builder_finalize_aligned_buffer` in
-`builder.h` and `builder.md` when malloc aligned buffers are
-insufficent.
+`builder.h` and the [builder interfaces reference] when malloc aligned
+buffers are insufficent.
 
 
     #include "monster_test_builder.h"
@@ -689,10 +688,10 @@ See also `include/flatcc/flatcc_verifier.h`.
 
 When verifying buffers returned directly from the builder, it may be
 necessary to use the `flatcc_builder_finalize_aligned_buffer` to ensure
-proper alignment and use `aligned_free` to free the buffer, see also
-`doc/builder.md`. Buffers may also be copied into aligned memory via
-mmap or using the portable layers `paligned_alloc.h` feature which is
-available when including generated headers.
+proper alignment and use `aligned_free` to free the buffer, see also the
+[builder interface reference]. Buffers may also be copied into aligned
+memory via mmap or using the portable layers `paligned_alloc.h` feature
+which is available when including generated headers.
 `test/flatc_compat/flatc_compat.c` is an example of how this can be
 done. For the majority of use cases, standard allocation would be
 sufficient, but for example standard 32-bit Windows only allocates on an
@@ -1098,7 +1097,7 @@ Union types are just any of a set of possible table types and an enum
 named as for example `Any_union_type_t`. There is a compound union type
 that can store both type and table reference such that `create` calls
 can represent unions as a single argument - see `flatcc_builder.h` and
-`doc/builder.md`. Union table fields return a pointer of type
+[builder interface reference]. Union table fields return a pointer of type
 `flatbuffers_generic_table_t` which is defined as `const void *`.
 
 All types have a `_vec_t` suffix which is a const pointer to the
@@ -1288,16 +1287,16 @@ any other field but this can be disabled by a compile time flag.
 
 Basic types such as `uint8_vec` also have search operations.
 
-See also `doc/builder.md` and `test/monster_test/monster_test.c`.
+See also [builder interface reference] and `test/monster_test/monster_test.c`.
 
 
 ## Null Values
 
 The FlatBuffers format does not fully distinguish between default values
 and missing or null values but it is possible to force values to be
-written to the buffer.  This is discussed further in the `builder.md`.
-For SQL data roundtrips this may be more important that having compact
-data.
+written to the buffer. This is discussed further in the [builder
+interface reference].For SQL data roundtrips this may be more
+important that having compact data.
 
 The `_is_present` suffix on table access methods can be used to detect if
 value is present in a vtable, for example `Monster_hp_present`. Unions
@@ -1768,3 +1767,5 @@ Numbers for Linux included because parsing is significantly faster.
     throughput in ops per sec: 564227.736
     throughput in 1M ops per sec: 0.564
     time per op: 1.772 (us)
+
+[builder interface reference]: https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md
