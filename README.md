@@ -26,10 +26,10 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Quickstart - building a buffer](#quickstart---building-a-buffer)
 * [Verifying a Buffer](#verifying-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
-    * [File Identifiers](#file-identifiers)
-    * [Type Identifiers](#type-identifiers)
+	* [File Identifiers](#file-identifiers)
+	* [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
-    * [Performance Notes](#performance-notes)
+	* [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
 * [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
 * [Fast Buffers](#fast-buffers)
@@ -41,29 +41,29 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Null Values](#null-values)
 * [Portability Layer](#portability-layer)
 * [Building](#building)
-    * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
-    * [Windows Build (MSVC)](#windows-build-msvc)
-    * [Cross-compilation](#cross-compilation)
+	* [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
+	* [Windows Build (MSVC)](#windows-build-msvc)
+	* [Cross-compilation](#cross-compilation)
 * [Distribution](#distribution)
-    * [Unix Files](#unix-files)
-    * [Windows Files](#windows-files)
+	* [Unix Files](#unix-files)
+	* [Windows Files](#windows-files)
 * [Running Tests on Unix](#running-tests-on-unix)
 * [Running Tests on Windows](#running-tests-on-windows)
 * [Configuration](#configuration)
 * [Using the Compiler and Builder library](#using-the-compiler-and-builder-library)
 * [Benchmark](#benchmark)
-    * [operation: flatbench for raw C structs encode (optimized)](#operation-flatbench-for-raw-c-structs-encode-optimized)
-    * [operation: flatbench for raw C structs decode/traverse (optimized)](#operation-flatbench-for-raw-c-structs-decodetraverse-optimized)
-    * [operation: flatc for C++ encode (optimized)](#operation-flatc-for-c-encode-optimized)
-    * [operation: flatc for C++ decode/traverse (optimized)](#operation-flatc-for-c-decodetraverse-optimized)
-    * [operation: flatcc for C encode (optimized)](#operation-flatcc-for-c-encode-optimized)
-    * [operation: flatcc for C decode/traverse (optimized)](#operation-flatcc-for-c-decodetraverse-optimized)
+	* [operation: flatbench for raw C structs encode (optimized)](#operation-flatbench-for-raw-c-structs-encode-optimized)
+	* [operation: flatbench for raw C structs decode/traverse (optimized)](#operation-flatbench-for-raw-c-structs-decodetraverse-optimized)
+	* [operation: flatc for C++ encode (optimized)](#operation-flatc-for-c-encode-optimized)
+	* [operation: flatc for C++ decode/traverse (optimized)](#operation-flatc-for-c-decodetraverse-optimized)
+	* [operation: flatcc for C encode (optimized)](#operation-flatcc-for-c-encode-optimized)
+	* [operation: flatcc for C decode/traverse (optimized)](#operation-flatcc-for-c-decodetraverse-optimized)
 * [JSON benchmark](#json-benchmark)
-    * [operation: flatcc json parser and printer for C encode (optimized)](#operation-flatcc-json-parser-and-printer-for-c-encode-optimized)
-    * [operation: flatcc json parser and printer for C decode/traverse (optimized)](#operation-flatcc-json-parser-and-printer-for-c-decodetraverse-optimized)
+	* [operation: flatcc json parser and printer for C encode (optimized)](#operation-flatcc-json-parser-and-printer-for-c-encode-optimized)
+	* [operation: flatcc json parser and printer for C decode/traverse (optimized)](#operation-flatcc-json-parser-and-printer-for-c-decodetraverse-optimized)
 * [JSON parsing and printing on same hardware in Virtual Box Ubuntu](#json-parsing-and-printing-on-same-hardware-in-virtual-box-ubuntu)
-    * [operation: flatcc json parser and printer for C encode (optimized)](#operation-flatcc-json-parser-and-printer-for-c-encode-optimized-1)
-    * [operation: flatcc json parser and printer for C decode/traverse](#operation-flatcc-json-parser-and-printer-for-c-decodetraverse)
+	* [operation: flatcc json parser and printer for C encode (optimized)](#operation-flatcc-json-parser-and-printer-for-c-encode-optimized-1)
+	* [operation: flatcc json parser and printer for C decode/traverse](#operation-flatcc-json-parser-and-printer-for-c-decodetraverse)
 
 <!-- vim-markdown-toc -->
 
@@ -103,6 +103,7 @@ See also:
 
 - [Quickstart](https://github.com/dvidelabs/flatcc#quickstart)
 
+- [Builder Interface Reference]
 
 The `flatcc` compiler is implemented as a standalone tool instead of
 extending Googles `flatc` compiler in order to have a pure portable C
@@ -164,7 +165,7 @@ Main features supported as of 0.4.2
 - fast build times
 - support for big endian platforms (as of 0.4.0)
 - support for big endian encoded flatbuffers on both le and be platforms. Enabled on `be` branch.
-- size prefixed buffers - see also [builder interfade referece]
+- size prefixed buffers - see also [Builder Interface Reference]
 
 Supported platforms:
 
@@ -330,7 +331,7 @@ once, if so desired.
 
 The typeless builder library is documented in `flatcc_builder.h` and
 `flatcc_emitter.h` while the generated typed builder api for C is
-documented in [builder interfade referece].
+documented in [Builder Interface Reference].
 
 
 ## Using flatcc
@@ -403,7 +404,7 @@ To write your own schema files please follow the main FlatBuffers
 project documentation on [writing schema
 files](https://google.github.io/flatbuffers/flatbuffers_guide_writing_schema.html).
 
-The [builder interfade referece] may be useful after studying the
+The [Builder Interface Reference] may be useful after studying the
 monster sample and quickstart below.
 
 When looking for advanced examples such as sorting vectors and finding
@@ -568,7 +569,7 @@ buffer using `flatcc_builder_finalize_buffer`, or the simplistic
 `flatcc_builder_get_direct_buffer` which returns null if the buffer is
 too large. See also documentation comments in `flatcc_builder.h` and
 `flatcc_emitter.h`. See also `flatc_builder_finalize_aligned_buffer` in
-`builder.h` and the [builder interfaces reference] when malloc aligned
+`builder.h` and the [Builder Interface Reference] when malloc aligned
 buffers are insufficent.
 
 
@@ -689,7 +690,7 @@ See also `include/flatcc/flatcc_verifier.h`.
 When verifying buffers returned directly from the builder, it may be
 necessary to use the `flatcc_builder_finalize_aligned_buffer` to ensure
 proper alignment and use `aligned_free` to free the buffer, see also the
-[builder interface reference]. Buffers may also be copied into aligned
+[Builder Interface Reference]. Buffers may also be copied into aligned
 memory via mmap or using the portable layers `paligned_alloc.h` feature
 which is available when including generated headers.
 `test/flatc_compat/flatc_compat.c` is an example of how this can be
@@ -1097,7 +1098,7 @@ Union types are just any of a set of possible table types and an enum
 named as for example `Any_union_type_t`. There is a compound union type
 that can store both type and table reference such that `create` calls
 can represent unions as a single argument - see `flatcc_builder.h` and
-[builder interface reference]. Union table fields return a pointer of type
+[Builder Interface Reference]. Union table fields return a pointer of type
 `flatbuffers_generic_table_t` which is defined as `const void *`.
 
 All types have a `_vec_t` suffix which is a const pointer to the
@@ -1287,15 +1288,15 @@ any other field but this can be disabled by a compile time flag.
 
 Basic types such as `uint8_vec` also have search operations.
 
-See also [builder interface reference] and `test/monster_test/monster_test.c`.
+See also [Builder Interface Reference] and `test/monster_test/monster_test.c`.
 
 
 ## Null Values
 
 The FlatBuffers format does not fully distinguish between default values
 and missing or null values but it is possible to force values to be
-written to the buffer. This is discussed further in the [builder
-interface reference].For SQL data roundtrips this may be more
+written to the buffer. This is discussed further in the
+[Builder Interface Reference]. For SQL data roundtrips this may be more
 important that having compact data.
 
 The `_is_present` suffix on table access methods can be used to detect if
@@ -1768,4 +1769,4 @@ Numbers for Linux included because parsing is significantly faster.
     throughput in 1M ops per sec: 0.564
     time per op: 1.772 (us)
 
-[builder interface reference]: https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md
+[Builder Interface Reference]: https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md
