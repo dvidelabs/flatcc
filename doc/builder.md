@@ -127,8 +127,8 @@ constrained environment - the allocator handles temporary stacks,
 virtual table caches etc. but not the emitter.
 
 The allocator and emitter interface is documented in the builder library
-header `flatcc_builder.h` and the default implementation in
-`flatcc_emitter.h`. The default allocator is implemented as part of the
+header pflatcc_builder.h] and the default implementation in
+[flatcc_emitter.h]. The default allocator is implemented as part of the
 flatcc_builder source.
 
 The builder can be reused between buffers using the `reset` operation.
@@ -174,7 +174,7 @@ into the namespace. We often use an empty namespace for custom types and
 be used on both cases, where `foo` is a custom namespace.
 
 Note that the name `flatcc_emitter` is only used with the default emitter
-and the name `flatcc_builder` is only used for buffer management but not
+and the name [flatcc_builder] is only used for buffer management but not
 for constructing content. Once a valid buffer is ready the common and
 namespace (`flatbuffers`) and schema specific (or empty) namespace is used
 with schema specific operations.
@@ -364,7 +364,7 @@ When the buffer is ended, nothing special happens but only at this point
 does it really makes sense to access the resulting buffer. The default
 emitter provides a copy method and a direct buffer access method. These
 are made available in the builder interface and will return null for
-other emitters. See also `flatcc_builder.h` and the default emitter in
+other emitters. See also [flatcc_builder.h] and the default emitter in
 `flatcc_emitter.h`.
 
 
@@ -692,7 +692,7 @@ modifiable pointer to the start of the string.
 including any embedded zeroes, but excluding final zero termination. It
 is only valid until `string_end` is called.
 
-See `flatcc_builder.h` for detailed documentation. Essentially `extend`
+See [flatcc_builder.h] for detailed documentation. Essentially `extend`
 reserves zeroed space on the stack and returns a buffer to the new
 space, and truncate reduces the overall size again, and the string is
 then given the final length and a zero termination at the end.
@@ -1203,7 +1203,7 @@ format is otherwise compatible, and thus feed the emitter directly.
 This is not possible with table and string vectors because the
 references in the source vectors must be translated into offsets.
 Therefore these create calls are similar to start, append, end calls.
-There is an internal, but unexposed flatcc_builder version
+There is an internal, but unexposed `flatcc_builder` version
 `create_offset_vector_direct` which destroys the source vector instead
 of allocating a stack copy.
 
@@ -1394,9 +1394,9 @@ analyze and has no need for the builder or the sort interface.
 ## Special Emitters
 
 An emitter only need to implement one function to replace or wrap the
-default emitter. See `flatcc_builder.h` on `flatcc_builder_emit_fun` for
+default emitter. See [flatcc_builder.h] on `flatcc_builder_emit_fun` for
 details, and also `emit_test.c` for a very simple custom emitter that
-just prints debug messages.
+just prints debug messages, and [flatcc_emitter.h].
 
 When adding padding `flatcc_builder_padding_base` is used as base in iov
 entries and an emitter may detect this pointer and assume the entire
@@ -1435,3 +1435,5 @@ builder reset between buffers to reduce stack size and initialization
 overhead.
 
 [monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
+[flatcc_builder.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_builder.h
+[flatcc_emitter.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_emitter.h

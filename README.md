@@ -321,7 +321,7 @@ constructed without requiring a full buffer to be present in memory at
 once, if so desired.
 
 The typeless builder library is documented in [flatcc_builder.h] and
-`flatcc_emitter.h` while the generated typed builder api for C is
+[flatcc_emitter.h] while the generated typed builder api for C is
 documented in [Builder Interface Reference].
 
 
@@ -561,7 +561,7 @@ as soon as they complete rather than merging all pages into a single
 buffer using `flatcc_builder_finalize_buffer`, or the simplistic
 `flatcc_builder_get_direct_buffer` which returns null if the buffer is
 too large. See also documentation comments in [flatcc_builder.h] and
-`flatcc_emitter.h`. See also `flatc_builder_finalize_aligned_buffer` in
+[flatcc_emitter.h]. See also `flatc_builder_finalize_aligned_buffer` in
 `builder.h` and the [Builder Interface Reference] when malloc aligned
 buffers are insufficent.
 
@@ -1640,3 +1640,4 @@ See [Benchmarks]
 [Benchmarks]: https://github.com/dvidelabs/flatcc/blob/master/doc/benchmarks.md
 [monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
 [flatcc_builder.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_builder.h
+[flatcc_emitter.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_emitter.h
