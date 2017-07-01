@@ -1,4 +1,4 @@
-# The builder interface
+# Builder Interface Reference
 
 <!-- vim-markdown-toc GFM -->
 * [Preface](#preface)
