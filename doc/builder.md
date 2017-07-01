@@ -16,6 +16,8 @@
 * [Error Handling](#error-handling)
 * [Limitations](#limitations)
 * [Sorting Vectors](#sorting-vectors)
+    * [Dangers of Sorting](#dangers-of-sorting)
+    * [Scanning](#scanning)
 * [Example of different interface type users](#example-of-different-interface-type-users)
 * [Special Emitters](#special-emitters)
 
@@ -1332,6 +1334,37 @@ the same table elements, and each can be sorted by a different key.
 The find operations are stable meaning they always return the lowest
 index of any matching key or `flatbuffers_not_found` which is larger
 than any other index.
+
+### Dangers of Sorting
+
+If a buffer was received over, say, an untrusted network the buffer
+should be verified before being accessed. But verification only makes it
+safe to read a buffer, not to modify a buffer because for example two
+vectors can be crafted to overlap each other without breaking any
+verification rules.
+
+Thus, sorting is intended to be done shortly after the buffer is
+constructed while it can still be trusted.
+
+Using find on a buffer that is supposed to be sorted, but isn't, can
+yield unexpected search results, but the result will always be a one
+element in the vector being searched, not a buffer overrun.
+
+### Scanning
+
+Some vectors can be sorted by different keys depending on which version
+depending on which version of `_sort_by` is being used. Obviously
+`_find_by` must match the sorted key.
+
+If we need to search for a key that is not sorted, or if we simply do
+not want to sort the vector, it is possible to use scanning operations
+instead using `_scan` or `_scan_by`. Scanning is similar to find except
+that it does a linear scan and it supports scanning from a given
+position.
+
+More information on scanning in the
+[README](https://github.com/dvidelabs/flatcc#searching-and-sorting)
+file, and in the `monster_test.c` test file.
 
 
 ## Example of different interface type users
