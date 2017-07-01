@@ -12,7 +12,62 @@ between 15K and 60K, read small buffers in 30ns, build FlatBuffers in
 about 600ns, and with a larger executable handle optional json parsing
 or printing in less than 2 us for a 10 field mixed type message.
 
-See also experimental meson branch, and [sample client project](https://github.com/dvidelabs/flatcc-meson-sample)
+
+<!-- vim-markdown-toc GFM -->
+* [Project Details](#project-details)
+* [Reporting Bugs](#reporting-bugs)
+* [Status](#status)
+* [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
+* [Generated Files](#generated-files)
+* [Using flatcc](#using-flatcc)
+* [Quickstart](#quickstart)
+* [Quickstart - reading a buffer](#quickstart---reading-a-buffer)
+* [Quickstart - compiling for read-only](#quickstart---compiling-for-read-only)
+* [Quickstart - building a buffer](#quickstart---building-a-buffer)
+* [Verifying a Buffer](#verifying-a-buffer)
+* [File and Type Identifiers](#file-and-type-identifiers)
+    * [File Identifiers](#file-identifiers)
+    * [Type Identifiers](#type-identifiers)
+* [JSON Parsing and Printing](#json-parsing-and-printing)
+    * [Performance Notes](#performance-notes)
+* [Global Scope and Included Schema](#global-scope-and-included-schema)
+* [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
+* [Fast Buffers](#fast-buffers)
+* [Types](#types)
+* [Endianness](#endianness)
+* [Offset Sizes and Direction](#offset-sizes-and-direction)
+* [Pitfalls in Error Handling](#pitfalls-in-error-handling)
+* [Searching and Sorting](#searching-and-sorting)
+* [Null Values](#null-values)
+* [Portability Layer](#portability-layer)
+* [Building](#building)
+    * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
+    * [Windows Build (MSVC)](#windows-build-msvc)
+    * [Cross-compilation](#cross-compilation)
+* [Distribution](#distribution)
+    * [Unix Files](#unix-files)
+    * [Windows Files](#windows-files)
+* [Running Tests on Unix](#running-tests-on-unix)
+* [Running Tests on Windows](#running-tests-on-windows)
+* [Configuration](#configuration)
+* [Using the Compiler and Builder library](#using-the-compiler-and-builder-library)
+* [Benchmark](#benchmark)
+    * [operation: flatbench for raw C structs encode (optimized)](#operation-flatbench-for-raw-c-structs-encode-optimized)
+    * [operation: flatbench for raw C structs decode/traverse (optimized)](#operation-flatbench-for-raw-c-structs-decodetraverse-optimized)
+    * [operation: flatc for C++ encode (optimized)](#operation-flatc-for-c-encode-optimized)
+    * [operation: flatc for C++ decode/traverse (optimized)](#operation-flatc-for-c-decodetraverse-optimized)
+    * [operation: flatcc for C encode (optimized)](#operation-flatcc-for-c-encode-optimized)
+    * [operation: flatcc for C decode/traverse (optimized)](#operation-flatcc-for-c-decodetraverse-optimized)
+* [JSON benchmark](#json-benchmark)
+    * [operation: flatcc json parser and printer for C encode (optimized)](#operation-flatcc-json-parser-and-printer-for-c-encode-optimized)
+    * [operation: flatcc json parser and printer for C decode/traverse (optimized)](#operation-flatcc-json-parser-and-printer-for-c-decodetraverse-optimized)
+* [JSON parsing and printing on same hardware in Virtual Box Ubuntu](#json-parsing-and-printing-on-same-hardware-in-virtual-box-ubuntu)
+    * [operation: flatcc json parser and printer for C encode (optimized)](#operation-flatcc-json-parser-and-printer-for-c-encode-optimized-1)
+    * [operation: flatcc json parser and printer for C decode/traverse](#operation-flatcc-json-parser-and-printer-for-c-decodetraverse)
+
+<!-- vim-markdown-toc -->
+
+## Project Details
 
 NOTE: see
 [CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md).
