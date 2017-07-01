@@ -21,15 +21,15 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Generated Files](#generated-files)
 * [Using flatcc](#using-flatcc)
 * [Quickstart](#quickstart)
-	* [Reading a Buffer](#reading-a-buffer)
-	* [Compiling for Read-Only](#compiling-for-read-only)
-	* [Building a Buffer](#building-a-buffer)
-	* [Verifying a Buffer](#verifying-a-buffer)
+    * [Reading a Buffer](#reading-a-buffer)
+    * [Compiling for Read-Only](#compiling-for-read-only)
+    * [Building a Buffer](#building-a-buffer)
+    * [Verifying a Buffer](#verifying-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
-	* [File Identifiers](#file-identifiers)
-	* [Type Identifiers](#type-identifiers)
+    * [File Identifiers](#file-identifiers)
+    * [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
-	* [Performance Notes](#performance-notes)
+    * [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
 * [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
 * [Fast Buffers](#fast-buffers)
@@ -41,13 +41,13 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Null Values](#null-values)
 * [Portability Layer](#portability-layer)
 * [Building](#building)
-	* [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
-	* [Windows Build (MSVC)](#windows-build-msvc)
-	* [Cross-compilation](#cross-compilation)
-	* [Shared Libraries](#shared-libraries)
+    * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
+    * [Windows Build (MSVC)](#windows-build-msvc)
+    * [Cross-compilation](#cross-compilation)
+    * [Shared Libraries](#shared-libraries)
 * [Distribution](#distribution)
-	* [Unix Files](#unix-files)
-	* [Windows Files](#windows-files)
+    * [Unix Files](#unix-files)
+    * [Windows Files](#windows-files)
 * [Running Tests on Unix](#running-tests-on-unix)
 * [Running Tests on Windows](#running-tests-on-windows)
 * [Configuration](#configuration)
@@ -320,7 +320,7 @@ buffer emitter object. The separate emitter ensures a buffer can be
 constructed without requiring a full buffer to be present in memory at
 once, if so desired.
 
-The typeless builder library is documented in `flatcc_builder.h` and
+The typeless builder library is documented in [flatcc_builder.h] and
 `flatcc_emitter.h` while the generated typed builder api for C is
 documented in [Builder Interface Reference].
 
@@ -560,7 +560,7 @@ to provide a custom emitter and for example emit pages over the network
 as soon as they complete rather than merging all pages into a single
 buffer using `flatcc_builder_finalize_buffer`, or the simplistic
 `flatcc_builder_get_direct_buffer` which returns null if the buffer is
-too large. See also documentation comments in `flatcc_builder.h` and
+too large. See also documentation comments in [flatcc_builder.h] and
 `flatcc_emitter.h`. See also `flatc_builder_finalize_aligned_buffer` in
 `builder.h` and the [Builder Interface Reference] when malloc aligned
 buffers are insufficent.
@@ -799,7 +799,7 @@ NOTE: The generated `_type_identifier` strings should not normally be
 used when an identifier string is expected in the generated API because
 it may contain null bytes which will be zero padded after the first null
 before comparison. Use the API calls that take a type hash instead. The
-`type_identifier` can be used in low level `flatcc_builder` calls
+`type_identifier` can be used in low level [flatcc_builder.h] calls
 because it handles identifiers as a fixed byte array and handles type
 hashes and strings the same.
 
@@ -1090,7 +1090,7 @@ a native struct has the type `Vec3_t *` or `struct Vec3 *`.
 Union types are just any of a set of possible table types and an enum
 named as for example `Any_union_type_t`. There is a compound union type
 that can store both type and table reference such that `create` calls
-can represent unions as a single argument - see `flatcc_builder.h` and
+can represent unions as a single argument - see [flatcc_builder.h] and
 [Builder Interface Reference]. Union table fields return a pointer of type
 `flatbuffers_generic_table_t` which is defined as `const void *`.
 
@@ -1628,7 +1628,7 @@ source files directly.  For debugging, it is useful to use the
 in assertions.
 
 The runtime library may also be used by other languages. See comments
-in `include/flatcc/flatcc_builder.h`. JSON parsing is on example of an
+in [flatcc_builder.h]. JSON parsing is on example of an
 alternative use of the builder library so it may help to inspect the
 generated JSON parser source and runtime source.
 
@@ -1639,3 +1639,4 @@ See [Benchmarks]
 [Builder Interface Reference]: https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md
 [Benchmarks]: https://github.com/dvidelabs/flatcc/blob/master/doc/benchmarks.md
 [monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
+[flatcc_builder.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_builder.h
