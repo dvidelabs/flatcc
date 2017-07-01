@@ -1353,14 +1353,14 @@ element in the vector being searched, not a buffer overrun.
 ### Scanning
 
 Some vectors can be sorted by different keys depending on which version
-depending on which version of `_sort_by` is being used. Obviously
-`_find_by` must match the sorted key.
+version of `_sort_by` is being used. Obviously `_find_by` must match the
+sorted key.
 
 If we need to search for a key that is not sorted, or if we simply do
 not want to sort the vector, it is possible to use scanning operations
-instead using `_scan` or `_scan_by`. Scanning is similar to find except
-that it does a linear scan and it supports scanning from a given
-position.
+instead by using `_scan` or `_scan_by`. Scanning is similar to find
+except that it does a linear search and it supports scanning from a
+given position.
 
 More information on scanning in the
 [README](https://github.com/dvidelabs/flatcc#searching-and-sorting)
