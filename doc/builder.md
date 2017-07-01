@@ -1,7 +1,6 @@
 # Builder Interface Reference
 
 <!-- vim-markdown-toc GFM -->
-* [Preface](#preface)
 * [Introduction](#introduction)
 * [Size Prefixed Buffers](#size-prefixed-buffers)
 * [Namespaces](#namespaces)
@@ -11,7 +10,7 @@
 * [Tables](#tables)
 * [Strings](#strings)
 * [Structs](#structs)
-* [Nested buffers](#nested-buffers)
+* [Nested Buffers](#nested-buffers)
 * [Scalars and Enums](#scalars-and-enums)
 * [Vectors](#vectors)
 * [Error Handling](#error-handling)
@@ -22,11 +21,6 @@
 
 <!-- vim-markdown-toc -->
 
-
-## Preface
-
-Some rules have changed regarding to namespace mappings and how sort
-functions are defined. The current documentation does not reflect this.
 
 ## Introduction
 
@@ -243,6 +237,11 @@ which for FlatBuffers is little endian. We do not hardcode little endian
 because it enables us to support other protocols in the future - for
 example the struct conversions may be very useful for big endian network
 protocols.
+
+> As of flatcc 0.4.0 it is possible to compile flatcc with native
+> big-endian support which has been tested on AIX. More details in
+> [README Endianness](https://github.com/dvidelabs/flatcc#endianness)
+
 
 By testing `is_native_pe` dependencies on speficic compile time flags
 can be avoided, and these are fragile:
@@ -879,7 +878,7 @@ Be aware that `Vec3_t` is for native updates while `Vec3_struct_t` is a const
 pointer to an endian encoded struct used in the reader interface, and actually
 also as source type in the clone operation.
 
-## Nested buffers
+## Nested Buffers
 
 These are discussed under Structs and Table sections but it is worth
 noting that a nested buffers can also be added as pe ubyte vectors
