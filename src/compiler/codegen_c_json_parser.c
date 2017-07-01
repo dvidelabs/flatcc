@@ -893,8 +893,6 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
     int len = 0, has_prefix_key = 0, prefix_guard = 0, has_descend;
     int label = 0;
 
-    println(out, "/* debug: gen_trie [%d..%d] pos %d */", a, b, pos);
-
     /*
      * Process a trie at the level given by pos. A single level covers
      * one tag.
@@ -929,8 +927,6 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
     if ((get_dict_suffix_len(&trie->dict[a], pos) == 0) &&
         (b == a || (b == a + 1 && get_dict_suffix_len(&trie->dict[b], pos) == 0))) {
         gen_prefix_trie(out, trie, a, b, pos, 0);
-
-        println(out, "/* debug: return (1) gen_trie [%d..%d] pos %d */", a, b, pos);
         return;
     }
 
@@ -952,8 +948,6 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
         unindent(); println(out, "} else { /* branch \"%.*s\" */", len, name); indent();
         gen_trie(out, trie, x, b, pos);
         unindent(); println(out, "} /* branch \"%.*s\" */", len, name);
-
-        println(out, "/* debug: return (2) gen_trie [%d..%d] pos %d */", a, b, pos);
         return;
     }
     x = split_dict_right(trie->dict, a, b, pos);
@@ -1006,12 +1000,6 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
     /* If we have a descend, process that in isolation. */
     if (has_descend) {
         has_prefix_key = k > a && get_dict_tag_len(&trie->dict[k - 1], pos) == 8;
-        if (has_prefix_key) {
-            /*TODO: debug */
-            int n = get_dict_tag_len(&trie->dict[k - 1], pos);
-            println(out, "/* debug: dict tag len: %d, total len: %d, key: %.*s */", n, trie->dict[k - 1].len,
-                    trie->dict[k - 1].len,trie->dict[k - 1].text);
-        }
         get_dict_tag(&trie->dict[k], pos, &tag, &mask, &name, &len);
         println(out, "if (w == 0x%"PRIx64") { /* descend \"%.*s\" */", tag, len, name); indent();
         if (has_prefix_key) {
@@ -1040,7 +1028,9 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
     if (prefix_guard) {
         /* All prefixes tested, but none matched. */
         println(out, "goto endpfguard%d;", label);
+        margin();
         println(out, "pfguard%d:", label);
+        unmargin();
     }
     if (x <= b) {
         gen_trie(out, trie, x, b, pos);
@@ -1048,12 +1038,14 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
         trie->gen_unmatched(out);
     }
     if (prefix_guard) {
-        println(out, "endpfguard%d: (void)0;", label);
+        margin();
+        println(out, "endpfguard%d:", label);
+        unmargin();
+        println(out, "(void)0;");
     }
     if (has_descend) {
         unindent(); println(out, "} /* descend \"%.*s\" */", len, name);
     }
-    println(out, "/* debug: return (3) gen_trie [%d..%d] pos %d */", a, b, pos);
 }
 
 
