@@ -156,7 +156,7 @@ To read a buffer with a size prefix use:
 
 The size the size of the buffer excluding the size prefix. When
 verifying buffers the buffer and size arguments should be used. See also
-`monster_test.c` for an example.
+[monster_test.c] for an example.
 
 Note that the size prefix ensures internal alignment but does not
 guarantee that the next buffer in a file can be appended directly
@@ -1364,7 +1364,7 @@ given position.
 
 More information on scanning in the
 [README](https://github.com/dvidelabs/flatcc#searching-and-sorting)
-file, and in the `monster_test.c` test file.
+file, and in the [monster_test.c] test file.
 
 
 ## Example of different interface type users
@@ -1433,3 +1433,5 @@ back will not necessarily double. If the stack grows large it may also
 be worthwhile trimming the stack with a custom allocator and custom
 builder reset between buffers to reduce stack size and initialization
 overhead.
+
+[monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
