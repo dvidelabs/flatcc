@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
 cd `dirname $0`
-mkdir -p "build"
-cd build && cmake -GNinja .. && ninja
+mkdir -p "build/release"
+cd build/release && cmake -GNinja ../.. -DCMAKE_BUILD_TYPE=Release && ninja

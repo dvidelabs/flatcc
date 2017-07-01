@@ -1,6 +1,8 @@
 #ifndef PALIGNED_ALLOC_H
 
-#ifndef __cplusplus
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * NOTE: MSVC in general has no aligned alloc function that is
@@ -149,5 +151,8 @@ static inline void __portable_aligned_free(void *p)
 #define __aligned_free_is_defined 1
 #endif
 
-#endif /* __cplusplus */
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* PALIGNED_ALLOC_H */

@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Mikkel F. Jørgensen, dvide.com
+ * Copyright (c) 2017 Mikkel F. Jørgensen, dvide.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,40 +22,26 @@
  * SOFTWARE.
  */
 
-#include <string.h>
+#include "ht64.h"
+#define HT_HASH_FUNCTION ht_uint64_hash_function
 
-#include "str_set.h"
 #include "hash_table_def.h"
-DEFINE_HASH_TABLE(str_set)
-#if defined(STR_SET_RH)
-#include "hash_table_impl_rh.h"
-#else
-#include "hash_table_impl.h"
-#endif
+DEFINE_HASH_TABLE(ht64)
 
-/*
- * Simple default implementation of a hash set. The stored items are
- * zero-terminated strings. The hash table does not manage the
- * allocation of the strings, like it doesn't manage any stored items.
- * However, it items are created with, say, strndup, a destructor can be
- * provided to free each item when clearing the table. The remove
- * operation also returns the removed item so it can be deallocated by
- * callee.
- *
- * In general, the key and the item are different, but here they are the
- * same. Normally the key would be referenced by the item.
- */
-static inline int ht_match(const void *key, size_t len, str_set_item_t item)
+#include "hash_table_impl.h"
+
+
+static inline int ht_match(const void *key, size_t len, const ht64_item_t item)
 {
-    return strncmp(key, item, len) == 0;
+    return *(const ht64_item_t)key == *item;
 }
 
-static inline const void *ht_key(str_set_item_t item)
+static inline const void *ht_key(const ht64_item_t item)
 {
     return (const void *)item;
 }
 
-static inline size_t ht_key_len(str_set_item_t item)
+static inline size_t ht_key_len(const ht64_item_t item)
 {
-    return strlen(item);
+    return sizeof(*item);
 }

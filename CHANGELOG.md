@@ -1,9 +1,22 @@
 # Change Log
 
-## [0.4.2-pre]
+## [0.4.3-pre]
+- Fix issue with initbuild.sh for custom builds (#43)
+- Add casts to aid clean C++ builds (#47)
+- Add missing const specifier in generated `buffer_start` methods - removes C++
+  warnings (#48)
+- Update external/hash, remove buggy Sorted Robin Hash that wasn't
+  faster anyway - no impact on flatcc.
+- Fix JSON parsing bug where some names are prefixes of others (#50).
+
+## [0.4.2]
+- Fix SIGNIFICANT bug miscalculating the number of builder frames in
+  use. Nesting 8 levels would cause memory corruption (#41).
 - Fix minor memory leak in flatcc compiler.
 - Reduce collisions in builders vtable hash.
-- Fix missing `<mm_malloc.h>` for some GCC versions in `paligned_alloc.h` (#40)
+- Remove broken dependency on `<mm_malloc.h>` for some GCC versions in
+  `paligned_alloc.h` (#40)
+- Allow C++ files to include `pstdalign.h` and `paligned_alloc.h` (#39)
 
 ## [0.4.1]
 - Test for `posix_memalign` on GCC platforms and fix fallback

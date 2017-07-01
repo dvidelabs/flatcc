@@ -5,10 +5,16 @@
  * NOTE: aligned_alloc is defined via paligned_alloc.h
  * and requires aligned_free to be fully portable although
  * free also works on C11 and platforms with posix_memalign.
+ *
+ * NOTE: C++11 defines alignas as a keyword but then also defines
+ * __alignas_is_defined.
  */
 
 #ifndef __alignas_is_defined
-#ifndef __cplusplus
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if (!defined(__clang__) && defined(__GNUC__) && \
         ((__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ < 7)))
@@ -45,9 +51,13 @@
 #define __alignas_is_defined 1
 #define __alignof_is_defined 1
 
-#endif /* __cplusplus */
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __alignas__is_defined */
 
 #include "paligned_alloc.h"
+
 
 #endif /* PSTDALIGN_H */

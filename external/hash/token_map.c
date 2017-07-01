@@ -34,8 +34,6 @@
 DEFINE_HASH_TABLE(token_map)
 #if defined(TOKEN_MAP_RH)
 #include "hash_table_impl_rh.h"
-#elif defined(TOKEN_MAP_SRH)
-#include "hash_table_impl_srh.h"
 #else
 #include "hash_table_impl.h"
 #endif

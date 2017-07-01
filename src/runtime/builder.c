@@ -533,7 +533,8 @@ static int enter_frame(flatcc_builder_t *B, uint16_t align)
         if (B->max_level > 0 && B->level > B->max_level) {
             return -1;
         }
-        if (!(B->frame = reserve_buffer(B, flatcc_builder_alloc_fs, B->level * frame_size, frame_size, 0))) {
+        if (!(B->frame = reserve_buffer(B, flatcc_builder_alloc_fs,
+                        (B->level - 1) * frame_size, frame_size, 0))) {
             return -1;
         }
         B->limit_level = (int)(B->buffers[flatcc_builder_alloc_fs].iov_len / frame_size);

@@ -49,8 +49,8 @@
 #define HT_MISSING ((ht_item_t)0)
 #endif
 
-#ifndef HT_ALLOC_FAILED
-#define HT_ALLOC_FAILED ((ht_item_t)1)
+#ifndef HT_NOMEM
+#define HT_NOMEM ((ht_item_t)1)
 #endif
 
 #ifndef HT_DELETED
@@ -77,6 +77,10 @@ static int ht_resize(hash_table_t *ht, size_t count);                       \
 static void ht_clear(hash_table_t *ht);                                     \
 static void ht_visit(hash_table_t *ht,                                      \
         ht_visitor_f *visitor, void *context);                              \
+                                                                            \
+const ht_item_t HT_NAME##_missing = HT_MISSING;                             \
+const ht_item_t HT_NAME##_nomem = HT_NOMEM;                                 \
+const ht_item_t HT_NAME##_deleted = HT_DELETED;                             \
                                                                             \
 HT_PRIV void HT_NAME##_clear(HT_NAME##_t *ht)                               \
 {                                                                           \

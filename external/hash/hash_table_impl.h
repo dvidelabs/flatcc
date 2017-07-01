@@ -113,12 +113,12 @@ static ht_item_t ht_insert(hash_table_t *ht,
 
     assert(new_item != HT_MISSING);
     assert(new_item != HT_DELETED);
-    assert(new_item != HT_ALLOC_FAILED);
+    assert(new_item != HT_NOMEM);
 
     if (ht->count >= ht->buckets * (HT_LOAD_FACTOR_FRAC) / 256) {
         if (ht_resize(ht, ht->count * 2)) {
             HT_PANIC("hash table failed to allocate memory during resize");
-            return HT_ALLOC_FAILED;
+            return HT_NOMEM;
         }
     }
     T = ht->table;
