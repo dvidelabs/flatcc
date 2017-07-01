@@ -21,15 +21,15 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Generated Files](#generated-files)
 * [Using flatcc](#using-flatcc)
 * [Quickstart](#quickstart)
-    * [Reading a Buffer](#reading-a-buffer)
-    * [Compiling for Read-Only](#compiling-for-read-only)
-    * [Building a Buffer](#building-a-buffer)
-    * [Verifying a Buffer](#verifying-a-buffer)
+	* [Reading a Buffer](#reading-a-buffer)
+	* [Compiling for Read-Only](#compiling-for-read-only)
+	* [Building a Buffer](#building-a-buffer)
+	* [Verifying a Buffer](#verifying-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
-    * [File Identifiers](#file-identifiers)
-    * [Type Identifiers](#type-identifiers)
+	* [File Identifiers](#file-identifiers)
+	* [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
-    * [Performance Notes](#performance-notes)
+	* [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
 * [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
 * [Fast Buffers](#fast-buffers)
@@ -41,13 +41,13 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Null Values](#null-values)
 * [Portability Layer](#portability-layer)
 * [Building](#building)
-    * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
-    * [Windows Build (MSVC)](#windows-build-msvc)
-    * [Cross-compilation](#cross-compilation)
-    * [Shared Libraries](#shared-libraries)
+	* [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
+	* [Windows Build (MSVC)](#windows-build-msvc)
+	* [Cross-compilation](#cross-compilation)
+	* [Shared Libraries](#shared-libraries)
 * [Distribution](#distribution)
-    * [Unix Files](#unix-files)
-    * [Windows Files](#windows-files)
+	* [Unix Files](#unix-files)
+	* [Windows Files](#windows-files)
 * [Running Tests on Unix](#running-tests-on-unix)
 * [Running Tests on Windows](#running-tests-on-windows)
 * [Configuration](#configuration)
@@ -285,7 +285,7 @@ abstractions and eventually have a set of predefined files for types
 beyond the standard 32-bit unsigned offset (`uoffset_t`). The runtime
 library is specific to one set of type definitions.
 
-Refer to `monster_test.c` and the generated files for detailed guidance
+Refer to [monster_test.c] and the generated files for detailed guidance
 on use. The monster schema used in this project is a slight adaptation
 to the original to test some additional edge cases.
 
@@ -293,7 +293,7 @@ For building flatbuffers a separate builder header file is generated per
 schema. It requires a `flatbuffers_common_builder.h` file also generated
 by the compiler and a small runtime library `libflatccrt.a`. It is
 because of this requirement that the reader and builder generated code
-is kept separate. Typical uses can be seen in the `monster_test.c` file.
+is kept separate. Typical uses can be seen in the [monster_test.c] file.
 The builder allows of repeated pushing of content to a vector or a
 string while a containing table is being updated which simplifies
 parsing of external formats. It is also possible to build nested buffers
@@ -413,10 +413,12 @@ follow along, but there are no assumptions about that in the text below.
 ### Reading a Buffer
 
 Here we provide a quick example of read-only access to Monster flatbuffer -
-it is an adapted extract of the `monster_test.c` file.
+it is an adapted extract of the [monster_test.c] file.
 
 First we compile the schema read-only with common (-c) support header and we
-add the recursion because `monster_test.fbs` includes other files.
+add the recursion because
+[monster_test.fbs](https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.fbs)
+includes other files.
 
     flatcc -cr test/monster_test/monster_test.fbs
 
@@ -515,7 +517,7 @@ features.
 ### Building a Buffer
 
 Here we provide a very limited example of how to build a buffer - only a few
-fields are updated. Pleaser refer to `monster_test.c` and the doc directory
+fields are updated. Pleaser refer to [monster_test.c] and the doc directory
 for more information.
 
 First we must generate the files:
@@ -566,7 +568,7 @@ buffers are insufficent.
 
     #include "monster_test_builder.h"
 
-    /* See `monster_test.c` for more advanced examples. */
+    /* See [monster_test.c] for more advanced examples. */
     void build_monster(flatcc_builder_t *B)
     {
         ns(Vec3_t *vec);
@@ -782,7 +784,7 @@ identifier in the buffer.
     }
 
 More API calls are available to naturally extend the existing API. See
-`test/monster_test/monster_test.c` for more.
+[monster_test.c] for more.
 
 The type identifiers are defined like:
 
@@ -1068,7 +1070,7 @@ measurements suggests there is a limit to how fast this can go (about
 buffers which involves zeroing allocated buffers. Small tables with a
 simple vector achieve roughly half that speed. For really high speed a
 dedicated builder for structs would be needed. See also
-`monster_test.c`.
+[monster_test.c].
 
 
 ## Types
@@ -1271,7 +1273,7 @@ and `b` can also conveniently be the result of a previous search.
 element. `rscan_ex` accepts the same range arguments as `scan_ex`. If
 `a >= b or a >= len` the range is considered empty and
 `flatbuffers_not_found` is returned. `[r]scan[_ex]_n[_by_name]` is for
-length terminated string keys. See `monster_test.c` for examples.
+length terminated string keys. See [monster_test.c] for examples.
 
 Note that `find` requires `key` attribute in the schema. `scan` is also
 available on keyed fields. By default `flatcc` will also enable scan by
@@ -1279,7 +1281,7 @@ any other field but this can be disabled by a compile time flag.
 
 Basic types such as `uint8_vec` also have search operations.
 
-See also [Builder Interface Reference] and `test/monster_test/monster_test.c`.
+See also [Builder Interface Reference] and [monster_test.c].
 
 
 ## Null Values
@@ -1636,3 +1638,4 @@ See [Benchmarks]
 
 [Builder Interface Reference]: https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md
 [Benchmarks]: https://github.com/dvidelabs/flatcc/blob/master/doc/benchmarks.md
+[monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
