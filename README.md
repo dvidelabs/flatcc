@@ -103,9 +103,6 @@ See also:
 
 - [Quickstart](https://github.com/dvidelabs/flatcc#quickstart)
 
-- [Status](https://github.com/dvidelabs/flatcc#status)
-
-- [Benchmark](https://github.com/dvidelabs/flatcc#benchmark)
 
 The `flatcc` compiler is implemented as a standalone tool instead of
 extending Googles `flatc` compiler in order to have a pure portable C
