@@ -329,6 +329,10 @@ documented in [Builder Interface Reference].
 
 Refer to `flatcc -h` for details.
 
+An online version listed here: [flatcc-help.md] but please use `flatcc
+-h` for an up to date reference.
+
+
 The compiler can either generate a single header file or headers for all
 included schema and a common file and with or without support for both
 reading (default) and writing (-w) flatbuffers. The simplest option is
@@ -1641,3 +1645,4 @@ See [Benchmarks]
 [monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
 [flatcc_builder.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_builder.h
 [flatcc_emitter.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_emitter.h
+[flatcc-help.md]: https://github.com/dvidelabs/flatcc/blob/master/doc/flatcc-help.md
