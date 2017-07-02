@@ -151,6 +151,13 @@ static inline const char *flatcc_json_parser_string_end(flatcc_json_parser_t *ct
     return ++buf;
 }
 
+/*
+ * Creates a string. Returns *ref == 0 on unrecoverable error or
+ * sets *ref to a valid new string reference.
+ */
+const char *flatcc_json_parser_build_string(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, flatcc_builder_ref_t *ref);
+
 typedef char flatcc_json_parser_escape_buffer_t[4];
 /*
  * If the buffer does not hold a valid escape sequence, an error is

@@ -573,24 +573,7 @@ repeat_nested:
     } else if (is_struct) {
             println(out, "buf = %s_parse_json_struct(ctx, buf, end, pval);", snref.text);
     } else if (is_string) {
-        println(out, "buf = flatcc_json_parser_string_start(ctx, buf, end);");
-        println(out, "buf = flatcc_json_parser_string_part(ctx, (mark = buf), end);");
-        println(out, "if (buf != end && *buf == '\\\"') {"); indent();
-             /* This is fast because it bypasses the builder stack. */
-        println(out, "ref = flatcc_builder_create_string(ctx->ctx, mark, buf - mark);");
-        unindent(); println(out, "} else {"); indent();
-        println(out, "if (flatcc_builder_start_string(ctx->ctx) ||");
-        indent(); indent(); println(out, "0 == flatcc_builder_append_string(ctx->ctx, mark, buf - mark)) goto failed;"); unindent(); unindent();
-        println(out, "while (buf != end && *buf != '\\\"') {"); indent();
-        println(out, "buf = flatcc_json_parser_string_escape(ctx, buf, end, code);");
-        println(out, "if (0 == flatcc_builder_append_string(ctx->ctx, code + 1, code[0])) goto failed;");
-        println(out, "if (end != (buf = flatcc_json_parser_string_part(ctx, (mark = buf), end))) {"); indent();
-        println(out, "if (0 == flatcc_builder_append_string(ctx->ctx, mark, buf - mark)) goto failed;");
-        unindent(); println(out, "}");
-        unindent(); println(out, "}");
-        println(out, "ref = flatcc_builder_end_string(ctx->ctx);");
-        unindent(); println(out, "}");
-        println(out, "buf = flatcc_json_parser_string_end(ctx, buf, end);");
+        println(out, "buf = flatcc_json_parser_build_string(ctx, buf, end, &ref);");
     } else if (is_table) {
         println(out, "buf = %s_parse_json_table(ctx, buf, end);", snref.text);
         println(out, "if (buf == end) goto failed;");
@@ -1365,9 +1348,6 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
         println(out, "flatcc_builder_ref_t ref, *pref;");
         println(out, "const char *mark;");
         println(out, "uint64_t w;");
-        // TODO: only if we have strings, better yet, place escape loop in
-        // flatcc_json.h
-        println(out, "flatcc_json_parser_escape_buffer_t code;");
     }
     println(out, "");
 

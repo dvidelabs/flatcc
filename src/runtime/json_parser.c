@@ -694,6 +694,36 @@ const char *flatcc_json_parser_integer(flatcc_json_parser_t *ctx, const char *bu
     return buf;
 }
 
+/* String Creation - depends on flatcc builder. */
+
+const char *flatcc_json_parser_build_string(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, flatcc_builder_ref_t *ref)
+{
+    flatcc_json_parser_escape_buffer_t code;
+    const char *mark;
+
+    buf = flatcc_json_parser_string_start(ctx, buf, end);
+    buf = flatcc_json_parser_string_part(ctx, (mark = buf), end);
+    if (buf != end && *buf == '\"') {
+        *ref = flatcc_builder_create_string(ctx->ctx, mark, buf - mark);
+    } else {
+        if (flatcc_builder_start_string(ctx->ctx) ||
+                0 == flatcc_builder_append_string(ctx->ctx, mark, buf - mark)) goto failed;
+        while (buf != end && *buf != '\"') {
+            buf = flatcc_json_parser_string_escape(ctx, buf, end, code);
+            if (0 == flatcc_builder_append_string(ctx->ctx, code + 1, code[0])) goto failed;
+            if (end != (buf = flatcc_json_parser_string_part(ctx, (mark = buf), end))) {
+                if (0 == flatcc_builder_append_string(ctx->ctx, mark, buf - mark)) goto failed;
+            }
+        }
+        *ref = flatcc_builder_end_string(ctx->ctx);
+    }
+    return flatcc_json_parser_string_end(ctx, buf, end);
+
+failed:
+    *ref = 0;
+    return buf;
+}
 
 /* UNIONS */
 
