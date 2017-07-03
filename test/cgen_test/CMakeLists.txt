@@ -18,7 +18,7 @@ add_test(cgen_test cgen_test${CMAKE_EXECUTABLE_SUFFIX})
 # Compilation of the generated code tests many import edge cases 
 # in the parser and code generator but due to CMake limitations, 
 # custom target dependencies only work for Make build targets.
-
+#
 # expansion of flags results in quotes the compiler won't eat,
 # separating arguments should fix this, but not sure how portable it is.
 # see also http://stackoverflow.com/questions/9870162/avoid-quoting-in-cmake-add-custom-command
@@ -31,6 +31,9 @@ add_custom_target(test_generated
     )
 add_dependencies(test_generated cgen_test)
 
+# Might be related to:
+# https://cmake.org/Bug/view.php?id=14963#c37230
+# https://github.com/ninja-build/ninja/issues/760
 if(${CMAKE_MAKE_PROGRAM} MATCHES make)
 add_test(test_generated ${CMAKE_MAKE_PROGRAM} test_generated)
 endif(${CMAKE_MAKE_PROGRAM} MATCHES make)
