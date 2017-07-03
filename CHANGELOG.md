@@ -10,6 +10,8 @@
 - Fix JSON parsing bug where some names are prefixes of others (#50).
 - A Table of Contents in documentation :-)
 - Move repetitive generated JSON string parsing into library.
+- Add tests for JSON runtime compiled with different flags such as
+  permitting unquoted keys.
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in

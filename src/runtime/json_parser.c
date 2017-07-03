@@ -598,14 +598,14 @@ again:
             uint8_t v;
             buf = flatcc_json_parser_bool(ctx, (k = buf), end, &v);
             if (k == buf) {
-                return flatcc_json_parser_set_error(ctx, buf, end, end, flatcc_json_parser_error_unexpected_character);
+                return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_unexpected_character);
             }
         }
         break;
     case 'n':
-        buf = flatcc_json_parser_null(ctx, (k = buf), end);
+        buf = flatcc_json_parser_null((k = buf), end);
         if (k == buf) {
-            return flatcc_json_parser_set_error(ctx, buf, end, end, flatcc_json_parser_error_unexpected_character);
+            return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_unexpected_character);
         }
         break;
 #endif

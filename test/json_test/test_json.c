@@ -5,6 +5,9 @@
 
 #include "flatcc/support/hexdump.h"
 
+#define UQL FLATCC_JSON_PARSE_ALLOW_UNQUOTED_LIST
+#define UQ FLATCC_JSON_PARSE_ALLOW_UNQUOTED
+
 #undef ns
 #define ns(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Example, x)
 
@@ -112,11 +115,53 @@ int edge_case_tests()
     TEST(   "{ name: \"Monster\", color: \"Green Blue Red Blue\"}",
             "{\"name\":\"Monster\",\"color\":\"Red Green Blue\"}");
 #else
+#if UQ
     TEST(   "{ name: \"Monster\", color: \"Green Blue Red Blue\"}",
             "{\"name\":\"Monster\",\"color\":19}");
+#else
+    TEST(   "{ \"name\": \"Monster\", \"color\": \"Green Blue Red Blue\"}",
+            "{\"name\":\"Monster\",\"color\":19}");
+#endif
 #endif
 
+/*
+ * If a value is stored, even if default, it is also printed.
+ * This option can also be flagged compile time for better performance.
+ */
+    TEST_FLAGS(flatcc_json_parser_f_force_add, 0,
+            "{ \"name\": \"Monster\", \"color\": 8}",
+            "{\"name\":\"Monster\",\"color\":\"Blue\"}");
 
+    TEST_FLAGS(0, flatcc_json_printer_f_noenum,
+            "{ \"name\": \"Monster\", \"color\": \"Green\"}",
+            "{\"name\":\"Monster\",\"color\":2}");
+
+    TEST_FLAGS(flatcc_json_parser_f_force_add, flatcc_json_printer_f_skip_default,
+            "{ \"name\": \"Monster\", \"color\": 8}",
+            "{\"name\":\"Monster\"}");
+
+    TEST_FLAGS(0, flatcc_json_printer_f_force_default,
+            "{ \"name\": \"Monster\"}",
+"{\"mana\":150,\"hp\":100,\"name\":\"Monster\",\"color\":\"Blue\",\"testbool\":true,\"testhashs32_fnv1\":0,\"testhashu32_fnv1\":0,\"testhashs64_fnv1\":0,\"testhashu64_fnv1\":0,\"testhashs32_fnv1a\":0,\"testhashu32_fnv1a\":0,\"testhashs64_fnv1a\":0,\"testhashu64_fnv1a\":0}");
+
+    TEST_FLAGS(flatcc_json_parser_f_force_add, 0,
+            "{ \"name\": \"Monster\", \"color\": \"Blue\"}",
+            "{\"name\":\"Monster\",\"color\":\"Blue\"}");
+
+    TEST_FLAGS(flatcc_json_parser_f_skip_unknown, 0,
+            "{ \"name\": \"Monster\", \"xcolor\": \"Green\", \"hp\": 42}",
+            "{\"hp\":42,\"name\":\"Monster\"}");
+
+    TEST_FLAGS(flatcc_json_parser_f_skip_unknown, flatcc_json_printer_f_unquote,
+            "{ \"name\": \"Monster\", \"xcolor\": \"Green\", \"hp\": 42}",
+            "{hp:42,name:\"Monster\"}");
+
+    /* Also test generic parser used with unions with late type field. */
+    TEST_FLAGS(flatcc_json_parser_f_skip_unknown, 0,
+            "{ \"name\": \"Monster\", \"xcolor\": \"Green\", "
+            "\"foobar\": { \"a\": [1, 2.0, ], \"a1\": {}, \"b\": null, \"c\":[],  }, \"hp\": 42 }",
+            "{\"hp\":42,\"name\":\"Monster\"}");
+#if UQ
 /*
  * If a value is stored, even if default, it is also printed.
  * This option can also be flagged compile time for better performance.
@@ -154,6 +199,7 @@ int edge_case_tests()
             "{ name: \"Monster\", xcolor: Green, "
             "foobar: { a: [1, 2.0, ], a1: {}, b: null, c:[],  }, hp: 42 }",
             "{\"hp\":42,\"name\":\"Monster\"}");
+#endif
 
 /* Without skip unknown, we should expect failure. */
 #if 0
@@ -189,6 +235,43 @@ int error_case_tests()
 {
     int ret = 0;
 
+    TEST_ERROR( "{ \"nickname\": \"Monster\" }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ \"name\": \"Monster\", \"test_type\": \"Monster\", \"test\": { \"nickname\": \"Joker\", \"color\": \"Red\" } } }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ \"name\": \"Monster\", \"test_type\": \"Monster\", \"test\": { \"name\": \"Joker\", \"colour\": \"Red\" } } }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ \"name\": \"Monster\", \"testarrayoftables\": [ { \"nickname\": \"Joker\", \"color\": \"Red\" } ] }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ \"name\": \"Monster\", \"testarrayoftables\": [ { \"name\": \"Joker\", \"colour\": \"Red\" } ] }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ \"name\": \"Monster\", \"testarrayoftables\": ["
+                "{ \"name\": \"Joker\", \"color\": \"Red\", \"test_type\": \"Monster\", \"test\": { \"nickname\": \"Harley\", \"color\": \"Blue\" } } ] }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ \"name\": \"Monster\", \"testarrayoftables\": ["
+                "{ \"name\": \"Joker\", \"color\": \"Red\", \"test_type\": \"Monster\", \"test\": { \"name\": \"Harley\", \"colour\": \"Blue\" } } ] }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ \"name\": \"Monster\", \"testarrayoftables\": ["
+                "{ \"name\": \"Joker\", \"test_type\": \"Monster\", \"test\": { \"nickname\": \"Harley\" } },"
+                "{ \"name\": \"Bonnie\", \"test_type\": \"Monster\", \"test\": { \"name\": \"Clyde\" } } ] }",
+                flatcc_json_parser_error_unknown_symbol );
+    TEST_ERROR( "{ \"name\": \"Monster\", \"testarrayoftables\": ["
+                "{ \"name\": \"Joker\", \"test_type\": \"Monster\", \"test\": { \"name\": \"Harley\" } },"
+                "{ \"name\": \"Bonnie\", \"test_type\": \"Monster\", \"test\": { \"nickname\": \"Clyde\" } } ] }",
+                flatcc_json_parser_error_unknown_symbol );
+
+#if !UQ
+    TEST_ERROR( "{ nickname: \"Monster\" }",
+                flatcc_json_parser_error_unexpected_character );
+
+    TEST_ERROR( "{ \"name\": \"Monster\", \"color\": Green }",
+                flatcc_json_parser_error_unexpected_character );
+
+    TEST_ERROR( "{ \"name\": \"Monster\", \"color\":    Green  Red   Blue    }",
+                flatcc_json_parser_error_unexpected_character );
+#endif
+
+#if UQ
     TEST_ERROR( "{ nickname: \"Monster\" }",
                 flatcc_json_parser_error_unknown_symbol );
     TEST_ERROR( "{ name: \"Monster\", test_type: Monster, test: { nickname: \"Joker\", color: \"Red\" } } }",
@@ -214,6 +297,8 @@ int error_case_tests()
                 "{ name: \"Bonnie\", test_type: Monster, test: { nickname: \"Clyde\" } } ] }",
                 flatcc_json_parser_error_unknown_symbol );
 
+#endif
+
     return ret;
 }
 
@@ -233,6 +318,36 @@ int main()
     ret |= error_case_tests();
 
     /* Allow trailing comma. */
+    TEST(   "{ \"name\": \"Monster\", }",
+            "{\"name\":\"Monster\"}");
+
+    TEST(   "{\"color\": \"Red\",  \"name\": \"Monster\", }",
+            "{\"name\":\"Monster\",\"color\":\"Red\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"color\": \"Green\" }",
+            "{\"name\":\"Monster\",\"color\":\"Green\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"color\": \"Green Red Blue\" }",
+            "{\"name\":\"Monster\",\"color\":\"Red Green Blue\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"color\": \"   Green  Red   Blue   \" }",
+            "{\"name\":\"Monster\",\"color\":\"Red Green Blue\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"color\": \"Red\" }",
+            "{\"name\":\"Monster\",\"color\":\"Red\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"color\"  :\"Green\" }",
+            "{\"name\":\"Monster\",\"color\":\"Green\"}");
+
+    /* Default value. */
+    TEST(   "{ \"name\": \"Monster\", \"color\": \"Blue\" }",
+            "{\"name\":\"Monster\"}");
+
+    /* Default value. */
+    TEST(   "{ \"name\": \"Monster\", \"color\": 8}",
+            "{\"name\":\"Monster\"}");
+#if UQ
+    /* Allow trailing comma. */
     TEST(   "{ name: \"Monster\", }",
             "{\"name\":\"Monster\"}");
 
@@ -247,6 +362,7 @@ int main()
 
     TEST(   "{ name: \"Monster\", color: \"   Green  Red   Blue   \" }",
             "{\"name\":\"Monster\",\"color\":\"Red Green Blue\"}");
+
     TEST(   "{ name: \"Monster\", color: Red }",
             "{\"name\":\"Monster\",\"color\":\"Red\"}");
 
@@ -260,13 +376,13 @@ int main()
     /* Default value. */
     TEST(   "{ name: \"Monster\", color: 8}",
             "{\"name\":\"Monster\"}");
-
-#if FLATCC_JSON_PARSE_ALLOW_UNQUOTED_LIST 
+#endif
+#if UQL 
     TEST(   "{ name: \"Monster\", color: Green Red }",
             "{\"name\":\"Monster\",\"color\":\"Red Green\"}");
 #endif
 
-#if FLATCC_JSON_PARSE_ALLOW_UNQUOTED_LIST 
+#if UQL
     /* No leading space in unquoted flag. */
     TEST(   "{ name: \"Monster\", color:Green Red }",
             "{\"name\":\"Monster\",\"color\":\"Red Green\"}");
@@ -278,6 +394,58 @@ int main()
             "{\"name\":\"Monster\",\"color\":\"Red Green Blue\"}");
 #endif
 
+    TEST(   "{ \"name\": \"Monster\", \"color\": 1}",
+            "{\"name\":\"Monster\",\"color\":\"Red\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"color\": 2}",
+            "{\"name\":\"Monster\",\"color\":\"Green\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"color\": 9}",
+            "{\"name\":\"Monster\",\"color\":\"Red Blue\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"color\": 11}",
+            "{\"name\":\"Monster\",\"color\":\"Red Green Blue\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"color\": 12}",
+            "{\"name\":\"Monster\",\"color\":12}");
+
+    TEST(   "{ \"name\": \"Monster\", \"color\": 15}",
+            "{\"name\":\"Monster\",\"color\":15}");
+
+    TEST(   "{ \"name\": \"Monster\", \"color\": 0}",
+            "{\"name\":\"Monster\",\"color\":0}");
+
+    TEST(   "{ \"name\": \"Monster\", \"color\": \"Color.Red\"}",
+            "{\"name\":\"Monster\",\"color\":\"Red\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"color\": \"MyGame.Example.Color.Red\"}",
+            "{\"name\":\"Monster\",\"color\":\"Red\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"hp\": \"Color.Green\"}",
+            "{\"hp\":2,\"name\":\"Monster\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"hp\": \"Color.Green\"}",
+            "{\"hp\":2,\"name\":\"Monster\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"test_type\": \"Monster\", \"test\": { \"name\": \"any Monster\" } }",
+            "{\"name\":\"Monster\",\"test_type\":\"Monster\",\"test\":{\"name\":\"any Monster\"}}");
+
+    /* This is tricky because the test field must be reparsed after discovering the test type. */
+    TEST(   "{ \"name\": \"Monster\", \"test\": { \"name\": \"second Monster\" }, \"test_type\": \"Monster\"  }",
+            "{\"name\":\"Monster\",\"test_type\":\"Monster\",\"test\":{\"name\":\"second Monster\"}}");
+
+    /* Also test that parsing can continue after reparse. */
+    TEST(   "{ \"name\": \"Monster\", \"test\": { \"name\": \"second Monster\" }, \"hp\":17, \"test_type\":\n \"Monster\", \"color\":\"Green\" }",
+            "{\"hp\":17,\"name\":\"Monster\",\"color\":\"Green\",\"test_type\":\"Monster\",\"test\":{\"name\":\"second Monster\"}}");
+
+    /* Test that NONE is recognized, and that we do not get a missing table error.*/
+    TEST(   "{ \"name\": \"Monster\", \"test_type\": \"NONE\" }",
+            "{\"name\":\"Monster\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"test_type\": 0 }",
+            "{\"name\":\"Monster\"}");
+
+#if UQ
     TEST(   "{ name: \"Monster\", color: 1}",
             "{\"name\":\"Monster\",\"color\":\"Red\"}");
 
@@ -329,7 +497,9 @@ int main()
     TEST(   "{ name: \"Monster\", test_type: 0 }",
             "{\"name\":\"Monster\"}");
 
-#if FLATCC_JSON_PARSE_ALLOW_UNQUOTED_LIST
+#endif
+
+#if UQL
     /*
      * Test that generic parsing handles multiple flags correctly during
      * first pass before backtracking.
@@ -339,7 +509,7 @@ int main()
 #endif
 
     /* Ditto quoted flags. */
-    TEST(   "{ name: \"Monster\", test: { name: \"second Monster\", color: \" Red Green \" }, test_type: Monster  }",
+    TEST(   "{ \"name\": \"Monster\", \"test\": { \"name\": \"second Monster\", \"color\": \" Red Green \" }, \"test_type\": \"Monster\"  }",
             "{\"name\":\"Monster\",\"test_type\":\"Monster\",\"test\":{\"name\":\"second Monster\",\"color\":\"Red Green\"}}");
 
     /*
@@ -354,18 +524,18 @@ int main()
      * but rather becoems a two-byte utf-8 encoding of 'ø' which
      * we use C encoding to form utf8 C3B8 == \u00F8.
      */
-    TEST(   "{ name: \"Mon\xfF\xFf\\x03s\\xC3\\xF9\\u00F8ter\\b\\f\\n\\r\\t\\\"\\\\\\/'/\", }",
+    TEST(   "{ \"name\": \"Mon\xfF\xFf\\x03s\\xC3\\xF9\\u00F8ter\\b\\f\\n\\r\\t\\\"\\\\\\/'/\", }",
             "{\"name\":\"Mon\xff\xff\\u0003s\xc3\xf9\xc3\xb8ter\\b\\f\\n\\r\\t\\\"\\\\/'/\"}");
 
-    TEST(   "{ name: \"\\u168B\\u1691\"}",
+    TEST(   "{ \"name\": \"\\u168B\\u1691\"}",
             "{\"name\":\"\xe1\x9a\x8b\xe1\x9a\x91\"}");
 
     /* Nested flatbuffer, either is a known object, or as a vector. */
-    TEST(   "{ name: \"Monster\", testnestedflatbuffer:{ \"name\": \"sub Monster\" } }",
+    TEST(   "{ \"name\": \"Monster\", \"testnestedflatbuffer\":{ \"name\": \"sub Monster\" } }",
             "{\"name\":\"Monster\",\"testnestedflatbuffer\":{\"name\":\"sub Monster\"}}");
 
 #if FLATBUFFERS_PROTOCOL_IS_LE
-    TEST(   "{ name: \"Monster\", testnestedflatbuffer:"
+    TEST(   "{ \"name\": \"Monster\", \"testnestedflatbuffer\":"
             "[" /* start of nested flatbuffer, implicit size: 40 */
             "4,0,0,0," /* header: object offset = 4, no identifier */
             "248,255,255,255," /* vtable offset */
@@ -376,7 +546,7 @@ int main()
             "}",
             "{\"name\":\"Monster\",\"testnestedflatbuffer\":{\"name\":\"sub Monster\"}}");
 #else
-    TEST(   "{ name: \"Monster\", testnestedflatbuffer:"
+    TEST(   "{ \"name\": \"Monster\", \"testnestedflatbuffer\":"
             "[" /* start of nested flatbuffer, implicit size: 40 */
             "0,0,0,4," /* header: object offset = 4, no identifier */
             "255,255,255,248," /* vtable offset */
@@ -389,30 +559,30 @@ int main()
 #endif
 
     /* Test empty table */
-    TEST(   "{ name: \"Monster\", testempty: {} }",
+    TEST(   "{ \"name\": \"Monster\", \"testempty\": {} }",
             "{\"name\":\"Monster\",\"testempty\":{}}" );
 
     /* Test empty array */
-    TEST(   "{ name: \"Monster\", testarrayoftables: [] }",
+    TEST(   "{ \"name\": \"Monster\", \"testarrayoftables\": [] }",
             "{\"name\":\"Monster\",\"testarrayoftables\":[]}" );
 
     /* Test JSON prefix parsing */
-    TEST(   "{ name: \"Monster\", testjsonprefixparsing: { aaaa: \"test\", aaaa12345: 17 } }",
+    TEST(   "{ \"name\": \"Monster\", \"testjsonprefixparsing\": { \"aaaa\": \"test\", \"aaaa12345\": 17 } }",
             "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"aaaa\":\"test\",\"aaaa12345\":17}}" );
 
-    TEST(   "{ name: \"Monster\", testjsonprefixparsing: { bbbb: \"test\", bbbb1234: 19 } }",
+    TEST(   "{ \"name\": \"Monster\", \"testjsonprefixparsing\": { \"bbbb\": \"test\", \"bbbb1234\": 19 } }",
             "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"bbbb\":\"test\",\"bbbb1234\":19}}" );
 
-    TEST(   "{ name: \"Monster\", testjsonprefixparsing: { cccc: \"test\", cccc1234: 19, cccc12345: 17 } }",
+    TEST(   "{ \"name\": \"Monster\", \"testjsonprefixparsing\": { \"cccc\": \"test\", \"cccc1234\": 19, \"cccc12345\": 17 } }",
             "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"cccc\":\"test\",\"cccc1234\":19,\"cccc12345\":17}}" );
 
-    TEST(   "{ name: \"Monster\", testjsonprefixparsing: { dddd1234: 19, dddd12345: 17 } }",
+    TEST(   "{ \"name\": \"Monster\", \"testjsonprefixparsing\": { \"dddd1234\": 19, \"dddd12345\": 17 } }",
             "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"dddd1234\":19,\"dddd12345\":17}}" );
 
-    TEST(   "{ name: \"Monster\", testjsonprefixparsing2: { aaaa_bbbb_steps: 19, aaaa_bbbb_start_: 17 } }",
+    TEST(   "{ \"name\": \"Monster\", \"testjsonprefixparsing2\": { \"aaaa_bbbb_steps\": 19, \"aaaa_bbbb_start_\": 17 } }",
             "{\"name\":\"Monster\",\"testjsonprefixparsing2\":{\"aaaa_bbbb_steps\":19,\"aaaa_bbbb_start_\":17}}" );
 
-    TEST(   "{ name: \"Monster\", testjsonprefixparsing3: { aaaa_bbbb_steps: 19, aaaa_bbbb_start_steps: 17 } }",
+    TEST(   "{ \"name\": \"Monster\", \"testjsonprefixparsing3\": { \"aaaa_bbbb_steps\": 19, \"aaaa_bbbb_start_steps\": 17 } }",
             "{\"name\":\"Monster\",\"testjsonprefixparsing3\":{\"aaaa_bbbb_steps\":19,\"aaaa_bbbb_start_steps\":17}}" );
 
     return ret ? -1: 0;

@@ -193,7 +193,9 @@ static inline const char *flatcc_json_parser_symbol_start(flatcc_json_parser_t *
     }
     if (*buf == '\"') {
         ++buf;
+#if FLATCC_JSON_PARSE_ALLOW_UNQUOTED
         ctx->unquoted = 0;
+#endif
     } else {
 #if FLATCC_JSON_PARSE_ALLOW_UNQUOTED
         if (*buf == '.') {
@@ -334,7 +336,11 @@ static inline const char *flatcc_json_parser_symbol_end(flatcc_json_parser_t *ct
 static inline const char *flatcc_json_parser_constant_start(flatcc_json_parser_t *ctx, const char *buf, const char *end)
 {
     buf = flatcc_json_parser_symbol_start(ctx, buf, end);
+#if FLATCC_JSON_PARSE_ALLOW_UNQUOTED
     if (!ctx->unquoted) {
+#else
+    {
+#endif
         buf = flatcc_json_parser_space(ctx, buf, end);
     }
     return buf;
