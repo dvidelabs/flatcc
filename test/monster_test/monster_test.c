@@ -1768,6 +1768,59 @@ int test_nested_buffer(flatcc_builder_t *B)
     return 0;
 }
 
+int test_nested_buffer_first(flatcc_builder_t *B)
+{
+    void *buffer;
+    size_t size;
+    ns(Monster_table_t) mon, nested;
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+    /*
+     * Note:
+     *   ns(Monster_testnestedflatbuffer_start(B));
+     * would start a raw ubyte array so we use start_as_root.
+     *
+     * Here we create the nested buffer first, and the parent
+     * string after so the emitter sees the nested buffer first.
+     */
+    ns(Monster_testnestedflatbuffer_start_as_root(B));
+    ns(Monster_name_create_str(B, "MyNestedMonster"));
+    ns(Monster_testnestedflatbuffer_end_as_root(B));
+    ns(Monster_hp_add(B, 10));
+    ns(Monster_name_create_str(B, "MyMonster"));
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_get_direct_buffer(B, &size);
+    hexdump("nested flatbuffer", buffer, size, stderr);
+
+    mon = ns(Monster_as_root(buffer));
+    if (strcmp(ns(Monster_name(mon)), "MyMonster")) {
+        printf("got the wrong root monster\n");
+        return -1;
+    }
+    /*
+     * Note:
+     *   nested = ns(Monster_testnestedflatbuffer(mon));
+     * would return a raw ubyte vector not a monster.
+     */
+    nested = ns(Monster_testnestedflatbuffer_as_root(mon));
+
+    if (ns(Monster_hp(mon)) != 10) {
+        printf("health points wrong at root monster\n");
+        return -1;
+    }
+
+    assert(ns(Monster_name(nested)));
+    if (strcmp(ns(Monster_name(nested)), "MyNestedMonster")) {
+        printf("got the wrong nested monster\n");
+        return -1;
+    }
+
+    return 0;
+}
+
 int verify_include(void *buffer)
 {
     if (MyGame_OtherNameSpace_FromInclude_Foo != 17) {
@@ -2114,6 +2167,12 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_nested_buffer(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_nested_buffer_first(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
