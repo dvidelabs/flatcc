@@ -81,7 +81,7 @@ struct vtable_descriptor {
     /* Where the vtable is emitted. */
     flatcc_builder_ref_t vt_ref;
     /* Which buffer it was emitted to. */
-    flatcc_builder_ref_t buffer_mark;
+    uoffset_t nest_id;
     /* Where the vtable is cached. */
     uoffset_t vb_start;
     /* Hash table collision chain. */
@@ -177,8 +177,8 @@ int flatcc_builder_default_alloc(void *alloc_context, iovec_t *b, size_t request
 
 #define set_identifier(id) memcpy(&B->identifier, (id) ? (void *)(id) : (void *)_pad, identifier_size)
 
-/* This also returns true if no buffer has been started. */
-#define is_top_buffer(B) (B->buffer_mark == 0)
+/* Must also return true when no buffer has been started. */
+#define is_top_buffer(B) (B->nest_id == 0)
 
 /*
  * Tables use a stack represention better suited for quickly adding
@@ -438,6 +438,8 @@ int flatcc_builder_custom_reset(flatcc_builder_t *B, int set_defaults, int reduc
     B->limit_level = 0;
     B->ds_offset = 0;
     B->ds_limit = 0;
+    B->nest_count = 0;
+    B->nest_id = 0;
     /* Needed for correct offset calculation. */
     B->ds = B->buffers[flatcc_builder_alloc_ds].iov_base;
     B->pl = B->buffers[flatcc_builder_alloc_pl].iov_base;
@@ -727,6 +729,7 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
     if (is_nested) {
         buffer_size = store_uoffset((uoffset_t)B->buffer_mark - buffer_base);
     } else {
+        /* Also include clustered vtables. */
         buffer_size = store_uoffset((uoffset_t)B->emit_end - buffer_base);
     }
     object_offset = store_uoffset((uoffset_t)object_ref - buffer_base);
@@ -775,8 +778,15 @@ int flatcc_builder_start_buffer(flatcc_builder_t *B,
     frame(buffer.flags = B->buffer_flags);
     B->buffer_flags = flags;
     frame(buffer.mark) = B->buffer_mark;
-    /* Allow vectors etc. to be constructed before buffer at root level. */
-    B->buffer_mark = B->level == 1 ? 0 : B->emit_start;
+    frame(buffer.nest_id) = B->nest_id;
+    /*
+     * End of buffer when nested. Not defined for top-level because we
+     * here (on only here) permit strings etc. to be created before buffer start and
+     * because top-level buffer vtables can be clustered.
+     */
+    B->buffer_mark = B->emit_start;
+    /* Must be 0 before and after entering top-level buffer, and unique otherwise. */
+    B->nest_id = B->nest_count++;
     frame(buffer.identifier) = B->identifier;
     set_identifier(identifier);
     frame(type) = flatcc_builder_buffer;
@@ -786,14 +796,18 @@ int flatcc_builder_start_buffer(flatcc_builder_t *B,
 flatcc_builder_ref_t flatcc_builder_end_buffer(flatcc_builder_t *B, flatcc_builder_ref_t root)
 {
     flatcc_builder_ref_t buffer_ref;
+    int flags;
 
+    flags = B->buffer_flags & flatcc_builder_with_size;
+    flags |= is_top_buffer(B) ? 0 : flatcc_builder_is_nested;
     check(frame(type) == flatcc_builder_buffer, "expected buffer frame");
     set_min_align(B, B->block_align);
     if (0 == (buffer_ref = flatcc_builder_create_buffer(B, (void *)&B->identifier,
-            B->block_align, root, B->min_align, (B->buffer_flags & flatcc_builder_with_size) | !is_top_buffer(B)))) {
+            B->block_align, root, B->min_align, flags))) {
         return 0;
     }
     B->buffer_mark = frame(buffer.mark);
+    B->nest_id = frame(buffer.nest_id);
     B->identifier = frame(buffer.identifier);
     B->buffer_flags = frame(buffer.flags);
     exit_frame(B);
@@ -1125,7 +1139,7 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
             continue;
         }
         /* Can't share emitted vtables between buffers, */
-        if (vd->buffer_mark != B->buffer_mark) {
+        if (vd->nest_id != B->nest_id) {
             /* but we don't have to resubmit to cache. */
             vd2 = vd;
             /* See if there is a better match. */
@@ -1150,7 +1164,7 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
     B->vd_end += sizeof(vtable_descriptor_t);
 
     /* Identify the buffer this vtable descriptor belongs to. */
-    vd->buffer_mark = B->buffer_mark;
+    vd->nest_id = B->nest_id;
 
     /* Move to front hash strategy. */
     vd->next = *pvd_head;

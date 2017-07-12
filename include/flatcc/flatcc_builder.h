@@ -263,8 +263,10 @@ typedef struct __flatcc_builder_buffer_frame __flatcc_builder_buffer_frame_t;
 struct __flatcc_builder_buffer_frame {
     flatcc_builder_identifier_t identifier;
     flatcc_builder_ref_t mark;
-    int flags;
-    size_t block_align;
+    flatbuffers_uoffset_t vs_end;
+    flatbuffers_uoffset_t nest_id;
+    uint16_t flags;
+    uint16_t block_align;
 };
 
 typedef struct __flatcc_builder_vector_frame __flatcc_builder_vector_frame_t;
@@ -370,14 +372,18 @@ struct flatcc_builder {
     /* Signed virtual address range used for `flatcc_builder_ref_t` and emitter. */
     flatcc_builder_ref_t emit_start;
     flatcc_builder_ref_t emit_end;
-    /* 0 for top level, and end of buffer ref for nested buffers. */
+    /* 0 for top level, and end of buffer ref for nested buffers (can also be 0). */
     flatcc_builder_ref_t buffer_mark;
+    /* Next nest_id. */
+    flatbuffers_uoffset_t nest_count;
+    /* Unique id to prevent sharing of vtables across buffers. */
+    flatbuffers_uoffset_t nest_id;
     /* Current nesting level. Helpful to state-machines with explicit stack and to check `max_level`. */
     int level;
     /* Aggregate check for allocated frame and max_level. */
     int limit_level;
     /* Track size prefixed buffer. */
-    int buffer_flags;
+    uint16_t buffer_flags;
 
     /* Settings that may happen with no frame allocated. */
 
