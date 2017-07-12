@@ -12,6 +12,8 @@
 - Move repetitive generated JSON string parsing into library.
 - Add tests for JSON runtime compiled with different flags such as
   permitting unquoted keys.
+- Fix building nested buffers when the parent buffer has not yet emitted
+  any data (#51).
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
@@ -19,8 +21,8 @@
 - Fix minor memory leak in flatcc compiler.
 - Reduce collisions in builders vtable hash.
 - Remove broken dependency on `<mm_malloc.h>` for some GCC versions in
-  `paligned_alloc.h` (#40)
-- Allow C++ files to include `pstdalign.h` and `paligned_alloc.h` (#39)
+  `paligned_alloc.h` (#40).
+- Allow C++ files to include `pstdalign.h` and `paligned_alloc.h` (#39).
 
 ## [0.4.1]
 - Test for `posix_memalign` on GCC platforms and fix fallback
