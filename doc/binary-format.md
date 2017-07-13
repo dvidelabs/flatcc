@@ -107,7 +107,7 @@ Buffer :
 
             +0x0100 e0 ff ff ff ; 32-bit soffset to vtable location
                                 ; two's complement: 2^32 - 0xffffffe0 = -0x20
-                                ; effective address: +0x0100 - (-0x20) = +0x0204
+                                ; effective address: +0x0100 - (-0x20) = +0x0120
             +0x0104 00 01 00 00 ; 32-bit uoffset string field (FooBar.say)
                                 ; find string +0x100 = 256 bytes _from_ here
                                 ; = +0x0104 + 0x100 = +0x0204.
