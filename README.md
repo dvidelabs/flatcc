@@ -721,7 +721,7 @@ an existing buffer.
 If the verifier rejects a buffer, the error can be printed (see
 [Verifying a Buffer](#verifying-a-buffer)), but it will not say exactly
 where the problem was found. To go further, the verifier can be made to
-assert where the problem is encountered so the buffer conent can be
+assert where the problem is encountered so the buffer content can be
 analyzed. This is enabled with:
 
     -DFLATCC_DEBUG_VERIFY=1
@@ -739,14 +739,15 @@ Both of these options can be set as CMake options, or in the
 
 When reporting bugs, output from the above might also prove helpful.
 
-Using the JSON parser and printer can also be used to quickly create new
-buffer content without the uncertainty of user code being used
-corrrectly because the parser will know the schema and use it correctly.
-The [test_json.c] file has a test function that can be adapted for
-custom tests.
+The JSON parser and printer can also be used to create and display
+buffers. The parser will use the builder API correctly or issue a syntax
+error or an error on required field missing. This can rule out some
+uncertainty about using the api correctly. The [test_json.c] file has a
+test function that can be adapted for custom tests. 
 
 For advanced debugging the [hexdump.h] file can be used to dump the buffer
 contents. It is used in [test_json.c] and also in [monster_test.c].
+See also [FlatBuffers Binary Format].
 
 
 ## File and Type Identifiers
@@ -1693,6 +1694,7 @@ generated JSON parser source and runtime source.
 See [Benchmarks]
 
 [Builder Interface Reference]: https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md
+[FlatBuffers Binary Format]: https://github.com/dvidelabs/flatcc/blob/master/doc/binary-format.md
 [Benchmarks]: https://github.com/dvidelabs/flatcc/blob/master/doc/benchmarks.md
 [monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
 [test_json.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json_parser.c

@@ -1,0 +1,346 @@
+# FlatBuffers Binary Format
+
+Please observe that data types have a standard size such as
+`sizeof(uoffset_t) == 4` but the size might change for related formats.
+Therefore the type name is important in the discussion.
+
+All content is little endian and offsets are 4 bytes (`uoffset_t`).
+A new buffer location is found by adding a uoffset to the location where
+the offset is stored. The first location (offset 0) points to the root
+table.
+
+> NOTE: a variation of this format stores a 4-byte length prefix. This
+> must be known in advance. A size cannot be added after the affect
+> without affecting buffer alignment so it must be done when building the
+> buffer. A length prefix can be used to stack multiple buffers in a file.
+
+The next 4 bytes (`sizeof(uoffset_t)`) might a 4 byte buffer identifier,
+or it might be absent. The file identifier is typically ASCII characters
+from the schemas `file_identifier` field padded with 0 bytes but may
+also contain any custom binary identifier in little endian encoding. The
+0 identifier should be avoided as it may be used as an indication that
+the identifier was not stored in the buffer or should not be stored in the
+buffer.
+
+When reading a buffer, it should be checked that the length is at least
+8 bytes (2 * `sizeof(uoffset_t)`) Otherwise it is not safe to check the
+file identifier.
+
+The root table starts with a 4 byte vtable offset (`soffset_t`). The
+`soffset_t` has the same size as `uoffset_t` but is signed.
+
+The vtable is found by *subtracting* the signed 4 byte offset to the
+location where the vtable offset is stored. Note that the `FlatCC`
+builder typically stores vtables at the end of the buffer (clustered
+vtables) and therefore the vtable offset is normally negative. Other
+builders often store the vtable before the table unless reusing an
+existing vtable and this makes the soffset positive.
+(Nested FlatBuffers will not store vtables at the end because it would
+break compartmentalization).
+
+The vtable is a table of 2 byte offsets (`voffset_t`). The first two
+entreis are the vtable size in bytes and the table size in bytes. The
+next offset is the vtable entry for table field 0. A vtable will always
+have as many entries as the largest stored field in the table, but it
+might skip entries that are not needed or known (version independence) -
+therefore the vtable length must be checked. The table length is only
+needed by verifiers. A vtable lookup of an out of range table id is the
+same as a vtable entry that has a zero entry and results in a default
+value for the expected type. Multiple tables may shared the same vtable,
+even if they have different types. This is done via deduplication during
+buffer construction. A table field id maps to a vtable offset using the
+formula `vtable-start + sizeof(voffset_t) * (field-id + 2)`, iff the
+result is within the vtable size.
+
+The vtable entry stores a byte offset relative to the location where the
+`soffset_t` where stored at the start of the table. A table field is
+stored immediately after the `soffset_t` or may contain 0 padding. A
+table field is always aligned to at least its own size, or more if the
+schema demands it. Strings, sub-tables and vectors are stored as a
+4-byte `uoffset_t`. Such sub-elements are always found later in the
+buffer because `uoffset_t` is unsigned. A struct is stored in-place.
+Conceptually a struct is not different from an integer in this respect,
+just larger.
+
+If a sub-table or vector is absent and not just without fields, 0
+length, the containing table field pointing the sub-table or vector
+should be absent. Note that structs cannot contain sub-tables or
+vectors.
+
+A struct is always 0 padded up to its alignment. A structs a alignment
+is given as the largest size of any non-struct member, or the alignment
+of a struct member (but not necessarily the size of a struct member), or
+the schema specified aligment.
+
+A structs members are stored in-place so there struct fields are known
+via the the schema, not via information in the binary format
+
+An enum is represent as its underlying integer type and can be a member
+of structs, fields and vectors just like integer and floating point
+scalars.
+
+A table is always aligned to `sizeof(uoffset_t)`, but may contain
+internal fields with larger alignment. That is, the table start or end
+is not affected by alignment requirements of field members unlike
+structs.
+
+Strings are a special case of vectors, so the following also applies to
+strings.
+
+A vector starts with a `uoffset_t` field the gives the length in element
+counts, not in bytes. Table fields points to the length field of a
+vector, not the first element. A vector may have 0 length. Note that
+the FlatCC C interface will return a pointer to a vectors first element
+and not the vector length although the internal reference does not.
+
+All elements of a vector has the same type which is either a scalar type
+including enums, a struct, or a uoffset reference where all the
+reference type is to tables all of the same type, all strings, or
+references to tables of the same union for union vectors. It is not
+possible to have vectors of vectors other than string vectors.
+
+A vectors first element is aligned to the size of `uoffset_t` or the
+alignment of its element type, or the alignment required by the schema,
+whichever is larger. Note that the vector itself might be aligned to 4
+bytes while the first element is aligned to 8 bytes.
+
+(Currently the schema semantics do no support aligning vectors beyond
+their element size, but that might change and can be forced when
+building buffers via dedicated api calls).
+
+Strings are stored as vectors of type `ubyte_t`, i.e. 8-bit elements. In
+addition, a trailing zero is always stored. The trailing zero is not
+counted in the length field of the vector. Technically a string is
+supposed to be valid UTF-8, but in praxis it is permitted that strings
+contain 0 bytes or other invalid sequences. It is recommended to
+explicitly check strings for UTF-8 conformance when this is required
+rather than to expect this to alwways be true. However, the ubyte vector
+should be preferred for binary data.
+
+A string, vector or table may be referenced by other tables and vectors.
+This is known as a directed acyclic graph (DAG). Because uoffsets are
+unsigned and because uoffsets are never stored with a zero value, it is
+not possible for a buffer to contain cycles which makes them safe to
+traverse with too much fear of excessive recursion. It also makes it
+possible to efficiently verify that buffers do not point out of bounds.
+
+
+## Alignment
+
+All alignments are powers of two between 1 and 256. Large alignments are
+only possible via schema specified alignments. The format naturally has
+a maximum alignment of the largest scalar it stores, which is a 64-bit
+integer or floating point value. Because C malloc typically returns
+buffers aligned to a least 8 bytes, it is often safe to place buffers in
+heap allocated memory, but if the target system does not permit
+unaligned access, or is slow on unaligned access, a buffer should be
+placed in sufficiently aligned memory. Typically it is a good idea to
+place buffer in cacheline aligned boundary anyway.
+
+A buffers alignment is the same as the largest alignment of any
+object or struct it contains.
+
+The buffer size is not guaranteed to be aligned to its own alignment
+unlike struct. Googles `flatc` builder does this, at least when size
+prefixed. The `FlatCC` tool currently does not, but it might later add
+an option to pad up to alignment. This would make it simpler to stack
+similar typed buffers in file - but users can retrieve the buffers
+alignment and do this manually. Thus, when stacking size prefixed
+buffers, each buffer should start aligned to its own size starting at
+the size field, and should also be zero padded up to its own alignment.
+
+
+## Verification
+
+Verification as discussed here is not just about implementing a
+verifier. It is as much requirements that any builder must fulfill.
+
+The objective of verification is to make it safe to read from an
+untrusted buffer, or a trusted buffer that accidentally has an
+unexpected type. The verifier does not guarantee that the type is indeed
+the expeced type exact it can read the buffer identifier if present
+which is still no guarantee. The verifier cannot make it safe to modify
+buffers in-place because the cost of doing such a check would be
+prohitive in the average case.
+
+A buffer verifier is expected to verify that all objects (strings,
+vectors and tables) do not have an end position beyond the externally
+specified buffer size and that all offset are aligned relative to offset
+zero, and sometimes also relative to actually specified buffer (but
+sometimes it is desireable to verify buffers that are not stored
+aligned, such as in network buffers).
+
+A verifier primarily checks that:
+
+- any offset being chased is inside the buffer that any data accessed
+  from that resuling location is entirely inside the buffer and aligned
+  notably the vtables first entry must be valid before the vtable can
+  safely validate itself, but this also applies to table, string and
+  vector fields.
+- any uoffset has size of at least `sizeof(uoffse_t)` to aviod
+  self-reference.
+- vtable size is aligned and does not end outside buffer.
+- vtable size is at least the two header fields
+  (`2 * `sizeof(voffset_t)`).
+- required table fields are present.
+- vectors end within the buffer.
+- strings end within the buffer and has a zero byte after the end which
+  is also within the buffer.
+- structs are aligned relative to buffer offset 0 regardless of where
+  they are stored.
+- structs are aligned relative to table start (so tables can be copied).
+- table field size is aligned relative to buffer start.
+- any table field does not end outside the tables size as given by the
+  vtable.
+- table end (without chasing offsets) is not outside buffer.
+- all data referenced by offsets are also valid within the buffer
+  according the type given by the schema.
+
+A verifier does not enforce that:
+
+- the order of individual fields within a table. Even if a schema says
+  something about ordering this should be considered advisory. A
+  verifier may additionally check for ordering for specific
+  applications. Table order does not affect safety nor general buffer
+  expectations. Ordering might affect size and performance.
+- sorting as specified by schema attributes. A table might be sorted in
+  different ways and an implementation might avoid sorting for
+  performance reasons and other practical reasons. A verifier may,
+  however, offer additional verification to ensure specific vectors or
+  all vectors are sorted according to schema or other guidelines.  Lack
+  of sorting might affect expected behavior but will not make the buffer
+  unsafe to access.
+- that structures do not overlap. Overlap can result in vulnerabilities
+  if a buffer is modified, and no sane builder should create overlaps
+  other than proper DAGs except via a separate compression/decopression
+  stage of no interest to the verifier.
+
+
+A buffer identifier is optional so the verifier should be informed
+whether an identifier must match a given id. It should check both ASCII
+text and zero padding not just a string compare. It is non-trivial to
+decide if the second buffer field is an identifier, or some other data,
+but if the field does not match the expected identifier, it certainly
+isn't what is expected.
+
+
+## Risks
+
+Because a buffer can contain DAGs constructed to explode exponentiall,
+it can be dangerous to print JSON or otherwise copy content blindly
+if there is no upper limit on the export size.
+
+In-place modification cannot be trusted because a standard buffer
+verifier will detect safe read, but will not detect if two objects are
+overlapping. For example, a table could be stored inside another table.
+Modifing one table might cause access to the contained table to go out
+of bounds, for example by directing the vtable elsewhere.
+
+
+## Nested FlatBuffers
+
+FlatBuffers can be nested inside other FlatBuffers. In concept this is
+very simple: a nested buffer is just a chunk of binary data stored in a
+`ubyte` vector, typically with some convenience methods generated to
+access a stored buffer. In praxis it adds a lot of complexity. Either
+a nested buffer must be created strictly separately and copied in as
+binary data, but often users mix the two builder contexts accidentally
+storing strings from one buffer inside another. And when done right, the
+containing ubyte vector might not be aligned appropriately making it
+invalid to access the buffer without first copying out of the containing
+buffer except where unaligned access is permitted. Further, a nested
+FlatBuffer necessarily has a length prefix because any ubyte vector has
+a length field at its start. Therefore, size prefixed flatbuffers should
+not normally be stored as nested buffers, but sometimes it is necessary
+in order have the buffer properly aligned after extraction.
+
+The FlatCC builder makes it possible to build nested FlatBuffers while
+the containing table of the parent buffer is still open. It is very
+careful to ensure alignment and to ensure that vtables are not shared
+between the two (or more) buffers, otherwise a buffer could not safely
+be copied out. Users can still make mistakes by storing references from
+one buffer in another.
+
+Still, this area is so complex that several bugs have been found.
+Thus, it is advice to use nested FlatBuffers with some care.
+
+On the other hand, nested FlatBuffers make it possible to trivially
+extract parts of FlatBuffer data. Extracting a table would require
+chasing pointers and could potentially explode due to shared sub-graphs,
+if not handled carefully.
+
+
+## Big Endian FlatBuffers
+
+FlatBuffers are formally always little endian and even on big-endian
+platforms they are reasonably efficient to access.
+
+However it is possible to compile FlatBuffers with native big endian
+suppport using the FlatCC tool. The procedure is out of scope for this
+text, but the binary format is discussed here:
+
+All fields have exactly the same type and size as the little endian
+format but all scalars including floating point values are stored
+byteswapped within their field size.
+
+The buffer identifier is stored byte swapped if present. For example
+the 4-byte "MONS" identifier becomes "SNOM" in big endian format. It is
+therefore reasonably easy to avoid accidentially mixing little- and
+big-endian buffers. However, it is not trivial to handle identifers that
+are not exactly 4-bytes. "HI\0\0" could be "IH\0\0" or "\0\0IH". It is
+recommended to always use 4-byte identifies to avoid this problem. See
+the FlatCC release 0.4.0 big endian release for details.
+
+When using type hash identifiers (a fully qualified table name such
+subjected to FNV-1A 32-bit hash), the user code will see the same
+identifier for both little and big endian buffers but the accessor code
+to accept the identifier will do the appropriate endian conversion. The
+type hash is for example FNV1a_32("MyGame.Example.Monster") to get the
+id of buffer storing the monster table as root, using the ubiquitious
+`monster.fbs` example.
+
+
+## StreamBuffers
+
+StreamBuffers are so far only a concept although some implementations
+may already be able to read them. The format is documented to aid
+possible future implementations.
+
+StreamBuffers makes it possible to store partially completed buffers
+for example by writing directly to disk or by sending partial buffer
+data over a network. Traditional FlatBuffers require an extra copying
+step to make this possible, and if the writes are partial, each section
+written must also store the segment length to support reassembly.
+StreamBuffers avoid this problem.
+
+Some may like the idea that the root table is stored first but modern
+CPU cache systems do not care much about the order of access as long as
+as their is some aspect of locality of reference and the same applies to
+disk access while network access likely will have the end of the buffer
+in hot cache as this is the last sent. The average distance between
+objects will be the same for both FlatBuffers and StreamBuffers.
+
+StreamBuffers treat `uoffset_t` the same as `soffset_t` when the special
+limitation that `uoffset_t` is always negative when viewed as 2s
+complement values.
+
+The implication is that everthing a table or vector references must be
+stored earlier in the buffer, except vtables that can be stored freely.
+Existing reader implementations that treat `uoffset_t` as signed, such as
+Javascript, will be able to read StreamBuffers with no modification.
+Other readers can easily be modified by casting the uoffset value to
+signed before it.
+
+Verifiers must ensure that any buffer verified always stores all
+`uoffset_t` with the same sign. This ensures the DAG structure is
+preserved without cycles.
+
+The root table offset remains positive as an exception and points to the
+root buffer. A stream buffer root table will be the last table in the
+buffer.
+
+The root table offset may be replaced with a root table offset at the
+end of the buffer instead of the start. An implementation may also
+zero the initial offset and update it later. In either case the buffer
+should be aligned accordingly.
+
