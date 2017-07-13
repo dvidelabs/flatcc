@@ -55,7 +55,7 @@ element is added to the soffset location to originally pointed to the
 vtable, i.e. the start of the referring table.
 
 
-    Schema:
+Schema:
 
         enum Fruit : byte { Banana = -1, Orange = 42 }
         table FooBar {
@@ -66,10 +66,10 @@ vtable, i.e. the start of the referring table.
         }
         file_identifer "NOOB";
 
-    JSON:
+JSON:
         { "meal": "Orange", "say": "hello", "height": -8000 }
 
-    Buffer:
+Buffer:
 
         header:
             +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
@@ -95,9 +95,9 @@ vtable, i.e. the start of the referring table.
             +0x0124 08 00       ; field id 0: +0x08 (meal)
             +0x0126 00 00       ; field id 1: <missing> (attitude)
             +0x0128 04 00       ; field id 2: +0004 (say)
-            +0x012a 0a 00       ; field id 3: +0x0a (height) 
+            +0x012a 0a 00       ; field id 3: +0x0a (height)
 
-        string: 
+        string:
             +0x0204 5 (vector element count)
             +0x0205 'h', 'e', 'l', 'l', 'o' (vector data)
             +0x020a '\0' (zero termination special case for string vectors)
@@ -614,7 +614,7 @@ Modifing one table might cause access to the contained table to go out
 of bounds, for example by directing the vtable elsewhere.
 
 The platform native integer and size type might not be able to handle
-large FlatBuffers - see [Size Limits](#size-limits). 
+large FlatBuffers - see [Size Limits](#size-limits).
 
 Becaue FlatCC requires buffers to be sorted after builiding, there is
 risk due to buffer modifications. It is not sufficient to verify buffers
