@@ -45,6 +45,10 @@ option(FLATCC_COVERAGE "enable coverage" OFF)
 option (FLATCC_DEBUG_VERIFY
     "assert on verify failure in runtime lib" OFF)
 
+# Print detailed traces of binary buffer contents when calling verify.
+option (FLATCC_TRACE_VERIFY
+    "assert on verify failure in runtime lib" OFF)
+
 # Reflection is the compilers ability to generate binary schema output
 # (.bfbs files). This requires using generated code from
 # `reflection.fbs`. During development it may not be possible to
@@ -104,6 +108,11 @@ endif()
 if (FLATCC_DEBUG_VERIFY)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_DEBUG_VERIFY=1")
 endif()
+
+if (FLATCC_TRACE_VERIFY)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_TRACE_VERIFY=1")
+endif()
+
 
 if (FLATCC_REFLECTION)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_REFLECTION=1")

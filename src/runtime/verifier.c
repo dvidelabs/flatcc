@@ -20,7 +20,7 @@
         flatcc_verify_error_string(reason)); assert(0); return reason; }
 #endif
 
-#ifdef FLATCC_TRACE_VERIFY
+#if FLATCC_TRACE_VERIFY
 #include <stdio.h>
 #define trace_verify(s, p) \
     fprintf(stderr, "trace verify: %s: 0x%02x\n", (s), (unsigned)(size_t)(p));

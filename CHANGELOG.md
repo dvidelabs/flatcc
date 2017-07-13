@@ -14,6 +14,8 @@
   permitting unquoted keys.
 - Fix building nested buffers when the parent buffer has not yet emitted
   any data (#51).
+- Add `FLATCC_TRACE_VERIFY` as build option (it was there, hidden,
+  already).
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in

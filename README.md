@@ -25,6 +25,7 @@ or printing in less than 2 us for a 10 field mixed type message.
     * [Compiling for Read-Only](#compiling-for-read-only)
     * [Building a Buffer](#building-a-buffer)
     * [Verifying a Buffer](#verifying-a-buffer)
+    * [Debugging a Buffer](#debugging-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
     * [File Identifiers](#file-identifiers)
     * [Type Identifiers](#type-identifiers)
@@ -129,6 +130,8 @@ If possible, please provide a short reproducible schema and
 source file using [issue4](https://github.com/dvidelabs/flatcc/issues/4)
 as an example. The first comment in this issue details how to quickly
 set up a new temporary project using the `scripts/setup.sh` script.
+
+See also [Debugging a Buffer](#debugging-a-buffer).
 
 
 ## Status
@@ -695,6 +698,30 @@ done. For the majority of use cases, standard allocation would be
 sufficient, but for example standard 32-bit Windows only allocates on an
 8-byte boundary and can break the monster schema because it has 16-byte
 aligned fields.
+
+
+### Debugging a Buffer
+
+When accessing a buffer yields unexpected results, the first line of
+defense is to ensure that the the code beingi tested is linked against
+`flatccrt_d`, the debug build of the runtime library. This will ensure
+that builder calls are balanced and that required fields are set
+otherwise an assertion is raised.
+
+To dig further into a buffer, call the buffer verifier and see if the
+buffer is actually valid with respect to the expected buffer type.
+
+If the buffer is not valid, it might be good to know why. The verifier
+is designed to verify fast, but can be made more informative by setting
+one or both of these build flags:
+    
+    -DFLATCC_DEBUG_VERIFY=1
+    -DFLATCC_TRACE_VERIFY=1
+
+These can be set as CMake options, directly as C compile flags, or in
+the `flatcc_rtconfig.h` file.
+
+When reporting bugs, output from the above might also prove helpful.
 
 
 ## File and Type Identifiers
