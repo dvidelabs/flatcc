@@ -408,9 +408,10 @@ A verifier does not enforce that:
 
 More generally we can say that a verifier is a basic fast assurance that
 the buffer is safe to access. Any additional verification is application
-specific. The verifier makes it safe to apply secondary validation. It
-may also be useful to automate via schema attributes, but it is out of
-scope for a core verifier.
+specific. The verifier makes it safe to apply secondary validation.
+Seconary validation could be automated via schema attributes and may be
+very useful as such, but it is a separate problem and out of scope for a
+core binary format verifier.
 
 A buffer identifier is optional so the verifier should be informed
 whether an identifier must match a given id. It should check both ASCII
