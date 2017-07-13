@@ -64,7 +64,7 @@ Schema :
             say       : string;
             height    : short;
         }
-        file_identifer "NOOB";
+        file_identifier "NOOB";
 
 JSON :
 
