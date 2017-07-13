@@ -55,7 +55,7 @@ element is added to the soffset location to originally pointed to the
 vtable, i.e. the start of the referring table.
 
 
-Schema:
+Schema :
 
         enum Fruit : byte { Banana = -1, Orange = 42 }
         table FooBar {
@@ -70,7 +70,7 @@ JSON :
 
         { "meal": "Orange", "say": "hello", "height": -8000 }
 
-Buffer:
+Buffer :
 
         header:
             +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
