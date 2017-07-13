@@ -733,7 +733,7 @@ the point of failure, use:
 
     -DFLATCC_TRACE_VERIFY=1
 
-Both of these optoins can be set as CMake options, or in the
+Both of these options can be set as CMake options, or in the
 [flatcc_rtconfig.h] file.
 
 When reporting bugs, output from the above might also prove helpful.
@@ -741,11 +741,11 @@ When reporting bugs, output from the above might also prove helpful.
 Using the JSON parser and printer can also be used to quickly create new
 buffer content without the uncertainty of user code being used
 corrrectly because the parser will know the schema and use it correctly.
-The [test_json.c] has a test function that can be adapted for
+The [test_json.c] file has a test function that can be adapted for
 custom tests.
 
-For advanced debugging the `hexdump.c` can be used to dump the buffer
-contents. It is used in [test_json.c] and [monster_test.c].
+For advanced debugging the [hexdump.h] can be used to dump the buffer
+contents. It is used in [test_json.c] and also in [monster_test.c].
 
 
 ## File and Type Identifiers
@@ -1699,3 +1699,4 @@ See [Benchmarks]
 [flatcc_emitter.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_emitter.h
 [flatcc-help.md]: https://github.com/dvidelabs/flatcc/blob/master/doc/flatcc-help.md
 [flatcc_rtconfig.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_rtconfig.h
+[hexdump.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/support/hexdump.h
