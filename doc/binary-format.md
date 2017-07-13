@@ -110,8 +110,9 @@ Buffer :
 
         string:
         
-            +0x0204 5 (vector element count)
-            +0x0205 'h', 'e', 'l', 'l', 'o' (vector data)
+            +0x0204 05 00 00 00 ; vector element count
+            +0x0208 'h' 'e' 'l' 'l'     ; vector data
+            +0x0209 'o'                 ; vector data
             +0x020a '\0' (zero termination special case for string vectors)
 
             ...
