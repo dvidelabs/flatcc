@@ -722,7 +722,7 @@ If the verifier rejects a buffer, the error can be printed (see
 [Verifying a Buffer](#verifying-a-buffer)), but it will not say exactly
 where the problem was found. To go further, the verifier can be made to
 assert where the problem is encountered so the buffer conent can be
-analized. This is enabled with:
+analyzed. This is enabled with:
 
     -DFLATCC_DEBUG_VERIFY=1
 
