@@ -150,6 +150,33 @@ buffers, each buffer should start aligned to its own size starting at
 the size field, and should also be zero padded up to its own alignment.
 
 
+## Size Limits
+
+A buffer should never be larger than `2^(sizeof(soffset_t) * 8 - 1) - 1`
+or `2^31 - 1` i.e. 2GB for standard FlatBuffers. Beyond this safe it is
+not safe to represent vtable offsets and implementations can no longer
+use signed types to store `uoffset_t` values. This limit also ensures
+that all vectors can be represented safely with a signed 32-bit length
+type.
+
+The application interface is likely to use a native type for
+representing sizes and vector indices. If this type is smaller that
+`sizeof(soffset_t)` or equivalently `sizeof(uoffset_t)` there is a risk
+of overflow. The simplest way to avoid any issues is to limit the
+accepted buffer size of the native size type. For example, on some
+embedded microprocessor systems a C compiler might have a 16-bit int and
+`size_t` type, even if it supports `uint32_t` as well. In this the safe
+assumption is to limit buffers to `2^15 - 1` which is very likely more
+than sufficient on such systems.
+
+A builder API might also want to prevent vectors from being created when
+they cannot stay within the size type of the platform when the element
+size is multipled by the element count. This is deceiving because the
+element count might easily be within range. Such issues will be rare in
+praxis but they can be the source of magnificent vulnerabilites if not
+handled appropriately.
+
+
 ## Verification
 
 Verification as discussed here is not just about implementing a
@@ -178,7 +205,10 @@ A verifier primarily checks that:
   safely validate itself, but this also applies to table, string and
   vector fields.
 - any uoffset has size of at least `sizeof(uoffse_t)` to aviod
-  self-reference.
+  self-reference and is no larger than the largest positive soffset_t
+  value of same size - this ensures that implementations can safely add
+  uoffset_t even if converting to signed first. It also, incidentally,
+  ensures compatibility with StreamBuffers - see below.
 - vtable size is aligned and does not end outside buffer.
 - vtable size is at least the two header fields
   (`2 * `sizeof(voffset_t)`).
@@ -195,6 +225,21 @@ A verifier primarily checks that:
 - table end (without chasing offsets) is not outside buffer.
 - all data referenced by offsets are also valid within the buffer
   according the type given by the schema.
+- verify that recursion depth is limited to a configurable acceptable
+  level for the target system both to protect itself and such that
+  general recursive buffer operations need not be concerned with stack
+  overflow checks (a depth of 100 or so would normally do).
+
+A verifier needs to be very careful in how it deals with overflow and
+signs. Vector elements multiplied by element size can overflow. Adding
+an invalid offset might become valid due to overflow. In C math on
+unsigned types yield predictable 2s complement overflow while signed
+overflow is undefined behavior and can and will result in unpredictable
+values with modern optimizing compilers. The upside is that if the
+verifier handles all this correctly, the application reader logic can be
+much simpler while staying safe.
+
+A verifier m
 
 A verifier does not enforce that:
 
@@ -235,6 +280,10 @@ decide if the second buffer field is an identifier, or some other data,
 but if the field does not match the expected identifier, it certainly
 isn't what is expected.
 
+Note that it is not entirely trivial to check vector lengths because the
+element size must be mulplied by the stored element count. For large
+elements this can lead to overflows.
+
 
 ## Risks
 
@@ -247,6 +296,9 @@ verifier will detect safe read, but will not detect if two objects are
 overlapping. For example, a table could be stored inside another table.
 Modifing one table might cause access to the contained table to go out
 of bounds, for example by directing the vtable elsewhere.
+
+The platform native integer and size type might not be able to handle
+large FlatBuffers - see [Size Limits](#size-limits). 
 
 
 ## Nested FlatBuffers
