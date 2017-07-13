@@ -313,6 +313,8 @@ aligned, such as in network buffers).
 
 A verifier primarily checks that:
 
+- the buffer is at least `2 * sizeof(uoffset_t)` such that the root
+  root table and buffer identifier can be checked safely.
 - any offset being chased is inside the buffer that any data accessed
   from that resuling location is entirely inside the buffer and aligned
   notably the vtables first entry must be valid before the vtable can
@@ -401,7 +403,7 @@ A verifier does not enforce that:
   values different from default values.
 - enum values are only among the enum values of its type. There are many
   use cases where it is convenient to add enum values for example flags
-  or enums as units e.g. `2 * kile + 3 * ounce. More generally ordinary
+  or enums as units e.g. `2 * kilo + 3 * ounce. More generally ordinary
   integers may have value range restrictions which is also out of scope
   for verifier. An application may provide additional verification when
   requested.
