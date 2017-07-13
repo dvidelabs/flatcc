@@ -215,17 +215,17 @@ A verifier does not enforce that:
   other than proper DAGs except via a separate compression/decopression
   stage of no interest to the verifier.
 - strings are UTF-8 compliant. Lack of compliance may affect expections
-  or may buffers appear shorter. Worst case a naive UTF-8 reader might
-  reach beyond the end when observing a lead byte suggest data after
-  buffer end, but such a read should discover the terminal 0 before
-  things get out of hand. Being relaxed permits specific use cases
-  where UTF-8 is not suitable without giving up the option to verify
-  buffers. Implementations can add additional verification for specific
-  usecases for example by providing a strict-UTF8 flag to a verifier
-  or by verifying at the application level. This also avoids unnecessary
-  duplicate validation, for example when an API first verifies the
-  buffer then converts strings to an internal heap representation where
-  UTF-8 is validated anyway.
+  or may make strings appear shorter or garbled. Worst case a naive
+  UTF-8 reader might reach beyond the end when observing a lead byte
+  suggest data after buffer end, but such a read should discover the
+  terminal 0 before things get out of hand. Being relaxed permits
+  specific use cases where UTF-8 is not suitable without giving up the
+  option to verify buffers. Implementations can add additional
+  verification for specific usecases for example by providing a
+  strict-UTF8 flag to a verifier or by verifying at the application
+  level. This also avoids unnecessary duplicate validation, for example
+  when an API first verifies the buffer then converts strings to an
+  internal heap representation where UTF-8 is validated anyway.
 
 
 A buffer identifier is optional so the verifier should be informed
