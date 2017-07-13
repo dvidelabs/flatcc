@@ -125,6 +125,42 @@ traverse with too much fear of excessive recursion. It also makes it
 possible to efficiently verify that buffers do not point out of bounds.
 
 
+## Unions
+
+A union is a contruction on top of the above primitives. It consists of
+a type and a value.
+
+In the schema a union type is a set of table types with each table name
+assigned a type enumaration starting from 1. 0 is the type NONE meaning
+the union has not value assigned. The union type is represented as a
+ubyte enum type, or in the binary format as a value of type
+`union_type_t` which for standard FlatBuffers is an 8-bit unsigned code
+with 0 indicating the union stores not value and a non-zero value
+indicating the type of the stored union.
+
+A union is stored in a table as a normal sub-table reference with the
+only difference being that the offset does not always point to a table
+of the same type. The 8-bit union type is stored as a separate table
+field conventially named the same as the union value field except for a
+`_type` suffix. The value (storing the table offset) MUST have a field
+ID that is exactly one larger than the type field. If value field is
+present the type field MUST also be present. If the type is NONE the
+value field MUST be absent and the type field MAY be absent because a
+union type always defaults to the value NONE.
+
+Vectors of unions is a late addition to the FlatBuffers format. FlatCC
+does currently not suppport them but they will be added eventually.
+
+Vectors of unions have the same two fields as normal unions but they
+both store a vector and both vectors MUST have the same length or both
+be absent from the table. The type vector is a vector of 8-bit enums and
+the value vector is a vector of table offsets. Obviously each type
+vector element represents the type of the table in the corresponding
+value element. If an element is of type NONE the value offset must be
+stored as 0 which is a circular reference. This is the only offset that
+can have the value 0.
+
+
 ## Alignment
 
 All alignments are powers of two between 1 and 256. Large alignments are
@@ -149,6 +185,84 @@ alignment and do this manually. Thus, when stacking size prefixed
 buffers, each buffer should start aligned to its own size starting at
 the size field, and should also be zero padded up to its own alignment.
 
+
+## Default Values and Deprecated Values
+
+A table can can omit storing any field that is not a required field. For
+strings, vectors and tables this result in returning a null value
+different from an empty value when reading the buffer. Struct fields not
+present in table are also returned as null.
+
+All fields that can return null do not have a default value. Other
+values, which are integers, floats and enumerations, can all have
+default values. The default value is returned if not found in the table.
+
+If a default value is not specified the default defaults to zero for the
+corresponding type. If an enumeration does not have a 0 value and no
+explicit default value, this is a schema error.
+
+When building a buffer the builder will compare a stored field to the
+known default value. If it matches the field will simple be skipped.
+Some builder API's makes it possible to force a default value to be
+stored and to check if a field is missing when reading the buffer. This
+can be used to handle NULL values differently from default or missing
+values.
+
+A deprecated field should be treated as not available, as in no way to
+read the value as opposed to returning a default value. If they for some
+reason are made accessible the verifier must also understand and verify
+these fields.
+
+Structs cannot have default values and cannot have deprecated fields in
+stadard FlatBuffers. FlatCC supports marking a struct field as
+deprecated. This implies the field will always be zeroed and with no
+trivial accessors. A struct can never change size without breaking
+support for schema evolution.
+
+FlatCC JSON parsers allow structs to only set some values. Remaining
+values will be implicitly zeroed. The C API for writing buffers do not
+have this concern because a struct can just be written as a C struct
+so there is no control over which fields a user choose to set or zero.
+However, structs should be zeroed and padded where data is not otherwise
+set. This makes it possible to hash and integrity check structs (though
+this is not an integral part of the format).
+
+
+## Schema Evolution
+
+A table has a known set of low-valued field identifiers. Any unused
+field id can be used in a future version. If a field (as is normal) is
+implicitly assigned an id, new fields can only be added at the end of
+the table. Internally this translates into new versions getting ever
+larger vtables. Note that vtables are only stored as large as needed for
+the actual content of table, so a rarely used new field will not cause
+vtables to grew when unused.
+
+Enumarations may not change values in future versions. Unions may only
+added new table names to the end of the union list.
+
+Structs cannot change size nor content. The cannot evolve. FlatCC
+permits deprecating fields which means old fields will be zeroed.
+
+Names can be changed to the extend it make sense to the applications already
+written around the schema.
+
+New types can be added.
+
+
+## Keys and Sorting
+
+Keys and sorting is a meta construct driven by the schema. The binary
+format has no special concept of keys and sorting and a vector can be
+sorted by one of several keys so it makes no sense to enforce a specific
+order.
+
+The basic FlatBuffers format only permit at most one key and generally
+sorts vectors by that key during buffer construction. FlatCC does not do
+this both because sorting is not practical while building the buffer and
+because FlatCC supports sorting by one of several keys. Thus, in general
+it is not safe to assume that a vector is sorted, but it can be sorted
+if needed.
 
 ## Size Limits
 
@@ -213,6 +327,11 @@ A verifier primarily checks that:
 - vtable size is at least the two header fields
   (`2 * `sizeof(voffset_t)`).
 - required table fields are present.
+- recursively verify all known fields and ignore other fields. Unknown
+  fields are vtable entries after the largest known field ID of a table.
+  These should be ignored in order to support forward versioning.
+- Verify deprecated fields if accessors are available to do so, or
+  ignore if the there is no way to access the field by application code.
 - vectors end within the buffer.
 - strings end within the buffer and has a zero byte after the end which
   is also within the buffer.
@@ -229,6 +348,13 @@ A verifier primarily checks that:
   level for the target system both to protect itself and such that
   general recursive buffer operations need not be concerned with stack
   overflow checks (a depth of 100 or so would normally do).
+- verify that if the union type is NONE the table field is absent and
+  if it is not NONE that the table field is present. If the union type
+  is known, the table should be verified. If the type is not known
+  the table field should be ignored. A reader using the same schema would
+  see the union as NONE. An unknown union is not an error in order to
+  support forward versioning.
+
 
 A verifier needs to be very careful in how it deals with overflow and
 signs. Vector elements multiplied by element size can overflow. Adding
@@ -270,6 +396,9 @@ A verifier does not enforce that:
   level. This also avoids unnecessary duplicate validation, for example
   when an API first verifies the buffer then converts strings to an
   internal heap representation where UTF-8 is validated anyway.
+- default values are not stored. It is common to force default values to
+  be stored. This may be used to implement NULL values as missing
+  values different from default values.
 
 
 A buffer identifier is optional so the verifier should be informed
@@ -298,6 +427,11 @@ of bounds, for example by directing the vtable elsewhere.
 
 The platform native integer and size type might not be able to handle
 large FlatBuffers - see [Size Limits](#size-limits). 
+
+Becaue FlatCC requires buffers to be sorted after builiding, there is
+risk due to buffer modifications. It is not sufficient to verify buffers
+after sorting because sorting is done inline. Therefore buffers must be
+trusted or rewritten before sorting.
 
 
 ## Nested FlatBuffers
