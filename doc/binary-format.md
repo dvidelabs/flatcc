@@ -239,7 +239,6 @@ values with modern optimizing compilers. The upside is that if the
 verifier handles all this correctly, the application reader logic can be
 much simpler while staying safe.
 
-A verifier m
 
 A verifier does not enforce that:
 
