@@ -332,15 +332,14 @@ A verifier primarily checks that:
 - recursively verify all known fields and ignore other fields. Unknown
   fields are vtable entries after the largest known field ID of a table.
   These should be ignored in order to support forward versioning.
-- Verify deprecated fields if accessors are available to do so, or
+- deprecated fields are valid if accessors are available to do so, or
   ignore if the there is no way to access the field by application code.
 - vectors end within the buffer.
 - strings end within the buffer and has a zero byte after the end which
   is also within the buffer.
-- structs are aligned relative to buffer offset 0 regardless of where
-  they are stored.
-- structs are aligned relative to table start (so tables can be copied).
-- table field size is aligned relative to buffer start.
+- table fields are aligned relative to buffer start - both structs,
+  scalars, and offset types.
+- table field size is aligned relative to field start.
 - any table field does not end outside the tables size as given by the
   vtable.
 - table end (without chasing offsets) is not outside buffer.
@@ -368,8 +367,11 @@ verifier handles all this correctly, the application reader logic can be
 much simpler while staying safe.
 
 
-A verifier does not enforce that:
+A verifier does __not__ enforce that:
 
+- structs and other table fields are aligned relative to table start because tables are only
+  aligned to their soffset field. This means a table cannot be copied
+  naively into a new buffer even if it has no offset fields.
 - the order of individual fields within a table. Even if a schema says
   something about ordering this should be considered advisory. A
   verifier may additionally check for ordering for specific
