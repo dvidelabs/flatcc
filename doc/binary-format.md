@@ -359,7 +359,7 @@ A verifier primarily checks that:
 A verifier needs to be very careful in how it deals with overflow and
 signs. Vector elements multiplied by element size can overflow. Adding
 an invalid offset might become valid due to overflow. In C math on
-unsigned types yield predictable 2s complement overflow while signed
+unsigned types yield predictable two's complement overflow while signed
 overflow is undefined behavior and can and will result in unpredictable
 values with modern optimizing compilers. The upside is that if the
 verifier handles all this correctly, the application reader logic can be
@@ -399,7 +399,18 @@ A verifier does not enforce that:
 - default values are not stored. It is common to force default values to
   be stored. This may be used to implement NULL values as missing
   values different from default values.
+- enum values are only among the enum values of its type. There are many
+  use cases where it is convenient to add enum values for example flags
+  or enums as units e.g. `2 * kile + 3 * ounce. More generally ordinary
+  integers may have value range restrictions which is also out of scope
+  for verifier. An application may provide additional verification when
+  requested.
 
+More generally we can say that a verifier is a basic fast assurance that
+the buffer is safe to access. Any additional verification is application
+specific. The verifier makes it safe to apply secondary validation. It
+may also be useful to automate via schema attributes, but it is out of
+scope for a core verifier.
 
 A buffer identifier is optional so the verifier should be informed
 whether an identifier must match a given id. It should check both ASCII
@@ -518,7 +529,7 @@ in hot cache as this is the last sent. The average distance between
 objects will be the same for both FlatBuffers and StreamBuffers.
 
 StreamBuffers treat `uoffset_t` the same as `soffset_t` when the special
-limitation that `uoffset_t` is always negative when viewed as 2s
+limitation that `uoffset_t` is always negative when viewed as two's
 complement values.
 
 The implication is that everthing a table or vector references must be
