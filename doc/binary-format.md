@@ -60,8 +60,8 @@ vtable, i.e. the start of the referring table.
         enum Fruit : byte { Banana = -1, Orange = 42 }
         table FooBar {
             meal      : Fruit;
-            attitude  : (deprecated);
-            say       : String;
+            density   : long (deprecated);
+            say       : string;
             height    : short;
         }
         file_identifer "NOOB";
@@ -90,7 +90,7 @@ vtable, i.e. the start of the referring table.
                     0, ...      ; lots of valid but unnecessary padding
                                 ; to simplify math.
         vtable:
-            +0x0120 08 00       ; vtable length = 8 bytes
+            +0x0120 0c 00       ; vtable length = 12 bytes
             +0x0122 0c 00       ; table length = 12 bytes
             +0x0124 08 00       ; field id 0: +0x08 (meal)
             +0x0126 00 00       ; field id 1: <missing> (attitude)
