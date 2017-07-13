@@ -76,7 +76,7 @@ tables offset to its vtable is signed and is substracted. A vtables
 element is added to the start of the table referring to the vtable.
 
 
-Schema (eclectic.fbs) :
+Schema ([eclectic.fbs]) :
 
         namespace Eclectic;
 
@@ -795,3 +795,4 @@ end of the buffer instead of the start. An implementation may also
 zero the initial offset and update it later. In either case the buffer
 should be aligned accordingly.
 
+[eclectic.fbs]: https://github.com/dvidelabs/flatcc/blob/master/doc/eclectic.fbs

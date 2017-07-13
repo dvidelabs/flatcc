@@ -53,6 +53,7 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Running Tests on Windows](#running-tests-on-windows)
 * [Configuration](#configuration)
 * [Using the Compiler and Builder library](#using-the-compiler-and-builder-library)
+* [FlatBuffers Binary Format](#flatbuffers-binary-format)
 * [Benchmarks](#benchmarks)
 
 <!-- vim-markdown-toc -->
@@ -1688,6 +1689,10 @@ The runtime library may also be used by other languages. See comments
 in [flatcc_builder.h]. JSON parsing is on example of an
 alternative use of the builder library so it may help to inspect the
 generated JSON parser source and runtime source.
+
+## FlatBuffers Binary Format
+
+Mostly for implementers: [FlatBuffers Binary Format]
 
 ## Benchmarks
 
