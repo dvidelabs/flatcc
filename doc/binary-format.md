@@ -66,7 +66,8 @@ Schema:
         }
         file_identifer "NOOB";
 
-JSON:
+JSON :
+
         { "meal": "Orange", "say": "hello", "height": -8000 }
 
 Buffer:
