@@ -703,28 +703,25 @@ aligned fields.
 ### Debugging a Buffer
 
 When reading a FlatBuffer does not provide the expected results, the
-first line of defense is to ensure that the code being tested is
-linked against `flatccrt_d`, the debug build of the runtime library.
-This will raise an assertion if builder calls are properly balanced or
+first line of defense is to ensure that the code being tested is linked
+against `flatccrt_d`, the debug build of the runtime library. This will
+raise an assertion if calls to the builder are not properly balanced or
 if required fields are not being set.
-
-The builder might return an error code such as adding a table field with
-an ID. These errors will not happen normally, but they will assert in
-debug mode.
-
-Strings and tables wll be returned as null pointers when their
-corresponding field is not set in the buffer. User code should test for
-this but it might be helpful to temporarily set the `required` attribute
-in the schema and make the builder enforce that expected fields are
-present.
 
 To dig further into a buffer, call the buffer verifier and see if the
 buffer is actually valid with respect to the expected buffer type.
 
-If the buffer is not valid, the error can be printed but it will not say
-exactly where the problem was found. To go further, the verifier can be
-made to assert where the problem is encountered so the buffer conent
-can be analized. This is enabled with:
+Strings and tables will be returned as null pointers when their
+corresponding field is not set in the buffer. User code should test for
+this but it might also be helpful to temporarily or permanently set the
+`required` attribute in the schema and make the builder enforce that the
+expected fields are present when building, and the make the verifier
+enforce their presence when reading.
+
+If the verifier rejects a buffer, the error can be printed, but it will
+not say exactly where the problem was found. To go further, the verifier
+can be made to assert where the problem is encountered so the buffer
+conent can be analized. This is enabled with:
 
     -DFLATCC_DEBUG_VERIFY=1
 
@@ -736,8 +733,8 @@ the point of failure, use:
 
     -DFLATCC_TRACE_VERIFY=1
 
-Both of these optoins can be set as CMake options, directly as C compile
-flags, or in the `flatcc_rtconfig.h` file.
+Both of these optoins can be set as CMake options, or in the
+[flatcc_rtconfig.h] file.
 
 When reporting bugs, output from the above might also prove helpful.
 
@@ -1701,3 +1698,4 @@ See [Benchmarks]
 [flatcc_builder.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_builder.h
 [flatcc_emitter.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_emitter.h
 [flatcc-help.md]: https://github.com/dvidelabs/flatcc/blob/master/doc/flatcc-help.md
+[flatcc_rtconfig.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_rtconfig.h
