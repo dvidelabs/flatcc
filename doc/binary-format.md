@@ -7,7 +7,6 @@
 * [Internals](#internals)
 * [Type Hashes](#type-hashes)
 * [Unions](#unions)
-* [Struct Buffers](#struct-buffers)
 * [Alignment](#alignment)
 * [Default Values and Deprecated Values](#default-values-and-deprecated-values)
 * [Schema Evolution](#schema-evolution)
@@ -17,6 +16,7 @@
 * [Risks](#risks)
 * [Nested FlatBuffers](#nested-flatbuffers)
 * [Big Endian FlatBuffers](#big-endian-flatbuffers)
+* [StructBuffers](#structbuffers)
 * [StreamBuffers](#streambuffers)
 
 <!-- vim-markdown-toc -->
@@ -31,6 +31,7 @@ A FlatBuffers layout consists of the following types of memory blocks:
 - vector
 - string
 - vtable
+- (structs)
 
 Each of these have a contigous memory layout. The header references the
 root table. Every table references a vtable and stores field in a single
@@ -45,7 +46,9 @@ densely but possibly more complicated to construct and the schema may
 provide guidelines on the preferred order. Two vtables might mean
 different things but accidentally have the same structure. Such vtables
 can be shared between different tables. vtable sharing is important when
-vectors store many similar tables.
+vectors store many similar tables. Structs a dense memory regions of
+scalar fields and smaller structs but they are generally only found
+inside other blocks and holds no references.
 
 Space between the above blocks are zero padded and present in order to
 ensure proper alignment. Structs must be packed as densely as possible
@@ -367,36 +370,6 @@ vector element represents the type of the table in the corresponding
 value element. If an element is of type NONE the value offset must be
 stored as 0 which is a circular reference. This is the only offset that
 can have the value 0.
-
-
-## Struct Buffers
-
-The FlatBuffers format does not permit structs to be stored as
-independent entities. They are always embedded in in a
-fixed memory block representing a table, in a vector, or embedded inline
-in other structs.
-
-The root object in FlatBuffers is expected to be a table, but it can
-also be struct. FlatCC supports struct as root. Since structs do not
-contain references, such buffers are truly flat. Most implementations
-are not likely to support structs are root but even so they are very
-useful:
-
-It is possible to create very compact and very fast buffers this way.
-They can be used where one would otherwise consider using manual structs
-or memory blocks but with the advantage of a system and language
-independent schema.
-
-Structs as roots may be particularly interesting for the Big Endian
-variant of FlatBuffers for two reasons: the first being that performance
-likely matters when using such buffers and thus Big Endian platforms
-might want them. The second reason is the network byte order is
-traditionally big endian, and this has proven very difficult to change,
-even in new evolving IETF standards. FlatBuffers can be used to manage
-non-trival big endian encoded structs, especially structs containing
-other structs, even when the receiver does not understand FlatBuffers as
-concept - here the struct would be be shipped without the buffer header
-as is.
 
 
 ## Alignment
@@ -732,7 +705,7 @@ text, but the binary format is discussed here:
 
 All fields have exactly the same type and size as the little endian
 format but all scalars including floating point values are stored
-byteswapped within their field size.
+byteswapped within their field size. Offset types are also byteswapped.
 
 The buffer identifier is stored byte swapped if present. For example
 the 4-byte "MONS" identifier becomes "SNOM" in big endian format. It is
@@ -742,13 +715,39 @@ are not exactly 4-bytes. "HI\0\0" could be "IH\0\0" or "\0\0IH". It is
 recommended to always use 4-byte identifies to avoid this problem. See
 the FlatCC release 0.4.0 big endian release for details.
 
-When using type hash identifiers (a fully qualified table name such
-subjected to FNV-1A 32-bit hash), the user code will see the same
-identifier for both little and big endian buffers but the accessor code
-to accept the identifier will do the appropriate endian conversion. The
-type hash is for example FNV1a_32("MyGame.Example.Monster") to get the
-id of buffer storing the monster table as root, using the ubiquitious
-`monster.fbs` example.
+When using type hash identifiers the identifier is stored as a big
+endian encoded hash value. The user application will the hash in its
+native form and accessor code will do the conversion as for other
+values.
+
+
+## StructBuffers
+
+The FlatBuffers format does not permit structs to be stored as
+independent entities. They are always embedded in in a
+fixed memory block representing a table, in a vector, or embedded inline
+in other structs.
+
+The root object in FlatBuffers is expected to be a table, but it can
+also be struct. FlatCC supports StructBuffers. Since structs do not
+contain references, such buffers are truly flat. Most implementations
+are not likely to support structs are root but even so they are very
+useful:
+
+It is possible to create very compact and very fast buffers this way.
+They can be used where one would otherwise consider using manual structs
+or memory blocks but with the advantage of a system and language
+independent schema.
+
+StructBuffers may be particularly interesting for the Big Endian
+variant of FlatBuffers for two reasons: the first being that performance
+likely matters when using such buffers and thus Big Endian platforms
+might want them. The second reason is the network byte order is
+traditionally big endian, and this has proven very difficult to change,
+even in new evolving IETF standards. StructBuffers can be used to manage
+non-trival big endian encoded structs, especially structs containing
+other structs, even when the receiver does not understand FlatBuffers as
+concept since the header can just be dropped or trivially documented.
 
 
 ## StreamBuffers
