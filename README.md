@@ -714,14 +714,15 @@ buffer is actually valid with respect to the expected buffer type.
 Strings and tables will be returned as null pointers when their
 corresponding field is not set in the buffer. User code should test for
 this but it might also be helpful to temporarily or permanently set the
-`required` attribute in the schema and make the builder enforce that the
-expected fields are present when building, and the make the verifier
-enforce their presence when reading.
+`required` attribute in the schema. The builder will then detect missing fields
+when cerating buffers and the verifier can will detect their absence in
+an existing buffer.
 
-If the verifier rejects a buffer, the error can be printed, but it will
-not say exactly where the problem was found. To go further, the verifier
-can be made to assert where the problem is encountered so the buffer
-conent can be analized. This is enabled with:
+If the verifier rejects a buffer, the error can be printed (see
+[Verifying a Buffer](#verifying-a-buffer), but it will not say exactly
+where the problem was found. To go further, the verifier can be made to
+assert where the problem is encountered so the buffer conent can be
+analized. This is enabled with:
 
     -DFLATCC_DEBUG_VERIFY=1
 
