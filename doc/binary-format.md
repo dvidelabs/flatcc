@@ -61,7 +61,7 @@ Schema :
 
         enum Fruit : byte { Banana = -1, Orange = 42 }
         table FooBar {
-            meal      : Fruit;
+            meal      : Fruit = Banana;
             density   : long (deprecated);
             say       : string;
             height    : short;
@@ -274,7 +274,7 @@ table:
 But we can also [compute
 one online](https://www.tools4noobs.com/online_tools/hash/) for our example buffer:
 
-        fnv1a32("Eclectic.FooBar") = edbe3f50
+        fnv1a32("Eclectic.FooBar") = 0a604f58
 
 Thus we can open a hex editor and locate
 
@@ -284,7 +284,14 @@ Thus we can open a hex editor and locate
 and replace it with
 
             +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
-            +0x0000 50 f3 be ed ; very likely our file identifier identifier
+            +0x0000 58 4f 60 0a ; very likely our file identifier identifier
+
+or generate with `flatcc`:
+
+        $ bin/flatcc --stdout doc/eclectic.fbs | grep FooBar_type_
+        #define Eclectic_FooBar_type_hash ((flatbuffers_thash_t)0xa604f58)
+        #define Eclectic_FooBar_type_identifier "\x58\x4f\x60\x0a"
+
 
 The following snippet implements fnv1a32, and returns the empty string
 hash if the hash accidentially should return 0:
