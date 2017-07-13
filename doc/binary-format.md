@@ -1,5 +1,115 @@
 # FlatBuffers Binary Format
 
+## Overview
+
+A FlatBuffers layout consists of the following types of memory blocks:
+
+- header
+- table
+- vector
+- string
+- vtable
+
+Each of these have a contigous memory layout. The header references the
+root table. Every table references a vtable and stores field in a single
+block of memory. Some of these fields can be offsets to vectors, strings
+and vectors. Vectors are one-dimensional blocks where each element is
+self-contained or stores reference to table or a string based on schema
+type information. A vtable decides which fields are present in table and
+where they are stored. Vtables are the key to support schema evolution.
+A table has no special rules about field ordering except fields must be
+properly aligned, and if they are ordered by size the will pack more
+densely but possibly more complicated to construct and the schema may
+provide guidelines on the preferred order. Two vtables might mean
+different things but accidentally have the same structure. Such vtables
+can be shared between different tables. vtable sharing is important when
+vectors store many similar tables.
+
+Space between the above blocks are zero padded and present in order to
+ensure proper alignment. Structs must be packed as densely as possible
+according the alignment rules that apply - this ensures that all
+implements will agree on the layout. The blocks must not overlap in
+memory but two blocks may be shared if they represent the same data such
+as sharing a string.
+
+FlatBuffers are constructed back to front such that lower level objects
+such as sub-tables and strings are created first in stored last and such
+that the root object is stored last and early in the buffer. See also
+(Stream Buffers](#stream-buffers) for a proposed variation over this
+theme.
+
+All addressing in FlatBuffers are relative. The reason for this? When
+navigating the buffer you don't need to store the buffer start or the
+buffer length, you can also find a new reference relative the reference
+you already have. vtables require the table location to find a field,
+but a table field referencing a string field only needs the table field
+location, not the table start in order to find the referenced string.
+This results in efficient navigation.
+
+
+## Example
+
+Uoffsets add their content to their address and are positive while a
+tables offset to its vtable is signed and is substracted. A vtables
+element is added to the soffset location to originally pointed to the
+vtable, i.e. the start of the referring table.
+
+
+    Schema:
+
+        enum Fruit : byte { Banana = -1, Orange = 42 }
+        table FooBar {
+            meal      : Fruit;
+            attitude  : (deprecated);
+            say       : String;
+            height    : short;
+        }
+        file_identifer "NOOB";
+
+    JSON:
+        { "meal": "Orange", "say": "hello", "height": -8000 }
+
+    Buffer:
+
+        header:
+            +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
+            +0x0000 'N', 'O', 'O', 'B' ; possibly a file identifier
+           ... or perhaps a vtable, probably not padding since non-zero.
+
+        root-table:
+            +0x0100 e0 ff ff ff ; 32-bit soffset to vtable location
+                                ; two's complement: 2^32 - 0xffffffe0 = -0x20
+                                ; effective address: +0x0100 - (-0x20) = +0x0204
+            +0x0104 00 01 00 00 ; 32-bit uoffset string field (FooBar.say)
+                                ; find string +0x100 = 256 bytes _from_ here
+                                ; = +0x0104 + 0x100 = +0x0204.
+            +0x0108 42d         ; 8-bit (FooBar.meal)
+            +0x0109 0           ; 8-bit padding
+            +0x010a -8000d      ; 16-bit (FooBar.height)
+            +0x010c 0, ...      ; (after table)
+                    0, ...      ; lots of valid but unnecessary padding
+                                ; to simplify math.
+        vtable:
+            +0x0120 08 00       ; vtable length = 8 bytes
+            +0x0122 0c 00       ; table length = 12 bytes
+            +0x0124 08 00       ; field id 0: +0x08 (meal)
+            +0x0126 00 00       ; field id 1: <missing> (attitude)
+            +0x0128 04 00       ; field id 2: +0004 (say)
+            +0x012a 0a 00       ; field id 3: +0x0a (height) 
+
+        string: 
+            +0x0204 5 (vector element count)
+            +0x0205 'h', 'e', 'l', 'l', 'o' (vector data)
+            +0x020a '\0' (zero termination special case for string vectors)
+
+Note that FlatCC often places vtables last resuting in `e0 ff ff ff`
+style vtable offsets, while Googles flatc builder typically places them
+before the table resulting in `20 00 00 00` style vtable offsets which
+might help understand why the soffset is subtracted from and not added
+to the table start. Both forms are equally valid.
+
+## Internals
+
 Please observe that data types have a standard size such as
 `sizeof(uoffset_t) == 4` but the size might change for related formats.
 Therefore the type name is important in the discussion.
@@ -7,20 +117,25 @@ Therefore the type name is important in the discussion.
 All content is little endian and offsets are 4 bytes (`uoffset_t`).
 A new buffer location is found by adding a uoffset to the location where
 the offset is stored. The first location (offset 0) points to the root
-table.
+table. `uoffset_t` based references are to tables, vectors, and strings.
+References to vtables and to table fields within a table have a
+different calculations as discussed below.
 
-> NOTE: a variation of this format stores a 4-byte length prefix. This
-> must be known in advance. A size cannot be added after the affect
-> without affecting buffer alignment so it must be done when building the
-> buffer. A length prefix can be used to stack multiple buffers in a file.
+A late addition to the format allow for adding a size prefix before the
+standard header. When this is done, the builder must know about so it
+can align content according to the changed starting position. Receivers
+must also know about the size field just as they must know about the
+excpected buffer type.
 
-The next 4 bytes (`sizeof(uoffset_t)`) might a 4 byte buffer identifier,
-or it might be absent. The file identifier is typically ASCII characters
-from the schemas `file_identifier` field padded with 0 bytes but may
-also contain any custom binary identifier in little endian encoding. The
-0 identifier should be avoided as it may be used as an indication that
-the identifier was not stored in the buffer or should not be stored in the
-buffer.
+The next 4 bytes (`sizeof(uoffset_t)`) might represent a 4 byte buffer
+identifier, or it might be absent but there is no obvious way to know
+which.  The file identifier is typically ASCII characters from the
+schemas `file_identifier` field padded with 0 bytes but may also contain
+any custom binary identifier in little endian encoding. See
+[Type-Hashes](#type-hashes). The 0 identifier should be avoided because
+the buffer might accidentally contain zero padding when an identifier is
+absent and because 0 can be used by API's to speficy that no identifier
+should be stored.
 
 When reading a buffer, it should be checked that the length is at least
 8 bytes (2 * `sizeof(uoffset_t)`) Otherwise it is not safe to check the
@@ -125,6 +240,33 @@ traverse with too much fear of excessive recursion. It also makes it
 possible to efficiently verify that buffers do not point out of bounds.
 
 
+## Type Hashes
+
+A type hash is an almost unique binary identifier for every table type.
+the identifier was not stored in the buffer or should not be stored in the
+buffer. When storing a binary identifier it is recommended to use the
+type hash convention which as the a 32-bit FNV-1a hash of the fully
+qualified type name of the root table (`FNV-1a("MyGame.Example.Monster")`).
+FlatCC generates these hashes automatically for every table and struct,
+but they are easy to compute and yields predictable results across
+implementations:
+
+
+    static inline flatbuffers_thash_t flatbuffers_type_hash_from_name(const char *name)
+    {
+        uint32_t hash = 2166136261UL;
+        while (*name) {
+            hash ^= (uint32_t)*name;
+            hash = hash * 16777619UL;
+            ++name;
+        }
+        if (hash == 0) {
+            hash = 2166136261UL;
+        }
+        return hash;
+    }
+
+
 ## Unions
 
 A union is a contruction on top of the above primitives. It consists of
@@ -159,6 +301,36 @@ vector element represents the type of the table in the corresponding
 value element. If an element is of type NONE the value offset must be
 stored as 0 which is a circular reference. This is the only offset that
 can have the value 0.
+
+
+## Struct Buffers
+
+The FlatBuffers format does not permit structs to be stored as
+independent entities. They are always embedded in in a
+fixed memory block representing a table, in a vector, or embedded inline
+in other structs.
+
+The root object in FlatBuffers is expected to be a table, but it can
+also be struct. FlatCC supports struct as root. Since structs do not
+contain references, such buffers are truly flat. Most implementations
+are not likely to support structs are root but even so they are very
+useful:
+
+It is possible to create very compact and very fast buffers this way.
+They can be used where one would otherwise consider using manual structs
+or memory blocks but with the advantage of a system and language
+independent schema.
+
+Structs as roots may be particularly interesting for the Big Endian
+variant of FlatBuffers for two reasons: the first being that performance
+likely matters when using such buffers and thus Big Endian platforms
+might want them. The second reason is the network byte order is
+traditionally big endian, and this has proven very difficult to change,
+even in new evolving IETF standards. FlatBuffers can be used to manage
+non-trival big endian encoded structs, especially structs containing
+other structs, even when the receiver does not understand FlatBuffers as
+concept - here the struct would be be shipped without the buffer header
+as is.
 
 
 ## Alignment
