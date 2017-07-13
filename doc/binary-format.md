@@ -51,11 +51,10 @@ This results in efficient navigation.
 
 Uoffsets add their content to their address and are positive while a
 tables offset to its vtable is signed and is substracted. A vtables
-element is added to the soffset location to originally pointed to the
-vtable, i.e. the start of the referring table.
+element is added to the start of the table referring to the vtable.
 
 
-Schema :
+Schema (eclectic.fbs) :
 
         namespace Eclectic;
 
@@ -78,7 +77,7 @@ Buffer :
         header:
 
             +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
-            +0x0000 'N', 'O', 'O', 'B' ; possibly our file identifier
+            +0x0004 'N', 'O', 'O', 'B' ; possibly our file identifier
 
             ...
 
@@ -279,12 +278,12 @@ one online](https://www.tools4noobs.com/online_tools/hash/) for our example buff
 Thus we can open a hex editor and locate
 
             +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
-            +0x0000 'N', 'O', 'O', 'B' ; possibly our file identifier
+            +0x0004 'N', 'O', 'O', 'B' ; possibly our file identifier
 
 and replace it with
 
             +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
-            +0x0000 58 4f 60 0a ; very likely our file identifier identifier
+            +0x0004 58 4f 60 0a ; very likely our file identifier identifier
 
 or generate with `flatcc`:
 
