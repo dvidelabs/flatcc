@@ -57,6 +57,8 @@ vtable, i.e. the start of the referring table.
 
 Schema :
 
+        namespace Eclectic;
+
         enum Fruit : byte { Banana = -1, Orange = 42 }
         table FooBar {
             meal      : Fruit;
@@ -65,6 +67,7 @@ Schema :
             height    : short;
         }
         file_identifier "NOOB";
+        root_type FooBar;
 
 JSON :
 
@@ -73,11 +76,14 @@ JSON :
 Buffer :
 
         header:
-            +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
-            +0x0000 'N', 'O', 'O', 'B' ; possibly a file identifier
-           ... or perhaps a vtable, probably not padding since non-zero.
 
-        root-table:
+            +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
+            +0x0000 'N', 'O', 'O', 'B' ; possibly our file identifier
+
+            ...
+
+        table:
+
             +0x0100 e0 ff ff ff ; 32-bit soffset to vtable location
                                 ; two's complement: 2^32 - 0xffffffe0 = -0x20
                                 ; effective address: +0x0100 - (-0x20) = +0x0204
@@ -87,10 +93,12 @@ Buffer :
             +0x0108 42d         ; 8-bit (FooBar.meal)
             +0x0109 0           ; 8-bit padding
             +0x010a -8000d      ; 16-bit (FooBar.height)
-            +0x010c 0, ...      ; (after table)
-                    0, ...      ; lots of valid but unnecessary padding
-                                ; to simplify math.
+            +0x010c  ...        ; (first byte after table end)
+
+            ...
+
         vtable:
+
             +0x0120 0c 00       ; vtable length = 12 bytes
             +0x0122 0c 00       ; table length = 12 bytes
             +0x0124 08 00       ; field id 0: +0x08 (meal)
@@ -98,16 +106,23 @@ Buffer :
             +0x0128 04 00       ; field id 2: +0004 (say)
             +0x012a 0a 00       ; field id 3: +0x0a (height)
 
+            ...
+
         string:
+        
             +0x0204 5 (vector element count)
             +0x0205 'h', 'e', 'l', 'l', 'o' (vector data)
             +0x020a '\0' (zero termination special case for string vectors)
+
+            ...
+
 
 Note that FlatCC often places vtables last resuting in `e0 ff ff ff`
 style vtable offsets, while Googles flatc builder typically places them
 before the table resulting in `20 00 00 00` style vtable offsets which
 might help understand why the soffset is subtracted from and not added
 to the table start. Both forms are equally valid.
+
 
 ## Internals
 
@@ -247,10 +262,31 @@ A type hash is an almost unique binary identifier for every table type.
 the identifier was not stored in the buffer or should not be stored in the
 buffer. When storing a binary identifier it is recommended to use the
 type hash convention which as the a 32-bit FNV-1a hash of the fully
-qualified type name of the root table (`FNV-1a("MyGame.Example.Monster")`).
-FlatCC generates these hashes automatically for every table and struct,
-but they are easy to compute and yields predictable results across
-implementations:
+qualified type name of the root table:
+
+FlatCC creates the following identifier for the "MyGame.Sample.Monster"
+table:
+
+    #define MyGame_Sample_Monster_type_hash ((flatbuffers_thash_t)0xd5be61b)
+    #define MyGame_Sample_Monster_type_identifier "\x1b\xe6\x5b\x0d"
+
+But we can also [compute
+one online](https://www.tools4noobs.com/online_tools/hash/) for our example buffer:
+
+        fnv1a32("Eclectic.FooBar") = edbe3f50
+
+Thus we can open a hex editor and locate
+
+            +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
+            +0x0000 'N', 'O', 'O', 'B' ; possibly our file identifier
+
+and replace it with
+
+            +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
+            +0x0000 50 f3 be ed ; very likely our file identifier identifier
+
+The following snippet implements fnv1a32, and returns the empty string
+hash if the hash accidentially should return 0:
 
 
     static inline flatbuffers_thash_t flatbuffers_type_hash_from_name(const char *name)
