@@ -1,5 +1,27 @@
 # FlatBuffers Binary Format
 
+
+<!-- vim-markdown-toc GFM -->
+* [Overview](#overview)
+* [Example](#example)
+* [Internals](#internals)
+* [Type Hashes](#type-hashes)
+* [Unions](#unions)
+* [Struct Buffers](#struct-buffers)
+* [Alignment](#alignment)
+* [Default Values and Deprecated Values](#default-values-and-deprecated-values)
+* [Schema Evolution](#schema-evolution)
+* [Keys and Sorting](#keys-and-sorting)
+* [Size Limits](#size-limits)
+* [Verification](#verification)
+* [Risks](#risks)
+* [Nested FlatBuffers](#nested-flatbuffers)
+* [Big Endian FlatBuffers](#big-endian-flatbuffers)
+* [StreamBuffers](#streambuffers)
+
+<!-- vim-markdown-toc -->
+
+
 ## Overview
 
 A FlatBuffers layout consists of the following types of memory blocks:
