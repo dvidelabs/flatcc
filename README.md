@@ -744,7 +744,7 @@ corrrectly because the parser will know the schema and use it correctly.
 The [test_json.c] file has a test function that can be adapted for
 custom tests.
 
-For advanced debugging the [hexdump.h] can be used to dump the buffer
+For advanced debugging the [hexdump.h] file can be used to dump the buffer
 contents. It is used in [test_json.c] and also in [monster_test.c].
 
 
