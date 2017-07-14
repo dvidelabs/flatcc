@@ -128,13 +128,11 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "static inline int N ## _end_as_typed_root(NS ## builder_t *B)\\\n"
         "{ return N ## _add(B, NS ## buffer_end(B, TN ## _end(B))); }\\\n"
         "static inline int N ## _nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\\\n"
-        "{ if (NS ## buffer_start(B, FID)) return -1;\\\n"
-        "  return N ## _add(B, NS ## buffer_end(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
-        "  align ? align : 8, FLATBUFFERS_COUNT_MAX(1)))); }\\\n"
+        "{ return N ## _add(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
+        "  align ? align : 8, FLATBUFFERS_COUNT_MAX(1))); }\\\n"
         "static inline int N ## _typed_nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\\\n"
-        "{ if (NS ## buffer_start(B, TFID)) return -1;\\\n"
-        "  return N ## _add(B, NS ## buffer_end(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
-        "  align ? align : 8, FLATBUFFERS_COUNT_MAX(1)))); }\n"
+        "{ return N ## _add(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
+        "  align ? align : 8, FLATBUFFERS_COUNT_MAX(1))); }\n"
         "\n",
         nsc);
 
@@ -157,13 +155,11 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "{ return N ## _add(B, flatcc_builder_create_buffer(B, TFID, 0,\\\n"
         "  TN ## _create(B __ ## TN ## _call_args), A, flatcc_builder_is_nested)); }\\\n"
         "static inline int N ## _nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\\\n"
-        "{ if (NS ## buffer_start(B, FID)) return -1;\\\n"
-        "  return N ## _add(B, NS ## buffer_end(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
-        "  align < A ? A : align, FLATBUFFERS_COUNT_MAX(1)))); }\\\n"
+        "{ return N ## _add(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
+        "  align < A ? A : align, FLATBUFFERS_COUNT_MAX(1))); }\\\n"
         "static inline int N ## _typed_nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\\\n"
-        "{ if (NS ## buffer_start(B, TFID)) return -1;\\\n"
-        "  return N ## _add(B, NS ## buffer_end(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
-        "  align < A ? A : align, FLATBUFFERS_COUNT_MAX(1)))); }\n"
+        "{ return N ## _add(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
+        "  align < A ? A : align, FLATBUFFERS_COUNT_MAX(1))); }\n"
         "\n",
         nsc);
 
