@@ -5,7 +5,7 @@
 - Add casts to aid clean C++ builds (#47)
 - Add missing const specifier in generated `buffer_start` methods - removes C++
   warnings (#48)
-- Update external/hash, remove buggy Sorted Robin Hash that wasn't
+- Update external/hash, removed buggy Sorted Robin Hood Hash that wasn't
   faster anyway - no impact on flatcc.
 - Fix JSON parsing bug where some names are prefixes of others (#50).
 - A Table of Contents in documentation :-)
@@ -14,8 +14,8 @@
   permitting unquoted keys.
 - Fix building nested buffers when the parent buffer has not yet emitted
   any data (#51).
-- Add `FLATCC_TRACE_VERIFY` as build option (it was there, hidden,
-  already).
+- Fix building nested buffers using the _nest() call (#52).
+- Add `FLATCC_TRACE_VERIFY` as build option.
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
