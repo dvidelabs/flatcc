@@ -3,8 +3,14 @@
 
 <!-- vim-markdown-toc GFM -->
 * [Overview](#overview)
+* [Memory Blocks](#memory-blocks)
 * [Example](#example)
 * [Internals](#internals)
+* [Primitives](#primitives)
+    * [Numerics](#numerics)
+    * [Scalars](#scalars)
+    * [Structs](#structs)
+* [Internals](#internals-1)
 * [Type Hashes](#type-hashes)
 * [Unions](#unions)
 * [Alignment](#alignment)
@@ -23,6 +29,8 @@
 
 
 ## Overview
+
+## Memory Blocks
 
 A FlatBuffers layout consists of the following types of memory blocks:
 
@@ -70,7 +78,6 @@ you already have. vtables require the table location to find a field,
 but a table field referencing a string field only needs the table field
 location, not the table start in order to find the referenced string.
 This results in efficient navigation.
-
 
 ## Example
 
@@ -148,12 +155,100 @@ before the table resulting in `20 00 00 00` style vtable offsets which
 might help understand why the soffset is subtracted from and not added
 to the table start. Both forms are equally valid.
 
-
 ## Internals
 
-Please observe that data types have a standard size such as
-`sizeof(uoffset_t) == 4` but the size might change for related formats.
-Therefore the type name is important in the discussion.
+
+## Primitives
+
+Primitives are data used to build more complex structures such as
+strings, vectors, vtables and tables. Although structs are not strictly
+a primitive, it helps to view them as self-contained primitives.
+
+
+### Numerics
+
+FlatBuffers are based on the following primitives that are 8, 16, 32 and
+64 bits in size respectively (IEEE-754, two's complement, little endian):
+
+    uint8, uint16, uint32, uint64 (unsigned)
+    int8, int16, int32, int64     (two's complement)
+    float32, float64              (IEE-754)
+
+Endian conversion is done via byte swapping of the primitive size. This
+also applies to floats although IEEE-754 does not specify this.
+
+Boolean:
+
+    flatbuffers_bool (uint8)
+    flatbuffers_true (flatbuffers_bool assign as 1, read as != 0)
+    flatbuffers_false (flatbuffers_bool = 0)
+
+Note that a C99 `bool` type has no defined size or sign so it is not an
+exact representation of a flatbuffers boolean encoding.
+
+When a stored value is interpreted as boolean it should not be assumed
+to be either 1 or 0 but rather as `not equal to 0`. When storing a
+boolean value or when converting a boolean value to integer before
+storing, the value should be 1 for true and 0 for false, In C this can
+be done using `!!x`.
+
+The following format specific types map to the above:
+
+    flatbuffers_union_type_t (uint8, NONE = 0, 0 <= type <= 255)
+    flatbuffers_identifier_t (uint8[4])
+    flatbuffers_uoffset_t (uin32)
+    flatbuffers_soffset_t (int32),
+    flatbuffers_voffset_t (uint16)
+
+These types can change in FlatBuffer derived formats, but when we say
+FlatBuffers without further annotations, we mean the above sizes in
+little endian encoding. We always refer to specific field type and not a
+specific field size because this allows us to derive new formats easily.
+
+
+### Scalars
+
+To simpify discussion we use the term scalars to mean integers, boolean,
+floating point and enumerations. Enumerations always have an underlying
+signed or unsigned integer type used for its representation.
+
+Scalars are primitives that has a size between 1 and 8 bytes. Scalars
+are stored aligned to the own size.
+
+The format generally supports vectors and structs of any scalar type but
+some language bindings might not have support for all combinations such
+as arrays of booleans.
+
+An special case is the encoding of a unions type code which internally
+is an enumeration but it is not normally permitted in places where we
+otherwise allow for scalars.
+
+Another special case is enumerations of type boolean which may not be
+widely supported, but possible. The binary format is not concerned with
+this distinction because a boolean is just an integer at this level.
+
+
+### Structs
+
+A struct is a fixed sized block of a fixed number of fields in a
+specific order defined by a schema. A field is either a scalar or
+another struct. A struct cannot contain fields that contain itself
+directly or indirectly. A struct is self-contained and has no
+references. A struct can be empty (note that this does not map cleanly
+to C structs).
+
+A schema cannot change the layout of a struct without breaking binary
+compatibility, unlike tables.
+
+Structs could in principle contain fixed size vectors of scalars or
+structs of same type, but this is not currently supported. Such a
+construct would be equivalent to simply repeating a field a fixed number
+of times and can be emulated by creating a struct that does exactly
+that. As such, this limitation is at the schema level and on not in the
+binary format.
+
+
+## Internals
 
 All content is little endian and offsets are 4 bytes (`uoffset_t`).
 A new buffer location is found by adding a uoffset to the location where
@@ -228,7 +323,7 @@ is given as the largest size of any non-struct member, or the alignment
 of a struct member (but not necessarily the size of a struct member), or
 the schema specified aligment.
 
-A structs members are stored in-place so there struct fields are known
+A structs members are stored in-place so the struct fields are known
 via the the schema, not via information in the binary format
 
 An enum is represent as its underlying integer type and can be a member
