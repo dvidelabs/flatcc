@@ -511,10 +511,17 @@ stored and to check if a field is missing when reading the buffer. This
 can be used to handle NULL values differently from default or missing
 values.
 
+A deprecated field is a schema construct. The binary format either stores
+a table field, or it does not.
+
 A deprecated field should be treated as not available, as in no way to
-read the value as opposed to returning a default value. If they for some
-reason are made accessible the verifier must also understand and verify
-these fields.
+read the value as opposed to returning a default value regardless of
+whether the field is present or not. If they for some reason are made
+accessible the verifier must also understand and verify these fields.
+
+A deprecated field also cannot be written to a new buffer, although if
+it against guidelines remains possible to do so, it should be done as if
+the field was not deprecated.
 
 Structs cannot have default values and cannot have deprecated fields in
 stadard FlatBuffers. FlatCC supports marking a struct field as
