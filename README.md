@@ -36,7 +36,6 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Fast Buffers](#fast-buffers)
 * [Types](#types)
 * [Endianness](#endianness)
-* [Offset Sizes and Direction](#offset-sizes-and-direction)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
 * [Searching and Sorting](#searching-and-sorting)
 * [Null Values](#null-values)
@@ -1328,31 +1327,6 @@ The flatbuffer environment only supports reading either big or little
 endian for the time being. To test which is supported, use the define
 `FLATBUFFERS_PROTOCOL_IS_LE` or `FLATBUFFERS_PROTOCOL_IS_BE`. They are
 defines as 1 and 0 respectively.
-
-
-## Offset Sizes and Direction
-
-FlatBuffers use 32-bit `uoffset_t` and 16-bit `voffset_t`. `soffset_t`
-always has the same size as `uoffset_t`. These types can be changed by
-preprocessor defines without regenerating code. However, it is important
-that `libflatccrt.a` is compiled with the same types as defined in
-`flatcc_types.h`.
-
-`uoffset_t` currently always point forward like `flatc`. In retrospect
-it would probably have simplified buffer constrution if offsets pointed
-the opposite direction. This is a major change and not likely to happen
-for reasons of effort and compatibility, but it is worth keeping in mind
-for a v2.0 of the format.
-
-Vector header fields storing the length are defined as `uoffset_t` which
-is 32-bit wide by default. If `uoffset_t` is redefined this will
-therefore also affect vectors and strings. The vector and string length
-and index arguments are exposed as `size_t` in user code regardless of
-underlying `uoffset_t` type.
-
-The practical buffer size is limited to about half of the `uoffset_t` range
-because vtable references are signed which in effect means that buffers
-are limited to about 2GB by default.
 
 
 ## Pitfalls in Error Handling
