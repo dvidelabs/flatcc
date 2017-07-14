@@ -488,7 +488,7 @@ approach to this, but as an example, lets say we want to use only 1 byte
 per vtable entry and identify these buffers with type hash using the
 prefix "ebt:" for example buffer type. We then have the type hash:
 
-    #define type_hash_prefix "eb:"
+    #define type_hash_prefix "ebt:"
     hash = fnv1a32(type_hash_prefix "Eclectic.FooBar");
     hash = hash ? hash : fnv1a32(type_hash_prefix)
 
