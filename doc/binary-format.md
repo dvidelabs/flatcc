@@ -476,7 +476,7 @@ If an alternative buffer format is used, the type hash should be
 modified. For example, if `uoffset_t` is defined as a 64-bit value, the
 fnv1a64 hash should be used instead. For big endian variants the hash
 remains unchanged but is byteswapped. The application will use the same
-id while the acces layer will handel the translation.
+id while the acces layer will handle the translation.
 
 For buffers using structs as roots, the hash remains unchanged because
 the struct is a unique type in schema. In this way a receiver that does
