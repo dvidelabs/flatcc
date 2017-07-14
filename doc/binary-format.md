@@ -150,11 +150,22 @@ Buffer :
             ...
 
 
-Note that FlatCC often places vtables last resuting in `e0 ff ff ff`
+Actual FlatCC generated buffer :
+
+Eclectic.FooBar:
+  0000  08 00 00 00 4e 4f 4f 42  e8 ff ff ff 08 00 00 00  ....NOOB........
+  0010  2a 00 c0 e0 05 00 00 00  68 65 6c 6c 6f 00 00 00  *.......hello...
+  0020  0c 00 0c 00 08 00 00 00  04 00 0a 00              ............
+
+
+Note that FlatCC often places vtables last resulting in `e0 ff ff ff`
 style vtable offsets, while Googles flatc builder typically places them
 before the table resulting in `20 00 00 00` style vtable offsets which
 might help understand why the soffset is subtracted from and not added
 to the table start. Both forms are equally valid.
+
+The actual buffer that the FlatCC builder might generated is:
+
 
 
 ## Primitives
