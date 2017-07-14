@@ -489,8 +489,9 @@ per vtable entry and identify these buffers with type hash using the
 prefix "ebt:" for example buffer type. We then have the type hash:
 
     #define type_hash_prefix "ebt:"
+
     hash = fnv1a32(type_hash_prefix "Eclectic.FooBar");
-    hash = hash ? hash : fnv1a32(type_hash_prefix)
+    hash = hash ? hash : fnv1a32(type_hash_prefix);
 
 If the hash returns 0 we hash the prefix.
 
