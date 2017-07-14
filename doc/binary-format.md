@@ -484,13 +484,15 @@ not handle struct roots can avoid trying to read the root as a table.
 
 For futher variations of the format, a format identifier can be inserted
 in front of the namespace when generating the hash. There is no formal
-approach to this, but as an example, lets say we keep `uoffset_t`
-unchanged have `voffset_t` reduced to only a single byte and name this
-ExampleBuffers. We then add a prefix to the name such as "eb:":
+approach to this, but as an example, lets say we want to use only 1 byte
+per vtable entry and identify these buffers with type hash using the
+prefix "ebt:" for example buffer type. We then have the type hash:
 
-    fnv1a32("eb:Eclection.FooBar")
+    #define type_hash_prefix "eb:"
+    hash = fnv1a32(type_hash_prefix "Eclection.FooBar");
+    hash = hash ? hash : fnv1a32(type_hash_prefix)
 
-If the hash returns 0 we hash the prefix fnv1a32("eb:").
+If the hash returns 0 we hash the prefix.
 
 
 ## Unions
