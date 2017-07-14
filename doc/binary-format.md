@@ -8,6 +8,7 @@
 * [Primitives](#primitives)
     * [Numerics](#numerics)
     * [Boolean](#boolean)
+    * [Format Internal Types](#format-internal-types)
     * [Scalars](#scalars)
     * [Structs](#structs)
 * [Internals](#internals)
@@ -188,7 +189,7 @@ boolean value or when converting a boolean value to integer before
 storing, the value should be 1 for true and 0 for false, In C this can
 be done using `!!x`.
 
-The following format specific types map to the above:
+### Format Internal Types
 
     flatbuffers_union_type_t (uint8, NONE = 0, 0 <= type <= 255)
     flatbuffers_identifier_t (uint8[4])
