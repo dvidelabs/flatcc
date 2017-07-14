@@ -405,8 +405,8 @@ provided `file_identifier`. The type hash makes it possible to
 distinguish between different root types from the same schema, and even
 across schema as long as the namespace is unique.
 
-Type hashes introduce no changes to the binary format but application
-interfaces must choose support user defined identifiers or explicitly
+Type hashes introduce no changes to the binary format but the application
+interface must choose to support user defined identifiers or explicitly
 support type hashes. Alternatively an application can peak directly into
 the buffer at offset 4 (when `uoffset_t` is 4 bytes long).
 
@@ -431,9 +431,9 @@ and replace it with
             +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
             +0x0004 58 4f 60 0a ; very likely our file identifier identifier
 
-or generate with `flatcc`:
+or generate it with `flatcc`:
 
-        $ bin/flatcc --stdout doc/eclectic.fbs | grep FooBar_type_
+        $ bin/flatcc --stdout doc/eclectic.fbs | grep FooBar_type
         #define Eclectic_FooBar_type_hash ((flatbuffers_thash_t)0xa604f58)
         #define Eclectic_FooBar_type_identifier "\x58\x4f\x60\x0a"
 
@@ -483,7 +483,7 @@ the struct is a unique type in schema. In this way a receiver that does
 not handle struct roots can avoid trying to read the root as a table.
 
 For futher variations of the format, a format identifier can be inserted
-in front of the namespace when generating the hash. There is nor formal
+in front of the namespace when generating the hash. There is no formal
 approach to this, but as an example, lets say we keep `uoffset_t`
 unchanged have `voffset_t` reduced to only a single byte and name this
 ExampleBuffers. We then add a prefix to the name such as "eb:":
@@ -927,13 +927,6 @@ step to make this possible, and if the writes are partial, each section
 written must also store the segment length to support reassembly.
 StreamBuffers avoid this problem.
 
-Some may like the idea that the root table is stored first but modern
-CPU cache systems do not care much about the order of access as long as
-as their is some aspect of locality of reference and the same applies to
-disk access while network access likely will have the end of the buffer
-in hot cache as this is the last sent. The average distance between
-objects will be the same for both FlatBuffers and StreamBuffers.
-
 StreamBuffers treat `uoffset_t` the same as `soffset_t` when the special
 limitation that `uoffset_t` is always negative when viewed as two's
 complement values.
@@ -957,5 +950,14 @@ The root table offset may be replaced with a root table offset at the
 end of the buffer instead of the start. An implementation may also
 zero the initial offset and update it later. In either case the buffer
 should be aligned accordingly.
+
+Some may prefer the traditional FlatBuffer approach because the root
+table is stored and it is somehow easier or faster to access, but modern
+CPU cache systems do not care much about the order of access as long as
+as their is some aspect of locality of reference and the same applies to
+disk access while network access likely will have the end of the buffer
+in hot cache as this is the last sent. The average distance between
+objects will be the same for both FlatBuffers and StreamBuffers.
+
 
 [eclectic.fbs]: https://github.com/dvidelabs/flatcc/blob/master/doc/eclectic.fbs
