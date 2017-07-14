@@ -5,12 +5,11 @@
 * [Overview](#overview)
 * [Memory Blocks](#memory-blocks)
 * [Example](#example)
-* [Internals](#internals)
 * [Primitives](#primitives)
     * [Numerics](#numerics)
     * [Scalars](#scalars)
     * [Structs](#structs)
-* [Internals](#internals-1)
+* [Internals](#internals)
 * [Type Hashes](#type-hashes)
 * [Unions](#unions)
 * [Alignment](#alignment)
@@ -154,8 +153,6 @@ style vtable offsets, while Googles flatc builder typically places them
 before the table resulting in `20 00 00 00` style vtable offsets which
 might help understand why the soffset is subtracted from and not added
 to the table start. Both forms are equally valid.
-
-## Internals
 
 
 ## Primitives
