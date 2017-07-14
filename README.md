@@ -125,12 +125,80 @@ their place.
 
 **NOTE: Big-endian platforms are only supported as of release 0.4.0.**
 
+
 ## Reporting Bugs
 
 If possible, please provide a short reproducible schema and
-source file using [issue4](https://github.com/dvidelabs/flatcc/issues/4)
-as an example. The first comment in this issue details how to quickly
-set up a new temporary project using the `scripts/setup.sh` script.
+source file with a main program the returns 1 on error and 0 on success
+and a small build script. Preferably call the buffer verifier to ensure
+the input is valid and link with the debug library `flatccrt_d`:
+
+eclectic.fbs :
+
+```c
+namespace Eclectic;
+
+enum Fruit : byte { Banana = -1, Orange = 42 }
+table FooBar {
+    meal      : Fruit = Banana;
+    density   : long (deprecated);
+    say       : string;
+    height    : short;
+}
+file_identifier "NOOB";
+root_type FooBar;
+```
+
+myissue.c :
+
+```c
+/* Minimal test with all headers generated into a single file. */
+#include <stdio.h>
+#include "myissue_generated.h"
+
+int main(int argc, char *argv[])
+{
+    int ret;
+    void *buf;
+    size_t size;
+    flatcc_builder_t builder, *B;
+
+    (void)argc;
+    (void)argv;
+
+    B = &builder;
+    flatcc_builder_init(B);
+
+    Eclectic_FooBar_start_as_root(B);
+    Eclectic_FooBar_name_create_str(B, "MyMonster");
+    Eclectic_FooBar_end_as_root(B);
+    buf = flatcc_builder_get_direct_buffer(B, &size);
+    ret = Eclectic_FooBar_verify_as_root(buf, size);
+    flatcc_builder_clear(B);
+    return ret;
+}
+```
+
+build.sh :
+
+```sh
+#!/bin/sh
+cd $(dirname $0)
+
+FLATBUFFERS_DIR=../flatcc
+NAME=myissue
+SCHEMA=eclectic.fbs
+
+FLATCC_EXE=$FLATBUFFERS_DIR/bin/flatcc
+FLATCC_INCLUDE=$FLATBUFFERS_DIR/include
+FLATCC_LIB=$FLATBUFFERS_DIR/lib
+
+$FLATCC_EXE --outfile $NAME_generated.h -a $SCHEMA || exit 1
+cc -I$FLATCC_INCLUDE -g -o $NAME $NAME.c -L$FLATCC_LIB -lflatccrt_d || exit 1
+echo "running $NAME"
+./$NAME || $(echo "failed" && exit 1)
+echo "success"
+```
 
 See also [Debugging a Buffer](#debugging-a-buffer).
 
