@@ -459,16 +459,16 @@ hash if the hash accidentially should return 0:
 ### Conflicts
 
 It is possible to have conficts between two type hashes although the
-risk is small. Conflicts are not important as long as the an application
-can distinguish between all the types in actual use. A switch statement
-in C will error at compile time for two cases have the same value, so
-the problem is easily detectable.
+risk is small. Conflicts are not important as long as an application can
+distinguish between all the types it may encouter in actual use. A
+switch statement in C will error at compile time for two cases that have
+the same value, so the problem is easily detectable and fixable by
+modifying a name or a namespace.
 
 For global conflict resolution, a type should be identified by its fully
-qualified name using adequate namespaces.
+qualified name using adequate namespaces. This obviously requires it to
+be stored separate from the buffer identifier due to size constraints.
 
-Conflict resolution can be handled by changing the namespace or the name of
-a type.
 
 ### Type Hash Variants
 
