@@ -7,6 +7,7 @@
 * [Example](#example)
 * [Primitives](#primitives)
     * [Numerics](#numerics)
+    * [Boolean](#boolean)
     * [Scalars](#scalars)
     * [Structs](#structs)
 * [Internals](#internals)
@@ -172,7 +173,7 @@ FlatBuffers are based on the following primitives that are 8, 16, 32 and
     float32, float64              (IEE-754)
 
 
-Boolean:
+### Boolean
 
     flatbuffers_bool (uint8)
     flatbuffers_true (flatbuffers_bool assign as 1, read as != 0)
