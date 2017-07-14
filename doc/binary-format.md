@@ -13,6 +13,8 @@
     * [Structs](#structs)
 * [Internals](#internals)
 * [Type Hashes](#type-hashes)
+    * [Conflicts](#conflicts)
+    * [Type Hash Variants](#type-hash-variants)
 * [Unions](#unions)
 * [Alignment](#alignment)
 * [Default Values and Deprecated Values](#default-values-and-deprecated-values)
@@ -388,13 +390,27 @@ possible to efficiently verify that buffers do not point out of bounds.
 
 ## Type Hashes
 
-A type hash is an almost unique binary identifier for every table type.
-the identifier was not stored in the buffer or should not be stored in the
-buffer. When storing a binary identifier it is recommended to use the
-type hash convention which as the a 32-bit FNV-1a hash of the fully
-qualified type name of the root table:
+A type hash is a 32-bit value defined as the fnv1a32 hash of a tables or
+a structs fully qualified name. If the fnv1a32 hash returns 0 it should
+instead hash the empty string. 0 is used to indicate that a buffer
+should not store an identifier.
 
-FlatCC creates the following identifier for the "MyGame.Sample.Monster"
+Every table and struct has a name and optionally also a namespace of one
+or more levels. The fully qualified name is optional namespace followed
+by the type name using '.' as a separator. For example
+"MyGame.Sample.Monster", or "Eclectic.FooBar".
+
+The type hash can be used as the buffer identifier instead of the schema
+provided `file_identifier`. The type hash makes it possible to
+distinguish between different root types from the same schema, and even
+across schema as long as the namespace is unique.
+
+Type hashes introduce no changes to the binary format but application
+interfaces must choose support user defined identifiers or explicitly
+support type hashes. Alternatively an application can peak directly into
+the buffer at offset 4 (when `uoffset_t` is 4 bytes long).
+
+FlatCC generates the following identifier for the "MyGame.Sample.Monster"
 table:
 
     #define MyGame_Sample_Monster_type_hash ((flatbuffers_thash_t)0xd5be61b)
@@ -439,6 +455,42 @@ hash if the hash accidentially should return 0:
         }
         return hash;
     }
+
+### Conflicts
+
+It is possible to have conficts between two type hashes although the
+risk is small. Conflicts are not important as long as the an application
+can distinguish between all the types in actual use. A switch statement
+in C will error at compile time for two cases have the same value, so
+the problem is easily detectable.
+
+For global conflict resolution, a type should be identified by its fully
+qualified name using adequate namespaces.
+
+Conflict resolution can be handled by changing the namespace or the name of
+a type.
+
+### Type Hash Variants
+
+If an alternative buffer format is used, the type hash should be
+modified. For example, if `uoffset_t` is defined as a 64-bit value, the
+fnv1a64 hash should be used instead. For big endian variants the hash
+remains unchanged but is byteswapped. The application will use the same
+id while the acces layer will handel the translation.
+
+For buffers using structs as roots, the hash remains unchanged because
+the struct is a unique type in schema. In this way a receiver that does
+not handle struct roots can avoid trying to read the root as a table.
+
+For futher variations of the format, a format identifier can be inserted
+in front of the namespace when generating the hash. There is nor formal
+approach to this, but as an example, lets say we keep `uoffset_t`
+unchanged have `voffset_t` reduced to only a single byte and name this
+ExampleBuffers. We then add a prefix to the name such as "eb:":
+
+    fnv1a32("eb:Eclection.FooBar")
+
+If the hash returns 0 we hash the prefix fnv1a32("eb:").
 
 
 ## Unions
