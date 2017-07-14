@@ -134,18 +134,20 @@ Buffer :
             +0x0120 0c 00       ; vtable length = 12 bytes
             +0x0122 0c 00       ; table length = 12 bytes
             +0x0124 08 00       ; field id 0: +0x08 (meal)
-            +0x0126 00 00       ; field id 1: <missing> (attitude)
+            +0x0126 00 00       ; field id 1: <missing> (density)
             +0x0128 04 00       ; field id 2: +0004 (say)
             +0x012a 0a 00       ; field id 3: +0x0a (height)
 
             ...
 
         string:
-        
-            +0x0204 05 00 00 00 ; vector element count
-            +0x0208 'h' 'e' 'l' 'l'     ; vector data
-            +0x0209 'o'                 ; vector data
-            +0x020a '\0' (zero termination special case for string vectors)
+
+            +0x0204 05 00 00 00 ; vector element count (5 ubyte elements)
+            +0x0208 'h' 'e'     ; vector data
+            +0x020a 'l' 'l'     ; vector data
+            +0x020c 'o'         ; vector data
+            +0x020d  00         ; zero termination
+                                ; special case for string vectors
 
             ...
 
