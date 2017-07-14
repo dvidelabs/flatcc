@@ -171,8 +171,6 @@ FlatBuffers are based on the following primitives that are 8, 16, 32 and
     int8, int16, int32, int64     (two's complement)
     float32, float64              (IEE-754)
 
-Endian conversion is done via byte swapping of the primitive size. This
-also applies to floats although IEEE-754 does not specify this.
 
 Boolean:
 
