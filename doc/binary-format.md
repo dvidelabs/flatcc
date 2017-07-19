@@ -27,6 +27,7 @@
 * [Big Endian FlatBuffers](#big-endian-flatbuffers)
 * [StructBuffers](#structbuffers)
 * [StreamBuffers](#streambuffers)
+* [Bidirecional Buffers](#bidirecional-buffers)
 
 <!-- vim-markdown-toc -->
 
@@ -961,6 +962,61 @@ as their is some aspect of locality of reference and the same applies to
 disk access while network access likely will have the end of the buffer
 in hot cache as this is the last sent. The average distance between
 objects will be the same for both FlatBuffers and StreamBuffers.
+
+
+## Bidirecional Buffers
+
+Bidirectional Buffers is a generalization of StreamBuffers and FlatBuffers
+and so far only exists as an idea.
+
+FlatBuffers and StreamBuffers only allow one direction because it
+guarantees easy cycle rejection. Cycles are unwanted because it is
+expensive to verify buffers with cycles and because recursive navigation
+might never terminate.
+
+As it happens, but we can also easily reject cycles in bidirectional
+buffers if we apply certain constraints that are fully backwards
+compatible with existing FlatBuffers that have a size below 2GB.
+
+The rule is that when an offset changes direction relative to a parent
+objects direction, the object creating the change of direction becomes a
+new start or end of buffer for anything reachable via that offset.
+
+The root table R is reached via forward reference from the buffer header.
+Its boundaries are itself and the buffer end. If the this table has an
+offset pointing back, for example to new table X, then table X must see
+the buffer start and R as two boundaries. X must not directly or
+indirectly reach outside this region. Likewise if buffer R points to new
+table Y in the forward direction, the Y is bounded by itself and the
+buffer end.
+
+A lower bound is the end of a table or a vector althoug we just say the
+table or vector is a boundary. An upper bound is until the start of the
+table or vector, or the end of the buffer.
+
+When a buffer is verified, the boundaries are initially the buffer start
+and buffer end. When the references from the root table are followed,
+there new boundaries are either buffer start to root table, or root
+table to end, depending on the offsets direction. And so forth
+recursively.
+
+We can relax the requirement that simple vectors and vtables cannot
+cross these boundaries, except for the hard buffer limits, but it does
+compicate things and is likely not necessary.
+
+Nested FlatBuffers already follow similar boundary rules.
+
+The point of Bidirectional buffers is not that it would be interesting
+to store things in both directions, but to provide a single coherent
+buffer model for both ways of storing buffers without making a special
+case. This will allow StreamBuffers to co-exist with FlatBuffers without
+any change, and it will allow procedures to build larger buffers to make
+their own changes on how to build their subsection of the buffer.
+
+We still need to make allowance for keeping the buffer headers root
+pointer implicit by context, at least as an option. Otherwise it is not,
+in general, possible to start streaming buffer content before the entire
+buffer is written.
 
 
 [eclectic.fbs]: https://github.com/dvidelabs/flatcc/blob/master/doc/eclectic.fbs
