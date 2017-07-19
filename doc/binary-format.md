@@ -27,7 +27,7 @@
 * [Big Endian FlatBuffers](#big-endian-flatbuffers)
 * [StructBuffers](#structbuffers)
 * [StreamBuffers](#streambuffers)
-* [Bidirecional Buffers](#bidirecional-buffers)
+* [Bidirectional Buffers](#bidirectional-buffers)
 
 <!-- vim-markdown-toc -->
 
@@ -964,7 +964,7 @@ in hot cache as this is the last sent. The average distance between
 objects will be the same for both FlatBuffers and StreamBuffers.
 
 
-## Bidirecional Buffers
+## Bidirectional Buffers
 
 Bidirectional Buffers is a generalization of StreamBuffers and FlatBuffers
 and so far only exists as an idea.
@@ -982,13 +982,13 @@ The rule is that when an offset changes direction relative to a parent
 objects direction, the object creating the change of direction becomes a
 new start or end of buffer for anything reachable via that offset.
 
-The root table R is reached via forward reference from the buffer header.
-Its boundaries are itself and the buffer end. If the this table has an
-offset pointing back, for example to new table X, then table X must see
-the buffer start and R as two boundaries. X must not directly or
-indirectly reach outside this region. Likewise if buffer R points to new
-table Y in the forward direction, the Y is bounded by itself and the
-buffer end.
+The root table R is reached via forward reference from the buffer
+header.  Its boundaries are itself and the buffer end. If the this table
+has an offset pointing back, for example to new table X, then table X
+must see the buffer start and R as two boundaries. X must not directly
+or indirectly reach outside this region. Likewise, if the table R points
+to new table Y in the forward direction, then Y is bounded by itself and
+the buffer end.
 
 A lower bound is the end of a table or a vector althoug we just say the
 table or vector is a boundary. An upper bound is until the start of the
