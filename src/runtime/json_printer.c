@@ -955,7 +955,7 @@ int flatcc_json_printer_init(flatcc_json_printer_t *ctx, void *fp)
     memset(ctx, 0, sizeof(*ctx));
     ctx->fp = fp ? fp : stdout;
     ctx->flush = __flatcc_json_printer_flush;
-    if (!(ctx->buf = malloc(FLATCC_JSON_PRINT_BUFFER_SIZE))) {
+    if (!(ctx->buf = FLATCC_JSON_PRINTER_ALLOC(FLATCC_JSON_PRINT_BUFFER_SIZE))) {
         return -1;
     }
     ctx->own_buffer = 1;
@@ -999,7 +999,7 @@ int flatcc_json_printer_init_buffer(flatcc_json_printer_t *ctx, char *buffer, si
 static void __flatcc_json_printer_flush_dynamic_buffer(flatcc_json_printer_t *ctx, int all)
 {
     size_t len = ctx->p - ctx->buf;
-    char *p = realloc(ctx->buf, ctx->size * 2);
+    char *p = FLATCC_JSON_PRINTER_REALLOC(ctx->buf, ctx->size * 2);
 
     (void)all;
     ctx->total += len;
@@ -1024,7 +1024,7 @@ int flatcc_json_printer_init_dynamic_buffer(flatcc_json_printer_t *ctx, size_t b
         buffer_size = FLATCC_JSON_PRINT_RESERVE;
     }
     memset(ctx, 0, sizeof(*ctx));
-    ctx->buf = malloc(buffer_size);
+    ctx->buf = FLATCC_JSON_PRINTER_ALLOC(buffer_size);
     ctx->own_buffer = 1;
     ctx->size = buffer_size;
     ctx->flush_size = ctx->size - FLATCC_JSON_PRINT_RESERVE;
@@ -1061,7 +1061,7 @@ void *flatcc_json_printer_finalize_dynamic_buffer(flatcc_json_printer_t *ctx, si
 void flatcc_json_printer_clear(flatcc_json_printer_t *ctx)
 {
     if (ctx->own_buffer && ctx->buf) {
-        free(ctx->buf);
+        FLATCC_JSON_PRINTER_FREE(ctx->buf);
     }
     memset(ctx, 0, sizeof(*ctx));
 }

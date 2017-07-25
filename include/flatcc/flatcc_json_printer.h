@@ -9,6 +9,18 @@
 #define FLATCC_JSON_PRINT_RESERVE 64
 #define FLATCC_JSON_PRINT_BUFFER_SIZE (FLATCC_JSON_PRINT_FLUSH_SIZE + FLATCC_JSON_PRINT_RESERVE)
 
+#ifndef FLATCC_JSON_PRINTER_ALLOC
+#define FLATCC_JSON_PRINTER_ALLOC(n) malloc(n)
+#endif
+
+#ifndef FLATCC_JSON_PRINTER_FREE
+#define FLATCC_JSON_PRINTER_FREE(p) free(p)
+#endif
+
+#ifndef FLATCC_JSON_PRINTER_REALLOC
+#define FLATCC_JSON_PRINTER_REALLOC(p, n) realloc(p, n)
+#endif
+
 /* Initial size that grows exponentially. */
 #define FLATCC_JSON_PRINT_DYN_BUFFER_SIZE 4096
 
