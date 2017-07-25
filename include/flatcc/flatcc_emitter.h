@@ -56,15 +56,24 @@
 
 #ifndef FLATCC_EMITTER_ALLOC
 #ifdef FLATCC_EMITTER_USE_ALIGNED_ALLOC
+#include "flatcc/portable/paligned_alloc.h"
 /*
  * <stdlib.h> does not always provide aligned_alloc, so include whatever
  * is required when enabling this feature.
  */
 #define FLATCC_EMITTER_ALLOC(n) aligned_alloc(FLATCC_EMITTER_PAGE_MULTIPLE,\
         (((n) + FLATCC_EMITTER_PAGE_MULTIPLE - 1) & ~(FLATCC_EMITTER_PAGE_MULTIPLE - 1)))
-#else
-#define FLATCC_EMITTER_ALLOC malloc
+#ifndef FLATCC_EMITTER_FREE
+#define FLATCC_EMITTER_FREE(p) aligned_free(p)
 #endif
+#endif
+#endif
+
+#ifndef FLATCC_EMITTER_ALLOC
+#define FLATCC_EMITTER_ALLOC(n) malloc(n)
+#endif
+#ifndef FLATCC_EMITTER_FREE
+#define FLATCC_EMITTER_FREE(p) free(p)
 #endif
 
 typedef struct flatcc_emitter_page flatcc_emitter_page_t;
