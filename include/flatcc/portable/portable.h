@@ -1,6 +1,10 @@
 #ifndef FLATCC_PORTABLE_H
 #define FLATCC_PORTABLE_H
 
+#define  flatcc_alloc(x)      malloc(x)
+#define  flatcc_realloc(x,y)  realloc(x,y)
+#define  flatcc_free(x)       free(x)
+
 #include "pversion.h"
 #include "pwarnings.h"
 
