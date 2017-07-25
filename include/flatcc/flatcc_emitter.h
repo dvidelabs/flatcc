@@ -14,6 +14,7 @@
 
 #include "flatcc/flatcc_types.h"
 #include "flatcc/flatcc_iov.h"
+#include "flatcc/flatcc_alloc.h"
 
 /*
  * The buffer steadily grows during emission but the design allows for
@@ -56,7 +57,6 @@
 
 #ifndef FLATCC_EMITTER_ALLOC
 #ifdef FLATCC_EMITTER_USE_ALIGNED_ALLOC
-#include "flatcc/portable/paligned_alloc.h"
 /*
  * <stdlib.h> does not always provide aligned_alloc, so include whatever
  * is required when enabling this feature.
@@ -70,10 +70,10 @@
 #endif
 
 #ifndef FLATCC_EMITTER_ALLOC
-#define FLATCC_EMITTER_ALLOC(n) malloc(n)
+#define FLATCC_EMITTER_ALLOC(n) FLATCC_ALLOC(n)
 #endif
 #ifndef FLATCC_EMITTER_FREE
-#define FLATCC_EMITTER_FREE(p) free(p)
+#define FLATCC_EMITTER_FREE(p) FLATCC_FREE(p)
 #endif
 
 typedef struct flatcc_emitter_page flatcc_emitter_page_t;
