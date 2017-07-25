@@ -16,6 +16,8 @@
   any data (#51).
 - Fix building nested buffers using the _nest() call (#52).
 - Add `FLATCC_TRACE_VERIFY` as build option.
+- Allow more costumization of allocation functions (#55).
+- Avoid dependency on PORTABLE_H include guard which is too common (#55).
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
