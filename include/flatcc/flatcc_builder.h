@@ -167,6 +167,26 @@ enum flatcc_builder_alloc_type {
 /** Must reflect the `flatcc_builder_alloc_type` enum. */
 #define FLATCC_BUILDER_ALLOC_BUFFER_COUNT flatcc_builder_alloc_buffer_count
 
+#ifndef FLATCC_BUILDER_ALLOC
+#define FLATCC_BUILDER_ALLOC(n) malloc(n)
+#endif
+
+#ifndef FLATCC_BUILDER_FREE
+#define FLATCC_BUILDER_FREE(p) free(p)
+#endif
+
+#ifndef FLATCC_BUILDER_REALLOC
+#define FLATCC_BUILDER_REALLOC(p, n) realloc(p, n)
+#endif
+
+#ifndef FLATCC_BUILDER_ALIGNED_ALLOC
+#define FLATCC_BUILDER_ALIGNED_ALLOC(a, n) aligned_alloc(a, n)
+#endif
+
+#ifndef FLATCC_BUILDER_ALIGNED_FREE
+#define FLATCC_BUILDER_ALIGNED_FREE(p) aligned_free(p)
+#endif
+
 /**
  * Emits data to a conceptual deque by appending to either front or
  * back, starting from offset 0.
