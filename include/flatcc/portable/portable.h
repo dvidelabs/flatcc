@@ -1,5 +1,5 @@
-#ifndef PORTABLE_H
-#define PORTABLE_H
+#ifndef FLATCC_PORTABLE_H
+#define FLATCC_PORTABLE_H
 
 #include "pversion.h"
 #include "pwarnings.h"
@@ -14,4 +14,4 @@
 #include "pendian.h"
 #include "punaligned.h"
 
-#endif /* PORTABLE_H */
+#endif /* FLATCC_PORTABLE_H */
