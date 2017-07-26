@@ -2,7 +2,7 @@
 #define FLATCC_ALLOC_H
 
 /*
- * These allocation abstractions are only for runtime librarys.
+ * These allocation abstractions are only for runtime libraries.
  * The flatcc compiler uses Posix allocation routines.
  *
  * This header makes it possible to use systems where malloc is not
