@@ -63,7 +63,7 @@
 #define FLATCC_EMITTER_ALLOC(n) aligned_alloc(FLATCC_EMITTER_PAGE_MULTIPLE,\
         (((n) + FLATCC_EMITTER_PAGE_MULTIPLE - 1) & ~(FLATCC_EMITTER_PAGE_MULTIPLE - 1)))
 #else
-#define FLATCC_EMITTER_ALLOC flatcc_alloc
+#define FLATCC_EMITTER_ALLOC malloc
 #endif
 #endif
 

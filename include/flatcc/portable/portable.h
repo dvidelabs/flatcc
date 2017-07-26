@@ -1,9 +1,5 @@
-#ifndef FLATCC_PORTABLE_H
-#define FLATCC_PORTABLE_H
-
-#define  flatcc_alloc(x)      malloc(x)
-#define  flatcc_realloc(x,y)  realloc(x,y)
-#define  flatcc_free(x)       free(x)
+#ifndef PORTABLE_H
+#define PORTABLE_H
 
 #include "pversion.h"
 #include "pwarnings.h"
@@ -18,4 +14,4 @@
 #include "pendian.h"
 #include "punaligned.h"
 
-#endif /* FLATCC_PORTABLE_H */
+#endif /* PORTABLE_H */

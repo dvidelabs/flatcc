@@ -1,8 +1,7 @@
 #include <stdlib.h>
 
 #include "flatcc/flatcc_rtconfig.h"
-#include "flatcc/flatcc_emitter.h" 
-#include "flatcc/portable/portable.h"
+#include "flatcc/flatcc_emitter.h"
 
 static int advance_front(flatcc_emitter_t *E)
 {
@@ -174,7 +173,7 @@ void flatcc_emitter_reset(flatcc_emitter_t *E)
         p = E->back->next;
         E->back->next = p->next;
         p->next->prev = E->back;
-        flatcc_free(p);
+        free(p);
         E->capacity -= FLATCC_EMITTER_PAGE_SIZE;
     }
 }
@@ -189,9 +188,9 @@ void flatcc_emitter_clear(flatcc_emitter_t *E)
     p->prev->next = 0;
     while (p->next) {
         p = p->next;
-        flatcc_free(p->prev);
+        free(p->prev);
     }
-    flatcc_free(p);
+    free(p);
     memset(E, 0, sizeof(*E));
 }
 

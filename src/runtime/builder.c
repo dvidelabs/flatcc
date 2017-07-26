@@ -19,8 +19,7 @@
 #include <assert.h>
 
 #include "flatcc/flatcc_builder.h"
-#include "flatcc/flatcc_emitter.h" 
-#include "flatcc/portable/portable.h"
+#include "flatcc/flatcc_emitter.h"
 
 /*
  * `check` is designed to handle incorrect use errors that can be
@@ -114,7 +113,7 @@ int flatcc_builder_default_alloc(void *alloc_context, iovec_t *b, size_t request
 
     if (request == 0) {
         if (b->iov_base) {
-            flatcc_free(b->iov_base);
+            free(b->iov_base);
             b->iov_base = 0;
             b->iov_len = 0;
         }
@@ -150,7 +149,7 @@ int flatcc_builder_default_alloc(void *alloc_context, iovec_t *b, size_t request
         /* Add hysteresis to shrink. */
         return 0;
     }
-    if (!(p = flatcc_realloc(b->iov_base, n))) {
+    if (!(p = realloc(b->iov_base, n))) {
         return -1;
     }
     /* Realloc might also shrink. */
@@ -1684,7 +1683,7 @@ void *flatcc_builder_finalize_buffer(flatcc_builder_t *B, size_t *size_out)
         *size_out = size;
     }
 
-    buffer = flatcc_alloc(size);
+    buffer = malloc(size);
 
     if (!buffer) {
         check(0, "failed to allocated memory for finalized buffer");
@@ -1692,7 +1691,7 @@ void *flatcc_builder_finalize_buffer(flatcc_builder_t *B, size_t *size_out)
     }
     if (!flatcc_builder_copy_buffer(B, buffer, size)) {
         check(0, "default emitter declined to copy buffer");
-        flatcc_free(buffer);
+        free(buffer);
         buffer = 0;
     }
 done:
@@ -1703,7 +1702,7 @@ done:
 }
 
 #ifndef aligned_free
-#define aligned_free flatcc_free
+#define aligned_free free
 #endif
 
 void *flatcc_builder_finalize_aligned_buffer(flatcc_builder_t *B, size_t *size_out)
