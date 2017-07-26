@@ -173,7 +173,7 @@ void flatcc_emitter_reset(flatcc_emitter_t *E)
         p = E->back->next;
         E->back->next = p->next;
         p->next->prev = E->back;
-        free(p);
+        FLATCC_EMITTER_FREE(p);
         E->capacity -= FLATCC_EMITTER_PAGE_SIZE;
     }
 }
@@ -188,9 +188,9 @@ void flatcc_emitter_clear(flatcc_emitter_t *E)
     p->prev->next = 0;
     while (p->next) {
         p = p->next;
-        free(p->prev);
+        FLATCC_EMITTER_FREE(p->prev);
     }
-    free(p);
+    FLATCC_EMITTER_FREE(p);
     memset(E, 0, sizeof(*E));
 }
 

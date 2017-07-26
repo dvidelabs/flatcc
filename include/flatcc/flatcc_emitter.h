@@ -14,6 +14,7 @@
 
 #include "flatcc/flatcc_types.h"
 #include "flatcc/flatcc_iov.h"
+#include "flatcc/flatcc_alloc.h"
 
 /*
  * The buffer steadily grows during emission but the design allows for
@@ -62,9 +63,17 @@
  */
 #define FLATCC_EMITTER_ALLOC(n) aligned_alloc(FLATCC_EMITTER_PAGE_MULTIPLE,\
         (((n) + FLATCC_EMITTER_PAGE_MULTIPLE - 1) & ~(FLATCC_EMITTER_PAGE_MULTIPLE - 1)))
-#else
-#define FLATCC_EMITTER_ALLOC malloc
+#ifndef FLATCC_EMITTER_FREE
+#define FLATCC_EMITTER_FREE(p) aligned_free(p)
 #endif
+#endif
+#endif
+
+#ifndef FLATCC_EMITTER_ALLOC
+#define FLATCC_EMITTER_ALLOC(n) FLATCC_ALLOC(n)
+#endif
+#ifndef FLATCC_EMITTER_FREE
+#define FLATCC_EMITTER_FREE(p) FLATCC_FREE(p)
 #endif
 
 typedef struct flatcc_emitter_page flatcc_emitter_page_t;

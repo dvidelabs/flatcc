@@ -21,6 +21,10 @@
 #include "flatcc/flatcc_builder.h"
 #include "flatcc/flatcc_emitter.h"
 
+#ifndef aligned_free
+#define aligned_free free
+#endif
+
 /*
  * `check` is designed to handle incorrect use errors that can be
  * ignored in production of a tested product.
@@ -113,7 +117,7 @@ int flatcc_builder_default_alloc(void *alloc_context, iovec_t *b, size_t request
 
     if (request == 0) {
         if (b->iov_base) {
-            free(b->iov_base);
+            FLATCC_BUILDER_FREE(b->iov_base);
             b->iov_base = 0;
             b->iov_len = 0;
         }
@@ -149,7 +153,7 @@ int flatcc_builder_default_alloc(void *alloc_context, iovec_t *b, size_t request
         /* Add hysteresis to shrink. */
         return 0;
     }
-    if (!(p = realloc(b->iov_base, n))) {
+    if (!(p = FLATCC_BUILDER_REALLOC(b->iov_base, n))) {
         return -1;
     }
     /* Realloc might also shrink. */
@@ -1683,7 +1687,7 @@ void *flatcc_builder_finalize_buffer(flatcc_builder_t *B, size_t *size_out)
         *size_out = size;
     }
 
-    buffer = malloc(size);
+    buffer = FLATCC_BUILDER_ALLOC(size);
 
     if (!buffer) {
         check(0, "failed to allocated memory for finalized buffer");
@@ -1691,7 +1695,7 @@ void *flatcc_builder_finalize_buffer(flatcc_builder_t *B, size_t *size_out)
     }
     if (!flatcc_builder_copy_buffer(B, buffer, size)) {
         check(0, "default emitter declined to copy buffer");
-        free(buffer);
+        FLATCC_BUILDER_FREE(buffer);
         buffer = 0;
     }
 done:
@@ -1700,10 +1704,6 @@ done:
     }
     return buffer;
 }
-
-#ifndef aligned_free
-#define aligned_free free
-#endif
 
 void *flatcc_builder_finalize_aligned_buffer(flatcc_builder_t *B, size_t *size_out)
 {
@@ -1719,13 +1719,13 @@ void *flatcc_builder_finalize_aligned_buffer(flatcc_builder_t *B, size_t *size_o
     align = flatcc_builder_get_buffer_alignment(B);
 
     size = (size + align - 1) & ~(align - 1);
-    buffer = aligned_alloc(align, size);
+    buffer = FLATCC_BUILDER_ALIGNED_ALLOC(align, size);
 
     if (!buffer) {
         goto done;
     }
     if (!flatcc_builder_copy_buffer(B, buffer, size)) {
-        aligned_free(buffer);
+        FLATCC_BUILDER_ALIGNED_FREE(buffer);
         buffer = 0;
         goto done;
     }
