@@ -15,15 +15,15 @@
 #endif
 
 #ifndef FLATCC_ALLOC
-#define FLATCC_ALLOC(n) malloc(n)
+#define FLATCC_ALLOC(n) pMalloc(n)
 #endif
 
 #ifndef FLATCC_FREE
-#define FLATCC_FREE(p) free(p)
+#define FLATCC_FREE(p) pFree(p)
 #endif
 
 #ifndef FLATCC_REALLOC
-#define FLATCC_REALLOC(p, n) realloc(p, n)
+#define FLATCC_REALLOC(p, n) pRealloc(p, n)
 #endif
 
 #ifndef FLATCC_ALIGNED_ALLOC
