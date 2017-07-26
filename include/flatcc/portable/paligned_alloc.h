@@ -1,4 +1,5 @@
 #ifndef PALIGNED_ALLOC_H
+#define PALIGNED_ALLOC_H
 
 #ifdef __cplusplus
 extern "C" {
