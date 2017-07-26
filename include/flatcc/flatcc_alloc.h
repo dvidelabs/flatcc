@@ -1,6 +1,15 @@
 #ifndef FLATCC_ALLOC_H
 #define FLATCC_ALLOC_H
 
+/*
+ * These allocation abstractions are only for runtime librarys.
+ * The flatcc compiler uses Posix allocation routines.
+ *
+ * This header makes it possible to use systems where malloc is not
+ * valid to use. In this case the portable library will not help
+ * because it implements Posix / C11 abstractions.
+ */
+
 #include <stdlib.h>
 
 #ifndef FLATCC_ALLOC
