@@ -44,6 +44,7 @@ or printing in less than 2 us for a 10 field mixed type message.
     * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
     * [Windows Build (MSVC)](#windows-build-msvc)
     * [Cross-compilation](#cross-compilation)
+    * [Custom Allocation](#custom-allocation)
     * [Shared Libraries](#shared-libraries)
 * [Distribution](#distribution)
     * [Unix Files](#unix-files)
@@ -1565,6 +1566,20 @@ project.
 Note that no tests will be built nor run with `FLATCC_RTONLY` enabled.
 It is highly recommended to at least run the `tests/monster_test`
 project on a new platform.
+
+
+### Custom Allocation
+
+Some target systems will not work with Posix `malloc`, `realloc`, `free`
+and C11 `aligned_alloc`. Or they might, but more allocation control is
+desired. The best approach is to use `flatcc_builder_custom_init` to
+provide a custom allocator and emitter object, but for simpler case or
+while piloting a new platform
+[flatcc_alloc.h](include/flatcc/flatcc_alloc.h) can be used to override
+runtime allocation functions. _Carefully_ read the comments in this file
+if doing so. There is a test case implementing a new emitter, and a
+custom allocator can be copied from the one embedded in the builder
+library source.
 
 
 ### Shared Libraries
