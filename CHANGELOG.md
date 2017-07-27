@@ -18,6 +18,7 @@
 - Add `FLATCC_TRACE_VERIFY` as build option.
 - Allow more costumization of allocation functions (#55).
 - Avoid dependency on PORTABLE_H include guard which is too common (#55).
+- (possibly breaking) Fix duplicate field check in flatcc_builder_table_add call.
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
