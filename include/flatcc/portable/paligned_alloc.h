@@ -1,5 +1,4 @@
 #ifndef PALIGNED_ALLOC_H
-#define PALIGNED_ALLOC_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,7 +19,6 @@ extern "C" {
  */
 
 #include <stdlib.h>
-#include "palloc.h"
 
 
 /*
@@ -95,7 +93,7 @@ static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
     }
     err = posix_memalign(&p, alignment, size);
     if (err && p) {
-        pFree(p);
+        free(p);
         p = 0;
     }
     return p;
@@ -106,7 +104,7 @@ static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
 #endif
 
 #define aligned_alloc(alignment, size) __portable_aligned_alloc(alignment, size)
-#define aligned_free(p) pFree(p)
+#define aligned_free(p) free(p)
 #define __aligned_alloc_is_defined 1
 #define __aligned_free_is_defined 1
 
@@ -121,7 +119,7 @@ static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
     if (alignment < sizeof(void *)) {
         alignment = sizeof(void *);
     }
-    raw = (char *)(size_t)pMalloc(total_size);
+    raw = (char *)(size_t)malloc(total_size);
     buf = raw + alignment - 1 + sizeof(void *);
     buf = (void *)(((size_t)buf) & ~(alignment - 1));
     ((void **)buf)[-1] = raw;
@@ -132,7 +130,7 @@ static inline void __portable_aligned_free(void *p)
 {
     char *raw = ((void **)p)[-1];
 
-    pFree(raw);
+    free(raw);
 }
 
 #define aligned_alloc(alignment, size) __portable_aligned_alloc(alignment, size)
@@ -149,7 +147,7 @@ static inline void __portable_aligned_free(void *p)
 #endif /* aligned_alloc */
 
 #if !defined(aligned_free) && !defined(__aligned_free_is_defined)
-#define aligned_free(p) pFree(p)
+#define aligned_free(p) free(p)
 #define __aligned_free_is_defined 1
 #endif
 
