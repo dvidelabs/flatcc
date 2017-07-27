@@ -36,7 +36,7 @@
 #if FLATCC_BUILDER_ASSERT_ON_ERROR
 #define check(cond, reason) FLATCC_BUILDER_ASSERT(cond, reason)
 #else
-#define check(cond) ((void)0)
+#define check(cond, reason) ((void)0)
 #endif
 
 #if FLATCC_BUILDER_SKIP_CHECKS
@@ -1526,16 +1526,18 @@ void *flatcc_builder_table_add(flatcc_builder_t *B, int id, size_t size, uint16_
     if (align > B->align) {
         B->align = align;
     }
-    if (B->vs[id] == 0) {
-        FLATCC_BUILDER_UPDATE_VT_HASH(B->vt_hash, (uint32_t)id, (uint32_t)size);
-        return push_ds_field(B, (uoffset_t)size, align, id);
-    } else {
 #if FLATCC_BUILDER_ALLOW_REPEAT_TABLE_ADD
-        check_error(B->vs[id] == 0, 0, "field already set");
-#else
+    if (B->vs[id] != 0) {
         return B->ds + B->vs[id] - field_size;
-#endif
     }
+#else
+    if (B->vs[id] != 0) {
+        check(0, "table field already set");
+        return 0;
+    }
+#endif
+    FLATCC_BUILDER_UPDATE_VT_HASH(B->vt_hash, (uint32_t)id, (uint32_t)size);
+    return push_ds_field(B, (uoffset_t)size, align, id);
 }
 
 void *flatcc_builder_table_edit(flatcc_builder_t *B, size_t size)
