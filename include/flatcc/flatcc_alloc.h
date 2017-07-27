@@ -55,13 +55,13 @@ static inline void *__flatcc_aligned_alloc(size_t alignment, size_t size)
     if (alignment < sizeof(void *)) {
         alignment = sizeof(void *);
     }
-    raw = (char *)(size_t)FLACC_ALLOC(total_size);
+    raw = (char *)(size_t)FLATCC_ALLOC(total_size);
     buf = raw + alignment - 1 + sizeof(void *);
     buf = (void *)(((size_t)buf) & ~(alignment - 1));
     ((void **)buf)[-1] = raw;
     return buf;
 }
-#define FLATCC_ALIGNED_ALLOC(alignment, size) __flatcc_aligned_alloc(alignemnt, size)
+#define FLATCC_ALIGNED_ALLOC(alignment, size) __flatcc_aligned_alloc(alignment, size)
 #endif /* FLATCC_USE_GENERIC_ALIGNED_ALLOC */
 
 #ifndef FLATCC_ALIGNED_FREE
