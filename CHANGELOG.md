@@ -19,6 +19,9 @@
 - Allow more costumization of allocation functions (#55).
 - Avoid dependency on PORTABLE_H include guard which is too common (#55).
 - (possibly breaking) Fix duplicate field check in flatcc_builder_table_add call.
+- Fix incorrect infinity result in grisu3 parser and double to float
+  overflow handling in parse_float in portable library (affects JSON
+  of abnormal numeric values).
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
