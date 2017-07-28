@@ -22,6 +22,7 @@
 - Fix incorrect infinity result in grisu3 parser and double to float
   overflow handling in parse_float in portable library (affects JSON
   of abnormal numeric values).
+- Fix return value handling of parse_float, parse_double in JSON parser.
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
