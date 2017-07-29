@@ -36,20 +36,6 @@
 
 #include "grisu3_math.h"
 
-static inline double grisu3_inf()
-{
-    union { uint64_t u64; double f64; } v;
-    v.u64 = GRISU3_D64_INF;
-    return v.f64;
-}
-
-static inline int grisu3_isinf(double x)
-{
-    union { uint64_t u64; double f64; } v;
-    v.f64 = x;
-    return (v.u64 & 0x7fffffff00000000ULL) == 0x7ff0000000000000ULL;
-}
-
 
 /*
  * The maximum number characters a valid number may contain.  The parse
@@ -280,7 +266,7 @@ static const char *grisu3_encode_double(const char *buf, const char *end, int si
         goto done;
     }
     if (exponent - 1 > max_d_exp) {
-        *result = grisu3_inf();
+        *result = grisu3_double_infinity;
         goto done;
     }
 
