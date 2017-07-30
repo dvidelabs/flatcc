@@ -2,7 +2,7 @@ project('flatcc', 'c',
     version : '0.3.5-pre',
     license : 'Apache-2.0',
     default_options : ['c_std=c11'],
-    meson_version : '>=0.34.0')
+    meson_version : '>=0.41.0')
 
 buildtype = get_option('buildtype')
 

@@ -12,7 +12,7 @@ test('test_json_parser',
     executable('test_json_parser', 'test_json_parser.c',
         fb_monster_json, flatcc_common, link_with : libflatccrt,
         include_directories : testinc_dir),
-    args: [monster_data_test_json_ref])
+    args: [ monster_data_test_json_ref ])
 
 # Print a json file from a Google flatc generated buffer
 # and compare the output to a Google flatc printed json file.
@@ -21,9 +21,9 @@ test('test_json_printer',
         fb_monster_json, flatcc_common, link_with : libflatccrt,
         include_directories : testinc_dir),
     args: [
-        monster_data_test_bin_src ,
+        monster_data_test_bin_src,
         monster_data_test_json_ref,
-        out_dir + '/monsterdata_test.json.txt'])
+        join_paths(out_dir, 'monsterdata_test.json.txt')])
 
 test('test_json',
     executable('test_json', 'test_json.c',

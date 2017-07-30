@@ -8,9 +8,9 @@ name = 'monster_test_solo'
 prefix_gen = custom_target(name,
     output : 'monster_test.h',
     input : [
-        monster_test_dir + '/include_test2.fbs',
-        monster_test_dir + '/include_test1.fbs',
-        monster_test_dir + '/monster_test.fbs',
+        join_paths(monster_test_dir, 'include_test2.fbs'),
+        join_paths(monster_test_dir, 'include_test1.fbs'),
+        join_paths(monster_test_dir, 'monster_test.fbs'),
     ],
     capture : true,
     command : [flatcc, '-cwv', '--stdout', '@INPUT@'])

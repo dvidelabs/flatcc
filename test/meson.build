@@ -1,22 +1,22 @@
 test_dir = meson.current_source_dir()
-bench_dir = test_dir + '/benchmark/'
+bench_dir = join_paths(test_dir, 'benchmark')
 
-testinc_dir = [ inc_dir, include_directories(bench_dir + '/benchmain')]
+testinc_dir = [ inc_dir, include_directories('benchmark/benchmain')]
 
+monster_test_dir = join_paths(test_dir, 'monster_test')
 
 # This schema is widely reused in various tests and has
 # include statements unlike the samples/monster/monster.fbs schema.
-monster_test_dir = test_dir + '/monster_test'
-monster_test_fbs = monster_test_dir + '/monster_test.fbs'
+monster_test_fbs = join_paths(monster_test_dir, 'monster_test.fbs')
 
 # For compatibility tests:
 # Google flatc generated binary FlatBuffer from C++ code generator.
-monster_data_test_bin_src = test_dir + '/flatc_compat/monsterdata_test.mon'
+monster_data_test_bin_src = join_paths(test_dir, 'flatc_compat/monsterdata_test.mon')
 
 # Google flatc printed json from the binary FlatBuffer.
-monster_data_test_json_ref = test_dir + '/flatc_compat/monsterdata_test.golden'
+monster_data_test_json_ref = join_paths(test_dir, 'flatc_compat/monsterdata_test.golden')
 
-flatbench_fbs = bench_dir + '/schema/flatbench.fbs'
+flatbench_fbs = join_paths(bench_dir, 'schema/flatbench.fbs')
 
 # Simply testing for debugging build rules and for smoke testing new platforms.
 if get_option('xflatcc_monster_test_only')
