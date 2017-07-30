@@ -15,6 +15,7 @@ or printing in less than 2 us for a 10 field mixed type message.
 
 <!-- vim-markdown-toc GFM -->
 * [Project Details](#project-details)
+* [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
 * [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
@@ -124,6 +125,12 @@ manually working with JSON such as editing game scenes. Both tools have
 their place. 
 
 **NOTE: Big-endian platforms are only supported as of release 0.4.0.**
+
+
+## Poll on Meson Build
+
+It is being considered adding support for the Meson build system, but it
+would be good with some feedback on this via #56.
 
 
 ## Reporting Bugs
