@@ -6,6 +6,27 @@ struct InGlobalNamespace {}
 
 namespace MyGame.Example;
 
+// test case for negative enum values
+enum neg_enum:int {
+  neg1 = -12,
+  neg2 = -11,
+  neg3 = -10,
+}
+
+enum int_enum:int {
+    intneg = -02,
+    intneg2 = -1,
+    int1 = 02,
+    int2 = 42,
+}
+
+// test for hex constants
+enum hex_enum:int {
+    hexneg = -0x02,
+    hex1 = 0x3,
+    hex2 = 0x7eafbeaf,
+}
+
 attribute "priority";
 
 enum Color:byte (bit_flags) { Red = 0, Green, Blue = 3, }
@@ -50,6 +71,36 @@ table Stat {
   count:ushort;
 }
 
+table TestJSONPrefixParsing
+{
+  aaaa: string;
+  aaaa12345: uint;
+  
+  bbbb: string;
+  bbbb1234: long;
+  
+  cccc: string;
+  cccc1234: long;
+  cccc12345: uint;
+  
+  dddd1234: long;
+  dddd12345: uint;
+}
+
+// when there are two keys ending in same 8 character group
+table TestJSONPrefixParsing2
+{
+    aaaa_bbbb_steps: long;
+    aaaa_bbbb_start_: uint;
+}
+
+// when there are two keys ending in different 8 character group
+table TestJSONPrefixParsing3
+{
+    aaaa_bbbb_steps: long;
+    aaaa_bbbb_start_steps: uint;
+}
+
 table Monster {
   pos:Vec3 (id: 0);
   hp:short = 100 (id: 2);
@@ -77,6 +128,9 @@ table Monster {
   testhashu32_fnv1a:uint (id:21, hash:"fnv1a_32");
   testhashs64_fnv1a:long (id:22, hash:"fnv1a_64");
   testhashu64_fnv1a:ulong (id:23, hash:"fnv1a_64");
+  testjsonprefixparsing:TestJSONPrefixParsing (id:25);
+  testjsonprefixparsing2:TestJSONPrefixParsing2 (id:26);
+  testjsonprefixparsing3:TestJSONPrefixParsing3 (id:27);
 }
 
 root_type MyGame.Example.Monster;

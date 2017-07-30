@@ -25,8 +25,6 @@ DEFINE_HASH_TABLE(ptr_set)
 
 #if defined(PTR_SET_RH)
 #include "hash_table_impl_rh.h"
-#elif defined(PTR_SET_SRH)
-#include "hash_table_impl_srh.h"
 #else
 #include "hash_table_impl.h"
 #endif

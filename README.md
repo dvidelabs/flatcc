@@ -10,9 +10,56 @@ link the project and execute a test case in less than 2 seconds (4 incl.
 flatcc clone), rebuild in less than 0.2 seconds and produce binaries
 between 15K and 60K, read small buffers in 30ns, build FlatBuffers in
 about 600ns, and with a larger executable handle optional json parsing
-or parsing in less than 2 us for a 10 field mixed type message.
+or printing in less than 2 us for a 10 field mixed type message.
 
-See also experimental meson branch, and [sample client project](https://github.com/dvidelabs/flatcc-meson-sample)
+
+<!-- vim-markdown-toc GFM -->
+* [Project Details](#project-details)
+* [Poll on Meson Build](#poll-on-meson-build)
+* [Reporting Bugs](#reporting-bugs)
+* [Status](#status)
+* [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
+* [Generated Files](#generated-files)
+* [Using flatcc](#using-flatcc)
+* [Quickstart](#quickstart)
+    * [Reading a Buffer](#reading-a-buffer)
+    * [Compiling for Read-Only](#compiling-for-read-only)
+    * [Building a Buffer](#building-a-buffer)
+    * [Verifying a Buffer](#verifying-a-buffer)
+    * [Debugging a Buffer](#debugging-a-buffer)
+* [File and Type Identifiers](#file-and-type-identifiers)
+    * [File Identifiers](#file-identifiers)
+    * [Type Identifiers](#type-identifiers)
+* [JSON Parsing and Printing](#json-parsing-and-printing)
+    * [Performance Notes](#performance-notes)
+* [Global Scope and Included Schema](#global-scope-and-included-schema)
+* [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
+* [Fast Buffers](#fast-buffers)
+* [Types](#types)
+* [Endianness](#endianness)
+* [Pitfalls in Error Handling](#pitfalls-in-error-handling)
+* [Searching and Sorting](#searching-and-sorting)
+* [Null Values](#null-values)
+* [Portability Layer](#portability-layer)
+* [Building](#building)
+    * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
+    * [Windows Build (MSVC)](#windows-build-msvc)
+    * [Cross-compilation](#cross-compilation)
+    * [Custom Allocation](#custom-allocation)
+    * [Shared Libraries](#shared-libraries)
+* [Distribution](#distribution)
+    * [Unix Files](#unix-files)
+    * [Windows Files](#windows-files)
+* [Running Tests on Unix](#running-tests-on-unix)
+* [Running Tests on Windows](#running-tests-on-windows)
+* [Configuration](#configuration)
+* [Using the Compiler and Builder library](#using-the-compiler-and-builder-library)
+* [FlatBuffers Binary Format](#flatbuffers-binary-format)
+* [Benchmarks](#benchmarks)
+
+<!-- vim-markdown-toc -->
+
+## Project Details
 
 NOTE: see
 [CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md).
@@ -48,9 +95,9 @@ See also:
 
 - [Quickstart](https://github.com/dvidelabs/flatcc#quickstart)
 
-- [Status](https://github.com/dvidelabs/flatcc#status)
+- [Builder Interface Reference]
 
-- [Benchmark](https://github.com/dvidelabs/flatcc#benchmark)
+- [Benchmarks]
 
 The `flatcc` compiler is implemented as a standalone tool instead of
 extending Googles `flatc` compiler in order to have a pure portable C
@@ -77,20 +124,108 @@ easier to deploy, the `flatc` approach is likely more convenient when
 manually working with JSON such as editing game scenes. Both tools have
 their place. 
 
-**NOTE: Big-endian platforms are untested but supported in principle.**
+**NOTE: Big-endian platforms are only supported as of release 0.4.0.**
+
+
+## Poll on Meson Build
+
+It is being considered adding support for the Meson build system, but it
+would be good with some feedback on this via 
+[issue #56](https://github.com/dvidelabs/flatcc/issues/56)
 
 
 ## Reporting Bugs
 
-If possible, please provide a short reproducible schema and
-source file using [issue4](https://github.com/dvidelabs/flatcc/issues/4)
-as an example. The first comment in this issue details how to quickly
-set up a new temporary project using the `scripts/setup.sh` script.
+If possible, please provide a short reproducible schema and source file
+with a main program the returns 1 on error and 0 on success and a small
+build script. Preferably generate a hexdump and call the buffer verifier
+to ensure the input is valid and link with the debug library
+`flatccrt_d`.
+
+See also [Debugging a Buffer](#debugging-a-buffer).
+
+Example:
+
+eclectic.fbs :
+
+```c
+namespace Eclectic;
+
+enum Fruit : byte { Banana = -1, Orange = 42 }
+table FooBar {
+    meal      : Fruit = Banana;
+    density   : long (deprecated);
+    say       : string;
+    height    : short;
+}
+file_identifier "NOOB";
+root_type FooBar;
+```
+
+myissue.c :
+
+```c
+/* Minimal test with all headers generated into a single file. */
+#include "myissue_generated.h"
+#include "flatcc/support/hexdump.h"
+
+int main(int argc, char *argv[])
+{
+    int ret;
+    void *buf;
+    size_t size;
+    flatcc_builder_t builder, *B;
+
+    (void)argc;
+    (void)argv;
+
+    B = &builder;
+    flatcc_builder_init(B);
+
+    Eclectic_FooBar_start_as_root(B);
+    Eclectic_FooBar_say_create_str(B, "hello");
+    Eclectic_FooBar_meal_add(B, Eclectic_Fruit_Orange);
+    Eclectic_FooBar_height_add(B, -8000);
+    Eclectic_FooBar_end_as_root(B);
+    buf = flatcc_builder_get_direct_buffer(B, &size);
+    hexdump("Eclectic.FooBar buffer for myissue", buf, size, stdout);
+    ret = Eclectic_FooBar_verify_as_root(buf, size);
+    flatcc_builder_clear(B);
+    return ret;
+}
+```
+build.sh :
+```sh
+#!/bin/sh
+cd $(dirname $0)
+
+FLATBUFFERS_DIR=../flatcc
+NAME=myissue
+SCHEMA=eclectic.fbs
+
+FLATCC_EXE=$FLATBUFFERS_DIR/bin/flatcc
+FLATCC_INCLUDE=$FLATBUFFERS_DIR/include
+FLATCC_LIB=$FLATBUFFERS_DIR/lib
+
+$FLATCC_EXE --outfile ${NAME}_generated.h -a $SCHEMA || exit 1
+cc -I$FLATCC_INCLUDE -g -o $NAME $NAME.c -L$FLATCC_LIB -lflatccrt_d || exit 1
+echo "running $NAME"
+./$NAME || $(echo "failed" && exit 1)
+echo "success"
+```
+
 
 
 ## Status
 
-Main features supported as of 0.3.5:
+0.4.2 is featurewise on par with 0.4.1 but improves compatibility with
+C++ in portable headers and fixes `aligned_alloc` for older GCC
+versions. 0.4.2. also fixes a memory corruption bug when building with a
+nesting level of 8 or above (number of open buffers, tables, and
+vectors).
+
+
+Main features supported as of 0.4.2
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -104,12 +239,17 @@ Main features supported as of 0.3.5:
 - thorough test cases
 - monster sample project
 - fast build times
+- support for big endian platforms (as of 0.4.0)
+- support for big endian encoded flatbuffers on both le and be platforms. Enabled on `be` branch.
+- size prefixed buffers - see also [Builder Interface Reference]
 
 Supported platforms:
 
 - Ubuntu gcc 4.4-4.8 and clang 3.5-3.8
 - OS-X current clang / gcc
 - Windows MSVC 2010, 2013, 2015, 2015 Win64 
+- IBM XLC on AIX big endian Power PC has been tested for release 0.4.0
+  but is not part of regular release tests.
 
 The monster sample does not work with MSVC 2010 because it intentionally
 uses C99 style code to better follow the C++ version.
@@ -119,22 +259,9 @@ it may require some work in the build configuration and possibly
 updates to the portable library. The above is simply what has been
 tested and configured.
 
-Use versions from 0.3.0 and up as there has been some minor breaking
-[interface changes](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md#030).
-Version 0.3.3 has a minor breaking change where the `verify_as_root` call
-must be renamed to `verify_as_root_with_identifier`, or drop the identifier
-argument.
-
-Big endian platforms have not been tested at all. While care has been
-taken to handle endian encoding, there are bound to be some issues. The
-approach taken is to make it work on little endian - then it can always
-be made to work on big endian later given that output generated by an
-little endian platforms presumable will be correct regardless of bugs in
-endian encoding.
-
 The portability layer has some features that are generally important for
 things like endian handling, and others to provide compatibility for
-non-C11 compliant compilers. Together this should support most C
+optional and missing C11 features. Together this should support most C
 compilers around, but relies on community feedback for maturity.
 
 The necessary size of the runtime include files can be reduced
@@ -228,14 +355,12 @@ binary.
 
 ## Generated Files
 
-In earlier releases it was attempted to generate all code needed for
-read-only buffer access. Now a library of include files is always
-required (`include/flatcc`) because the original approach lead to
-excessive code duplication. The generated code for building flatbuffers,
-and for parsing and printing flatbuffers, all need to link with the
-runtime library `libflatccrt.a`. The verifier and builder headers depend
-on the reader header. The generated reader only depends on library
-header files.
+The generated code for building flatbuffers,
+and for parsing and printing flatbuffers, all need access to
+`include/flatcc`. The reader does no rely on any library but all other
+generated files rely on the `libflatccrt.a` runtime library. Note that
+`libflatcc.a` is only required if the flatcc compiler itself is required
+as a library.
 
 The reader and builder rely on generated common reader and builder
 header files. These common file makes it possible to change the global
@@ -245,18 +370,15 @@ abstractions and eventually have a set of predefined files for types
 beyond the standard 32-bit unsigned offset (`uoffset_t`). The runtime
 library is specific to one set of type definitions.
 
-Reader code is reasonably straight forward and the generated code is
-more readable than the builder code because the generated functions
-headers are not buried in macros. Refer to `monster_test.c` and the
-generated files for detailed guidance on use. The monster schema used in
-this project is a slight adaptation to the original to test some
-additional edge cases.
+Refer to [monster_test.c] and the generated files for detailed guidance
+on use. The monster schema used in this project is a slight adaptation
+to the original to test some additional edge cases.
 
 For building flatbuffers a separate builder header file is generated per
 schema. It requires a `flatbuffers_common_builder.h` file also generated
 by the compiler and a small runtime library `libflatccrt.a`. It is
 because of this requirement that the reader and builder generated code
-is kept separate. Typical uses can be seen in the `monster_test.c` file.
+is kept separate. Typical uses can be seen in the [monster_test.c] file.
 The builder allows of repeated pushing of content to a vector or a
 string while a containing table is being updated which simplifies
 parsing of external formats. It is also possible to build nested buffers
@@ -283,14 +405,18 @@ buffer emitter object. The separate emitter ensures a buffer can be
 constructed without requiring a full buffer to be present in memory at
 once, if so desired.
 
-The typeless builder library is documented in `flatcc_builder.h` and
-`flatcc_emitter.h` while the generated typed builder api for C is
-documented in `doc/builder.md`.
+The typeless builder library is documented in [flatcc_builder.h] and
+[flatcc_emitter.h] while the generated typed builder api for C is
+documented in [Builder Interface Reference].
 
 
 ## Using flatcc
 
 Refer to `flatcc -h` for details.
+
+An online version listed here: [flatcc-help.md] but please use `flatcc
+-h` for an up to date reference.
+
 
 The compiler can either generate a single header file or headers for all
 included schema and a common file and with or without support for both
@@ -358,9 +484,8 @@ To write your own schema files please follow the main FlatBuffers
 project documentation on [writing schema
 files](https://google.github.io/flatbuffers/flatbuffers_guide_writing_schema.html).
 
-The [builder interface
-reference](https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md)
-may be useful after studying the monster sample and quickstart below.
+The [Builder Interface Reference] may be useful after studying the
+monster sample and quickstart below.
 
 When looking for advanced examples such as sorting vectors and finding
 elements by a key, you should find these in the
@@ -374,13 +499,15 @@ than general FlatBuffers concepts.
 You can still use the setup tool to create an empty project and
 follow along, but there are no assumptions about that in the text below.
 
-## Quickstart - reading a buffer
+### Reading a Buffer
 
 Here we provide a quick example of read-only access to Monster flatbuffer -
-it is an adapted extract of the `monster_test.c` file.
+it is an adapted extract of the [monster_test.c] file.
 
 First we compile the schema read-only with common (-c) support header and we
-add the recursion because `monster_test.fbs` includes other files.
+add the recursion because
+[monster_test.fbs](https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.fbs)
+includes other files.
 
     flatcc -cr test/monster_test/monster_test.fbs
 
@@ -458,7 +585,7 @@ Namespaces can be long so we optionally use a macro to manage this.
     /* main() {...} */
 
 
-## Quickstart - compiling for read-only
+### Compiling for Read-Only
 
 Assuming our above file is `monster_example.c` the following are a few
 ways to compile the project for read-only - compilation with runtime
@@ -476,10 +603,10 @@ flag includes additional files to support compilers lacking c11
 features.
 
 
-## Quickstart - building a buffer
+### Building a Buffer
 
 Here we provide a very limited example of how to build a buffer - only a few
-fields are updated. Pleaser refer to `monster_test.c` and the doc directory
+fields are updated. Pleaser refer to [monster_test.c] and the doc directory
 for more information.
 
 First we must generate the files:
@@ -522,13 +649,15 @@ to provide a custom emitter and for example emit pages over the network
 as soon as they complete rather than merging all pages into a single
 buffer using `flatcc_builder_finalize_buffer`, or the simplistic
 `flatcc_builder_get_direct_buffer` which returns null if the buffer is
-too large. See also documentation comments in `flatcc_builder.h` and
-`flatcc_emitter.h`.
+too large. See also documentation comments in [flatcc_builder.h] and
+[flatcc_emitter.h]. See also `flatc_builder_finalize_aligned_buffer` in
+`builder.h` and the [Builder Interface Reference] when malloc aligned
+buffers are insufficent.
 
 
     #include "monster_test_builder.h"
 
-    /* See `monster_test.c` for more advanced examples. */
+    /* See [monster_test.c] for more advanced examples. */
     void build_monster(flatcc_builder_t *B)
     {
         ns(Vec3_t *vec);
@@ -599,7 +728,7 @@ obvious from the filenames except that JSON parsing also requires the
 builder and emitter source files.
 
 
-## Verifying a Buffer
+### Verifying a Buffer
 
 A buffer can be verified to ensure it does not contain any ranges that
 point outside the the given buffer size, that all data structures are
@@ -633,15 +762,74 @@ construct overlapping datastructures such that in-place updates may
 cause subsequent invalid buffers. Therefore an untrusted buffer should
 never be updated in-place without first rewriting it to a new buffer.
 
-Note: prior to version 0.2.0, the verifier would fail on 0 and report
-success on non-zero value. As of 0.2.0, success is indicated by 0, and
-non-zero yields an error code that can be translated into a string.
-
 The CMake build system has build option to enable assertions in the
 verifier. This will break debug builds and not usually what is desired,
-but it can be very useful when debugging why a buffer is invalid.
+but it can be very useful when debugging why a buffer is invalid. Traces
+can also be enabled so table offset and field id can be reported.
 
 See also `include/flatcc/flatcc_verifier.h`.
+
+When verifying buffers returned directly from the builder, it may be
+necessary to use the `flatcc_builder_finalize_aligned_buffer` to ensure
+proper alignment and use `aligned_free` to free the buffer, see also the
+[Builder Interface Reference]. Buffers may also be copied into aligned
+memory via mmap or using the portable layers `paligned_alloc.h` feature
+which is available when including generated headers.
+`test/flatc_compat/flatc_compat.c` is an example of how this can be
+done. For the majority of use cases, standard allocation would be
+sufficient, but for example standard 32-bit Windows only allocates on an
+8-byte boundary and can break the monster schema because it has 16-byte
+aligned fields.
+
+
+### Debugging a Buffer
+
+When reading a FlatBuffer does not provide the expected results, the
+first line of defense is to ensure that the code being tested is linked
+against `flatccrt_d`, the debug build of the runtime library. This will
+raise an assertion if calls to the builder are not properly balanced or
+if required fields are not being set.
+
+To dig further into a buffer, call the buffer verifier and see if the
+buffer is actually valid with respect to the expected buffer type.
+
+Strings and tables will be returned as null pointers when their
+corresponding field is not set in the buffer. User code should test for
+this but it might also be helpful to temporarily or permanently set the
+`required` attribute in the schema. The builder will then detect missing fields
+when cerating buffers and the verifier can will detect their absence in
+an existing buffer.
+
+If the verifier rejects a buffer, the error can be printed (see
+[Verifying a Buffer](#verifying-a-buffer)), but it will not say exactly
+where the problem was found. To go further, the verifier can be made to
+assert where the problem is encountered so the buffer content can be
+analyzed. This is enabled with:
+
+    -DFLATCC_DEBUG_VERIFY=1
+
+Note that this will break test cases where a buffer is expected to fail
+verification.
+
+To dump detailed contents of a valid buffer, or the valid contents up to
+the point of failure, use:
+
+    -DFLATCC_TRACE_VERIFY=1
+
+Both of these options can be set as CMake options, or in the
+[flatcc_rtconfig.h] file.
+
+When reporting bugs, output from the above might also prove helpful.
+
+The JSON parser and printer can also be used to create and display
+buffers. The parser will use the builder API correctly or issue a syntax
+error or an error on required field missing. This can rule out some
+uncertainty about using the api correctly. The [test_json.c] file has a
+test function that can be adapted for custom tests. 
+
+For advanced debugging the [hexdump.h] file can be used to dump the buffer
+contents. It is used in [test_json.c] and also in [monster_test.c].
+See also [FlatBuffers Binary Format].
 
 
 ## File and Type Identifiers
@@ -735,7 +923,7 @@ identifier in the buffer.
     }
 
 More API calls are available to naturally extend the existing API. See
-`test/monster_test/monster_test.c` for more.
+[monster_test.c] for more.
 
 The type identifiers are defined like:
 
@@ -745,6 +933,23 @@ The type identifiers are defined like:
 The `type_identifier` can be used anywhere the original 4 character
 file identifier would be used, but a buffer must choose which system, if any,
 to use. This will not affect the `file_extension`.
+
+NOTE: The generated `_type_identifier` strings should not normally be
+used when an identifier string is expected in the generated API because
+it may contain null bytes which will be zero padded after the first null
+before comparison. Use the API calls that take a type hash instead. The
+`type_identifier` can be used in low level [flatcc_builder.h] calls
+because it handles identifiers as a fixed byte array and handles type
+hashes and strings the same.
+
+NOTE: it is possible to compile the flatcc runtime to encode buffers in
+big endian format rather than the standard little endian format
+regardless of the host platforms endianness. If this is done, the
+identifier field in the buffer is always byte swapped regardless of the
+identifier method chosen. The API calls make this transparent, so "MONS"
+will be stored as "SNOM" but should still be verified as "MONS" in API
+calls. This safeguards against mixing little- and big-endian buffers.
+Likewise, type hashes are always tested in native (host) endian format.
 
 
 The
@@ -824,8 +1029,7 @@ quoted in order to be compatible with Googles flatc tool for Flatbuffers
 
     color: "Green Red"
 
-The following is also accepted in flatcc 0.2.0, but subsequent releases
-only permits it if explicitly enabled at compile time.
+The following is only permitted if explicitly enabled at compile time.
 
     color: Green Red
 
@@ -1005,7 +1209,7 @@ measurements suggests there is a limit to how fast this can go (about
 buffers which involves zeroing allocated buffers. Small tables with a
 simple vector achieve roughly half that speed. For really high speed a
 dedicated builder for structs would be needed. See also
-`monster_test.c`.
+[monster_test.c].
 
 
 ## Types
@@ -1025,8 +1229,8 @@ a native struct has the type `Vec3_t *` or `struct Vec3 *`.
 Union types are just any of a set of possible table types and an enum
 named as for example `Any_union_type_t`. There is a compound union type
 that can store both type and table reference such that `create` calls
-can represent unions as a single argument - see `flatcc_builder.h` and
-`doc/builder.md`. Union table fields return a pointer of type
+can represent unions as a single argument - see [flatcc_builder.h] and
+[Builder Interface Reference]. Union table fields return a pointer of type
 `flatbuffers_generic_table_t` which is defined as `const void *`.
 
 All types have a `_vec_t` suffix which is a const pointer to the
@@ -1076,74 +1280,62 @@ bounds access. This also applies to related string operations.
 
 ## Endianness
 
-The generated code supports the `FLATBUFFERS_LITTLEENDIAN` flag defined
-by the `flatc` compiler and it can be used to force endianness. Big
-Endian will define it as 0. Other endian may lead to unexpected results.
-In most cases `FLATBUFFERS_LITTLEENDIAN` will be defined but in some
-cases a decision is made in runtime where the flag cannot be defined.
-This is likely just as fast, but `#if FLATBUFFERS_LITTLEENDIAN` can lead
-to wrong results alone - use `#if defined(FLATBUFFERS_LITTLEENDIAN) &&
-FLATBUFFERS_ENDIAN` to be sure the platform is recognized as little
-endian. The detection logic will set `FLATBUFFERS_LITTLEENDIAN` if at
-all possible and can be improved with the `pendian.h` file included by
-the `-DFLATCC_PORTABLE`.
+The `include/flatcc/portable/pendian_detect.h` file detects endianness
+for popular compilers and provides a runtime fallback detection for
+others. In most cases even the runtime detection will be optimized out
+at compile time in release builds.
 
-The user can always define `-DFLATBUFFERS_LITTLEENDIAN` as a compile
-time option and then this will take precedence.
+The `FLATBUFFERS_LITTLEENDIAN` flag is respected for compatibility with
+Googles `flatc` compiler, but it is recommended to avoid its use and
+work with the mostly standard flags defined and/or used in
+`pendian_detect.h`, or to provide for additional compiler support.
 
-It is recommended to use `flatbuffers_is_native_pe()` instead of testing
-`FLATBUFFERS_LITTLEENDIAN` whenever it can be avoided to use the
-proprocessor for several reasons:
+As of flatcc 0.4.0 there is support for flatbuffers running natively on
+big endian hosts. This has been tested on IBM AIX. However, always run
+tests against the system of interest - the release process does not cover
+automated tests on any BE platform.
 
-- if it isn't defined, the source won't compile at all
-- combined with `pendian.h` it provides endian swapping even without
-  preprocessor detection.
-- it is normally a constant similar to `FLATBUFFERS_LITTLEENDIAN`
-- it works even with undefined `FLATBUFFERS_LITTLEENDIAN`
-- compiler should optimize out even runtime detection
-- protocol might not always be little endian.
-- it is defined as a macro and can be checked for existence.
+As of flatcc 0.4.0 there is also support for compiling the flatbuffers
+runtime library with flatbuffers encoded in big endian format regardless
+of the host platforms endianness. Longer term this should probably be
+placed in a separate library with separate name prefixes or suffixes,
+but it is usable as is. Redefine `FLATBUFFERS_PROTOCOL_IS_LE/BE`
+accordingly in `include/flatcc/flatcc_types.h`. This is already done in
+the `be` branch. This branch is not maintained but the master branch can
+be merged into it as needed.
 
-`pe` means protocol endian. This suggests that `flatcc` output may be
-used for other protocols in the future, or for variations of
-flatbuffers. The main reason for this is the generated structs that can
-be very useful on other predefined network protols in big endian. Each
-struct has a `mystruct_copy_from_pe` method and similar to do these
-conversions. Internally flatcc optimizes struct conversions by testing
-`flatbuffers_is_native_pe()` in some heavier struct conversions.
+Note that standard flatbuffers are always encoded in little endian but
+in situations where all buffer producers and consumers are big endian,
+the non standard big endian encoding may be faster, depending on
+intrinsic byteswap support. As a curiosity, the `load_test` actually
+runs faster with big endian buffers on a little endian MacOS platform
+for reasons only the optimizer will know, but read performance of small
+buffers drop to 40% while writing buffers generally drops to 80-90%
+performance. For platforms without compiler intrinsics for byteswapping,
+this can be much worse.
 
-In a few cases it may be relevant to test for `FLATBUFFERS_LITTLEENDIAN`
-but then code intended for general use should provide an alternitive for
-when the flag isn't defined.
+Flatbuffers encoded in big endian will have the optional file identifier
+byteswapped. The interface should make this transparent, but details
+are still being worked out. For example, a buffer should always verify
+the monster buffer has the identifier "MONS", but internally the buffer
+will store the identifier as "SNOM" on big endian encoded buffers.
 
-Even with correct endian detection, the code may break on platforms
-where `flatbuffers_is_native_pe()` is false because the necessary system
-headers could not found. In this case `-DFLATCC_PORTABLE` should help.
+Because buffers can be encode in two ways, `flatcc` uses the term
+`native` endianness and `protocol` endianess. `_pe` is a suffix used in
+various low level API calls to convert between native and protocol
+endianness without caring about whether host or buffer is little or big
+endian.
 
+If it is necessary to write application code that behaves differently if
+the native encoding differs from protocol encoding, use
+`flatbuffers_is_pe_native()`. This is a function, not a define, but for
+all practical purposes it will have same efficience while also
+supporting runtime endian detection where necessary.
 
-## Offset Sizes and Direction
-
-FlatBuffers use 32-bit `uoffset_t` and 16-bit `voffset_t`. `soffset_t`
-always has the same size as `uoffset_t`. These types can be changed by
-preprocessor defines without regenerating code. However, it is important
-that `libflatccrt.a` is compiled with the same types as defined in
-`flatcc_types.h`.
-
-`uoffset_t` currently always point forward like `flatc`. In retrospect
-it would probably have simplified buffer constrution if offsets pointed
-the opposite direction. This is a major change and not likely to happen
-for reasons of effort and compatibility, but it is worth keeping in mind
-for a v2.0 of the format.
-
-Vector header fields storing the length are defined as `uoffset_t` which
-is 32-bit wide by default. If `uoffset_t` is redefined this will
-therefore also affect vectors and strings. The vector and string length
-and index arguments are exposed as `size_t` in user code regardless of
-underlying `uoffset_t` type.
-
-The practical buffer size is limited to about half of the `uoffset_t` range
-because vtable references are signed which in effect means that buffers
-are limited to about 2GB by default.
+The flatbuffer environment only supports reading either big or little
+endian for the time being. To test which is supported, use the define
+`FLATBUFFERS_PROTOCOL_IS_LE` or `FLATBUFFERS_PROTOCOL_IS_BE`. They are
+defines as 1 and 0 respectively.
 
 
 ## Pitfalls in Error Handling
@@ -1162,7 +1354,7 @@ correctly.  By not checking error codes, this logic also optimizes out
 for better performance.
 
 
-## Sorting and Finding
+## Searching and Sorting
 
 The builder API does not support sorting due to the complexity of
 customizable emitters, but the reader API does support sorting so a
@@ -1174,23 +1366,45 @@ external memory or recursion. Due to the lack of external memory, the
 sort is not stable. The corresponding find operation returns the lowest
 index of any matching key, or `flatbuffers_not_found`.
 
-When configured in `config.h`, the `flatcc` compiler allows multiple
-keyed fields unlike Googles `flatc` compiler. This works transparently
-by providing `<table_name>_vec_sort_by_<field_name>` and
-`<table_name>_vec_find_by_<field_name>` methods for all keyed fields. The
-first field maps to `<table_name>_vec_sort` and `<table_name>_vec_find`.
-Obviously the chosen find method must match the chosen sort method.
+When configured in `config.h` (the default), the `flatcc` compiler
+allows multiple keyed fields unlike Googles `flatc` compiler. This works
+transparently by providing `<table_name>_vec_sort_by_<field_name>` and
+`<table_name>_vec_find_by_<field_name>` methods for all keyed fields.
+The first field maps to `<table_name>_vec_sort` and
+`<table_name>_vec_find`. Obviously the chosen find method must match
+the chosen sort method. The find operation is O(logN).
 
-See also `doc/builder.md` and `test/monster_test/monster_test.c`.
+As of v0.4.1 `<table_name>_vec_scan_by_<field_name>` and the default
+`<table_name>_vec_scan` are also provided, similar to `find`, but as a
+linear search that does not require the vector to be sorted. This is
+especially useful for searching by a secondary key (multiple keys is a
+non-standard flatcc feature). `_scan_ex` searches a sub-range [a, b)
+where b is an exclusive index. `b = flatbuffers_end == flatbuffers_not_found
+== (size_t)-1` may be used when searching from a position to the end,
+and `b` can also conveniently be the result of a previous search.
+
+`rscan` searches in the opposite direction starting from the last
+element. `rscan_ex` accepts the same range arguments as `scan_ex`. If
+`a >= b or a >= len` the range is considered empty and
+`flatbuffers_not_found` is returned. `[r]scan[_ex]_n[_by_name]` is for
+length terminated string keys. See [monster_test.c] for examples.
+
+Note that `find` requires `key` attribute in the schema. `scan` is also
+available on keyed fields. By default `flatcc` will also enable scan by
+any other field but this can be disabled by a compile time flag.
+
+Basic types such as `uint8_vec` also have search operations.
+
+See also [Builder Interface Reference] and [monster_test.c].
 
 
 ## Null Values
 
 The FlatBuffers format does not fully distinguish between default values
 and missing or null values but it is possible to force values to be
-written to the buffer.  This is discussed further in the `builder.md`.
-For SQL data roundtrips this may be more important that having compact
-data.
+written to the buffer. This is discussed further in the
+[Builder Interface Reference]. For SQL data roundtrips this may be more
+important that having compact data.
 
 The `_is_present` suffix on table access methods can be used to detect if
 value is present in a vtable, for example `Monster_hp_present`. Unions
@@ -1204,23 +1418,37 @@ it detectable by `is_present`.
 
 ## Portability Layer
 
-Some aspects of the portablity layer is not required when -std=c11 is
-defined on a clang compiler where little endian is avaiable and easily
-detected, or where `<endian.h>` is available and easily detected.
-`flatbuffers_common_reader.h` contains a minimal portability abstraction
-that also works for some platforms even without C11, e.g. OS-X clang.
-The portablity file can be included before other headers, or by setting
-the compile time directives:
+The portable library is placed under `include/flatcc/portable` and is
+required by flatcc, but isn't strictly part of the `flatcc` project. It
+is intended as an independent light-weight header-only library to deal
+with compiler and platform variations. It is placed under the flatcc
+include path to simplify flatcc runtime distribution and to avoid
+name and versioning conflicts if used by other projects.
+
+The license of portable is different from `flatcc`. It is mostly MIT or
+Apache depending on the original source of the various parts.
+
+A larger set of portable files is included if `FLATCC_PORTABLE` is
+defined by the user when building.
 
     cc -D FLATCC_PORTABLE -I include monster_test.c -o monster_test
 
-Also see the top of this file on how to include the actual portability layer
-when needed. Mandatory aspects of the portability layer are not
-sensitive to `FLATCC_PORTABLE`, these will be included as needed.
+Otherwise a targeted subset is
+included by `flatcc_flatbuffers.h` in order to deal with non-standard
+behavior of some C11 compilers.
+
+`pwarnings.h` is also always included so compiler specific warnings can
+be disabled where necessary.
+
+The portable library includes the essential parts of the grisu3 library
+found in `external/grisu3`, but excludes the test cases. The JSON
+printer and parser relies on fast portable numeric print and parse
+operations based mostly on grisu3.
 
 If a specific platform has been tested, it would be good with feedback
-and possibly patches to the portability layer so this can be documented
-for other users.
+and possibly patches to the portability layer so these can be made
+available to other users.
+
 
 ## Building
 
@@ -1346,6 +1574,38 @@ project.
 Note that no tests will be built nor run with `FLATCC_RTONLY` enabled.
 It is highly recommended to at least run the `tests/monster_test`
 project on a new platform.
+
+
+### Custom Allocation
+
+Some target systems will not work with Posix `malloc`, `realloc`, `free`
+and C11 `aligned_alloc`. Or they might, but more allocation control is
+desired. The best approach is to use `flatcc_builder_custom_init` to
+provide a custom allocator and emitter object, but for simpler case or
+while piloting a new platform
+[flatcc_alloc.h](include/flatcc/flatcc_alloc.h) can be used to override
+runtime allocation functions. _Carefully_ read the comments in this file
+if doing so. There is a test case implementing a new emitter, and a
+custom allocator can be copied from the one embedded in the builder
+library source.
+
+
+### Shared Libraries
+
+By default libraries are built statically.
+
+Occasionally there are requests
+[#42](https://github.com/dvidelabs/flatcc/pull/42) for also building shared
+libraries. It is not clear how to build both static and shared libraries
+at the same time without choosing some unconvential naming scheme that
+might affect install targets unexpectedly.
+
+CMake supports building shared libraries out of the box using the
+standard library name using the following option:
+
+    CMAKE ... -DBUILD_SHARED_LIBS=ON ...
+
+See also [CMake Gold: Static + shared](http://cgold.readthedocs.io/en/latest/tutorials/libraries/static-shared.html).
 
 
 ## Distribution
@@ -1496,169 +1756,25 @@ source files directly.  For debugging, it is useful to use the
 in assertions.
 
 The runtime library may also be used by other languages. See comments
-in `include/flatcc/flatcc_builder.h`. JSON parsing is on example of an
+in [flatcc_builder.h]. JSON parsing is on example of an
 alternative use of the builder library so it may help to inspect the
 generated JSON parser source and runtime source.
 
-## The Portable Library
+## FlatBuffers Binary Format
 
-The portable library is placed under `include/flatcc/portable` and is
-required by flatcc, but isn't strictly part of the `flatcc` project. It
-is intended as an independent light-weight header-only library to deal
-with compiler and platform variations. It is placed under the flatcc
-include path to simplify flatcc runtime distribution and to avoid
-name and versioning conflicts if used by other projects.
+Mostly for implementers: [FlatBuffers Binary Format]
 
-The portably library includes the essential parts of the grisu3 library
-found in `external/grisu3`, but excludes the test cases.
+## Benchmarks
 
-The license of portable is different from `flatcc`. It is mostly MIT or
-Apache depending on the original source of the various parts.
+See [Benchmarks]
 
-
-## Benchmark
-
-Benchmarks are defined for raw C structs, Googles `flatc` generated C++
-and the `flatcc` compilers C ouput.
-
-These can be run with:
-
-    scripts/benchmark.sh
-
-and requires a C++ compiler installed - the benchmark for flatcc alone can be
-run with:
-
-    test/benchmark/benchflatcc/run.sh
-
-this only requires a system C compiler (cc) to be installed (and
-flatcc's build environment).
-
-A summary for OS-X 2.2 GHz Haswell core-i7 is found below. Generated
-files for OS-X and Ubuntu are found in the benchmark folder.
-
-The benchmarks use the same schema and dataset as Google FPL's
-FlatBuffers benchmark.
-
-In summary, 1 million iterations runs at about 500-540MB/s at 620-700
-ns/op encoding buffers and 29-34ns/op traversing buffers. `flatc` and
-`flatcc` are close enough in performance for it not to matter much.
-`flatcc` is a bit faster encoding but it is likely due to less memory
-allocation. Throughput and time per operatin are of course very specific
-to this test case.
-
-Generated JSON parser/printer shown below, for flatcc only but for OS-X
-and Linux.
-
-
-### operation: flatbench for raw C structs encode (optimized)
-    elapsed time: 0.055 (s)
-    iterations: 1000000
-    size: 312 (bytes)
-    bandwidth: 5665.517 (MB/s)
-    throughput in ops per sec: 18158707.100
-    throughput in 1M ops per sec: 18.159
-    time per op: 55.070 (ns)
-
-### operation: flatbench for raw C structs decode/traverse (optimized)
-    elapsed time: 0.012 (s)
-    iterations: 1000000
-    size: 312 (bytes)
-    bandwidth: 25978.351 (MB/s)
-    throughput in ops per sec: 83263946.711
-    throughput in 1M ops per sec: 83.264
-    time per op: 12.010 (ns)
-
-### operation: flatc for C++ encode (optimized)
-    elapsed time: 0.702 (s)
-    iterations: 1000000
-    size: 344 (bytes)
-    bandwidth: 490.304 (MB/s)
-    throughput in ops per sec: 1425301.380
-    throughput in 1M ops per sec: 1.425
-    time per op: 701.606 (ns)
-
-### operation: flatc for C++ decode/traverse (optimized)
-    elapsed time: 0.029 (s)
-    iterations: 1000000
-    size: 344 (bytes)
-    bandwidth: 11917.134 (MB/s)
-    throughput in ops per sec: 34642832.398
-    throughput in 1M ops per sec: 34.643
-    time per op: 28.866 (ns)
-
-
-### operation: flatcc for C encode (optimized)
-    elapsed time: 0.626 (s)
-    iterations: 1000000
-    size: 336 (bytes)
-    bandwidth: 536.678 (MB/s)
-    throughput in ops per sec: 1597255.277
-    throughput in 1M ops per sec: 1.597
-    time per op: 626.074 (ns)
-
-### operation: flatcc for C decode/traverse (optimized)
-    elapsed time: 0.029 (s)
-    iterations: 1000000
-    size: 336 (bytes)
-    bandwidth: 11726.930 (MB/s)
-    throughput in ops per sec: 34901577.551
-    throughput in 1M ops per sec: 34.902
-    time per op: 28.652 (ns)
-
-## JSON benchmark
-
-*Note: this benchmark is only available for `flatcc`. It uses the exact
-same data set as above.*
-
-The benchmark uses Grisu3 floating point parsing and printing algorithm
-with exact fallback to strtod/sprintf when the algorithm fails to be
-exact. Better performance can be gained by enabling inexact Grisu3 and
-SSE 4.2 in build options, but likely not worthwhile in praxis.
-
-### operation: flatcc json parser and printer for C encode (optimized)
-
-(encode means printing from existing binary buffer to JSON)
-
-    elapsed time: 1.407 (s)
-    iterations: 1000000
-    size: 722 (bytes)
-    bandwidth: 513.068 (MB/s)
-    throughput in ops per sec: 710619.931
-    throughput in 1M ops per sec: 0.711
-    time per op: 1.407 (us)
-
-### operation: flatcc json parser and printer for C decode/traverse (optimized)
-
-(decode/traverse means parsing json to flatbuffer binary and calculating checksum)
-
-    elapsed time: 2.218 (s)
-    iterations: 1000000
-    size: 722 (bytes)
-    bandwidth: 325.448 (MB/s)
-    throughput in ops per sec: 450758.672
-    throughput in 1M ops per sec: 0.451
-    time per op: 2.218 (us)
-
-## JSON parsing and printing on same hardware in Virtual Box Ubuntu
-
-Numbers for Linux included because parsing is significantly faster.
-
-### operation: flatcc json parser and printer for C encode (optimized)
-
-    elapsed time: 1.210 (s)
-    iterations: 1000000
-    size: 722 (bytes)
-    bandwidth: 596.609 (MB/s)
-    throughput in ops per sec: 826328.137
-    throughput in 1M ops per sec: 0.826
-    time per op: 1.210 (us)
-
-### operation: flatcc json parser and printer for C decode/traverse
-
-    elapsed time: 1.772 (s)
-    iterations: 1000000
-    size: 722 (bytes)
-    bandwidth: 407.372 (MB/s)
-    throughput in ops per sec: 564227.736
-    throughput in 1M ops per sec: 0.564
-    time per op: 1.772 (us)
+[Builder Interface Reference]: https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md
+[FlatBuffers Binary Format]: https://github.com/dvidelabs/flatcc/blob/master/doc/binary-format.md
+[Benchmarks]: https://github.com/dvidelabs/flatcc/blob/master/doc/benchmarks.md
+[monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
+[test_json.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json_parser.c
+[flatcc_builder.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_builder.h
+[flatcc_emitter.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_emitter.h
+[flatcc-help.md]: https://github.com/dvidelabs/flatcc/blob/master/doc/flatcc-help.md
+[flatcc_rtconfig.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_rtconfig.h
+[hexdump.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/support/hexdump.h

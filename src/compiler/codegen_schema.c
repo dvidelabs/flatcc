@@ -215,14 +215,12 @@ static void export_enums(flatcc_builder_t *B, enum_entry_t *enums, int nenums,
     int i, is_union;
     fb_compound_type_t *ct;
     fb_symbol_t *sym;
-    reflection_Enum_ref_t *vec;
 
     reflection_Schema_enums_start(B);
-    vec = reflection_Schema_enums_extend(B, nenums);
     for (i = 0; i < nenums; ++i) {
         ct = enums[i].ct;
         is_union = ct->symbol.kind == fb_is_union;
-        reflection_Enum_start(B);
+        reflection_Enum_vec_push_start(B);
         reflection_Enum_name_create_str(B, enums[i].name);
         reflection_Enum_values_start(B);
         for (sym = ct->members; sym; sym = sym->link) {
@@ -231,7 +229,7 @@ static void export_enums(flatcc_builder_t *B, enum_entry_t *enums, int nenums,
         reflection_Enum_values_end(B);
         reflection_Enum_is_union_add(B, is_union);
         reflection_Enum_underlying_type_add(B, export_type(B, ct->type));
-        vec[i] = reflection_Enum_end(B);
+        reflection_Enum_vec_push_end(B);
     }
     reflection_Schema_enums_end(B);
 }
@@ -256,20 +254,24 @@ static void export_root_type(flatcc_builder_t *B, fb_symbol_t * root_type,
 static int export_schema(flatcc_builder_t *B, fb_options_t *opts, fb_schema_t *S)
 {
     catalog_t catalog;
-    reflection_Object_ref_t *object_map;
+    reflection_Object_ref_t *object_map = 0;
 
     if (build_catalog(&catalog, S, opts->bgen_qualify_names, &S->root_schema->scope_index)) {
         return -1;
     }
 
-    if (!(object_map = malloc(catalog.nobjects * sizeof(object_map[0])))) {
+    if (catalog.nobjects > 0 && !(object_map = malloc(catalog.nobjects * sizeof(object_map[0])))) {
         clear_catalog(&catalog);
         return -1;
     }
 
     /* Build the schema. */
 
-    reflection_Schema_start_as_root(B);
+    if (opts->bgen_length_prefix) {
+        reflection_Schema_start_as_root_with_size(B);
+    } else {
+        reflection_Schema_start_as_root(B);
+    }
     if (S->file_identifier.type == vt_string) {
         reflection_Schema_file_ident_create(B,
                 S->file_identifier.s.s, S->file_identifier.s.len);
@@ -418,13 +420,6 @@ int fb_codegen_bfbs_to_file(fb_options_t *opts, fb_schema_t *S)
     if (!buffer) {
         printf("failed to generate binary schema\n");
         goto done;
-    }
-    if (opts->bgen_length_prefix) {
-        flatbuffers_uoffset_t length = __flatbuffers_uoffset_cast_to_pe((flatbuffers_uoffset_t)size);
-        if (sizeof(flatbuffers_uoffset_t) != fwrite(&length, 1, sizeof(length), fp)) {
-            fprintf(stderr, "could not write binary schema to file\n");
-            goto done;
-        }
     }
     if (size != fwrite(buffer, 1, size, fp)) {
         fprintf(stderr, "could not write binary schema to file\n");

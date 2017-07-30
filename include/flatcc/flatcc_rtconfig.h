@@ -55,6 +55,11 @@
 #define FLATCC_DEBUG_VERIFY 0
 #endif
 
+#if !defined(FLATCC_TRACE_VERIFY)
+#define FLATCC_TRACE_VERIFY 0
+#endif
+
+
 /*
  * Limit recursion level for tables. Actual level may be deeper
  * when structs are deeply nested - but these are limited by the

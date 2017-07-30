@@ -59,6 +59,11 @@ static inline const void *read_uoffset_ptr(const void *p)
     return (uint8_t *)p + __flatbuffers_uoffset_read_from_pe(p);
 }
 
+static inline voffset_t read_voffset(const void *p, uoffset_t base)
+{
+    return __flatbuffers_voffset_read_from_pe((uint8_t *)p + base);
+}
+
 static inline const void *get_field_ptr(flatcc_json_printer_table_descriptor_t *td, int id)
 {
     int vo = (id + 2) * sizeof(voffset_t);
@@ -66,7 +71,7 @@ static inline const void *get_field_ptr(flatcc_json_printer_table_descriptor_t *
     if (vo >= td->vsize) {
         return 0;
     }
-    vo = *(voffset_t *)((uint8_t *)td->vtable + vo);
+    vo = read_voffset(td->vtable, vo);
     if (vo == 0) {
         return 0;
     }
@@ -810,15 +815,22 @@ void flatcc_json_printer_struct_field(flatcc_json_printer_t *ctx,
 static int accept_header(flatcc_json_printer_t * ctx,
         const void *buf, size_t bufsiz, const char *fid)
 {
+    flatbuffers_thash_t id, id2 = 0;
+
     if (buf == 0 || bufsiz < offset_size + FLATBUFFERS_IDENTIFIER_SIZE) {
         RAISE_ERROR(bad_input);
         assert(0 && "buffer header too small");
         return 0;
     }
-    if (fid != 0 && 0 != memcmp((uint8_t *)buf + offset_size, fid, FLATBUFFERS_IDENTIFIER_SIZE)) {
-        RAISE_ERROR(bad_input);
-        assert(0 && "identifier mismatch");
-        return 0;
+    if (fid != 0) {
+        strncpy((char *)&id2, fid, FLATBUFFERS_IDENTIFIER_SIZE);
+        id2 = __flatbuffers_thash_cast_from_le(id2);
+        id = __flatbuffers_thash_read_from_pe((uint8_t *)buf + offset_size);
+        if (!(id2 == 0 || id == id2)) {
+            RAISE_ERROR(bad_input);
+            assert(0 && "identifier mismatch");
+            return 0;
+        }
     }
     return 1;
 }
@@ -943,7 +955,7 @@ int flatcc_json_printer_init(flatcc_json_printer_t *ctx, void *fp)
     memset(ctx, 0, sizeof(*ctx));
     ctx->fp = fp ? fp : stdout;
     ctx->flush = __flatcc_json_printer_flush;
-    if (!(ctx->buf = malloc(FLATCC_JSON_PRINT_BUFFER_SIZE))) {
+    if (!(ctx->buf = FLATCC_JSON_PRINTER_ALLOC(FLATCC_JSON_PRINT_BUFFER_SIZE))) {
         return -1;
     }
     ctx->own_buffer = 1;
@@ -987,7 +999,7 @@ int flatcc_json_printer_init_buffer(flatcc_json_printer_t *ctx, char *buffer, si
 static void __flatcc_json_printer_flush_dynamic_buffer(flatcc_json_printer_t *ctx, int all)
 {
     size_t len = ctx->p - ctx->buf;
-    char *p = realloc(ctx->buf, ctx->size * 2);
+    char *p = FLATCC_JSON_PRINTER_REALLOC(ctx->buf, ctx->size * 2);
 
     (void)all;
     ctx->total += len;
@@ -1012,7 +1024,7 @@ int flatcc_json_printer_init_dynamic_buffer(flatcc_json_printer_t *ctx, size_t b
         buffer_size = FLATCC_JSON_PRINT_RESERVE;
     }
     memset(ctx, 0, sizeof(*ctx));
-    ctx->buf = malloc(buffer_size);
+    ctx->buf = FLATCC_JSON_PRINTER_ALLOC(buffer_size);
     ctx->own_buffer = 1;
     ctx->size = buffer_size;
     ctx->flush_size = ctx->size - FLATCC_JSON_PRINT_RESERVE;
@@ -1049,7 +1061,7 @@ void *flatcc_json_printer_finalize_dynamic_buffer(flatcc_json_printer_t *ctx, si
 void flatcc_json_printer_clear(flatcc_json_printer_t *ctx)
 {
     if (ctx->own_buffer && ctx->buf) {
-        free(ctx->buf);
+        FLATCC_JSON_PRINTER_FREE(ctx->buf);
     }
     memset(ctx, 0, sizeof(*ctx));
 }

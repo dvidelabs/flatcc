@@ -1,7 +1,125 @@
 # Change Log
 
-## [0.3.6-pre]
+## [0.4.3-pre]
+- Fix issue with initbuild.sh for custom builds (#43)
+- Add casts to aid clean C++ builds (#47)
+- Add missing const specifier in generated `buffer_start` methods - removes C++
+  warnings (#48)
+- Update external/hash, removed buggy Sorted Robin Hood Hash that wasn't
+  faster anyway - no impact on flatcc.
+- Fix JSON parsing bug where some names are prefixes of others (#50).
+- A Table of Contents in documentation :-)
+- Move repetitive generated JSON string parsing into library.
+- Add tests for JSON runtime compiled with different flags such as
+  permitting unquoted keys.
+- Fix building nested buffers when the parent buffer has not yet emitted
+  any data (#51).
+- Fix building nested buffers using the _nest() call (#52).
+- Add `FLATCC_TRACE_VERIFY` as build option.
+- Allow more costumization of allocation functions (#55).
+- Avoid dependency on PORTABLE_H include guard which is too common (#55).
+- (possibly breaking) Fix duplicate field check in flatcc_builder_table_add call.
+- Fix incorrect infinity result in grisu3 parser and double to float
+  overflow handling in parse_float in portable library (affects JSON
+  of abnormal numeric values).
+- Fix return value handling of parse_float, parse_double in JSON parser.
+- Fix verifier vector alignment check - affects vectors with element size 8+.
+
+## [0.4.2]
+- Fix SIGNIFICANT bug miscalculating the number of builder frames in
+  use. Nesting 8 levels would cause memory corruption (#41).
+- Fix minor memory leak in flatcc compiler.
+- Reduce collisions in builders vtable hash.
+- Remove broken dependency on `<mm_malloc.h>` for some GCC versions in
+  `paligned_alloc.h` (#40).
+- Allow C++ files to include `pstdalign.h` and `paligned_alloc.h` (#39).
+
+## [0.4.1]
+- Test for `posix_memalign` on GCC platforms and fix fallback
+  `aligned_alloc`.
+- Fix JSON parser handling of empty objects and tables.
+- Fix JSON parser - some fields would not be accepted as valid (#17).
+- Fix rare uncompilable doc comment in schema (#21).
+- Avoid crash on certain table parser error cases (#30).
+- Add support for scan similar to find in reader API, but for O(N)
+  unsorted search, or search by a secondary key, and in sub-ranges.
+- Optionally, and by default, allow scan by any field (#29), not just keys.
+- More compact code generation for reader (hiding scan methods).
+- Use __flatbuffers_utype_t for union type in reader instead of uint8_t.
+- Add unaligned write to punaligned for completeness.
+- Promote use of `flatcc_builder_finalize_aligned_buffer` in doc and
+  samples over `flatcc_builder_finalize_buffer`.
+- Add scope counter to pstatic_assert.h to avoid line number conflicts.
+- Fix compiler error/warning for negative enums in generated JSON parser (#35).
+- Fix potential compiler error/warnings for large enum/defaults in
+  generated reader/builder (#35).
+- Fix tab character in C++ style comments (#34)
+- Fix incorrect api usage in binary schema builder (#32)
+- Support hex constants in fbs schema (flatc also supports these now) (#33).
+
+
+## [0.4.0]
 - Fix Windows detection in flatcc/support/elapsed.h used by benchmark.
+- Fix #8 surplus integer literal suffix in portable byteswap fallback.
+- Fix `pstatic_assert.h` missing fallback case.
+- Fix #9 return values from allocation can be zero without being an error.
+- Fix #11 by avoiding dependency on -lm (libmath) by providing a cleaner
+  over/underflow function in `include/flatcc/portable/pparsefp.h`.
+- Fix #12 infinite loop during flatbuffer build operations caused by
+  rare vtable dedupe hash table collision chains.
+- Added `include/flatcc/support/cdump.h` tool for encoding buffers in C.
+- JSON code generators no longer use non-portable PRIszu print
+  modifiers. Fixes issue on IBM XLC AIX.
+- Deprecated support for PRIsz? print modifiers in
+  `include/flatcc/portable/pinttypes.h`, they would require much more
+  work to be portable.
+- Fix and clean up `__STDC__` version checks in portable library.
+- Improve IBM XLC support in `pstdalign.h`.
+- Always include `pstdalign.h` in `flatcc_flatbuffers.h` because some
+  C11 compilers fail to provide `stdalign.h`.
+- Buffer verifier used to mostly, but not always, verify buffer
+  alignment relative to buffer start. With size prefixed buffers it is
+  necessary to verify relative to the allocated buffer, which is also
+  safer and more consistent, but adds requirements to aligned allocation.
+- `monster_test` and `flatc_compat` test now uses aligned alloc.
+- Add `aligned_alloc` and `aligned_free` to `pstdalign.h`.
+- `flatcc_builder_finalize_aligned_buffer` now requires `aligned_free`
+  to be fully portable and no longer use unaligned malloc as fallback,
+  but still works with `free` on most platforms (not Windows).
+
+- BREAKING: Size prefixed buffers added requires a minor change
+  to the low-level flatcc builder library with a flag argument to create
+  and start buffer calls. This should not affect user code.
+
+
+Changes related to big endian support which do not affect little endian
+platforms with little endian wire format.
+
+- Support for big endian platforms, tested on IBM AIX Power PC.
+- Support for big endian encoded flatbuffers on both little and big
+  endian host platforms via `FLATBUFFERS_PROTOCOL_IS_LE/BE` in
+  `include/flatcc/flatcc_types.h`. Use `flatbuffers_is_native_pe()` to
+  see if the host native endian format matches the buffer protocol.
+  NOTE: file identifier at buffer offset 4 is always byteswapped.
+
+In more detail:
+
+- Fix vtable conversion to protocol endian format. This keeps cached
+  vtables entirely in native format and reduces hash collisions and only
+  converts when emitting the vtable to a buffer location.
+- Fix structs created with parameter list resulting in double endian
+  conversion back to native. 
+- Fix string swap used in sort due to endian sensitive diff math. 
+- Disable direct vector access test case when running on non-native
+  endian platform.
+- Update JSON printer test to handle `FLATBUFFERS_PROTOCOL_IS_BE`.
+- Fix emit test case. Incorrect assumption on acceptable null pointer
+  breaks with null pointer conversion. Also add binary check when
+  `FLATBUFFERS_PROTOCOL_IS_BE`.
+- Add binary test case to `json_test` when `FLATBUFFERS_PROTOCOL_IS_BE`.
+- Fix endian sensitive voffset access in json printer.
+- Update `flatc_compat` to reverse acceptance of 'golden' little endian
+  reference buffer when `FLATBUFFERS_PROTOCOL_IS_BE`.
 
 ## [0.3.5a]
 - Fix regression introduced in 0.3.5 that caused double memory free on

@@ -114,6 +114,8 @@ typedef flatbuffers_soffset_t flatcc_builder_ref_t;
  */
 typedef flatbuffers_soffset_t flatcc_builder_vt_ref_t;
 
+typedef flatbuffers_uoffset_t flatcc_builder_identifier_t;
+
 /**
  * Hints to custom allocators so they can provide initial alloc sizes
  * etc. There will be at most one buffer for each allocation type per
@@ -164,6 +166,26 @@ enum flatcc_builder_alloc_type {
 
 /** Must reflect the `flatcc_builder_alloc_type` enum. */
 #define FLATCC_BUILDER_ALLOC_BUFFER_COUNT flatcc_builder_alloc_buffer_count
+
+#ifndef FLATCC_BUILDER_ALLOC
+#define FLATCC_BUILDER_ALLOC(n) FLATCC_ALLOC(n)
+#endif
+
+#ifndef FLATCC_BUILDER_FREE
+#define FLATCC_BUILDER_FREE(p) FLATCC_FREE(p)
+#endif
+
+#ifndef FLATCC_BUILDER_REALLOC
+#define FLATCC_BUILDER_REALLOC(p, n) FLATCC_REALLOC(p, n)
+#endif
+
+#ifndef FLATCC_BUILDER_ALIGNED_ALLOC
+#define FLATCC_BUILDER_ALIGNED_ALLOC(a, n) FLATCC_ALIGNED_ALLOC(a, n)
+#endif
+
+#ifndef FLATCC_BUILDER_ALIGNED_FREE
+#define FLATCC_BUILDER_ALIGNED_FREE(p) FLATCC_ALIGNED_FREE(p)
+#endif
 
 /**
  * Emits data to a conceptual deque by appending to either front or
@@ -259,9 +281,12 @@ typedef int flatcc_builder_alloc_fun(void *alloc_context,
 
 typedef struct __flatcc_builder_buffer_frame __flatcc_builder_buffer_frame_t;
 struct __flatcc_builder_buffer_frame {
-    char identifier[FLATBUFFERS_IDENTIFIER_SIZE];
+    flatcc_builder_identifier_t identifier;
     flatcc_builder_ref_t mark;
-    size_t block_align;
+    flatbuffers_uoffset_t vs_end;
+    flatbuffers_uoffset_t nest_id;
+    uint16_t flags;
+    uint16_t block_align;
 };
 
 typedef struct __flatcc_builder_vector_frame __flatcc_builder_vector_frame_t;
@@ -351,8 +376,8 @@ struct flatcc_builder {
     flatcc_builder_alloc_fun *alloc;
     /* Buffers indexed by `alloc_type` */
     flatcc_iovec_t buffers[FLATCC_BUILDER_ALLOC_BUFFER_COUNT];
-    /* Number of slots in ht - 1. */
-    size_t ht_mask;
+    /* Number of slots in ht given as 1 << ht_width. */
+    size_t ht_width;
 
     /* The location in vb to add next cached vtable. */
     flatbuffers_uoffset_t vb_end;
@@ -367,16 +392,22 @@ struct flatcc_builder {
     /* Signed virtual address range used for `flatcc_builder_ref_t` and emitter. */
     flatcc_builder_ref_t emit_start;
     flatcc_builder_ref_t emit_end;
-    /* 0 for top level, and end of buffer ref for nested buffers. */
+    /* 0 for top level, and end of buffer ref for nested buffers (can also be 0). */
     flatcc_builder_ref_t buffer_mark;
+    /* Next nest_id. */
+    flatbuffers_uoffset_t nest_count;
+    /* Unique id to prevent sharing of vtables across buffers. */
+    flatbuffers_uoffset_t nest_id;
     /* Current nesting level. Helpful to state-machines with explicit stack and to check `max_level`. */
     int level;
     /* Aggregate check for allocated frame and max_level. */
     int limit_level;
+    /* Track size prefixed buffer. */
+    uint16_t buffer_flags;
 
     /* Settings that may happen with no frame allocated. */
 
-    char identifier[FLATBUFFERS_IDENTIFIER_SIZE];
+    flatcc_builder_identifier_t identifier;
 
     /* Settings that survive reset (emitter, alloc, and contexts also survive): */
 
@@ -554,6 +585,11 @@ void flatcc_builder_set_max_level(flatcc_builder_t *B, int level);
  */
 void flatcc_builder_set_vtable_clustering(flatcc_builder_t *B, int enable);
 
+enum flatcc_builder_buffer_flags {
+    flatcc_builder_is_nested = 1,
+    flatcc_builder_with_size = 2,
+};
+
 /**
  * An alternative to start buffer, start struct/table ... end buffer.
  *
@@ -574,9 +610,25 @@ void flatcc_builder_set_vtable_clustering(flatcc_builder_t *B, int enable);
  * may return different after the call because it will be updated with
  * the `block_align` argument to `create_buffer` but that is ok).
  *
- * The buffer may be constructed as a nested buffer with `is_nested = 1`
- * or as a top level buffer with `is_nested = 0`. As a nested buffer a
- * ubyte vector header is placed before the block aligned buffer header.
+ * The buffer may be constructed as a nested buffer with the `is_nested
+ * = 1` flag. As a nested buffer a ubyte vector header is placed before
+ * the aligned buffer header. A top-level buffer will normally have
+ * flags set to 0.
+ *
+ * A top-level buffer may also be constructed with the `with_size = 2`
+ * flag for top level buffers. It adds a size prefix similar to
+ * `is_nested` but the size is part of the aligned buffer. A size
+ * prefixed top level buffer must be accessed with a size prefix aware
+ * reader, or the buffer given to a standard reader must point to after
+ * the size field while keeping the buffer aligned to the size field
+ * (this will depend on the readers API which may be an arbitrary other
+ * language).
+ *
+ * If the `with_size` is used with the `is_nested` flag, the size is
+ * added as usual and all fields remain aligned as before, but padding
+ * is adjusted to ensure the buffer is aligned to the size field so
+ * that, for example, the nested buffer with size can safely be copied
+ * to a new memory buffer for consumption.
  *
  * Generally, references may only be used within the same buffer
  * context. With `create_buffer` this becomes less precise. The rule
@@ -599,7 +651,7 @@ void flatcc_builder_set_vtable_clustering(flatcc_builder_t *B, int enable);
 flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
         const char identifier[FLATBUFFERS_IDENTIFIER_SIZE],
         uint16_t block_align,
-        flatcc_builder_ref_t ref, uint16_t align, int is_nested);
+        flatcc_builder_ref_t ref, uint16_t align, int flags);
 
 /**
  * Creates a struct within the current buffer without using any
@@ -616,13 +668,12 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
  * interface without being in a buffer and without being a valid
  * FlatBuffer.
  */
-
 flatcc_builder_ref_t flatcc_builder_create_struct(flatcc_builder_t *B,
         const void *data, size_t size, uint16_t align);
 
 /**
  * Starts a struct and returns a pointer that should be used immediately
- * to fill in the struct in litte endian format, and when done,
+ * to fill in the struct in protocol endian format, and when done,
  * `end_struct` should be called. The returned reference should be used
  * as argument to `end_buffer`. See also `create_struct`.
  */
@@ -682,10 +733,13 @@ flatcc_builder_ref_t flatcc_builder_end_struct(flatcc_builder_t *B);
  * All alignment in all API calls must be between 1 and 256 and must be a
  * power of 2. This is not checked. Only if explicitly documented can it
  * also be 0 for a default value.
+ *
+ * `flags` can be `with_size` but `is_nested` is derived from context
+ * see also `create_buffer`.
  */
 int flatcc_builder_start_buffer(flatcc_builder_t *B,
         const char identifier[FLATBUFFERS_IDENTIFIER_SIZE],
-        uint16_t block_align);
+        uint16_t block_align, int flags);
 
 /**
  * The root object should be a struct or a table to conform to the
@@ -719,9 +773,9 @@ flatcc_builder_ref_t flatcc_builder_end_buffer(flatcc_builder_t *B, flatcc_build
  * `align = 64` and `size = 65` may share its last 64 byte block with
  * other content, but not if `block_align = 64`.
  *
- * Because the ubyte size field is not part of the aligned buffer,
- * significant space can be wasted if multiple blocks are added in
- * sequence with a large block size.
+ * Because the ubyte size field is not, by default, part of the aligned
+ * buffer, significant space can be wasted if multiple blocks are added
+ * in sequence with a large block size.
  *
  * In most cases the distinction between the two alignments is not
  * important, but it allows separate configuration of block internal
@@ -733,10 +787,15 @@ flatcc_builder_ref_t flatcc_builder_end_buffer(flatcc_builder_t *B, flatcc_build
  * emit the buffer through the emit interface, but may also add padding
  * up to block alignment. At top-level there will be no size field
  * header.
+ *
+ * If `with_size` flag is set, the buffer is aligned to size field and
+ * the above note about padding space no longer applies. The size field
+ * is added regardless. The `is_nested` flag has no effect since it is
+ * impplied.
  */
 flatcc_builder_ref_t flatcc_builder_embed_buffer(flatcc_builder_t *B,
         uint16_t block_align,
-        const void *data, size_t size, uint16_t align);
+        const void *data, size_t size, uint16_t align, int flags);
 
 /**
  * Applies to the innermost open buffer. The identifier may be null or
@@ -920,7 +979,7 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
         flatbuffers_voffset_t vt_size, uint32_t vt_hash);
 
 /*
- * Based on Knuts prime multiplier.
+ * Based on Knuth's prime multiplier.
  *
  * This is an incremental hash that is called with id and size of each
  * non-empty field, and finally with the two vtable header fields
@@ -932,9 +991,12 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
 #define FLATCC_BUILDER_INIT_VT_HASH(hash) { (hash) = (uint32_t)0x2f693b52UL; }
 #endif
 #ifndef FLATCC_BUILDER_UPDATE_VT_HASH
-#define FLATCC_BUILDER_UPDATE_VT_HASH(hash, id, offset)\
+#define FLATCC_BUILDER_UPDATE_VT_HASH(hash, id, offset) \
         { (hash) = (((((uint32_t)id ^ (hash)) * (uint32_t)2654435761UL)\
                 ^ (uint32_t)(offset)) * (uint32_t)2654435761UL); }
+#endif
+#ifndef FLATCC_BUILDER_BUCKET_VT_HASH
+#define FLATCC_BUILDER_BUCKET_VT_HASH(hash, width) (((uint32_t)(hash)) >> (32 - (width)))
 #endif
 #endif
 
@@ -949,9 +1011,14 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
 #define FLATCC_BUILDER_INIT_VT_HASH(hash) { (hash) = 5381; }
 #endif
 #ifndef FLATCC_BUILDER_UPDATE_VT_HASH
-#define FLATCC_BUILDER_UPDATE_VT_HASH(hash, id, offset)\
+#define FLATCC_BUILDER_UPDATE_VT_HASH(hash, id, offset) \
         { (hash) = ((((hash) << 5) ^ (id)) << 5) ^ (offset); }
 #endif
+#ifndef FLATCC_BUILDER_BUCKET_VT_HASH
+#define FLATCC_BUILDER_BUCKET_VT_HASH(hash, width) (((1 << (width)) - 1) & (hash))
+#endif
+
+
 
 /**
  * Normally use `start_table` instead of this call.
@@ -1510,7 +1577,10 @@ void *flatcc_builder_finalize_buffer(flatcc_builder_t *B, size_t *size_out);
  * If `size_out` is not null, it is set to the buffer size, or 0 if
  * operation failed.
  *
- * The returned buffer must be deallocated using `free`.
+ * The returned buffer must be deallocated using `aligned_free` which is
+ * implemented via `flatcc_flatbuffers.h`. `free` will usually work but
+ * is not portable to platforms without posix_memalign or C11
+ * aligned_alloc support.
  */
 void *flatcc_builder_finalize_aligned_buffer(flatcc_builder_t *B, size_t *size_out);
 

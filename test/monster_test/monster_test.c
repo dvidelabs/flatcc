@@ -5,6 +5,7 @@
 
 #include "flatcc/support/hexdump.h"
 #include "flatcc/support/elapsed.h"
+#include "../../config/config.h"
 
 /*
  * Convenience macro to deal with long namespace names,
@@ -90,6 +91,39 @@ int verify_empty_monster(void *buffer)
     return 0;
 }
 
+int test_enums(flatcc_builder_t *B)
+{
+    if (ns(neg_enum_neg1) != -12) {
+        printf("neg_enum_neg1 should be -12, was %d\n", ns(neg_enum_neg1));
+        return -1;
+    }
+    if (ns(neg_enum_neg2) != -11) {
+        printf("neg_enum_neg1 should be -11, was %d\n", ns(neg_enum_neg2));
+        return -1;
+    }
+    if (ns(int_enum_int1) != 2) {
+        printf("int_enum_int1 should be 2\n");
+        return -1;
+    }
+    if (ns(int_enum_int2) != 42) {
+        printf("int_enum_int2 should be 42\n");
+        return -1;
+    }
+    if (ns(hex_enum_hexneg) != -2) {
+        printf("enum hexneg should be -2\n");
+        return -1;
+    }
+    if (ns(hex_enum_hex1) != 3) {
+        printf("hex_enum_hex1 should be 3\n");
+        return -1;
+    }
+    if (ns(hex_enum_hex2) != INT32_C(0x7eafbeaf)) {
+        printf("hex_enum_hex2 should be 0x7eafbeaf\n");
+        return -1;
+    }
+    return 0;
+}
+
 int test_empty_monster(flatcc_builder_t *B)
 {
     int ret;
@@ -106,7 +140,7 @@ int test_empty_monster(flatcc_builder_t *B)
     root = ns(Monster_end(B));
     flatbuffers_buffer_end(B, root);
 
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
 
     hexdump("empty monster table", buffer, size, stderr);
     if ((ret = verify_empty_monster(buffer))) {
@@ -131,7 +165,7 @@ int test_empty_monster(flatcc_builder_t *B)
     }
 
 done:
-    free(buffer);
+    aligned_free(buffer);
     return ret;
 }
 
@@ -153,7 +187,7 @@ int test_typed_empty_monster(flatcc_builder_t *B)
     flatbuffers_buffer_end(B, root);
 
 
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
 
     hexdump("empty typed monster table", buffer, size, stderr);
 
@@ -210,7 +244,7 @@ int test_typed_empty_monster(flatcc_builder_t *B)
     ret = 0;
 
 done:
-    free(buffer);
+    aligned_free(buffer);
     return ret;
 }
 
@@ -260,7 +294,7 @@ int test_table_with_emptystruct(flatcc_builder_t *B)
 
     ns(with_emptystruct_create_as_root)(B, empty);
 
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
 
     /*
      * We should expect an empty table with a vtable holding
@@ -271,7 +305,7 @@ int test_table_with_emptystruct(flatcc_builder_t *B)
      */
     hexdump("table with empty struct", buffer, size, stderr);
     ret = verify_table_with_emptystruct(buffer);
-    free(buffer);
+    aligned_free(buffer);
 
     return ret;
 }
@@ -383,7 +417,6 @@ int verify_monster(void *buffer)
     nsc(bool_vec_t) bools;
     ns(Stat_table_t) stat;
     int booldata[] = { 0, 1, 1, 0 };
-    size_t offset;
     const uint8_t *inv;
     size_t i;
 
@@ -420,8 +453,7 @@ int verify_monster(void *buffer)
         printf("Position is absent\n");
         return -1;
     }
-    offset = (char *)vec - (char *)buffer;
-    if (offset & 15) {
+    if ((size_t)vec & 15) {
         printf("Force align of Vec3 struct not correct\n");
     }
     /* -3.2f is actually -3.20000005 and not -3.2 due to representation loss. */
@@ -508,16 +540,24 @@ int verify_monster(void *buffer)
         printf("Test4 vector is not the right length.\n");
         return -1;
     }
-    for (i = 0; i < 5; ++i) {
-        test = ns(Test_vec_at(testvec, i));
-        if (testvec_data[i].a != ns(Test_a(test))) {
-            printf("Test4 vec failed at index %d, member a\n", (int)i);
-            return -1;
+    /*
+     * This particular test requires that the in-memory
+     * array layout matches the array layout in the buffer.
+     */
+    if (flatbuffers_is_native_pe()) {
+        for (i = 0; i < 5; ++i) {
+            test = ns(Test_vec_at(testvec, i));
+            if (testvec_data[i].a != ns(Test_a(test))) {
+                printf("Test4 vec failed at index %d, member a\n", (int)i);
+                return -1;
+            }
+            if (testvec_data[i].b != ns(Test_b(test))) {
+                printf("Test4 vec failed at index %d, member a\n", (int)i);
+                return -1;
+            }
         }
-        if (testvec_data[i].b != ns(Test_b(test))) {
-            printf("Test4 vec failed at index %d, member a\n", (int)i);
-            return -1;
-        }
+    } else {
+        printf("SKIPPING DIRECT VECTOR ACCESS WITH NON-NATIVE ENDIAN PROTOCOL\n");
     }
     monsters = ns(Monster_testarrayoftables(monster));
     if (ns(Monster_vec_len(monsters)) != 8) {
@@ -666,7 +706,7 @@ int verify_monster(void *buffer)
     return 0;
 }
 
-int gen_monster(flatcc_builder_t *B)
+int gen_monster(flatcc_builder_t *B, int with_size)
 {
     uint8_t inv[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     ns(Vec3_t) *vec;
@@ -676,8 +716,9 @@ int gen_monster(flatcc_builder_t *B)
     nsc(string_ref_t) name;
     nsc(string_ref_t) strings[3];
     nsc(bool_t)bools[] = { 0, 1, 1, 0 };
-
     flatcc_builder_reset(B);
+
+
 
     /*
      * Some FlatBuffer language interfaces require a string and other
@@ -685,7 +726,11 @@ int gen_monster(flatcc_builder_t *B)
      * is being created. This is not necessary (but possible) here
      * because the flatcc_builder maintains an internal stack.
      */
-    ns(Monster_start_as_root(B));
+    if (with_size) {
+        ns(Monster_start_as_root_with_size(B));
+    } else {
+        ns(Monster_start_as_root(B));
+    }
 
     ns(Monster_hp_add(B, 80));
     vec = ns(Monster_pos_start(B));
@@ -868,9 +913,9 @@ int test_monster(flatcc_builder_t *B)
     size_t size;
     int ret;
 
-    gen_monster(B);
+    gen_monster(B, 0);
 
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
     hexdump("monster table", buffer, size, stderr);
     if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
         printf("Monster buffer failed to verify, got: %s\n", flatcc_verify_error_string(ret));
@@ -878,7 +923,40 @@ int test_monster(flatcc_builder_t *B)
     }
     ret = verify_monster(buffer);
 
-    free(buffer);
+    aligned_free(buffer);
+    return ret;
+}
+
+int test_monster_with_size(flatcc_builder_t *B)
+{
+    void *buffer, *frame;
+    size_t size, size2, esize;
+    int ret;
+
+    gen_monster(B, 1);
+
+    frame = flatcc_builder_finalize_aligned_buffer(B, &size);
+    hexdump("monster table with size", frame, size, stderr);
+    if (((size_t)frame & 15)) {
+        printf("Platform did not provide 16 byte aligned allocation and needs special attention.");
+        printf("buffer address: %x\n", (flatbuffers_uoffset_t)(size_t)frame);
+        return -1;
+    }
+
+    buffer = flatbuffers_read_size_prefix(frame, &size2);
+    esize = size - sizeof(flatbuffers_uoffset_t);
+    if (size2 != esize) {
+        printf("Size prefix has unexpected size, got %i, expected %i\n", (int)size2, (int)esize);
+        return -1;
+    }
+    if ((ret = ns(Monster_verify_as_root(buffer, size2)))) {
+        printf("Monster buffer with size prefix failed to verify, got: %s\n", flatcc_verify_error_string(ret));
+        return -1;
+    }
+    ret = verify_monster(buffer);
+
+    /* Extension in `paligned_alloc.h` */
+    aligned_free(frame);
     return ret;
 }
 
@@ -958,7 +1036,7 @@ int test_sort_find(flatcc_builder_t *B)
 
     ns(Monster_end_as_root(B));
 
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
 
     hexdump("unsorted monster buffer", buffer, size, stderr);
     mon = ns(Monster_as_root(buffer));
@@ -1054,7 +1132,293 @@ int test_sort_find(flatcc_builder_t *B)
     ret = 0;
 
 done:
-    free(buffer);
+    aligned_free(buffer);
+    return ret;
+}
+
+static size_t count_monsters(ns(Monster_vec_t) monsters, const char *name)
+{
+    size_t i;
+    size_t count = 0;
+
+    for (i = ns(Monster_vec_scan)(monsters, name);
+         i != nsc(not_found);
+         i = ns(Monster_vec_scan_ex)(monsters, i + 1, nsc(end), name)) {
+        ++count;
+    }
+
+    return count;
+}
+
+int test_scan(flatcc_builder_t *B)
+{
+    size_t pos;
+    ns(Monster_table_t) mon;
+    ns(Monster_vec_t) monsters;
+    nsc(uint8_vec_t) inv;
+    nsc(string_vec_t) strings;
+    void *buffer;
+    size_t size;
+    uint8_t invdata[] = { 6, 7, 1, 3, 4, 3, 2 };
+    int ret = -1;
+
+    flatcc_builder_reset(B);
+    ns(Monster_start_as_root(B));
+    ns(Monster_name_create_str(B, "MyMonster"));
+    ns(Monster_inventory_create(B, invdata, c_vec_len(invdata)));
+
+    ns(Monster_testarrayofstring_start(B));
+    ns(Monster_testarrayofstring_end(B));
+
+    ns(Monster_testarrayoftables_start(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_name_create_str(B, "TwoFace"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_name_create_str(B, "Joker"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_name_create_str(B, "Gulliver"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_name_create_str(B, "Alice"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_name_create_str(B, "Gulliver"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_end(B));
+
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+    mon = ns(Monster_as_root(buffer));
+    monsters = ns(Monster_testarrayoftables(mon));
+    assert(monsters);
+    inv = ns(Monster_inventory(mon));
+    assert(inv);
+    strings = ns(Monster_testarrayofstring(mon));
+    assert(strings);
+
+    if (1 != ns(Monster_vec_scan(monsters, "Joker"))) {
+        printf("scan_by did not find the Joker\n");
+        goto done;
+    }
+    if (1 != ns(Monster_vec_rscan(monsters, "Joker"))) {
+        printf("rscan_by did not find the Joker\n");
+        goto done;
+    }
+    if (1 != ns(Monster_vec_scan_n(monsters, "Joker3", 5))) {
+        printf("scan_by did not find the Joker with n\n");
+        goto done;
+    }
+    if (1 != ns(Monster_vec_rscan_n(monsters, "Joker3", 5))) {
+        printf("scan_by did not find the Joker with n\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, 2, nsc(end), "Joker"))) {
+        printf("scan_from found Joker past first occurence\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan(monsters, "Jingle"))) {
+        printf("not found not working\n");
+        goto done;
+    }
+    if (0 != ns(Monster_vec_scan(monsters, "TwoFace"))) {
+        printf("TwoFace not found\n");
+        goto done;
+    }
+    if (2 != ns(Monster_vec_scan_by_name(monsters, "Gulliver"))) {
+        printf("Gulliver not found\n");
+        goto done;
+    }
+    if (4 != ns(Monster_vec_rscan_by_name(monsters, "Gulliver"))) {
+        printf("Gulliver not found\n");
+        goto done;
+    }
+    if (4 != ns(Monster_vec_rscan_n_by_name(monsters, "Gulliver42", 8))) {
+        printf("Gulliver not found with n\n");
+        goto done;
+    }
+    if (2 != ns(Monster_vec_rscan_ex_n_by_name(monsters, 1, 3, "Gulliver42", 8))) {
+        printf("Gulliver not found with n\n");
+        goto done;
+    }
+    if (2 != ns(Monster_vec_scan_ex_by_name(monsters, 2, nsc(end), "Gulliver"))) {
+        printf("Gulliver not found starting from Gulliver\n");
+        goto done;
+    }
+    if (2 != ns(Monster_vec_scan_ex_n_by_name(monsters, 2, nsc(end), "Gulliver42", 8))) {
+        printf("Gulliver not found starting from Gulliver\n");
+        goto done;
+    }
+    if (4 != ns(Monster_vec_scan_ex_by_name(monsters, 3, nsc(end), "Gulliver"))) {
+        printf("Another Gulliver not found\n");
+        goto done;
+    }
+
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, 1, 3, "Jingle"))) {
+        printf("not found in subrange not working\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, 1, 3, "TwoFace"))) {
+        printf("subrange doesn't limit low bound\n");
+        goto done;
+    }
+    if (1 != ns(Monster_vec_scan_ex(monsters, 1, 3, "Joker"))) {
+        printf("scan in subrange did not find Joker\n");
+        goto done;
+    }
+    if (2 != ns(Monster_vec_scan_ex_by_name(monsters, 1, 3, "Gulliver"))) {
+        printf("scan in subrange did not find Gulliver\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan_ex_by_name(monsters, 1, 3, "Alice"))) {
+        printf("subrange doesn't limit upper bound in scan\n");
+        goto done;
+    }
+
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex(monsters, 1, 3, "Jingle"))) {
+        printf("not found in subrange not working with rscan\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex(monsters, 1, 3, "TwoFace"))) {
+        printf("subrange doesn't limit lower bound in rscan\n");
+        goto done;
+    }
+    if (1 != ns(Monster_vec_rscan_ex(monsters, 1, 3, "Joker"))) {
+        printf("rscan in subrange did not find Joker\n");
+        goto done;
+    }
+    if (2 != ns(Monster_vec_rscan_ex_by_name(monsters, 1, 3, "Gulliver"))) {
+        printf("rscan in subrange did not find Gulliver\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex_by_name(monsters, 1, 3, "Alice"))) {
+        printf("subrange doesn't limit upper bound in rscan\n");
+        goto done;
+    }
+
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, 0, 0, "TwoFace"))) {
+        printf("TwoFace is found in empty range\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, 0, 0, "Joker"))) {
+        printf("Joker is found in empty range\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, 1, 1, "Joker"))) {
+        printf("Joker is found in another empty range\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_scan_ex(monsters, ns(Monster_vec_len(monsters)), nsc(end), "TwoFace"))) {
+        printf("TwoFace is found in empty range in the end\n");
+        goto done;
+    }
+
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex(monsters, 0, 0, "TwoFace"))) {
+        printf("TwoFace is found in empty range\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex(monsters, 0, 0, "Joker"))) {
+        printf("Joker is found in empty range\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex(monsters, 1, 1, "Joker"))) {
+        printf("Joker is found in another empty range\n");
+        goto done;
+    }
+    if (nsc(not_found) != ns(Monster_vec_rscan_ex(monsters, ns(Monster_vec_len(monsters)), nsc(end), "TwoFace"))) {
+        printf("TwoFace is found in empty range in the end\n");
+        goto done;
+    }
+
+    if (1 != count_monsters(monsters, "Joker")) {
+        printf("number of Jokers is not 1\n");
+        goto done;
+    }
+    if (0 != count_monsters(monsters, "Jingle")) {
+        printf("number of Jingles is not 0\n");
+        goto done;
+    }
+    if (1 != count_monsters(monsters, "TwoFace")) {
+        printf("number of TwoFace is not 1\n");
+        goto done;
+    }
+    if (2 != count_monsters(monsters, "Gulliver")) {
+        printf("number of Gullivers is not 2\n");
+        goto done;
+    }
+
+
+    if (0 != (pos = nsc(uint8_vec_scan(inv, 6)))) {
+        printf("scan not working on first item of inventory\n");
+        goto done;
+    }
+    if (2 != (pos = nsc(uint8_vec_scan(inv, 1)))) {
+        printf("scan not working on middle item of inventory\n");
+        goto done;
+    }
+    if (nsc(not_found) != (pos = nsc(uint8_vec_scan_ex(inv, 3, nsc(end), 1)))) {
+        printf("scan_ex(item+1) not working on middle item of inventory\n");
+        goto done;
+    }
+    if (nsc(not_found) != (pos = nsc(uint8_vec_scan(inv, 5)))) {
+        printf("scan not working for repeating item of inventory\n");
+        goto done;
+    }
+    if (6 != (pos = nsc(uint8_vec_scan(inv, 2)))) {
+        printf("scan not working on last item of inventory\n");
+        goto done;
+    }
+    if (3 != (pos = nsc(uint8_vec_scan(inv, 3)))) {
+        printf("scan not working for repeating item of inventory\n");
+        goto done;
+    }
+    if (3 != (pos = nsc(uint8_vec_scan_ex(inv, 3, nsc(end), 3)))) {
+        printf("scan_ex(item) not working for repeating item of inventory\n");
+        goto done;
+    }
+    if (5 != (pos = nsc(uint8_vec_scan_ex(inv, 4, nsc(end), 3)))) {
+        printf("scan_ex(item+1) not working for repeating item of inventory\n");
+        goto done;
+    }
+    if (5 != (pos = nsc(uint8_vec_rscan(inv, 3)))) {
+        printf("rscan not working for repeating item of inventory\n");
+        goto done;
+    }
+    if (3 != (pos = nsc(uint8_vec_rscan_ex(inv, 1, 4, 3)))) {
+        printf("rscan_ex not working for repeating item of inventory\n");
+        goto done;
+    }
+
+    /* Test that all scan functions are generated for string arrays */
+    nsc(string_vec_scan(strings, "Hello"));
+    nsc(string_vec_scan_ex(strings, 0, nsc(end), "Hello"));
+    nsc(string_vec_scan_n(strings, "Hello", 4));
+    nsc(string_vec_scan_ex_n(strings, 0, nsc(end), "Hello", 4));
+    nsc(string_vec_rscan(strings, "Hello"));
+    nsc(string_vec_rscan_ex(strings, 0, nsc(end), "Hello"));
+    nsc(string_vec_rscan_n(strings, "Hello", 4));
+    nsc(string_vec_rscan_ex_n(strings, 0, nsc(end), "Hello", 4));
+
+#if FLATCC_ALLOW_SCAN_FOR_ALL_FIELDS
+    /* Check for presence of scan for non-key fields */
+    ns(Monster_vec_scan_by_hp(monsters, 13));
+    ns(Monster_vec_scan_ex_by_hp(monsters, 1, nsc(end), 42));
+    ns(Monster_vec_rscan_by_hp(monsters, 1));
+    ns(Monster_vec_rscan_ex_by_hp(monsters, 0, 2, 42));
+#endif
+
+    ret = 0;
+
+done:
+    aligned_free(buffer);
     return ret;
 }
 
@@ -1106,6 +1470,7 @@ int test_clone_slice(flatcc_builder_t *B)
     ns(Monster_ref_t) monster_ref;
     ns(Test_t) *t;
     ns(Test_struct_t) test4;
+    ns(Test_struct_t) elem4;
     void *buffer, *buf2;
     size_t size;
     int ret = -1;
@@ -1124,7 +1489,7 @@ int test_clone_slice(flatcc_builder_t *B)
     ns(Monster_pos_start(B))->x = -42.3f;
 
     ns(Monster_end_as_root(B));
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
     hexdump("clone slice source buffer", buffer, size, stderr);
 
     mon = ns(Monster_as_root(buffer));
@@ -1226,11 +1591,17 @@ int test_clone_slice(flatcc_builder_t *B)
         printf("struct vector test4 not cloned with correct length\n");
         goto done;
     }
-    if (ns(Test_vec_at(test4, 0))->a != 22) {
+    elem4 = ns(Test_vec_at(test4, 0));
+    if (ns(Test_a(elem4)) != 22) {
         printf("elem 0 of test4 not cloned\n");
         goto done;
     }
-    if (ns(Test_vec_at(test4, 1))->a != 44) {
+    if (flatbuffers_is_native_pe() && ns(Test_vec_at(test4, 0))->a != 22) {
+        printf("elem 0 of test4 not cloned, direct access\n");
+        goto done;
+    }
+    elem4 = ns(Test_vec_at(test4, 1));
+    if (ns(Test_a(elem4)) != 44) {
         printf("elem 1 of test4 not cloned\n");
         goto done;
     }
@@ -1239,7 +1610,8 @@ int test_clone_slice(flatcc_builder_t *B)
         printf("sliced struct vec not sliced\n");
         goto done;
     }
-    if (ns(Test_vec_at(test4, 0))->a != 44) {
+    elem4 = ns(Test_vec_at(test4, 0));
+    if (ns(Test_a(elem4)) != 44) {
         printf("sliced struct vec has wrong element\n");
         goto done;
     }
@@ -1253,7 +1625,7 @@ int test_clone_slice(flatcc_builder_t *B)
     ret = 0;
 
 done:
-    free(buffer);
+    aligned_free(buffer);
     return ret;
 }
 
@@ -1273,7 +1645,7 @@ int test_create_add_field(flatcc_builder_t *B)
     ns(Monster_enemy_add(B, 0));
     ns(Monster_end_as_root(B));
 
-    buffer = flatcc_builder_finalize_buffer(B, &size);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
     mon = ns(Monster_as_root(buffer));
     if (ns(Monster_enemy_is_present(mon))) {
         printf("enemy should not be present when adding null\n");
@@ -1286,7 +1658,7 @@ int test_create_add_field(flatcc_builder_t *B)
     }
     ret = 0;
 done:
-    free(buffer);
+    aligned_free(buffer);
     return ret;
 }
 
@@ -1390,6 +1762,121 @@ int test_nested_buffer(flatcc_builder_t *B)
     assert(ns(Monster_name(nested)));
     if (strcmp(ns(Monster_name(nested)), "MyNestedMonster")) {
         printf("got the wrong nested monster\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int test_nested_buffer_first(flatcc_builder_t *B)
+{
+    void *buffer;
+    size_t size;
+    ns(Monster_table_t) mon, nested;
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+    /*
+     * Note:
+     *   ns(Monster_testnestedflatbuffer_start(B));
+     * would start a raw ubyte array so we use start_as_root.
+     *
+     * Here we create the nested buffer first, and the parent
+     * string after so the emitter sees the nested buffer first.
+     */
+    ns(Monster_testnestedflatbuffer_start_as_root(B));
+    ns(Monster_name_create_str(B, "MyNestedMonster"));
+    ns(Monster_testnestedflatbuffer_end_as_root(B));
+    ns(Monster_hp_add(B, 10));
+    ns(Monster_name_create_str(B, "MyMonster"));
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_get_direct_buffer(B, &size);
+    hexdump("nested flatbuffer", buffer, size, stderr);
+
+    mon = ns(Monster_as_root(buffer));
+    if (strcmp(ns(Monster_name(mon)), "MyMonster")) {
+        printf("got the wrong root monster\n");
+        return -1;
+    }
+    /*
+     * Note:
+     *   nested = ns(Monster_testnestedflatbuffer(mon));
+     * would return a raw ubyte vector not a monster.
+     */
+    nested = ns(Monster_testnestedflatbuffer_as_root(mon));
+
+    if (ns(Monster_hp(mon)) != 10) {
+        printf("health points wrong at root monster\n");
+        return -1;
+    }
+
+    assert(ns(Monster_name(nested)));
+    if (strcmp(ns(Monster_name(nested)), "MyNestedMonster")) {
+        printf("got the wrong nested monster\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int test_nested_buffer_using_nest(flatcc_builder_t *B)
+{
+    void *buffer;
+    uint8_t nested_buffer[1024];
+    size_t size, nested_size;
+    ns(Monster_table_t) mon, nested;
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+    ns(Monster_name_create_str(B, "MyNestedMonster"));
+    ns(Monster_mana_add(B, 42));
+    ns(Monster_end_as_root(B));
+
+    nested_size = flatcc_builder_get_buffer_size(B);
+    if (!flatcc_builder_copy_buffer(B, nested_buffer, sizeof(nested_buffer))) {
+        printf("nested buffer copy failed\n");
+        return -1;
+    }
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+    ns(Monster_testnestedflatbuffer_nest(B, nested_buffer, nested_size, 0));
+    ns(Monster_hp_add(B, 10));
+    ns(Monster_name_create_str(B, "MyMonster"));
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_get_direct_buffer(B, &size);
+    hexdump("nested flatbuffer [using _nest()]", buffer, size, stderr);
+
+    mon = ns(Monster_as_root(buffer));
+    if (strcmp(ns(Monster_name(mon)), "MyMonster")) {
+        printf("got the wrong root monster\n");
+        return -1;
+    }
+    /*
+     * Note:
+     *   nested = ns(Monster_testnestedflatbuffer(mon));
+     * would return a raw ubyte vector not a monster.
+     */
+    nested = ns(Monster_testnestedflatbuffer_as_root(mon));
+
+    if (ns(Monster_hp(mon)) != 10) {
+        printf("health points wrong at root monster\n");
+        return -1;
+    }
+
+    assert(ns(Monster_name(nested)));
+    if (strcmp(ns(Monster_name(nested)), "MyNestedMonster")) {
+        printf("got the wrong nested monster\n");
+        return -1;
+    }
+
+    if (ns(Monster_mana(nested)) != 42) {
+        printf("mana points wrong in nested monster\n");
         return -1;
     }
 
@@ -1651,7 +2138,7 @@ int main(int argc, char *argv[])
     }
 #endif
 #if 1
-    if (test_typed_table_with_emptystruct(B)) {
+    if (test_enums(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
@@ -1663,13 +2150,13 @@ int main(int argc, char *argv[])
     }
 #endif
 #if 1
-    if (test_typed_empty_monster(B)) {
+    if (test_monster(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
 #endif
 #if 1
-    if (test_monster(B)) {
+    if (test_monster_with_size(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
@@ -1682,6 +2169,18 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_struct_buffer(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_typed_empty_monster(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_typed_table_with_emptystruct(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
@@ -1723,7 +2222,25 @@ int main(int argc, char *argv[])
     }
 #endif
 #if 1
+    if (test_scan(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
     if (test_nested_buffer(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_nested_buffer_first(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_nested_buffer_using_nest(B)) {
         printf("TEST FAILED\n");
         return -1;
     }

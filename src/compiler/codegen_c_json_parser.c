@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include "codegen_c.h"
 #include "flatcc/flatcc_types.h"
-#include "flatcc/portable/pinttypes.h"
 #include "catalog.h"
 
 /* -DFLATCC_PORTABLE may help if inttypes.h is missing. */
@@ -85,6 +84,21 @@ static int get_dict_suffix_len(dict_entry_t *de, int pos)
         return 0;
     }
     return n - pos - 8;
+}
+
+/*
+ * Returns the length name that reminds if it terminates at the tag
+ * and 0 if it has a suffix.
+ */
+static int get_dict_tag_len(dict_entry_t *de, int pos)
+{
+    int n;
+
+    n = de->len;
+    if (pos + 8 >= n) {
+        return n - pos;
+    }
+    return 0;
 }
 
 /*
@@ -184,6 +198,21 @@ static int split_dict_right(dict_entry_t *dict, int a, int b, int pos)
         ++m;
     }
     return m + 1;
+}
+
+/*
+ * Returns the first index where the tag does not terminate at
+ * [pos..pos+7], or b + 1 if none exists.
+ */
+static int split_dict_descend(dict_entry_t *dict, int a, int b, int pos)
+{
+    while (a <= b) {
+        if (0 < get_dict_suffix_len(&dict[a], pos)) {
+            break;
+        }
+        ++a;
+    }
+    return a;
 }
 
 
@@ -436,7 +465,7 @@ repeat_nested:
         }
         is_vector = 0;
         is_scalar = 0;
-        println(out, "if (flatcc_builder_start_buffer(ctx->ctx, 0, 0)) goto failed;");
+        println(out, "if (flatcc_builder_start_buffer(ctx->ctx, 0, 0, 0)) goto failed;");
     }
     is_offset = !is_scalar && !is_struct && !is_union_type;
 
@@ -451,11 +480,12 @@ repeat_nested:
             println(out, "if (flatcc_builder_start_offset_vector(ctx->ctx)) goto failed;");
         } else {
             println(out,
-                "if (flatcc_builder_start_vector(ctx->ctx, %"PRIszu", %hu, %"PRIszu"ULL)) goto failed;",
-                (size_t)member->size, (short)member->align,
-                (size_t)FLATBUFFERS_COUNT_MAX(member->size));
+                "if (flatcc_builder_start_vector(ctx->ctx, %"PRIu64", %hu, UINT64_C(%"PRIu64"))) goto failed;",
+                (uint64_t)member->size, (short)member->align,
+                (uint64_t)FLATBUFFERS_COUNT_MAX(member->size));
         }
         println(out, "buf = flatcc_json_parser_array_start(ctx, buf, end, &more);");
+        /* Note that we reuse `more` which is safe because it is updated at the end of the main loop. */
         println(out, "while (more) {"); indent();
     }
     if (is_scalar) {
@@ -483,12 +513,12 @@ repeat_nested:
     }
     if (is_struct_container) {
         /* `struct_base` is given as argument to struct parsers. */
-        println(out, "pval = (void *)((size_t)struct_base + %"PRIszu");", (size_t)member->offset);
+        println(out, "pval = (void *)((size_t)struct_base + %"PRIu64");", (uint64_t)member->offset);
     } else if (is_struct && !is_vector) {
         /* Same logic as scalars in tables, but scalars must be tested for default. */
         println(out,
-            "if (!(pval = flatcc_builder_table_add(ctx->ctx, %"PRIu64", %"PRIszu", %hu))) goto failed;",
-            (uint64_t)member->id, (size_t)member->size, (short)member->align);
+            "if (!(pval = flatcc_builder_table_add(ctx->ctx, %"PRIu64", %"PRIu64", %hu))) goto failed;",
+            (uint64_t)member->id, (uint64_t)member->size, (short)member->align);
     }
     if (is_scalar) {
         println(out, "buf = flatcc_json_parser_%s(ctx, (mark = buf), end, &val);", tname_prefix);
@@ -498,7 +528,7 @@ repeat_nested:
         unindent(); println(out, "}");
         if (!is_struct_container && !is_vector) {
 #if !FLATCC_JSON_PARSE_FORCE_DEFAULTS
-            /* We need create check for default value and create table field if not default. */
+            /* We need to create a check for the default value and create a table field if not the default. */
             switch(member->value.type) {
             case vt_bool:
             case vt_uint:
@@ -530,8 +560,8 @@ repeat_nested:
                 return -1;
             }
 #endif
-            println(out, "if (!(pval = flatcc_builder_table_add(ctx->ctx, %"PRIu64", %"PRIszu", %hu))) goto failed;",
-                    (uint64_t)member->id, (size_t)member->size, (short)member->align);
+            println(out, "if (!(pval = flatcc_builder_table_add(ctx->ctx, %"PRIu64", %"PRIu64", %hu))) goto failed;",
+                    (uint64_t)member->id, (uint64_t)member->size, (short)member->align);
 #if !FLATCC_JSON_PARSE_FORCE_DEFAULTS
 #endif
         }
@@ -543,30 +573,14 @@ repeat_nested:
     } else if (is_struct) {
             println(out, "buf = %s_parse_json_struct(ctx, buf, end, pval);", snref.text);
     } else if (is_string) {
-        println(out, "buf = flatcc_json_parser_string_start(ctx, buf, end);");
-        println(out, "buf = flatcc_json_parser_string_part(ctx, (mark = buf), end);");
-        println(out, "if (buf != end && *buf == '\\\"') {"); indent();
-             /* This is fast because it bypasses the builder stack. */
-        println(out, "ref = flatcc_builder_create_string(ctx->ctx, mark, buf - mark);");
-        unindent(); println(out, "} else {"); indent();
-        println(out, "if (flatcc_builder_start_string(ctx->ctx) ||");
-        indent(); indent(); println(out, "0 == flatcc_builder_append_string(ctx->ctx, mark, buf - mark)) goto failed;"); unindent(); unindent();
-        println(out, "while (buf != end && *buf != '\\\"') {"); indent();
-        println(out, "buf = flatcc_json_parser_string_escape(ctx, buf, end, code);");
-        println(out, "if (0 == flatcc_builder_append_string(ctx->ctx, code + 1, code[0])) goto failed;");
-        println(out, "if (end != (buf = flatcc_json_parser_string_part(ctx, (mark = buf), end))) {"); indent();
-        println(out, "if (0 == flatcc_builder_append_string(ctx->ctx, mark, buf - mark)) goto failed;");
-        unindent(); println(out, "}");
-        unindent(); println(out, "}");
-        println(out, "ref = flatcc_builder_end_string(ctx->ctx);");
-        unindent(); println(out, "}");
-        println(out, "buf = flatcc_json_parser_string_end(ctx, buf, end);");
+        println(out, "buf = flatcc_json_parser_build_string(ctx, buf, end, &ref);");
     } else if (is_table) {
         println(out, "buf = %s_parse_json_table(ctx, buf, end);", snref.text);
+        println(out, "if (buf == end) goto failed;");
         println(out, "ref = flatcc_builder_end_table(ctx->ctx);");
     } else if (is_union) {
-        println(out, "buf = flatcc_json_parser_union(ctx, buf, end, %"PRIszu", %"PRIu64", %s_parse_json_union);",
-                (size_t)member->export_index, member->id, snref.text);
+        println(out, "buf = flatcc_json_parser_union(ctx, buf, end, %"PRIu64", %"PRIu64", %s_parse_json_union);",
+                (uint64_t)member->export_index, member->id, snref.text);
     } else if (is_union_type) {
         println(out, "static flatcc_json_parser_integral_symbol_f *symbolic_parsers[] = {");
         indent(); indent();
@@ -574,8 +588,8 @@ repeat_nested:
         println(out, "%s_local_%sjson_parser_enum,", out->S->basename, scope_name);
         println(out, "%s_global_json_parser_enum, 0 };", out->S->basename);
         unindent(); unindent();
-        println(out, "buf = flatcc_json_parser_union_type(ctx, buf, end, %"PRIszu", %"PRIu64", symbolic_parsers, %s_parse_json_union);",
-                (size_t)member->export_index, member->id, snref.text);
+        println(out, "buf = flatcc_json_parser_union_type(ctx, buf, end, %"PRIu64", %"PRIu64", symbolic_parsers, %s_parse_json_union);",
+                (uint64_t)member->export_index, member->id, snref.text);
     } else if (!is_vector) {
         gen_panic(out, "internal error: unexpected type for trie member\n");
         return -1;
@@ -637,7 +651,7 @@ static void gen_enum_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     case fb_ushort:
     case fb_uint:
     case fb_ulong:
-        println(out, "*value = %"PRIu64", *value_sign = 0;",
+        println(out, "*value = UINT64_C(%"PRIu64"), *value_sign = 0;",
                 member->value.u);
         break;
     case fb_byte:
@@ -645,9 +659,9 @@ static void gen_enum_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     case fb_int:
     case fb_long:
         if (member->value.i < 0) {
-            println(out, "*value = %"PRIu64", *value_sign = 1;", member->value.i);
+            println(out, "*value = UINT64_C(%"PRIu64"), *value_sign = 1;", member->value.i);
         } else {
-            println(out, "*value = %"PRIu64", *value_sign = 0;", member->value.i);
+            println(out, "*value = UINT64_C(%"PRIu64"), *value_sign = 0;", member->value.i);
         }
         break;
     default:
@@ -756,6 +770,7 @@ struct trie {
     fb_compound_type_t *ct;
     int type;
     int union_total;
+    int label;
 };
 
 /*
@@ -795,8 +810,12 @@ struct trie {
  * comparision. We need no special code for this, assuming the function
  * is called correctly. This significantly reduces the branching in a
  * case like "Red, Green, Blue".
+ *
+ * If `label` is positive, it is used to jump to additional match logic
+ * when a prefix was not matched. If 0 there is no additional logic and
+ * the symbol is considered unmatched immediately.
  */
-static void gen_prefix_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
+static void gen_prefix_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos, int label)
 {
     int m, n;
     uint64_t tag = 00, mask = 0;
@@ -819,31 +838,80 @@ static void gen_prefix_trie(fb_output_t *out, trie_t *trie, int a, int b, int po
     if (m == a) {
         /* There can be only one. */
         trie->gen_match(out, trie->ct, trie->dict[m].data, trie->dict[m].hint, n);
-        trie->gen_unmatched(out);
+        if (label > 0) {
+            println(out, "goto pfguard%d;", label);
+        } else {
+            trie->gen_unmatched(out);
+        }
         unindent(); println(out, "}");
         unindent(); println(out, "} else { /* \"%.*s\" */", len, name); indent();
-        trie->gen_unmatched(out);
+        if (label > 0) {
+            println(out, "goto pfguard%d;", label);
+        } else {
+            trie->gen_unmatched(out);
+        }
     } else {
         if (m == b) {
             trie->gen_match(out, trie->ct, trie->dict[m].data, trie->dict[m].hint, n);
-            trie->gen_unmatched(out);
+            if (label > 0) {
+                println(out, "goto pfguard%d;", label);
+            } else {
+                trie->gen_unmatched(out);
+            }
             unindent(); println(out, "}");
         } else {
-            gen_prefix_trie(out, trie, m, b, pos);
+            gen_prefix_trie(out, trie, m, b, pos, label);
         }
         unindent(); println(out, "} else { /* \"%.*s\" */", len, name); indent();
-        gen_prefix_trie(out, trie, a, m - 1, pos);
+        gen_prefix_trie(out, trie, a, m - 1, pos, label);
     }
     unindent(); println(out, "} /* \"%.*s\" */", len, name);
 }
 
 static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
 {
-    int x, y, k;
+    int x, k;
     uint64_t tag = 0, mask = 0;
-    const char *name;
-    int len = 0, n, has_prefix_key = 0;
+    const char *name = "";
+    int len = 0, has_prefix_key = 0, prefix_guard = 0, has_descend;
+    int label = 0;
 
+    /*
+     * Process a trie at the level given by pos. A single level covers
+     * one tag.
+     *
+     * A tag is a range of 8 characters [pos..pos+7] that is read as a
+     * single big endian word and tested as against a ternary trie
+     * generated in code. In generated code the tag is stored in "w".
+     *
+     * Normally trailing data in a tag is not a problem
+     * because the difference between two keys happen in the middle and
+     * trailing data is not valid key material. When the difference is
+     * at the end, we get a lot of special cases to handle.
+     *
+     * Regardless, when we believe we have a match, a final check is
+     * made to ensure that the next character after the match is not a
+     * valid key character - for quoted keys a valid termiantot is a
+     * quote, for unquoted keys it can be one of several characters -
+     * therefore quoted keys are faster to parse, even if they consume
+     * more space. The trie does not care about these details, the
+     * gen_match function handles this transparently for different
+     * symbol types.
+     */
+
+
+    /*
+    * If we have one or two keys that terminate in this tag, there is no
+    * need to do a branch test before matching exactly.
+    *
+    * We observe that `gen_prefix_trie` actually handles this
+    * case well, even though it was not designed for it.
+    */
+    if ((get_dict_suffix_len(&trie->dict[a], pos) == 0) &&
+        (b == a || (b == a + 1 && get_dict_suffix_len(&trie->dict[b], pos) == 0))) {
+        gen_prefix_trie(out, trie, a, b, pos, 0);
+        return;
+    }
 
     /*
      * Due trie nature, we have a left, middle, and right range where
@@ -851,124 +919,118 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
      * when masked against shortest (and first) key in middle range.
      */
     x = split_dict_left(trie->dict, a, b, pos);
-    y = split_dict_right(trie->dict, a, b, pos);
 
-    if (x == a) {
-        if (y > b) {
-            /*
-             * It is very likely that this is just a single element `a
-             * == b` and that we essentially have our match now. But it
-             * is not a given, it is a special case of the following:
-             *
-             * The keys are consequtively prefixes like `a, alpha,
-             * alphabeta, ...` and nothing to distinguish them except
-             * length and the guarantee the trailing syntax will not
-             * conflict with a valid key.
-             *
-             * The prefixes are identical before pos, and may or may not
-             * all be identical at pos through pos + 7 inclusive.
-             * We match the range of keys that share prefixes and
-             * terminate at pos + 8 or before using the
-             * `gen_prefix_trie`, and we match any keys with longer
-             * prefixes using this `gen_trie` function with a shifted
-             * position. `gen_prefix_trie` is also used to handle
-             * single key ranges that must be finally accepted or
-             * rejected, and incidentally also optimizes special case
-             * of two keys that terminate in same tag.
-             */
-
-            /*
-             * Some keys may be at most `pos + 8`, but not necessarily
-             * all. We must identify the first with a suffix.
-             */
-            k = get_dict_suffix_len(&trie->dict[x], pos);
-            while (x != b && !k) {
-                ++x;
-                k = get_dict_suffix_len(&trie->dict[x], pos);
-            }
-            if (!k) {
-                /*
-                 * The typical a == b single key match,
-                 * or all keys that share prefix and end within
-                 * the current tag range
-                 */
-                gen_prefix_trie(out, trie, a, b, pos);
-                return;
-            }
-            get_dict_tag(&trie->dict[x], pos, &tag, &mask, &name, &len);
-            /*
-             * Test for special case where prefix [pos..pos+8) is also a
-             * key. We cannot branch on any tag and need a decision on
-             * terminal symbol which depends the on the customizable
-             * match logic. For this reason the match function ends with
-             * an open else branch which can either place unmatched in,
-             * or a sub trie.
-             */
-            has_prefix_key = 0;
-            if (a != x) {
-                n = get_dict_tag(&trie->dict[x - 1], pos, &tag, &mask, &name, &len);
-                if (n == 8) {
-                    has_prefix_key = 1;
-                }
-            }
-            /* `x` is now the smallest key that has a suffix at pos + 8.
-             * 'x - 1` may be a prefix key of [x..b]. */
-            println(out, "if (w == 0x%"PRIx64") { /* prefix \"%.*s\" */",
-                    tag, len, name); indent();
-            if (has_prefix_key) {
-                    println(out, "/* prefix key \"%.*s\" */", len, name);
-                    trie->gen_match(out, trie->ct, trie->dict[x - 1].data, trie->dict[x - 1].hint, n);
-
-                    println(out, "/* prefix key suffix branch \"%.*s\" */", len, name);
-            }
-            println(out, "buf += 8;");
-            println(out, "w = flatcc_json_parser_symbol_part(buf, end);");
-            gen_trie(out, trie, x, b, pos + 8);
-            if (has_prefix_key) {
-                unindent(); println(out, "} /* prefix key suffix branch \"%.*s\" */", len, name);
-                --x;
-            }
-            unindent(); println(out, "} else { /* prefix \"%.*s\" */", len, name); indent();
-            if (a < x) {
-                gen_prefix_trie(out, trie, a, x - 1, pos);
-            } else {
-                trie->gen_unmatched(out);
-            }
-            unindent(); println(out, "} /* prefix \"%.*s\" */", len, name);
-            return;
-        }
+    if (x > a) {
         /*
-         * The intersection has moved to the head or the key range
-         * because of shared prefixes, so branch on the end of the
-         * shared prefix range. We know that there is content
-         * after that because we just checked for that in the above.
+         * This is normal early branch with a key `a < x < b` such that
+         * any shared prefix ranges do not span x.
          */
-        x = y;
-    }
-
-    /*
-     * This is normal early branch with a key `a < x < b` such that
-     * any shared prefix ranges do not span x.
-     */
-    k = get_dict_suffix_len(&trie->dict[x], pos);
-    if (!k && b == a + 1) {
-        /*
-        * If we have two keys that terminate in this tag, there is no
-        * need to do a branch test before matching exactly.
-        *
-        * We observe that `gen_prefix_trie` actually handles this
-        * case well, even though it was not designed for it.
-        */
-        gen_prefix_trie(out, trie, a, b, pos);
+        get_dict_tag(&trie->dict[x], pos, &tag, &mask, &name, &len);
+        println(out, "if (w < 0x%"PRIx64") { /* branch \"%.*s\" */", tag, len, name); indent();
+        gen_trie(out, trie, a, x - 1, pos);
+        unindent(); println(out, "} else { /* branch \"%.*s\" */", len, name); indent();
+        gen_trie(out, trie, x, b, pos);
+        unindent(); println(out, "} /* branch \"%.*s\" */", len, name);
         return;
     }
-    get_dict_tag(&trie->dict[x], pos, &tag, &mask, &name, &len);
-    println(out, "if (w < 0x%"PRIx64") { /* branch \"%.*s\" */", tag, len, name); indent();
-    gen_trie(out, trie, a, x - 1, pos);
-    unindent(); println(out, "} else { /* branch \"%.*s\" */", len, name); indent();
-    gen_trie(out, trie, x, b, pos);
-    unindent(); println(out, "} /* branch \"%.*s\" */", len, name);
+    x = split_dict_right(trie->dict, a, b, pos);
+
+    /*
+     * [a .. x-1] is a non-empty sequence of prefixes,
+     * for example { a123, a1234, a12345 }.
+     * The keys might not terminate in the current tag. To find those
+     * that do, we will evaluate k such that:
+     * [a .. k-1] are prefixes that terminate in the current tag if any
+     * such exists.
+     * [x..b] are keys that are prefixes up to at least pos + 7 but
+     * do not terminate in the current tag.
+     * [k..x-1] are prefixes that do not termiante in the current tag.
+     * Note that they might not be prefixes when considering more than the
+     * current tag.
+     * The range [a .. x-1] can ge generated with `gen_prefix_trie`.
+     *
+     * We generally have the form
+     *
+     * [a..b] =
+     * (a)<prefixes>, (k-1)<descend-prefix>, (k)<descend>, (x)<reminder>
+     *
+     * Where <prefixes> are keys that terminate at the current tag.
+     * <descend> are keys that have the prefixes as prefix but do not
+     * terminate at the current tag.
+     * <descend-prerfix> is a single key that terminates exactly
+     * where the tag ends. If there are no descend keys it is part of
+     * prefixes, otherwise it is tested as a special case.
+     * <reminder> are any keys larger than the prefixes.
+     *
+     * The reminder keys cannot be tested before we are sure that no
+     * prefix is matching at least no prefixes that is not a
+     * descend-prefix. This is because less than comparisons are
+     * affected by trailing data within the tag caused by prefixes
+     * terminating early. Trailing data is not a problem if two keys are
+     * longer than the point where they differ even if they terminate
+     * within the current tag.
+     *
+     * Thus, if we have non-empty <descend> and non-empty <reminder>,
+     * the reminder must guard against any matches in prefix but not
+     * against any matches in <descend>. If <descend> is empty and
+     * <prefixes> == <descend-prefix> a guard is also not needed.
+     */
+
+    /* Find first prefix that does not terminate at the current level, or x if absent */
+    k = split_dict_descend(trie->dict, a, x - 1, pos);
+    has_descend = k < x;
+
+    /* If we have a descend, process that in isolation. */
+    if (has_descend) {
+        has_prefix_key = k > a && get_dict_tag_len(&trie->dict[k - 1], pos) == 8;
+        get_dict_tag(&trie->dict[k], pos, &tag, &mask, &name, &len);
+        println(out, "if (w == 0x%"PRIx64") { /* descend \"%.*s\" */", tag, len, name); indent();
+        if (has_prefix_key) {
+            /* We have a key that terminates at the descend prefix. */
+            println(out, "/* descend prefix key \"%.*s\" */", len, name);
+            trie->gen_match(out, trie->ct, trie->dict[k - 1].data, trie->dict[k - 1].hint, 8);
+            println(out, "/* descend suffix \"%.*s\" */", len, name);
+        }
+        println(out, "buf += 8;");
+        println(out, "w = flatcc_json_parser_symbol_part(buf, end);");
+        gen_trie(out, trie, k, x - 1, pos + 8);
+        if (has_prefix_key) {
+            unindent(); println(out, "} /* desend suffix \"%.*s\" */", len, name);
+            /* Here we move the <descend-prefix> key out of the <descend> range. */
+            --k;
+        }
+        unindent(); println(out, "} else { /* descend \"%.*s\" */", len, name); indent();
+    }
+    prefix_guard = a < k && x <= b;
+    if (prefix_guard) {
+        label = ++trie->label;
+    }
+    if (a < k) {
+        gen_prefix_trie(out, trie, a, k - 1, pos, label);
+    }
+    if (prefix_guard) {
+        /* All prefixes tested, but none matched. */
+        println(out, "goto endpfguard%d;", label);
+        margin();
+        println(out, "pfguard%d:", label);
+        unmargin();
+    }
+    if (x <= b) {
+        gen_trie(out, trie, x, b, pos);
+    } else {
+        trie->gen_unmatched(out);
+    }
+    if (prefix_guard) {
+        margin();
+        println(out, "endpfguard%d:", label);
+        unmargin();
+        println(out, "(void)0;");
+    }
+    if (has_descend) {
+        unindent(); println(out, "} /* descend \"%.*s\" */", len, name);
+    }
 }
+
 
 /*
  * Parsing symbolic constants:
@@ -1102,9 +1164,8 @@ static int gen_global_scope_parser(fb_output_t *out)
     println(out, "{"); indent();
     if (n == 0) {
         println(out, "/* Global scope has no enum / union types to look up. */");
-        println(out, "*more = 0;");
         println(out, "return buf; /* unmatched; */");
-        println(out, "");
+        unindent(); println(out, "}");
     } else {
         println(out, "const char *unmatched = buf;");
         println(out, "const char *mark;");
@@ -1287,16 +1348,13 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
         println(out, "flatcc_builder_ref_t ref, *pref;");
         println(out, "const char *mark;");
         println(out, "uint64_t w;");
-        // TODO: only if we have strings, better yet, place escape loop in
-        // flatcc_json.h
-        println(out, "flatcc_json_parser_escape_buffer_t code;");
     }
     println(out, "");
 
-    println(out, "if (flatcc_builder_start_table(ctx->ctx, %"PRIszu")) goto failed;",
+    println(out, "if (flatcc_builder_start_table(ctx->ctx, %"PRIu64")) goto failed;",
         ct->count);
     if (trie.union_total) {
-        println(out, "if (end == flatcc_json_parser_prepare_unions(ctx, buf, end, %"PRIszu")) goto failed;", (size_t)trie.union_total);
+        println(out, "if (end == flatcc_json_parser_prepare_unions(ctx, buf, end, %"PRIu64")) goto failed;", (uint64_t)trie.union_total);
     }
     println(out, "buf = flatcc_json_parser_object_start(ctx, buf, end, &more);");
     println(out, "while (more) {"); indent();
@@ -1395,7 +1453,7 @@ static int gen_union_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "if(!(ref = flatcc_builder_end_table(ctx->ctx))) goto failed;");
     println(out, "if (!(pref = flatcc_builder_table_add_offset(ctx->ctx, id))) goto failed;");
     println(out, "*pref = ref;");
-    println(out, "if (!(ptype = flatcc_builder_table_add(ctx->ctx, id - 1, 1, 1))) goto failed;");
+    println(out, "if (!(ptype = (uint8_t *)flatcc_builder_table_add(ctx->ctx, id - 1, 1, 1))) goto failed;");
     println(out, "*ptype = type;");
     unindent(); println(out, "}");
     println(out, "return buf;");
@@ -1438,10 +1496,10 @@ static int gen_root_table_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "ctx = ctx ? ctx : &parser;");
     println(out, "flatcc_json_parser_init(ctx, B, buf, buf + bufsiz, flags);");
     if (out->S->file_identifier.type == vt_string) {
-        println(out, "if (flatcc_builder_start_buffer(B, \"%.*s\", 0)) return -1;",
+        println(out, "if (flatcc_builder_start_buffer(B, \"%.*s\", 0, 0)) return -1;",
         out->S->file_identifier.s.len, out->S->file_identifier.s.s);
     } else {
-        println(out, "if (flatcc_builder_start_buffer(B, 0, 0)) return -1;");
+        println(out, "if (flatcc_builder_start_buffer(B, 0, 0, 0)) return -1;");
     }
     println(out, "%s_parse_json_table(ctx, buf, buf + bufsiz);", snt.text);
     println(out, "if (ctx->error) {"); indent();
@@ -1474,10 +1532,10 @@ static int gen_root_struct_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "ctx = ctx ? ctx : &ctx_;");
     println(out, "flatcc_json_parser_init(ctx, B, buf, buf + bufsiz, flags);");
     if (out->S->file_identifier.type == vt_string) {
-        println(out, "if (flatcc_builder_start_buffer(B, \"%.*s\", 0)) return -1;",
+        println(out, "if (flatcc_builder_start_buffer(B, \"%.*s\", 0, 0)) return -1;",
         out->S->file_identifier.s.len, out->S->file_identifier.s.s);
     } else {
-        println(out, "if (flatcc_builder_start_buffer(B, 0, 0)) return -1;");
+        println(out, "if (flatcc_builder_start_buffer(B, 0, 0, 0)) return -1;");
     }
     println(out, "buf = %s_parse_json_struct(ctx, buf, buf + bufsiz);", snt.text);
     println(out, "if (ctx->error) {"); indent();

@@ -78,7 +78,7 @@ const char *flatcc_json_parser_error_string(int err);
  */
 typedef struct flatcc_json_parser_ctx flatcc_json_parser_t;
 struct flatcc_json_parser_ctx {
-    void *ctx;
+    flatcc_builder_t *ctx;
     const char *line_start;
     int flags;
 #if FLATCC_JSON_PARSE_ALLOW_UNQUOTED
@@ -151,6 +151,13 @@ static inline const char *flatcc_json_parser_string_end(flatcc_json_parser_t *ct
     return ++buf;
 }
 
+/*
+ * Creates a string. Returns *ref == 0 on unrecoverable error or
+ * sets *ref to a valid new string reference.
+ */
+const char *flatcc_json_parser_build_string(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, flatcc_builder_ref_t *ref);
+
 typedef char flatcc_json_parser_escape_buffer_t[4];
 /*
  * If the buffer does not hold a valid escape sequence, an error is
@@ -186,7 +193,9 @@ static inline const char *flatcc_json_parser_symbol_start(flatcc_json_parser_t *
     }
     if (*buf == '\"') {
         ++buf;
+#if FLATCC_JSON_PARSE_ALLOW_UNQUOTED
         ctx->unquoted = 0;
+#endif
     } else {
 #if FLATCC_JSON_PARSE_ALLOW_UNQUOTED
         if (*buf == '.') {
@@ -327,7 +336,11 @@ static inline const char *flatcc_json_parser_symbol_end(flatcc_json_parser_t *ct
 static inline const char *flatcc_json_parser_constant_start(flatcc_json_parser_t *ctx, const char *buf, const char *end)
 {
     buf = flatcc_json_parser_symbol_start(ctx, buf, end);
+#if FLATCC_JSON_PARSE_ALLOW_UNQUOTED
     if (!ctx->unquoted) {
+#else
+    {
+#endif
         buf = flatcc_json_parser_space(ctx, buf, end);
     }
     return buf;
@@ -336,12 +349,13 @@ static inline const char *flatcc_json_parser_constant_start(flatcc_json_parser_t
 static inline const char *flatcc_json_parser_object_start(flatcc_json_parser_t *ctx, const char *buf, const char *end, int *more)
 {
     if (buf == end || *buf != '{') {
+        *more = 0;
         return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_expected_object);
     }
     buf = flatcc_json_parser_space(ctx, buf + 1, end);
     if (buf != end && *buf == '}') {
         *more = 0;
-        buf = flatcc_json_parser_space(ctx, buf + 1, end);
+        return flatcc_json_parser_space(ctx, buf + 1, end);
     }
     *more = 1;
     return buf;
@@ -381,12 +395,13 @@ static inline const char *flatcc_json_parser_object_end(flatcc_json_parser_t *ct
 static inline const char *flatcc_json_parser_array_start(flatcc_json_parser_t *ctx, const char *buf, const char *end, int *more)
 {
     if (buf == end || *buf != '[') {
+        *more = 0;
         return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_expected_array);
     }
     buf = flatcc_json_parser_space(ctx, buf + 1, end);
     if (buf != end && *buf == ']') {
         *more = 0;
-        buf = flatcc_json_parser_space(ctx, buf + 1, end);
+        return flatcc_json_parser_space(ctx, buf + 1, end);
     }
     *more = 1;
     return buf;
@@ -396,7 +411,11 @@ static inline const char *flatcc_json_parser_array_end(flatcc_json_parser_t *ctx
         const char *end, int *more)
 {
     buf = flatcc_json_parser_space(ctx, buf, end);
-    if (buf != end && *buf != ',') {
+    if (buf == end) {
+        *more = 0;
+        return buf;
+    }
+    if (*buf != ',') {
         *more = 0;
         if (*buf != ']') {
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_unbalanced_array);

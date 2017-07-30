@@ -31,10 +31,10 @@ FLATCC_BUILD_GEN=${FLATCC_BUILD_GEN:-Ninja}
 
 echo "initializing build for CMake $FLATCC_BUILD_GEN"
 
-mkdir -p ${ROOT}/build/Debug/*
+mkdir -p ${ROOT}/build/Debug
 mkdir -p ${ROOT}/build/Release
 rm -rf ${ROOT}/build/Debug/*
-rm -rf ${ROOT}/build/Debug/*
+rm -rf ${ROOT}/build/Release/*
 
 cd ${ROOT}/build/Debug && cmake -G "$FLATCC_BUILD_GEN" ../.. -DCMAKE_BUILD_TYPE=Debug
 cd ${ROOT}/build/Release && cmake -G "$FLATCC_BUILD_GEN" ../.. -DCMAKE_BUILD_TYPE=Release

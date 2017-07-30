@@ -21,6 +21,10 @@
 #include "flatcc/flatcc_builder.h"
 #include "flatcc/flatcc_emitter.h"
 
+#ifndef aligned_free
+#define aligned_free free
+#endif
+
 /*
  * `check` is designed to handle incorrect use errors that can be
  * ignored in production of a tested product.
@@ -32,7 +36,7 @@
 #if FLATCC_BUILDER_ASSERT_ON_ERROR
 #define check(cond, reason) FLATCC_BUILDER_ASSERT(cond, reason)
 #else
-#define check(cond) ((void)0)
+#define check(cond, reason) ((void)0)
 #endif
 
 #if FLATCC_BUILDER_SKIP_CHECKS
@@ -65,6 +69,7 @@ const uint8_t flatcc_builder_padding_base[512] = { 0 };
 
 #define store_uoffset __flatbuffers_uoffset_cast_to_pe
 #define store_voffset  __flatbuffers_voffset_cast_to_pe
+#define store_identifier __flatbuffers_uoffset_cast_to_pe
 
 #define field_size sizeof(uoffset_t)
 #define max_offset_count FLATBUFFERS_COUNT_MAX(field_size)
@@ -80,7 +85,7 @@ struct vtable_descriptor {
     /* Where the vtable is emitted. */
     flatcc_builder_ref_t vt_ref;
     /* Which buffer it was emitted to. */
-    flatcc_builder_ref_t buffer_mark;
+    uoffset_t nest_id;
     /* Where the vtable is cached. */
     uoffset_t vb_start;
     /* Hash table collision chain. */
@@ -112,7 +117,7 @@ int flatcc_builder_default_alloc(void *alloc_context, iovec_t *b, size_t request
 
     if (request == 0) {
         if (b->iov_base) {
-            free(b->iov_base);
+            FLATCC_BUILDER_FREE(b->iov_base);
             b->iov_base = 0;
             b->iov_len = 0;
         }
@@ -148,7 +153,7 @@ int flatcc_builder_default_alloc(void *alloc_context, iovec_t *b, size_t request
         /* Add hysteresis to shrink. */
         return 0;
     }
-    if (!(p = realloc(b->iov_base, n))) {
+    if (!(p = FLATCC_BUILDER_REALLOC(b->iov_base, n))) {
         return -1;
     }
     /* Realloc might also shrink. */
@@ -174,10 +179,10 @@ int flatcc_builder_default_alloc(void *alloc_context, iovec_t *b, size_t request
 #define table_limit (FLATBUFFERS_VOFFSET_MAX - field_size + 1)
 #define data_limit (FLATBUFFERS_UOFFSET_MAX - field_size + 1)
 
-#define set_identifier(id) memcpy(B->identifier, id ? id : _pad, identifier_size)
+#define set_identifier(id) memcpy(&B->identifier, (id) ? (void *)(id) : (void *)_pad, identifier_size)
 
-/* This also returns true if no buffer has been started. */
-#define is_top_buffer(B) (B->buffer_mark == 0)
+/* Must also return true when no buffer has been started. */
+#define is_top_buffer(B) (B->nest_id == 0)
 
 /*
  * Tables use a stack represention better suited for quickly adding
@@ -328,7 +333,7 @@ static int alloc_ht(flatcc_builder_t *B)
 {
     iovec_t *buf = B->buffers + flatcc_builder_alloc_ht;
 
-    size_t size;
+    size_t size, k;
     /* Allocate null entry so we can check for return errors. */
     assert(B->vd_end == 0);
     if (!reserve_buffer(B, flatcc_builder_alloc_vd, B->vd_end, sizeof(vtable_descriptor_t), 0)) {
@@ -342,7 +347,10 @@ static int alloc_ht(flatcc_builder_t *B)
     while (size * 2 <= buf->iov_len) {
         size *= 2;
     }
-    B->ht_mask = size / field_size - 1;
+    size /= field_size;
+    for (k = 0; (UINT32_C(1) << k) < size; ++k) {
+    }
+    B->ht_width = k;
     return 0;
 }
 
@@ -350,20 +358,21 @@ static inline uoffset_t *lookup_ht(flatcc_builder_t *B, uint32_t hash)
 {
     uoffset_t *T;
 
-    if (B->ht_mask == 0) {
+    if (B->ht_width == 0) {
         if (alloc_ht(B)) {
             return 0;
         }
     }
     T = B->buffers[flatcc_builder_alloc_ht].iov_base;
-    return &T[hash & B->ht_mask];
+
+    return &T[FLATCC_BUILDER_BUCKET_VT_HASH(hash, B->ht_width)];
 }
 
 void flatcc_builder_flush_vtable_cache(flatcc_builder_t *B)
 {
     iovec_t *buf = B->buffers + flatcc_builder_alloc_ht;
 
-    if (B->ht_mask == 0) {
+    if (B->ht_width == 0) {
         return;
     }
     memset(buf->iov_base, 0, buf->iov_len);
@@ -433,6 +442,8 @@ int flatcc_builder_custom_reset(flatcc_builder_t *B, int set_defaults, int reduc
     B->limit_level = 0;
     B->ds_offset = 0;
     B->ds_limit = 0;
+    B->nest_count = 0;
+    B->nest_id = 0;
     /* Needed for correct offset calculation. */
     B->ds = B->buffers[flatcc_builder_alloc_ds].iov_base;
     B->pl = B->buffers[flatcc_builder_alloc_pl].iov_base;
@@ -528,7 +539,8 @@ static int enter_frame(flatcc_builder_t *B, uint16_t align)
         if (B->max_level > 0 && B->level > B->max_level) {
             return -1;
         }
-        if (!(B->frame = reserve_buffer(B, flatcc_builder_alloc_fs, B->level * frame_size, frame_size, 0))) {
+        if (!(B->frame = reserve_buffer(B, flatcc_builder_alloc_fs,
+                        (B->level - 1) * frame_size, frame_size, 0))) {
             return -1;
         }
         B->limit_level = (int)(B->buffers[flatcc_builder_alloc_fs].iov_len / frame_size);
@@ -666,15 +678,16 @@ static int align_to_block(flatcc_builder_t *B, uint16_t *align, uint16_t block_a
 
 flatcc_builder_ref_t flatcc_builder_embed_buffer(flatcc_builder_t *B,
         uint16_t block_align,
-        const void *data, size_t size, uint16_t align)
+        const void *data, size_t size, uint16_t align, int flags)
 {
     uoffset_t size_field, pad;
     iov_state_t iov;
+    int with_size = flags & flatcc_builder_with_size;
 
     if (align_to_block(B, &align, block_align, !is_top_buffer(B))) {
         return 0;
     }
-    pad = front_pad(B, (uoffset_t)size, align);
+    pad = front_pad(B, (uoffset_t)size + (with_size ? field_size : 0), align);
     size_field = store_uoffset((uoffset_t)size + pad);
     init_iov();
     /* Add ubyte vector size header if nested buffer. */
@@ -686,31 +699,43 @@ flatcc_builder_ref_t flatcc_builder_embed_buffer(flatcc_builder_t *B,
 
 flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
         const char identifier[identifier_size], uint16_t block_align,
-        flatcc_builder_ref_t object_ref, uint16_t align, int is_nested)
+        flatcc_builder_ref_t object_ref, uint16_t align, int flags)
 {
     flatcc_builder_ref_t buffer_ref;
-    uoffset_t header_pad, id_size;
+    uoffset_t header_pad, id_size = 0;
     uoffset_t object_offset, buffer_size, buffer_base;
     iov_state_t iov;
+    flatcc_builder_identifier_t id_out = 0;
+    int is_nested = (flags & flatcc_builder_is_nested) != 0;
+    int with_size = (flags & flatcc_builder_with_size) != 0;
 
     if (align_to_block(B, &align, block_align, is_nested)) {
         return 0;
     }
     set_min_align(B, align);
-    id_size = identifier_size;
-    /* Identifiers are not always present in buffer. */
-    if (!identifier || 0 == memcmp(identifier, _pad, identifier_size)) {
-        id_size = 0;
+    if (identifier) {
+        assert(sizeof(flatcc_builder_identifier_t) == identifier_size);
+        assert(sizeof(flatcc_builder_identifier_t) == field_size);
+        memcpy(&id_out, identifier, identifier_size);
+        id_out = __flatbuffers_thash_cast_from_le(id_out);
+        id_out = store_identifier(id_out);
     }
-    header_pad = front_pad(B, field_size + id_size, align);
+    id_size = id_out ? identifier_size : 0;
+    header_pad = front_pad(B, field_size + id_size + (with_size ? field_size : 0), align);
     init_iov();
     /* ubyte vectors size field wrapping nested buffer. */
-    push_iov_cond(&buffer_size, field_size, is_nested);
+    push_iov_cond(&buffer_size, field_size, is_nested || with_size);
     push_iov(&object_offset, field_size);
-    push_iov(identifier, id_size);
+    /* Identifiers are not always present in buffer. */
+    push_iov(&id_out, id_size);
     push_iov(_pad, header_pad);
-    buffer_base = (uoffset_t)B->emit_start - (uoffset_t)iov.len + (is_nested ? field_size : 0);
-    buffer_size = store_uoffset((uoffset_t)B->buffer_mark - buffer_base);
+    buffer_base = (uoffset_t)B->emit_start - (uoffset_t)iov.len + ((is_nested || with_size) ? field_size : 0);
+    if (is_nested) {
+        buffer_size = store_uoffset((uoffset_t)B->buffer_mark - buffer_base);
+    } else {
+        /* Also include clustered vtables. */
+        buffer_size = store_uoffset((uoffset_t)B->emit_end - buffer_base);
+    }
     object_offset = store_uoffset((uoffset_t)object_ref - buffer_base);
     if (0 == (buffer_ref = emit_front(B, &iov))) {
         check(0, "emitter rejected buffer content");
@@ -738,7 +763,7 @@ flatcc_builder_ref_t flatcc_builder_create_struct(flatcc_builder_t *B, const voi
 }
 
 int flatcc_builder_start_buffer(flatcc_builder_t *B,
-        const char identifier[identifier_size], uint16_t block_align)
+        const char identifier[identifier_size], uint16_t block_align, int flags)
 {
     /*
      * This saves the parent `min_align` in the align field since we
@@ -754,11 +779,20 @@ int flatcc_builder_start_buffer(flatcc_builder_t *B,
     /* Save the parent block align, and set proper defaults for this buffer. */
     frame(buffer.block_align) = B->block_align;
     B->block_align = block_align;
+    frame(buffer.flags = B->buffer_flags);
+    B->buffer_flags = flags;
     frame(buffer.mark) = B->buffer_mark;
-    /* Allow vectors etc. to be constructed before buffer at root level. */
-    B->buffer_mark = B->level == 1 ? 0 : B->emit_start;
-    memcpy(frame(buffer.identifier), B->identifier, identifier_size);
-    memcpy(B->identifier, identifier ? identifier : (const char *)_pad, identifier_size);
+    frame(buffer.nest_id) = B->nest_id;
+    /*
+     * End of buffer when nested. Not defined for top-level because we
+     * here (on only here) permit strings etc. to be created before buffer start and
+     * because top-level buffer vtables can be clustered.
+     */
+    B->buffer_mark = B->emit_start;
+    /* Must be 0 before and after entering top-level buffer, and unique otherwise. */
+    B->nest_id = B->nest_count++;
+    frame(buffer.identifier) = B->identifier;
+    set_identifier(identifier);
     frame(type) = flatcc_builder_buffer;
     return 0;
 }
@@ -766,15 +800,20 @@ int flatcc_builder_start_buffer(flatcc_builder_t *B,
 flatcc_builder_ref_t flatcc_builder_end_buffer(flatcc_builder_t *B, flatcc_builder_ref_t root)
 {
     flatcc_builder_ref_t buffer_ref;
+    int flags;
 
+    flags = B->buffer_flags & flatcc_builder_with_size;
+    flags |= is_top_buffer(B) ? 0 : flatcc_builder_is_nested;
     check(frame(type) == flatcc_builder_buffer, "expected buffer frame");
     set_min_align(B, B->block_align);
-    if (0 == (buffer_ref = flatcc_builder_create_buffer(B, B->identifier,
-            B->block_align, root, B->min_align, !is_top_buffer(B)))) {
+    if (0 == (buffer_ref = flatcc_builder_create_buffer(B, (void *)&B->identifier,
+            B->block_align, root, B->min_align, flags))) {
         return 0;
     }
     B->buffer_mark = frame(buffer.mark);
-    memcpy(B->identifier, frame(buffer.identifier), identifier_size);
+    B->nest_id = frame(buffer.nest_id);
+    B->identifier = frame(buffer.identifier);
+    B->buffer_flags = frame(buffer.flags);
     exit_frame(B);
     return buffer_ref;
 }
@@ -1020,6 +1059,8 @@ flatcc_builder_vt_ref_t flatcc_builder_create_vtable(flatcc_builder_t *B,
 {
     flatcc_builder_vt_ref_t vt_ref;
     iov_state_t iov;
+    voffset_t *vt_;
+    size_t i;
 
     /*
      * Only top-level buffer can cluster vtables because only it can
@@ -1036,7 +1077,26 @@ flatcc_builder_vt_ref_t flatcc_builder_create_vtable(flatcc_builder_t *B,
      * valid reference (which usally means error). It also idententifies
      * vtable references as the only uneven references, and the only
      * references that can be used multiple times in the same buffer.
+     *
+     * We do the vtable conversion here so cached vtables can be built
+     * hashed and compared more efficiently, and so end users with
+     * direct vtable construction don't have to worry about endianness.
+     * This also ensures the hash function works the same wrt.
+     * collision frequency.
      */
+
+    if (!flatbuffers_is_native_pe()) {
+        /* Make space in vtable cache for temporary endian conversion. */
+        if (!(vt_ = reserve_buffer(B, flatcc_builder_alloc_vb, B->vb_end, vt_size, 0))) {
+            return 0;
+        }
+        for (i = 0; i < vt_size / sizeof(voffset_t); ++i) {
+            vt_[i] = store_voffset(vt[i]);
+        }
+        vt = vt_;
+        /* We don't need to free the reservation since we don't advance any base pointer. */
+    }
+
     init_iov();
     push_iov(vt, vt_size);
     if (is_top_buffer(B) && !B->disable_vt_clustering) {
@@ -1065,7 +1125,6 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
     uoffset_t *pvd, *pvd_head;
     uoffset_t next;
     voffset_t *vt_;
-    voffset_t encoded_vt_size;
 
     /* This just gets the hash table slot, we still have to inspect it. */
     if (!(pvd_head = lookup_ht(B, vt_hash))) {
@@ -1075,17 +1134,16 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
     next = *pvd;
     /* Tracks if there already is a cached copy. */
     vd2 = 0;
-    encoded_vt_size = vt[0];
     while (next) {
         vd = vd_ptr(next);
         vt_ = vb_ptr(vd->vb_start);
-        if (vt_[0] != encoded_vt_size || 0 != memcmp(vt, vt_, vt_size)) {
+        if (vt_[0] != vt_size || 0 != memcmp(vt, vt_, vt_size)) {
             pvd = &vd->next;
             next = vd->next;
             continue;
         }
         /* Can't share emitted vtables between buffers, */
-        if (vd->buffer_mark != B->buffer_mark) {
+        if (vd->nest_id != B->nest_id) {
             /* but we don't have to resubmit to cache. */
             vd2 = vd;
             /* See if there is a better match. */
@@ -1095,7 +1153,7 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
         }
         /* Move to front hash strategy. */
         if (pvd != pvd_head) {
-            *pvd = next;
+            *pvd = vd->next;
             vd->next = *pvd_head;
             *pvd_head = next;
         }
@@ -1110,7 +1168,7 @@ flatcc_builder_vt_ref_t flatcc_builder_create_cached_vtable(flatcc_builder_t *B,
     B->vd_end += sizeof(vtable_descriptor_t);
 
     /* Identify the buffer this vtable descriptor belongs to. */
-    vd->buffer_mark = B->buffer_mark;
+    vd->nest_id = B->nest_id;
 
     /* Move to front hash strategy. */
     vd->next = *pvd_head;
@@ -1231,13 +1289,13 @@ flatcc_builder_ref_t flatcc_builder_end_table(flatcc_builder_t *B)
     vt = B->vs - 2;
     vt_size = sizeof(voffset_t) * (B->id_end + 2);
     /* Update vtable header fields, first vtable size, then object table size. */
-    vt[0] = store_voffset(vt_size);
+    vt[0] = vt_size;
     /*
      * The `ds` buffer is always at least `field_size` aligned but excludes the
      * initial vtable offset field. Therefore `field_size` is added here
      * to the total table size in the vtable.
      */
-    vt[1] = store_voffset((voffset_t)B->ds_offset + field_size);
+    vt[1] = (voffset_t)B->ds_offset + field_size;
     FLATCC_BUILDER_UPDATE_VT_HASH(B->vt_hash, (uint32_t)vt[0], (uint32_t)vt[1]);
     /* Find already emitted vtable, or emit a new one. */
     if (!(vt_ref = flatcc_builder_create_cached_vtable(B, vt, vt_size, B->vt_hash))) {
@@ -1468,16 +1526,18 @@ void *flatcc_builder_table_add(flatcc_builder_t *B, int id, size_t size, uint16_
     if (align > B->align) {
         B->align = align;
     }
-    if (B->vs[id] == 0) {
-        FLATCC_BUILDER_UPDATE_VT_HASH(B->vt_hash, (uint32_t)id, (uint32_t)size);
-        return push_ds_field(B, (uoffset_t)size, align, id);
-    } else {
 #if FLATCC_BUILDER_ALLOW_REPEAT_TABLE_ADD
-        check_error(B->vs[id] == 0, 0, "field already set");
-#else
+    if (B->vs[id] != 0) {
         return B->ds + B->vs[id] - field_size;
-#endif
     }
+#else
+    if (B->vs[id] != 0) {
+        check(0, "table field already set");
+        return 0;
+    }
+#endif
+    FLATCC_BUILDER_UPDATE_VT_HASH(B->vt_hash, (uint32_t)id, (uint32_t)size);
+    return push_ds_field(B, (uoffset_t)size, align, id);
 }
 
 void *flatcc_builder_table_edit(flatcc_builder_t *B, size_t size)
@@ -1579,7 +1639,7 @@ void flatcc_builder_set_vtable_cache_limit(flatcc_builder_t *B, size_t size)
 
 void flatcc_builder_set_identifier(flatcc_builder_t *B, const char identifier[identifier_size])
 {
-    memcpy(B->identifier, identifier ? identifier : (const char *)_pad, identifier_size);
+    set_identifier(identifier);
 }
 
 enum flatcc_builder_type flatcc_builder_get_type(flatcc_builder_t *B)
@@ -1629,7 +1689,7 @@ void *flatcc_builder_finalize_buffer(flatcc_builder_t *B, size_t *size_out)
         *size_out = size;
     }
 
-    buffer = malloc(size);
+    buffer = FLATCC_BUILDER_ALLOC(size);
 
     if (!buffer) {
         check(0, "failed to allocated memory for finalized buffer");
@@ -1637,7 +1697,7 @@ void *flatcc_builder_finalize_buffer(flatcc_builder_t *B, size_t *size_out)
     }
     if (!flatcc_builder_copy_buffer(B, buffer, size)) {
         check(0, "default emitter declined to copy buffer");
-        free(buffer);
+        FLATCC_BUILDER_FREE(buffer);
         buffer = 0;
     }
 done:
@@ -1660,18 +1720,14 @@ void *flatcc_builder_finalize_aligned_buffer(flatcc_builder_t *B, size_t *size_o
     }
     align = flatcc_builder_get_buffer_alignment(B);
 
-#ifdef FLATBUFFERS_HAVE_ALIGNED_ALLOC
     size = (size + align - 1) & ~(align - 1);
-    buffer = aligned_alloc(align, size);
-#else
-    buffer = (void *)(((size_t)malloc(size + align - 1) + align - 1) & ~(align - 1));
-#endif
+    buffer = FLATCC_BUILDER_ALIGNED_ALLOC(align, size);
 
     if (!buffer) {
         goto done;
     }
     if (!flatcc_builder_copy_buffer(B, buffer, size)) {
-        free(buffer);
+        FLATCC_BUILDER_ALIGNED_FREE(buffer);
         buffer = 0;
         goto done;
     }

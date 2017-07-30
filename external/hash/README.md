@@ -113,13 +113,20 @@ in caching hash keys in buckets.
 Robin Hood hashing is mostly interesting when there are many deletions
 to clean up and when the load factor increases. In our implementation we
 try to keep the per bucket size small: a pointer and a 8 bit offset, or
-just a pointer for the linear and quadruatic probing implementations.
+just a pointer for the linear and quadratic probing implementations.
 This makes it affordable with a lower load factor.
 
-This Robin hood variation stores the offset from the hashed bucket to
+This Robin Hood variation stores the offset from the hashed bucket to
 where the first entry is stored. This means we can avoiding sampling any
 bucket not indexed by the current hash key, and it also means that we
 avoid having to store or calculate the hash key when updating.
+
+A sorted Robin Hood hashing implementation was also made, but it prooved
+to be error prone with many special cases and slower than regular Robin
+Hood hashing. It would conceivably protect against hash collision
+attacks through exponential search, but insertions and deletions would
+still need to move memory in linear time, making this point mood.
+Therefore the sorted Robin Hood variant has been removed.
 
 
 Section 4.5:

@@ -1,9 +1,28 @@
-# The builder interface.
+# Builder Interface Reference
 
-## Preface
+<!-- vim-markdown-toc GFM -->
+* [Introduction](#introduction)
+* [Size Prefixed Buffers](#size-prefixed-buffers)
+* [Namespaces](#namespaces)
+* [Error Codes](#error-codes)
+* [Endinaness](#endinaness)
+* [Buffers](#buffers)
+* [Tables](#tables)
+* [Strings](#strings)
+* [Structs](#structs)
+* [Nested Buffers](#nested-buffers)
+* [Scalars and Enums](#scalars-and-enums)
+* [Vectors](#vectors)
+* [Error Handling](#error-handling)
+* [Limitations](#limitations)
+* [Sorting Vectors](#sorting-vectors)
+    * [Dangers of Sorting](#dangers-of-sorting)
+    * [Scanning](#scanning)
+* [Example of different interface type users](#example-of-different-interface-type-users)
+* [Special Emitters](#special-emitters)
 
-Some rules have changed regarding to namespace mappings and how sort
-functions are defined. The current documentation does not reflect this.
+<!-- vim-markdown-toc -->
+
 
 ## Introduction
 
@@ -37,6 +56,12 @@ the emitter and we can use a default finalizer only because we use the
 default emitter - it allocates and populates a linear buffer from a
 paged emitter ring buffer.
 
+Note that in must cases `flatcc_builder_finalize_buffer` is sufficient,
+but to be strictly portable, use
+`flatcc_builder_finalize_aligned_buffer` and `aligned_free`.
+`aligned_free` is often implemented as `free` in `flatcc/portable` but
+not on all platforms.
+
 Generally we use the monster example with various extensions, but to
 show a simple complete example we use a very simple schema (`myschema.fbs`):
 
@@ -57,14 +82,16 @@ show a simple complete example we use a very simple schema (`myschema.fbs`):
         mytable_create_as_root(B, 1, 2);
 
         /* Retrieve buffer - see also `flatcc_builder_get_direct_buffer`. */
-        buffer = flatcc_builder_finalize_buffer(B, &size);
+        /* buffer = flatcc_builder_finalize_buffer(B, &size); */
+        buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
 
         /* This is read-only buffer access. */
         mt = mytable_as_root(buffer);
         assert(mytable_myfield1(mt) == 1);
         assert(mytable_myfield2(mt) == 2);
 
-        free(buffer);
+        /* free(buffer); */
+        aligned_free(buffer);
 
         /*
          * Reset, but keep allocated stack etc.,
@@ -100,8 +127,8 @@ constrained environment - the allocator handles temporary stacks,
 virtual table caches etc. but not the emitter.
 
 The allocator and emitter interface is documented in the builder library
-header `flatcc_builder.h` and the default implementation in
-`flatcc_emitter.h`. The default allocator is implemented as part of the
+header pflatcc_builder.h] and the default implementation in
+[flatcc_emitter.h]. The default allocator is implemented as part of the
 flatcc_builder source.
 
 The builder can be reused between buffers using the `reset` operation.
@@ -112,6 +139,32 @@ maintain allocated memory by also reduce memory consumption across
 multiple resets heuristically.
 
 
+## Size Prefixed Buffers
+
+Buffers can be created with a size prefix of type `uoffset_t`. When
+doing this, the buffer is aligned relative to the size prefix such that
+buffers can be stacked in a file and for example be accessed via memory
+mapping.
+
+The usual `create_as_root` and `start_as_root` has a variant called
+`create_as_root_with_size` and `start_as_root_with_size`.
+
+To read a buffer with a size prefix use:
+
+    size_t size;
+    buffer = flatbuffers_read_size_prefix(rawbuffer, &size);
+
+The size the size of the buffer excluding the size prefix. When
+verifying buffers the buffer and size arguments should be used. See also
+[monster_test.c] for an example.
+
+Note that the size prefix ensures internal alignment but does not
+guarantee that the next buffer in a file can be appended directly
+because the next buffers alignment is unknown and becuase it potentially
+wastes padding bytes.  The buffer size at offset 0 can increased to the
+needed alignment as long as endianness is handled and the size of the
+size field is subtracted, and zeroes are appended as necesary.
+
 ## Namespaces
 
 The generated code is typically wrapped in a custom namespace and
@@ -121,7 +174,7 @@ into the namespace. We often use an empty namespace for custom types and
 be used on both cases, where `foo` is a custom namespace.
 
 Note that the name `flatcc_emitter` is only used with the default emitter
-and the name `flatcc_builder` is only used for buffer management but not
+and the name [flatcc_builder] is only used for buffer management but not
 for constructing content. Once a valid buffer is ready the common and
 namespace (`flatbuffers`) and schema specific (or empty) namespace is used
 with schema specific operations.
@@ -186,6 +239,11 @@ which for FlatBuffers is little endian. We do not hardcode little endian
 because it enables us to support other protocols in the future - for
 example the struct conversions may be very useful for big endian network
 protocols.
+
+> As of flatcc 0.4.0 it is possible to compile flatcc with native
+> big-endian support which has been tested on AIX. More details in
+> [README Endianness](https://github.com/dvidelabs/flatcc#endianness)
+
 
 By testing `is_native_pe` dependencies on speficic compile time flags
 can be avoided, and these are fragile:
@@ -306,7 +364,7 @@ When the buffer is ended, nothing special happens but only at this point
 does it really makes sense to access the resulting buffer. The default
 emitter provides a copy method and a direct buffer access method. These
 are made available in the builder interface and will return null for
-other emitters. See also `flatcc_builder.h` and the default emitter in
+other emitters. See also [flatcc_builder.h] and the default emitter in
 `flatcc_emitter.h`.
 
 
@@ -634,7 +692,7 @@ modifiable pointer to the start of the string.
 including any embedded zeroes, but excluding final zero termination. It
 is only valid until `string_end` is called.
 
-See `flatcc_builder.h` for detailed documentation. Essentially `extend`
+See [flatcc_builder.h] for detailed documentation. Essentially `extend`
 reserves zeroed space on the stack and returns a buffer to the new
 space, and truncate reduces the overall size again, and the string is
 then given the final length and a zero termination at the end.
@@ -822,7 +880,7 @@ Be aware that `Vec3_t` is for native updates while `Vec3_struct_t` is a const
 pointer to an endian encoded struct used in the reader interface, and actually
 also as source type in the clone operation.
 
-## Nested buffers
+## Nested Buffers
 
 These are discussed under Structs and Table sections but it is worth
 noting that a nested buffers can also be added as pe ubyte vectors
@@ -1145,7 +1203,7 @@ format is otherwise compatible, and thus feed the emitter directly.
 This is not possible with table and string vectors because the
 references in the source vectors must be translated into offsets.
 Therefore these create calls are similar to start, append, end calls.
-There is an internal, but unexposed flatcc_builder version
+There is an internal, but unexposed `flatcc_builder` version
 `create_offset_vector_direct` which destroys the source vector instead
 of allocating a stack copy.
 
@@ -1277,6 +1335,37 @@ The find operations are stable meaning they always return the lowest
 index of any matching key or `flatbuffers_not_found` which is larger
 than any other index.
 
+### Dangers of Sorting
+
+If a buffer was received over, say, an untrusted network the buffer
+should be verified before being accessed. But verification only makes it
+safe to read a buffer, not to modify a buffer because for example two
+vectors can be crafted to overlap each other without breaking any
+verification rules.
+
+Thus, sorting is intended to be done shortly after the buffer is
+constructed while it can still be trusted.
+
+Using find on a buffer that is supposed to be sorted, but isn't, can
+yield unexpected search results, but the result will always be a one
+element in the vector being searched, not a buffer overrun.
+
+### Scanning
+
+Some vectors can be sorted by different keys depending on which version
+version of `_sort_by` is being used. Obviously `_find_by` must match the
+sorted key.
+
+If we need to search for a key that is not sorted, or if we simply do
+not want to sort the vector, it is possible to use scanning operations
+instead by using `_scan` or `_scan_by`. Scanning is similar to find
+except that it does a linear search and it supports scanning from a
+given position.
+
+More information on scanning in the
+[README](https://github.com/dvidelabs/flatcc#searching-and-sorting)
+file, and in the [monster_test.c] test file.
+
 
 ## Example of different interface type users
 
@@ -1305,9 +1394,9 @@ analyze and has no need for the builder or the sort interface.
 ## Special Emitters
 
 An emitter only need to implement one function to replace or wrap the
-default emitter. See `flatcc_builder.h` on `flatcc_builder_emit_fun` for
+default emitter. See [flatcc_builder.h] on `flatcc_builder_emit_fun` for
 details, and also `emit_test.c` for a very simple custom emitter that
-just prints debug messages.
+just prints debug messages, and [flatcc_emitter.h].
 
 When adding padding `flatcc_builder_padding_base` is used as base in iov
 entries and an emitter may detect this pointer and assume the entire
@@ -1344,3 +1433,7 @@ back will not necessarily double. If the stack grows large it may also
 be worthwhile trimming the stack with a custom allocator and custom
 builder reset between buffers to reduce stack size and initialization
 overhead.
+
+[monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
+[flatcc_builder.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_builder.h
+[flatcc_emitter.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_emitter.h

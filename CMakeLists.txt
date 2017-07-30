@@ -33,11 +33,20 @@ option(FLATCC_INSTALL "enable build of runtime library only" OFF)
 # experience issues, and this option can then help.
 option(FLATCC_TEST "enable tests" ON)
 
+# Use with debug build with testing enabled only. Enables generation
+# of coverage information during build and run. Adds target "coverage"
+# which collects data and makes HTML report in build directory
+option(FLATCC_COVERAGE "enable coverage" OFF)
+
 # Affects the flatbuffer verify operation. Normally a verify should just
 # quickly reject invalid buffers but for troubleshooting, assertions can
 # enabled. This requires rebuilding the runtime library and will likely
 # break test cases (those that tests that an invalid buffer is invalid).
 option (FLATCC_DEBUG_VERIFY
+    "assert on verify failure in runtime lib" OFF)
+
+# Print detailed traces of binary buffer contents when calling verify.
+option (FLATCC_TRACE_VERIFY
     "assert on verify failure in runtime lib" OFF)
 
 # Reflection is the compilers ability to generate binary schema output
@@ -84,9 +93,26 @@ if (FLATCC_TEST)
     enable_testing()
 endif()
 
+if (NOT FLATCC_TEST)
+    set(FLATCC_COVERAGE off)
+endif()
+
+if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
+    set(FLATCC_COVERAGE off)
+endif()
+
+if (FLATCC_COVERAGE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -DNDEBUG")
+endif()
+
 if (FLATCC_DEBUG_VERIFY)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_DEBUG_VERIFY=1")
 endif()
+
+if (FLATCC_TRACE_VERIFY)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_TRACE_VERIFY=1")
+endif()
+
 
 if (FLATCC_REFLECTION)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_REFLECTION=1")
@@ -118,7 +144,7 @@ set (dist_dir "${PROJECT_SOURCE_DIR}")
 
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     # Clang or AppleClang
-
+    message(STATUS "Setting Clang compiler options")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
     if (FLATCC_ALLOW_WERROR)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
@@ -134,10 +160,12 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
                     OUTPUT_VARIABLE GCC_VERSION)
     if (GCC_VERSION VERSION_LESS 4.7)
+        message(STATUS "Setting older GNU C compiler options with FLATCC_PORTABLE")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
         # We need stdalign.h
         set(FLATCC_PORTABLE true)
     else()
+        message(STATUS "Setting GNU C compiler options with c11")
         # -std=c11 only available as of 4.7
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
         if (FLATCC_ALLOW_WERROR)
@@ -154,8 +182,10 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-type-limits")
 
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Intel")
+    message(STATUS "Setting Intel C compiler options")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -Wextra")
 elseif (MSVC) # using STREQUAL here conflicts with string interpretation changes in CMake
+    message(STATUS "Setting MSVC C compiler options")
     # -DFLATCC_PORTABLE also required, but set earlier
     # -W3 is the highest warning level that is reasonable.
     # See include/flatcc/portable/pwarnings.h for disabled warnings.
@@ -167,8 +197,14 @@ elseif (MSVC) # using STREQUAL here conflicts with string interpretation changes
         set (FLATCC_NEED_C89_VAR_DECLS true)
     endif()
     set(FLATCC_PORTABLE true)
+ elseif (CMAKE_C_COMPILER_ID STREQUAL "XL")
+    # IBM's native XLC C compiler in extended C99 mode
+
+    message(STATUS "Setting IBM XL C compiler options")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qlanglvl=extc99")
 else()
     # Best effort
+    message(STATUS "Best effort settings for compiler: ${CMAKE_C_COMPILER_ID}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
     set(FLATCC_PORTABLE true)
 endif()
@@ -216,6 +252,12 @@ endif()
 if (FLATCC_TEST)
     add_subdirectory(test)
     add_subdirectory(samples)
+endif()
+
+if (FLATCC_COVERAGE)
+    add_custom_target(coverage
+        COMMAND lcov --capture --directory src --output-file coverage.info
+        COMMAND genhtml coverage.info --output-directory coverage)
 endif()
 
 set_target_properties(${dist_targets}

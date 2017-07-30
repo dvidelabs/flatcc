@@ -2,9 +2,6 @@
 
 #include "codegen_c.h"
 
-#define llu(x) (long long unsigned int)(x)
-#define lld(x) (long long int)(x)
-
 int fb_gen_common_c_builder_header(fb_output_t *out)
 {
     const char *nsc = out->nsc;
@@ -36,10 +33,14 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sbuild_buffer(NS)\\\n"
         "typedef NS ## ref_t NS ## buffer_ref_t;\\\n"
-        "static inline int NS ## buffer_start(NS ## builder_t *B, NS ##fid_t fid)\\\n"
-        "{ return flatcc_builder_start_buffer(B, fid, 0); }\\\n"
+        "static inline int NS ## buffer_start(NS ## builder_t *B, const NS ##fid_t fid)\\\n"
+        "{ return flatcc_builder_start_buffer(B, fid, 0, 0); }\\\n"
+        "static inline int NS ## buffer_start_with_size(NS ## builder_t *B, const NS ##fid_t fid)\\\n"
+        "{ return flatcc_builder_start_buffer(B, fid, 0, flatcc_builder_with_size); }\\\n"
         "static inline int NS ## buffer_start_aligned(NS ## builder_t *B, NS ##fid_t fid, uint16_t block_align)\\\n"
-        "{ return flatcc_builder_start_buffer(B, fid, block_align); }\\\n"
+        "{ return flatcc_builder_start_buffer(B, fid, block_align, 0); }\\\n"
+        "static inline int NS ## buffer_start_aligned_with_size(NS ## builder_t *B, NS ##fid_t fid, uint16_t block_align)\\\n"
+        "{ return flatcc_builder_start_buffer(B, fid, block_align, flatcc_builder_with_size); }\\\n"
         "static inline NS ## buffer_ref_t NS ## buffer_end(NS ## builder_t *B, NS ## ref_t root)\\\n"
         "{ return flatcc_builder_end_buffer(B, root); }\n"
         "\n",
@@ -49,8 +50,12 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "#define __%sbuild_table_root(NS, N, FID, TFID)\\\n"
         "static inline int N ## _start_as_root(NS ## builder_t *B)\\\n"
         "{ return NS ## buffer_start(B, FID) ? -1 : N ## _start(B); }\\\n"
+        "static inline int N ## _start_as_root_with_size(NS ## builder_t *B)\\\n"
+        "{ return NS ## buffer_start_with_size(B, FID) ? -1 : N ## _start(B); }\\\n"
         "static inline int N ## _start_as_typed_root(NS ## builder_t *B)\\\n"
         "{ return NS ## buffer_start(B, TFID) ? -1 : N ## _start(B); }\\\n"
+        "static inline int N ## _start_as_typed_root_with_size(NS ## builder_t *B)\\\n"
+        "{ return NS ## buffer_start_with_size(B, TFID) ? -1 : N ## _start(B); }\\\n"
         "static inline NS ## buffer_ref_t N ## _end_as_root(NS ## builder_t *B)\\\n"
         "{ return NS ## buffer_end(B, N ## _end(B)); }\\\n"
         "static inline NS ## buffer_ref_t N ## _end_as_typed_root(NS ## builder_t *B)\\\n"
@@ -62,8 +67,12 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
          */
         "static inline NS ## buffer_ref_t N ## _create_as_root(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
         "{ if (NS ## buffer_start(B, FID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }\\\n"
+        "static inline NS ## buffer_ref_t N ## _create_as_root_with_size(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
+        "{ if (NS ## buffer_start_with_size(B, FID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }\\\n"
         "static inline NS ## buffer_ref_t N ## _create_as_typed_root(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
-        "{ if (NS ## buffer_start(B, TFID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }\n"
+        "{ if (NS ## buffer_start(B, TFID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }\\\n"
+        "static inline NS ## buffer_ref_t N ## _create_as_typed_root_with_size(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
+        "{ if (NS ## buffer_start_with_size(B, TFID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }\n"
         "\n",
         nsc);
 
@@ -79,8 +88,12 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "#define __%sbuild_struct_root(NS, N, A, FID, TFID)\\\n"
         "static inline N ## _t *N ## _start_as_root(NS ## builder_t *B)\\\n"
         "{ return NS ## buffer_start(B, FID) ? 0 : N ## _start(B); }\\\n"
+        "static inline N ## _t *N ## _start_as_root_with_size(NS ## builder_t *B)\\\n"
+        "{ return NS ## buffer_start_with_size(B, FID) ? 0 : N ## _start(B); }\\\n"
         "static inline N ## _t *N ## _start_as_typed_root(NS ## builder_t *B)\\\n"
         "{ return NS ## buffer_start(B, TFID) ? 0 : N ## _start(B); }\\\n"
+        "static inline N ## _t *N ## _start_as_typed_root_with_size(NS ## builder_t *B)\\\n"
+        "{ return NS ## buffer_start_with_size(B, TFID) ? 0 : N ## _start(B); }\\\n"
         "static inline NS ## buffer_ref_t N ## _end_as_root(NS ## builder_t *B)\\\n"
         "{ return NS ## buffer_end(B, N ## _end(B)); }\\\n"
         "static inline NS ## buffer_ref_t N ## _end_as_typed_root(NS ## builder_t *B)\\\n"
@@ -92,9 +105,15 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "static inline NS ## buffer_ref_t N ## _create_as_root(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
         "{ return flatcc_builder_create_buffer(B, FID, 0,\\\n"
         "  N ## _create(B __ ## N ## _call_args), A, 0); }\\\n"
+        "static inline NS ## buffer_ref_t N ## _create_as_root_with_size(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
+        "{ return flatcc_builder_create_buffer(B, FID, 0,\\\n"
+        "  N ## _create(B __ ## N ## _call_args), A, flatcc_builder_with_size); }\\\n"
         "static inline NS ## buffer_ref_t N ## _create_as_typed_root(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
         "{ return flatcc_builder_create_buffer(B, TFID, 0,\\\n"
-        "  N ## _create(B __ ## N ## _call_args), A, 0); }\n"
+        "  N ## _create(B __ ## N ## _call_args), A, 0); }\\\n"
+        "static inline NS ## buffer_ref_t N ## _create_as_typed_root_with_size(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
+        "{ return flatcc_builder_create_buffer(B, TFID, 0,\\\n"
+        "  N ## _create(B __ ## N ## _call_args), A, flatcc_builder_with_size); }\n"
         "\n",
         nsc);
 
@@ -109,13 +128,11 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "static inline int N ## _end_as_typed_root(NS ## builder_t *B)\\\n"
         "{ return N ## _add(B, NS ## buffer_end(B, TN ## _end(B))); }\\\n"
         "static inline int N ## _nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\\\n"
-        "{ if (NS ## buffer_start(B, FID)) return -1;\\\n"
-        "  return N ## _add(B, NS ## buffer_end(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
-        "  align ? align : 8, FLATBUFFERS_COUNT_MAX(1)))); }\\\n"
+        "{ return N ## _add(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
+        "  align ? align : 8, FLATBUFFERS_COUNT_MAX(1))); }\\\n"
         "static inline int N ## _typed_nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\\\n"
-        "{ if (NS ## buffer_start(B, TFID)) return -1;\\\n"
-        "  return N ## _add(B, NS ## buffer_end(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
-        "  align ? align : 8, FLATBUFFERS_COUNT_MAX(1)))); }\n"
+        "{ return N ## _add(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
+        "  align ? align : 8, FLATBUFFERS_COUNT_MAX(1))); }\n"
         "\n",
         nsc);
 
@@ -133,38 +150,37 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "{ return N ## _add(B, NS ## buffer_end(B, TN ## _end_pe(B))); }\\\n"
         "static inline int N ## _create_as_root(NS ## builder_t *B __ ## TN ## _formal_args)\\\n"
         "{ return N ## _add(B, flatcc_builder_create_buffer(B, FID, 0,\\\n"
+        "  TN ## _create(B __ ## TN ## _call_args), A, flatcc_builder_is_nested)); }\\\n"
         "static inline int N ## _create_as_typed_root(NS ## builder_t *B __ ## TN ## _formal_args)\\\n"
         "{ return N ## _add(B, flatcc_builder_create_buffer(B, TFID, 0,\\\n"
-        "  TN ## _create(B __ ## TN ## _call_args), A, 1)); }\\\n"
+        "  TN ## _create(B __ ## TN ## _call_args), A, flatcc_builder_is_nested)); }\\\n"
         "static inline int N ## _nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\\\n"
-        "{ if (NS ## buffer_start(B, FID)) return -1;\\\n"
-        "  return N ## _add(B, NS ## buffer_end(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
-        "  align < A ? A : align, FLATBUFFERS_COUNT_MAX(1)))); }\\\n"
+        "{ return N ## _add(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
+        "  align < A ? A : align, FLATBUFFERS_COUNT_MAX(1))); }\\\n"
         "static inline int N ## _typed_nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\\\n"
-        "{ if (NS ## buffer_start(B, TFID)) return -1;\\\n"
-        "  return N ## _add(B, NS ## buffer_end(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
-        "  align < A ? A : align, FLATBUFFERS_COUNT_MAX(1)))); }\n"
+        "{ return N ## _add(B, flatcc_builder_create_vector(B, data, size, 1,\\\n"
+        "  align < A ? A : align, FLATBUFFERS_COUNT_MAX(1))); }\n"
         "\n",
         nsc);
 
     fprintf(out->fp,
         "#define __%sbuild_vector_ops(NS, V, N, TN, T)\\\n"
         "static inline T *V ## _extend(NS ## builder_t *B, size_t len)\\\n"
-        "{ return flatcc_builder_extend_vector(B, len); }\\\n"
+        "{ return (T *)flatcc_builder_extend_vector(B, len); }\\\n"
         "static inline T *V ## _append(NS ## builder_t *B, const T *data, size_t len)\\\n"
-        "{ return flatcc_builder_append_vector(B, data, len); }\\\n"
+        "{ return (T *)flatcc_builder_append_vector(B, data, len); }\\\n"
         "static inline int V ## _truncate(NS ## builder_t *B, size_t len)\\\n"
         "{ return flatcc_builder_truncate_vector(B, len); }\\\n"
         "static inline T *V ## _edit(NS ## builder_t *B)\\\n"
-        "{ return flatcc_builder_vector_edit(B); }\\\n"
+        "{ return (T *)flatcc_builder_vector_edit(B); }\\\n"
         "static inline size_t V ## _reserved_len(NS ## builder_t *B)\\\n"
         "{ return flatcc_builder_vector_count(B); }\\\n"
         "static inline T *V ## _push(NS ## builder_t *B, const T *p)\\\n"
-        "{ T *_p; return (_p = flatcc_builder_extend_vector(B, 1)) ? (memcpy(_p, p, TN ## __size()), _p) : 0; }\\\n"
+        "{ T *_p; return (_p = (T *)flatcc_builder_extend_vector(B, 1)) ? (memcpy(_p, p, TN ## __size()), _p) : 0; }\\\n"
         "static inline T *V ## _push_copy(NS ## builder_t *B, const T *p)\\\n"
-        "{ T *_p; return (_p = flatcc_builder_extend_vector(B, 1)) ? TN ## _copy(_p, p) : 0; }\\\n"
+        "{ T *_p; return (_p = (T *)flatcc_builder_extend_vector(B, 1)) ? TN ## _copy(_p, p) : 0; }\\\n"
         "static inline T *V ## _push_create(NS ## builder_t *B __ ## TN ## _formal_args)\\\n"
-        "{ T *_p; return (_p = flatcc_builder_extend_vector(B, 1)) ? TN ## _assign(_p __ ## TN ## _call_args) : 0; }\n"
+        "{ T *_p; return (_p = (T *)flatcc_builder_extend_vector(B, 1)) ? TN ## _assign(_p __ ## TN ## _call_args) : 0; }\n"
         "\n",
         nsc);
 
@@ -177,14 +193,14 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "static inline N ## _vec_ref_t N ## _vec_end_pe(NS ## builder_t *B)\\\n"
         "{ return flatcc_builder_end_vector(B); }\\\n"
         "static inline N ## _vec_ref_t N ## _vec_end(NS ## builder_t *B)\\\n"
-        "{ if (!NS ## is_native_pe()) { size_t i, n; T *p = flatcc_builder_vector_edit(B);\\\n"
+        "{ if (!NS ## is_native_pe()) { size_t i, n; T *p = (T *)flatcc_builder_vector_edit(B);\\\n"
         "    for (i = 0, n = flatcc_builder_vector_count(B); i < n; ++i)\\\n"
         "    { N ## _to_pe(N ## __ptr_add(p, i)); }} return flatcc_builder_end_vector(B); }\\\n"
         "static inline N ## _vec_ref_t N ## _vec_create_pe(NS ## builder_t *B, const T *data, size_t len)\\\n"
         "{ return flatcc_builder_create_vector(B, data, len, S, A, FLATBUFFERS_COUNT_MAX(S)); }\\\n"
         "static inline N ## _vec_ref_t N ## _vec_create(NS ## builder_t *B, const T *data, size_t len)\\\n"
         "{ if (!NS ## is_native_pe()) { size_t i; T *p; int ret = flatcc_builder_start_vector(B, S, A, FLATBUFFERS_COUNT_MAX(S)); if (ret) { return ret; }\\\n"
-        "  p = flatcc_builder_extend_vector(B, len); if (!p) return 0;\\\n"
+        "  p = (T *)flatcc_builder_extend_vector(B, len); if (!p) return 0;\\\n"
         "  for (i = 0; i < len; ++i) { N ## _copy_to_pe(N ## __ptr_add(p, i), N ## __const_ptr_add(data, i)); }\\\n"
         "  return flatcc_builder_end_vector(B); } else return flatcc_builder_create_vector(B, data, len, S, A, FLATBUFFERS_COUNT_MAX(S)); }\\\n"
         "static inline N ## _vec_ref_t N ## _vec_clone(NS ## builder_t *B, N ##_vec_t vec)\\\n"
@@ -237,7 +253,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "static inline int V ## _truncate(NS ## builder_t *B, size_t len)\\\n"
         "{ return flatcc_builder_truncate_offset_vector(B, len); }\\\n"
         "static inline TN ## _ref_t *V ## _edit(NS ## builder_t *B)\\\n"
-        "{ return flatcc_builder_offset_vector_edit(B); }\\\n"
+        "{ return (TN ## _ref_t *)flatcc_builder_offset_vector_edit(B); }\\\n"
         "static inline size_t V ## _reserved_len(NS ## builder_t *B)\\\n"
         "{ return flatcc_builder_offset_vector_count(B); }\\\n"
         "static inline TN ## _ref_t *V ## _push(NS ## builder_t *B, const TN ## _ref_t ref)\\\n"
@@ -338,7 +354,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "__ ## NS ## define_struct_primitives(NS, N)\\\n"
         "typedef NS ## ref_t N ## _ref_t;\\\n"
         "static inline N ## _t *N ## _start(NS ## builder_t *B)\\\n"
-        "{ return flatcc_builder_start_struct(B, S, A); }\\\n"
+        "{ return (N ## _t *)flatcc_builder_start_struct(B, S, A); }\\\n"
         "static inline N ## _ref_t N ## _end(NS ## builder_t *B)\\\n"
         "{ if (!NS ## is_native_pe()) { N ## _to_pe(flatcc_builder_struct_edit(B)); }\\\n"
         "  return flatcc_builder_end_struct(B); }\\\n"
@@ -346,7 +362,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "{ return flatcc_builder_end_struct(B); }\\\n"
         "static inline N ## _ref_t N ## _create(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
         "{ N ## _t *_p = N ## _start(B); if (!_p) return 0; N ##_assign_to_pe(_p __ ## N ## _call_args);\\\n"
-        "  return N ## _end(B); }\\\n"
+        "  return N ## _end_pe(B); }\\\n"
         "__%sbuild_vector(NS, N, N ## _t, S, A)\\\n"
         "__%sbuild_struct_root(NS, N, A, FID, TFID)\n"
         "\n",
@@ -383,10 +399,10 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "#define __%sbuild_union_field(ID, NS, N, TN)\\\n"
         "static inline int N ## _add(NS ## builder_t *B, TN ## _union_ref_t uref)\\\n"
         "{ NS ## ref_t *_p; TN ## _union_type_t *_pt; if (uref.type == TN ## _NONE) return 0; if (uref._member == 0) return -1;\\\n"
-        "  if (!(_pt = flatcc_builder_table_add(B, ID - 1, sizeof(*_pt), sizeof(_pt))) ||\\\n"
+        "  if (!(_pt = (TN ## _union_type_t *)flatcc_builder_table_add(B, ID - 1, sizeof(*_pt), sizeof(_pt))) ||\\\n"
         "  !(_p = flatcc_builder_table_add_offset(B, ID))) return -1; *_pt = uref.type; *_p = uref._member; return 0; }\\\n"
         "static inline int N ## _add_type(NS ## builder_t *B, TN ## _union_type_t type)\\\n"
-        "{ TN ## _union_type_t *_pt; if (type == TN ## _NONE) return 0; return (_pt = flatcc_builder_table_add(B, ID - 1,\\\n"
+        "{ TN ## _union_type_t *_pt; if (type == TN ## _NONE) return 0; return (_pt = (TN ## _union_type_t *)flatcc_builder_table_add(B, ID - 1,\\\n"
         "  sizeof(*_pt), sizeof(*_pt))) ? ((*_pt = type), 0) : -1; }\\\n"
         "static inline int N ## _add_member(NS ## builder_t *B, TN ## _union_ref_t uref)\\\n"
         "{ NS ## ref_t *p; if (uref.type == TN ## _NONE) return 0; return (p = flatcc_builder_table_add_offset(B, ID)) ?\\\n"
@@ -411,10 +427,10 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         " * S: sizeof of scalar type, A: alignment of type T, default value V of type T. */\n"
         "#define __%sbuild_scalar_field(ID, NS, N, TN, T, S, A, V)\\\n"
         "static inline int N ## _add(NS ## builder_t *B, const T v)\\\n"
-        "{ T *_p; if (v == V) return 0; if (!(_p = flatcc_builder_table_add(B, ID, S, A))) return -1;\\\n"
+        "{ T *_p; if (v == V) return 0; if (!(_p = (T *)flatcc_builder_table_add(B, ID, S, A))) return -1;\\\n"
         "  TN ## _assign_to_pe(_p, v); return 0; }\\\n"
         "static inline int N ## _force_add(NS ## builder_t *B, const T v)\\\n"
-        "{ T *_p; if (!(_p = flatcc_builder_table_add(B, ID, S, A))) return -1;\\\n"
+        "{ T *_p; if (!(_p = (T *)flatcc_builder_table_add(B, ID, S, A))) return -1;\\\n"
         "  TN ## _assign_to_pe(_p, v); return 0; }\\\n"
         "\n",
         nsc);
@@ -422,7 +438,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sbuild_struct_field(ID, NS, N, TN, S, A)\\\n"
         "static inline TN ## _t *N ## _start(NS ## builder_t *B)\\\n"
-        "{ return flatcc_builder_table_add(B, ID, S, A); }\\\n"
+        "{ return (TN ## _t *)flatcc_builder_table_add(B, ID, S, A); }\\\n"
         "static inline int N ## _end(NS ## builder_t *B)\\\n"
         "{ if (!NS ## is_native_pe()) { TN ## _to_pe(flatcc_builder_table_edit(B, S)); } return 0; }\\\n"
         "static inline int N ## _end_pe(NS ## builder_t *B) { return 0; }\\\n"
@@ -969,7 +985,7 @@ static int gen_required_table_fields(fb_output_t *out, fb_compound_type_t *ct)
     if (index > 0) {
         fprintf(out->fp, ", 0 };\n");
     } else {
-        fprintf(out->fp, "0 };\n");
+        fprintf(out->fp, " 0 };\n");
     }
     return index;
 }
@@ -1198,6 +1214,7 @@ static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
     int n;
     fb_scoped_name_t snt;
     fb_scoped_name_t snref;
+    fb_literal_t literal;
 
     fb_clear(snt);
     fb_clear(snref);
@@ -1215,35 +1232,11 @@ static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
             tname_ns = scalar_type_ns(member->type.st, nsc);
             tname = scalar_type_name(member->type.st);
             tprefix = scalar_type_prefix(member->type.st);
-            switch (member->value.type) {
-            case vt_uint:
-                fprintf(out->fp,
-                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %llu)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
-                    llu(member->size), member->align, llu(member->value.u));
-                break;
-            case vt_int:
-                fprintf(out->fp,
-                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %lld)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
-                    llu(member->size), member->align, lld(member->value.i));
-                break;
-            case vt_bool:
-                fprintf(out->fp,
-                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %u)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
-                    llu(member->size), member->align, (unsigned)member->value.b);
-                break;
-            case vt_float:
-                fprintf(out->fp,
-                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %.17g)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
-                    llu(member->size), member->align, member->value.f);
-                break;
-            default:
-                gen_panic(out, "internal error: unexpected scalar table default value");
-                continue;
-            }
+            print_literal(member->type.st, &member->value, literal);
+            fprintf(out->fp,
+                "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %s)\n",
+                nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
+                llu(member->size), member->align, literal);
             break;
         case vt_vector_type:
             tname_ns = scalar_type_ns(member->type.st, nsc);
@@ -1296,29 +1289,11 @@ static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
                     nsc, llu(member->id), nsc, snt.text, n, s, snref.text);
                 break;
             case fb_is_enum:
-                switch (member->value.type) {
-                case vt_uint:
-                    fprintf(out->fp,
-                        "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %llu, %u, %llu)\n",
-                        nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text,
-                        llu(member->size), member->align, llu(member->value.u));
-                    break;
-                case vt_int:
-                    fprintf(out->fp,
-                        "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %llu, %u, %lli)\n",
-                        nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text,
-                        llu(member->size), member->align, lld(member->value.i));
-                    break;
-                case vt_bool:
-                    fprintf(out->fp,
-                        "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %llu, %u, %u)\n",
-                        nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text,
-                        llu(member->size), member->align, (unsigned)member->value.b);
-                    break;
-                default:
-                    gen_panic(out, "internal error: unexpected enum type referenced by table");
-                    continue;
-                }
+                print_literal(member->type.ct->type.st, &member->value, literal);
+                fprintf(out->fp,
+                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %llu, %u, %s)\n",
+                    nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text,
+                    llu(member->size), member->align, literal);
                 break;
             case fb_is_union:
                 fprintf(out->fp,

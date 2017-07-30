@@ -249,6 +249,17 @@
 #define FLATCC_ALLOW_MULTIPLE_KEY_FIELDS 1
 #endif
 
+/*
+ * flatcc has scan functions which are equivalent to find except they
+ * don't require arrays to be sorted by field and have O(N) complexity.
+ * It makes sense to generate these functions by default for all fields,
+ * not just ones marked as key.
+ */
+
+#ifndef FLATCC_ALLOW_SCAN_FOR_ALL_FIELDS
+#define FLATCC_ALLOW_SCAN_FOR_ALL_FIELDS 1
+#endif
+
 /* flatc currently does not allow keys on structs, but it makes sense to have them. */
 #ifndef FLATCC_ALLOW_STRUCT_FIELD_KEY
 #define FLATCC_ALLOW_STRUCT_FIELD_KEY 1

@@ -6,6 +6,9 @@
 #include "flatcc/support/readfile.h"
 #include "flatcc/support/hexdump.h"
 
+#define align_up(alignment, size)                                           \
+    (((size) + (alignment) - 1) & ~((alignment) - 1))
+
 const char *filename = "monsterdata_test.mon";
 
 #undef ns
@@ -163,7 +166,7 @@ int main(int argc, char *argv[])
 {
     int ret;
     size_t size;
-    void *buffer;
+    void *buffer, *raw_buffer;
 
     if (argc != 1 && argc != 2) {
         fprintf(stderr, usage);
@@ -173,14 +176,17 @@ int main(int argc, char *argv[])
         filename = argv[1];
     }
 
-    buffer = readfile(filename, 1024, &size);
+    raw_buffer = readfile(filename, 1024, &size);
+    buffer = aligned_alloc(256, align_up(256, size));
+    memcpy(buffer, raw_buffer, size);
+    free(raw_buffer);
 
     if (!buffer) {
         fprintf(stderr, "could not read binary test file: %s\n", filename);
         return -1;
     }
     hexdump("monsterdata_test.mon", buffer, size, stderr);
-    /* 
+    /*
      * Not automated, but verifying size - 3 fails as expected because the last
      * object in the file is a string, and the zero termination fails.
      * size - 1 and size - 2 verifies because the buffers contains
@@ -189,18 +195,32 @@ int main(int argc, char *argv[])
      * v1.1`.
      */
     if (flatcc_verify_ok != ns(Monster_verify_as_root_with_identifier(buffer, size, "MONS"))) {
+#if FLATBUFFERS_PROTOCOL_IS_BE
+        fprintf(stderr, "flatc golden reference buffer was correctly rejected by flatcc verificiation\n"
+                "because flatc is little endian and flatcc has been compiled for big endian protocol format\n");
+        ret = 0;
+        goto done;
+#else
         fprintf(stderr, "could not verify foreign monster file\n");
         ret = -1;
         goto done;
+#endif
     }
+
+#if FLATBUFFERS_PROTOCOL_IS_BE
+    fprintf(stderr, "flatcc compiled with big endian protocol failed to reject reference little endian buffer\n");
+    ret = -1;
+    goto done;
+#else
     if (flatcc_verify_ok != ns(Monster_verify_as_root(buffer, size))) {
         fprintf(stderr, "could not verify foreign monster file with default identifier\n");
         ret = -1;
         goto done;
     }
     ret = verify_monster(buffer);
+#endif
 
 done:
-    free(buffer);
+    aligned_free(buffer);
     return ret;
 }

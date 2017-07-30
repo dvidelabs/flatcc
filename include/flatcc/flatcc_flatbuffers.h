@@ -1,3 +1,11 @@
+/*
+ * Even C11 compilers depend on clib support for `static_assert` which
+ * isn't always present, so we deal with this here for all compilers.
+ *
+ * Outside include guard to handle scope counter.
+ */
+#include "flatcc/portable/pstatic_assert.h"
+
 #ifndef FLATCC_FLATBUFFERS_H
 #define FLATCC_FLATBUFFERS_H
 
@@ -8,13 +16,10 @@
 #include "flatcc/flatcc_portable.h"
 #endif
 #include "flatcc/portable/pwarnings.h"
+/* Needed by C99 compilers without FLATCC_PORTABLE. */
+#include "flatcc/portable/pstdalign.h"
 
-/*
- * Even -std=c11 supporting compilers depend on clib support for
- * `static_assert` which isn't always present, so we deal with this here
- * for all compilers.
- */
-#include "flatcc/portable/pstatic_assert.h"
+#include "flatcc/flatcc_alloc.h"
 
 #define __FLATBUFFERS_PASTE2(a, b) a ## b
 #define __FLATBUFFERS_PASTE3(a, b, c) a ## b ## c
