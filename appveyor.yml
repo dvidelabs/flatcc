@@ -35,7 +35,7 @@ before_build:
     #- if "%platform%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..\..
 
 build:
-  parallel: true # enable MSBuild parallel builds
+  #parallel: true # enable MSBuild parallel builds
   project: c:\projects\flatcc\build\MSVC\flatcc.sln
 
 test_script:
