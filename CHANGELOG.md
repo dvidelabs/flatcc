@@ -24,6 +24,8 @@
   of abnormal numeric values).
 - Fix return value handling of parse_float, parse_double in JSON parser.
 - Fix verifier vector alignment check - affects vectors with element size 8+.
+- Fix missing static in generated enum and union functions in JSON
+  printer (#57).
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
