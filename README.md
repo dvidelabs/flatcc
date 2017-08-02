@@ -215,17 +215,13 @@ echo "success"
 ```
 
 
-
 ## Status
 
-0.4.2 is featurewise on par with 0.4.1 but improves compatibility with
-C++ in portable headers and fixes `aligned_alloc` for older GCC
-versions. 0.4.2. also fixes a memory corruption bug when building with a
-nesting level of 8 or above (number of open buffers, tables, and
-vectors).
+0.4.3 is a bug fix release covering nested FlatBuffers, JSON and grisu3
+numeric errors, special cases for JSON keyword parsing, improved C++
+compatibility, flexible configuration of malloc alternatives.
 
-
-Main features supported as of 0.4.2
+Main features supported as of 0.4.3
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -242,6 +238,7 @@ Main features supported as of 0.4.2
 - support for big endian platforms (as of 0.4.0)
 - support for big endian encoded flatbuffers on both le and be platforms. Enabled on `be` branch.
 - size prefixed buffers - see also [Builder Interface Reference]
+- flexible configuration of malloc alternatives.
 
 Supported platforms:
 
@@ -250,6 +247,9 @@ Supported platforms:
 - Windows MSVC 2010, 2013, 2015, 2015 Win64 
 - IBM XLC on AIX big endian Power PC has been tested for release 0.4.0
   but is not part of regular release tests.
+
+Users have been testing on FreeRTOS as well which requires changing the
+runtime allocation method.
 
 The monster sample does not work with MSVC 2010 because it intentionally
 uses C99 style code to better follow the C++ version.

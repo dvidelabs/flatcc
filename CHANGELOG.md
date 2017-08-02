@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.4.3-pre]
+## [0.4.3]
 - Fix issue with initbuild.sh for custom builds (#43)
 - Add casts to aid clean C++ builds (#47)
 - Add missing const specifier in generated `buffer_start` methods - removes C++
