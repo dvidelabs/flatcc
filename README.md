@@ -1277,6 +1277,28 @@ or `_vec_len` will be 0 if the vector is missing whereas `_vec_at` will
 assert in debug or behave undefined in release builds following out of
 bounds access. This also applies to related string operations.
 
+The FlatBuffers schema uses the following scalar types: `ubyte`, `byte`,
+`ushort`, `short, uint`, `int`, `ulong`, and `long` to represent
+unsigned and signed integer types of length 8, 16, 32, and 64
+respectively. The schema syntax has been updated to also support the
+type aliases `uint8`, `int8`, `uint16`, `int16`, `uint32`, `int32`,
+`uint64`, `int64` to represent the same basic types. Likewise, the
+schema uses the types `float` and `double` to represent IEEE-754
+binary32 and binary64 floating point formats where the updated syntax
+also supports the type aliases `float32` and `float64`.
+
+The C interface uses the standard C types such as uint8 and double to
+represent scalar types and this is unaffected by the schema type name
+used, so the schema vector type `[float64]` is represented as
+`flatbuffers_double_vec_t` the same as `[double]` would be.
+
+Note that the C standard does not guarantee that the C types `float` and
+`double` are represented by the IEEE-754 binary32 single precision
+format and the binary64 double precision format respectively, although
+they usually are. If this is not the case FlatCC cannot work correctly
+with FlatBuffers floating point values. (If someone really has this
+problem, it would be possible to fix).
+
 
 ## Endianness
 

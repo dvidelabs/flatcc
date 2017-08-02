@@ -124,6 +124,62 @@ int test_enums(flatcc_builder_t *B)
     return 0;
 }
 
+int test_type_aliases(flatcc_builder_t *B)
+{
+    int ret = 0;
+    void *buffer = 0;
+    size_t size;
+    ns(TypeAliases_table_t) ta;
+    flatbuffers_uint8_vec_ref_t v8_ref;
+    flatbuffers_double_vec_ref_t vf64_ref;
+
+    flatcc_builder_reset(B);
+
+    v8_ref = flatbuffers_uint8_vec_create(B, 0, 0);
+    vf64_ref = flatbuffers_double_vec_create(B, 0, 0);
+    ns(TypeAliases_create_as_root(B,
+          INT8_MIN, UINT8_MAX, INT16_MIN, UINT16_MAX,
+          INT32_MIN, UINT32_MAX, INT64_MIN, UINT64_MAX, 2.3f, 2.3, v8_ref, vf64_ref));
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+    if ((ret = ns(TypeAliases_verify_as_root(buffer, size)))) {
+
+        hexdump("TypeAliases buffer", buffer, size, stderr);
+        printf("could not verify TypeAliases table, got %s\n", flatcc_verify_error_string(ret));
+        goto done;
+    }
+    ta = ns(TypeAliases_as_root(buffer));
+
+    if (ns(TypeAliases_i8(ta)) != INT8_MIN) goto failed;
+    if (ns(TypeAliases_i16(ta)) != INT16_MIN) goto failed;
+    if (ns(TypeAliases_i32(ta)) != INT32_MIN) goto failed;
+    if (ns(TypeAliases_i64(ta)) != INT64_MIN) goto failed;
+    if (ns(TypeAliases_u8(ta)) != UINT8_MAX) goto failed;
+    if (ns(TypeAliases_u16(ta)) != UINT16_MAX) goto failed;
+    if (ns(TypeAliases_u32(ta)) != UINT32_MAX) goto failed;
+    if (ns(TypeAliases_u64(ta)) != UINT64_MAX) goto failed;
+    if (ns(TypeAliases_f32(ta)) != 2.3f) goto failed;
+    if (ns(TypeAliases_f64(ta)) != 2.3) goto failed;
+    if (sizeof(ns(TypeAliases_i8(ta))) != 1) goto failed;
+    if (sizeof(ns(TypeAliases_i16(ta))) != 2) goto failed;
+    if (sizeof(ns(TypeAliases_i32(ta))) != 4) goto failed;
+    if (sizeof(ns(TypeAliases_i64(ta))) != 8) goto failed;
+    if (sizeof(ns(TypeAliases_u8(ta))) != 1) goto failed;
+    if (sizeof(ns(TypeAliases_u16(ta))) != 2) goto failed;
+    if (sizeof(ns(TypeAliases_u32(ta))) != 4) goto failed;
+    if (sizeof(ns(TypeAliases_u64(ta))) != 8) goto failed;
+    if (sizeof(ns(TypeAliases_f32(ta))) != 4) goto failed;
+    if (sizeof(ns(TypeAliases_f64(ta))) != 8) goto failed;
+
+done:
+    aligned_free(buffer);
+    return ret;
+
+failed:
+    ret = -1;
+    printf("Scalar type alias has unexpected value or size\n");
+    goto done;
+}
+
 int test_empty_monster(flatcc_builder_t *B)
 {
     int ret;
@@ -2247,6 +2303,12 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (verify_include(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_type_aliases(B)) {
         printf("TEST FAILED\n");
         return -1;
     }

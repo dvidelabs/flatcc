@@ -133,6 +133,21 @@ table Monster {
   testjsonprefixparsing3:TestJSONPrefixParsing3 (id:27);
 }
 
+table TypeAliases {
+    i8:int8;
+    u8:uint8;
+    i16:int16;
+    u16:uint16;
+    i32:int32;
+    u32:uint32;
+    i64:int64;
+    u64:uint64;
+    f32:float32;
+    f64:float64;
+    v8:[int8];
+    vf64:[float64];
+}
+
 root_type MyGame.Example.Monster;
 
 file_identifier "MONS";

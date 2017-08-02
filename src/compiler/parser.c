@@ -664,6 +664,16 @@ static void parse_type(fb_parser_t *P, fb_value_t *v)
     case tok_kw_ulong:
     case tok_kw_ushort:
     case tok_kw_double:
+    case tok_kw_int8:
+    case tok_kw_int16:
+    case tok_kw_int32:
+    case tok_kw_int64:
+    case tok_kw_uint8:
+    case tok_kw_uint16:
+    case tok_kw_uint32:
+    case tok_kw_uint64:
+    case tok_kw_float32:
+    case tok_kw_float64:
         v->t = P->token;
         v->type = vector ? vt_vector_type : vt_scalar_type;
         next(P);
@@ -799,6 +809,8 @@ static void parse_enum_decl(fb_parser_t *P, fb_compound_type_t *ct)
             switch (ct->type.t->id) {
             case tok_kw_float:
             case tok_kw_double:
+            case tok_kw_float32:
+            case tok_kw_float64:
                 error_tok(P, ct->type.t, "integral type expected");
             default:
                 break;

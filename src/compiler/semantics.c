@@ -35,26 +35,36 @@ static const int fb_known_attribute_types[] = {
 static fb_scalar_type_t map_scalar_token_type(fb_token_t *t)
 {
     switch (t->id) {
+    case tok_kw_uint64:
     case tok_kw_ulong:
         return fb_ulong;
+    case tok_kw_uint32:
     case tok_kw_uint:
         return fb_uint;
+    case tok_kw_uint16:
     case tok_kw_ushort:
         return fb_ushort;
+    case tok_kw_uint8:
     case tok_kw_ubyte:
         return fb_ubyte;
     case tok_kw_bool:
         return fb_bool;
+    case tok_kw_int64:
     case tok_kw_long:
         return fb_long;
+    case tok_kw_int32:
     case tok_kw_int:
         return fb_int;
+    case tok_kw_int16:
     case tok_kw_short:
         return fb_short;
+    case tok_kw_int8:
     case tok_kw_byte:
         return fb_byte;
+    case tok_kw_float64:
     case tok_kw_double:
         return fb_double;
+    case tok_kw_float32:
     case tok_kw_float:
         return fb_float;
     default:
