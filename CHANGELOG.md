@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.4.3-pre]
+## [0.4.3]
 - Fix issue with initbuild.sh for custom builds (#43)
 - Add casts to aid clean C++ builds (#47)
 - Add missing const specifier in generated `buffer_start` methods - removes C++
@@ -24,6 +24,8 @@
   of abnormal numeric values).
 - Fix return value handling of parse_float, parse_double in JSON parser.
 - Fix verifier vector alignment check - affects vectors with element size 8+.
+- Fix missing static in generated enum and union functions in JSON
+  printer (#57).
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in

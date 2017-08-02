@@ -81,7 +81,7 @@ static int gen_json_printer_enum(fb_output_t *out, fb_compound_type_t *ct)
     }
 
     fprintf(out->fp,
-            "void __%s_print_json_enum(flatcc_json_printer_t *ctx, %s%s v)\n{\n",
+            "static void __%s_print_json_enum(flatcc_json_printer_t *ctx, %s%s v)\n{\n",
             snt.text, ns, tn);
     if (bit_flags) {
         if (strcmp(ut, tn)) {
@@ -178,7 +178,7 @@ static int gen_json_printer_union(fb_output_t *out, fb_compound_type_t *ct)
     fb_compound_name(ct, &snt);
 
     fprintf(out->fp,
-            "void __%s_print_json_union(flatcc_json_printer_t *ctx, flatcc_json_printer_table_descriptor_t *td, int id, const char *name, int len)\n"
+            "static void __%s_print_json_union(flatcc_json_printer_t *ctx, flatcc_json_printer_table_descriptor_t *td, int id, const char *name, int len)\n"
             "{\n    switch (flatcc_json_printer_read_union_type(td, id)) {\n",
             snt.text);
     for (sym = ct->members; sym; sym = sym->link) {
