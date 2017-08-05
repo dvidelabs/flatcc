@@ -852,7 +852,9 @@ enum flatcc_builder_type flatcc_builder_get_type_at(flatcc_builder_t *B, int lev
  *
  * The returned pointer is only valid until the next call to
  * `enter/extend_user_frame`. The latest frame pointer
- * can be restored by calling `get_user_frame`.
+ * can be restored by calling `get_user_frame`. It is also
+ * possible to acquire a handle subsequently a pointer so
+ * older frames can be reached safely.
  */
 void *flatcc_builder_enter_user_frame(flatcc_builder_t *B, size_t size);
 
@@ -863,8 +865,14 @@ void *flatcc_builder_enter_user_frame(flatcc_builder_t *B, size_t size);
 void flatcc_builder_exit_user_frame(flatcc_builder_t *B);
 
 /**
+ * Exits the frame represented by the given handle. All more
+ * recently entered frames will also be exited.
+ */
+void flatcc_builder_exit_user_frame_from_handle(flatcc_builder_t *B, size_t handle);
+
+/**
  * Returns a pointer to the start of the inner-most user frame. It is
- * not valid to call if there isn't any fram.
+ * not valid to call if there isn't any frame.
  */
 void *flatcc_builder_get_user_frame(flatcc_builder_t *B);
 
@@ -873,6 +881,21 @@ void *flatcc_builder_get_user_frame(flatcc_builder_t *B);
  */
 int flatcc_builder_has_user_frame(flatcc_builder_t *B);
 
+/**
+ * Similar to `get_user_frame` but returns a handle that can later
+ * be converted to a pointer via `get_user_frame_from_handle. The
+ * returned handle is never 0 and a valid frame must exist.
+ */
+size_t flatcc_builder_get_user_frame_handle(flatcc_builder_t *B);
+
+/*
+ * Returns a pointer to user frame previously retrieved via
+ * get_user_frame_handle`. This can be used to access user
+ * frames other than the inner-most when a pointer would be
+ * invalidated via new operations that might reallocate the
+ * user frame stack.
+ */
+void *flatcc_builder_get_user_frame_from_handle(flatcc_builder_t *B, size_t handle);
 
 /**
  * Returns the size of the buffer and the logical start and end address

@@ -523,9 +523,27 @@ void flatcc_builder_exit_user_frame(flatcc_builder_t *B)
     B->user_frame_offset = *hdr;
 }
 
+void flatcc_builder_exit_user_frame_from_handle(flatcc_builder_t *B, size_t handle)
+{
+    assert(B->user_frame_offset + sizeof(size_t) >= handle);
+
+    B->user_frame_offset = handle - sizeof(size_t);
+    flatcc_builder_exit_user_frame(B);
+}
+
 void *flatcc_builder_get_user_frame(flatcc_builder_t *B)
 {
     return us_ptr(B->user_frame_offset + sizeof(size_t));
+}
+
+size_t flatcc_builder_get_user_frame_handle(flatcc_builder_t *B)
+{
+    return B->user_frame_offset + sizeof(size_t);
+}
+
+void *flatcc_builder_get_user_frame_from_handle(flatcc_builder_t *B, size_t handle)
+{
+    return us_ptr(handle);
 }
 
 int flatcc_builder_has_user_frame(flatcc_builder_t *B)
