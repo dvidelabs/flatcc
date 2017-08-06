@@ -146,6 +146,8 @@ See also [Debugging a Buffer](#debugging-a-buffer).
 
 Example:
 
+[samples/bugreport](samples/bugreport)
+
 eclectic.fbs :
 
 ```c
@@ -188,8 +190,15 @@ int main(int argc, char *argv[])
     Eclectic_FooBar_height_add(B, -8000);
     Eclectic_FooBar_end_as_root(B);
     buf = flatcc_builder_get_direct_buffer(B, &size);
-    hexdump("Eclectic.FooBar buffer for myissue", buf, size, stdout);
+#if defined(PROVOKE_ERROR) || 0
+    /* Provoke error for testing. */
+    ((char*)buf)[0] = 42;
+#endif
     ret = Eclectic_FooBar_verify_as_root(buf, size);
+    if (ret) {
+        hexdump("Eclectic.FooBar buffer for myissue", buf, size, stdout);
+        printf("could not verify Electic.FooBar table, got %s\n", flatcc_verify_error_string(ret));
+    }
     flatcc_builder_clear(B);
     return ret;
 }
@@ -199,19 +208,25 @@ build.sh :
 #!/bin/sh
 cd $(dirname $0)
 
-FLATBUFFERS_DIR=../flatcc
+FLATBUFFERS_DIR=../..
 NAME=myissue
 SCHEMA=eclectic.fbs
+OUT=build
 
 FLATCC_EXE=$FLATBUFFERS_DIR/bin/flatcc
 FLATCC_INCLUDE=$FLATBUFFERS_DIR/include
 FLATCC_LIB=$FLATBUFFERS_DIR/lib
 
-$FLATCC_EXE --outfile ${NAME}_generated.h -a $SCHEMA || exit 1
-cc -I$FLATCC_INCLUDE -g -o $NAME $NAME.c -L$FLATCC_LIB -lflatccrt_d || exit 1
-echo "running $NAME"
-./$NAME || $(echo "failed" && exit 1)
-echo "success"
+mkdir -p $OUT
+$FLATCC_EXE --outfile $OUT/${NAME}_generated.h -a $SCHEMA || exit 1
+cc -I$FLATCC_INCLUDE -g -o $OUT/$NAME $NAME.c -L$FLATCC_LIB -lflatccrt_d || exit 1
+echo "running $OUT/$NAME"
+if $OUT/$NAME; then
+    echo "success"
+else
+    echo "failed"
+    exit 1
+fi
 ```
 
 
