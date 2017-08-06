@@ -168,7 +168,7 @@ myissue.c :
 
 ```c
 /* Minimal test with all headers generated into a single file. */
-#include "myissue_generated.h"
+#include "build/myissue_generated.h"
 #include "flatcc/support/hexdump.h"
 
 int main(int argc, char *argv[])
