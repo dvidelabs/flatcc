@@ -3,6 +3,9 @@ Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/gi
 
 # FlatCC FlatBuffers in C for C
 
+_NOTE: ongoing work towards version 0.5.0 features might cause minor
+breakage. For full backwards compatibility use the v0.4.3 tag._
+
 `flatcc` has no external dependencies except for build and compiler
 tools, and the C runtime library. With concurrent Ninja builds, a small
 client project can build flatcc with libraries, generate schema code,
