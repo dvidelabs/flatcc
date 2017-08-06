@@ -145,7 +145,8 @@ build script. Preferably generate a hexdump and call the buffer verifier
 to ensure the input is valid and link with the debug library
 `flatccrt_d`.
 
-See also [Debugging a Buffer](#debugging-a-buffer).
+See also [Debugging a Buffer](#debugging-a-buffer), and [readfile.h]
+useful for reading an existing buffer for verification.
 
 Example:
 
@@ -231,9 +232,6 @@ else
     exit 1
 fi
 ```
-
-The [readfile.h](include/flatcc/support/readfile.h) utility may also be helpful in
-reading an existing buffer for verification.
 
 ## Status
 
@@ -766,6 +764,9 @@ In the builder example above, we can apply a verifier to the output:
         printf("Monster buffer is invalid: %s\n",
         flatcc_verify_error_string(ret));
     }
+
+The [readfile.h] utility may also be helpful in reading an existing
+buffer for verification.
 
 Flatbuffers can optionally leave out the identifier, here "MONS". Use a
 null pointer as identifier argument to ignore any existing identifiers
@@ -1820,3 +1821,4 @@ See [Benchmarks]
 [flatcc-help.md]: https://github.com/dvidelabs/flatcc/blob/master/doc/flatcc-help.md
 [flatcc_rtconfig.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_rtconfig.h
 [hexdump.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/support/hexdump.h
+[readfile.h]: include/flatcc/support/readfile.h
