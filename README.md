@@ -232,7 +232,7 @@ else
 fi
 ```
 
-The file <include/flatcc/support/readfile.h> may also be helpful in
+The [readfile.h](include/flatcc/support/readfile.h) utility may also be helpful in
 reading an existing buffer for verification.
 
 ## Status
