@@ -4,6 +4,8 @@
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,
   int64, uint64, float32, float64.
 - Low-level: access multiple user frames in builder via handles.
+- Support for `_is_known_type` and `_is_known_value` on union and enum
+  types.
 
 ## [0.4.3]
 - Fix issue with initbuild.sh for custom builds (#43)

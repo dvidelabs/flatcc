@@ -564,6 +564,39 @@ int verify_monster(void *buffer)
         printf("Enum name map does not have a green solution\n");
         return -1;
     }
+    /*
+     * This is bit tricky because Color is a bit flag, so we can have
+     * combinations that are expected, but that we do not know. The
+     * known value logic does not accomodate for that.
+     */
+    if (!ns(Color_is_known_value(ns(Color_Green)))) {
+        printf("Color enum does not recognize the value of the Green flag\n");
+        return -1;
+    }
+    if (!ns(Color_is_known_value(1))) {
+        printf("Color enum does not recognize the value of the Red flag\n");
+        return -1;
+    }
+    if (ns(Color_is_known_value(4))) {
+        printf("Color enum recognizes a value it shouldn't\n");
+        return -1;
+    }
+    if (!ns(Color_is_known_value(8))) {
+        printf("Color enum does not recognize the value of the Blue flag\n");
+        return -1;
+    }
+    if (ns(Color_is_known_value(9))) {
+        printf("Color enum recognizes a value it shouldn't\n");
+        return -1;
+    }
+    if (!ns(Any_is_known_type(ns(Any_Monster)))) {
+        printf("Any type does not accept Monster\n");
+        return -1;
+    }
+    if (ns(Any_is_known_type(42))) {
+        printf("Any type recognizes unexpected type\n");
+        return -1;
+    }
     inv = ns(Monster_inventory(monster));
     if ((nsc(uint8_vec_len(inv))) != 10) {
         printf("Inventory length unexpected\n");

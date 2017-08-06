@@ -1159,6 +1159,7 @@ static void gen_enum(fb_output_t *out, fb_compound_type_t *ct)
                 snt.text, snt.text);
     }
 
+
     if (is_union) {
         fprintf(out->fp, "    switch (type) {\n");
     } else {
@@ -1182,6 +1183,40 @@ static void gen_enum(fb_output_t *out, fb_compound_type_t *ct)
             "    }\n"
             "}\n");
     fprintf(out->fp, "\n");
+
+    if (is_union) {
+        fprintf(out->fp, "static inline int %s_is_known_type(%s_union_type_t type)\n"
+                "{\n",
+                snt.text, snt.text);
+    } else {
+        fprintf(out->fp, "static inline int %s_is_known_value(%s_enum_t value)\n"
+                "{\n",
+                snt.text, snt.text);
+    }
+    if (is_union) {
+        fprintf(out->fp, "    switch (type) {\n");
+    } else {
+        fprintf(out->fp, "    switch (value) {\n");
+    }
+    for (sym = ct->members; sym; sym = sym->link) {
+        member = (fb_member_t *)sym;
+        symbol_name(&member->symbol, &n, &s);
+        if (sym->flags & fb_duplicate) {
+            fprintf(out->fp,
+                    "    /* case %s_%.*s: return 1; (duplicate) */\n",
+                    snt.text, n, s);
+        } else {
+            fprintf(out->fp,
+                    "    case %s_%.*s: return 1;\n",
+                    snt.text, n, s);
+        }
+    }
+    fprintf(out->fp,
+            "    default: return 0;\n"
+            "    }\n"
+            "}\n");
+    fprintf(out->fp, "\n");
+
 }
 
 static void gen_nested_root(fb_output_t *out, fb_symbol_t *root_type, fb_symbol_t *container, fb_symbol_t *member)
