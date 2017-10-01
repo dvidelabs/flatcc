@@ -143,11 +143,10 @@ static inline int check_aligned_header(uoffset_t end, uoffset_t base, uoffset_t 
         return 0;
     }
     /* Alignment refers to element 0 and header must also be aligned. */
-    k += uoffset_size;
     align = align < uoffset_size ? uoffset_size : align;
 
     /* Note to self: the builder can also use the mask OR trick to propagate `min_align`. */
-    return k > base && k + offset_size <= end && !(k & ((offset_size - 1) | (align - 1)));
+    return k > base && k + offset_size <= end && !((k + offset_size) & ((offset_size - 1) | (align - 1)));
 }
 
 static inline int verify_struct(uoffset_t end, uoffset_t base, uint16_t align, uoffset_t size)
