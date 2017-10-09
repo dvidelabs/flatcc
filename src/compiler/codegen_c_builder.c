@@ -642,7 +642,7 @@ static int get_total_struct_field_count(fb_compound_type_t *ct)
                 count += get_total_struct_field_count(member->type.ct);
                 continue;
             }
-            /* enum fall through. */
+            /* Fall through */
         default:
             ++count;
         }

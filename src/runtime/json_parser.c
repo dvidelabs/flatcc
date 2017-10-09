@@ -130,7 +130,8 @@ descend:
     while (buf != end && *buf <= 0x20) {
         switch (*buf) {
         case 0x0d: buf += (end - buf > 1 && buf[1] == 0x0a);
-            /* Fall through consuming following LF or treating CR as LF. */
+            /* Fall through */
+            /* Consume following LF or treating CR as LF. */
         case 0x0a: ++ctx->line; ctx->line_start = ++buf; continue;
         case 0x09: ++buf; continue;
         case 0x20: goto again; /* Don't consume here, sync with power of 2 spaces. */

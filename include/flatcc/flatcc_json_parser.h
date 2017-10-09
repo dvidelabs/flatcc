@@ -221,13 +221,21 @@ static inline uint64_t flatcc_json_parser_symbol_part_ext(const char *buf, const
 #if 1
     switch (n) {
     case 8: w |= ((uint64_t)buf[7]) << (0 * 8);
+        /* Fall through */
     case 7: w |= ((uint64_t)buf[6]) << (1 * 8);
+        /* Fall through */
     case 6: w |= ((uint64_t)buf[5]) << (2 * 8);
+        /* Fall through */
     case 5: w |= ((uint64_t)buf[4]) << (3 * 8);
+        /* Fall through */
     case 4: w |= ((uint64_t)buf[3]) << (4 * 8);
+        /* Fall through */
     case 3: w |= ((uint64_t)buf[2]) << (5 * 8);
+        /* Fall through */
     case 2: w |= ((uint64_t)buf[1]) << (6 * 8);
+        /* Fall through */
     case 1: w |= ((uint64_t)buf[0]) << (7 * 8);
+        /* Fall through */
     case 0:
         break;
     }
