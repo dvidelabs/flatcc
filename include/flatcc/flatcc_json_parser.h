@@ -219,6 +219,7 @@ static inline uint64_t flatcc_json_parser_symbol_part_ext(const char *buf, const
     }
     /* This can bloat inlining for a rarely executed case. */
 #if 1
+    /* Fall through comments needed to silence gcc 7 warnings. */
     switch (n) {
     case 8: w |= ((uint64_t)buf[7]) << (0 * 8);
         /* Fall through */

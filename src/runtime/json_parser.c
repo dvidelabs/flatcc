@@ -128,6 +128,7 @@ descend:
         ++buf;
     }
     while (buf != end && *buf <= 0x20) {
+        /* Fall through comments needed to silence gcc 7 warnings. */
         switch (*buf) {
         case 0x0d: buf += (end - buf > 1 && buf[1] == 0x0a);
             /* Fall through */

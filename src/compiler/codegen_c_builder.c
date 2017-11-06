@@ -636,6 +636,7 @@ static int get_total_struct_field_count(fb_compound_type_t *ct)
         if (member->metadata_flags & fb_f_deprecated) {
             continue;
         }
+        /* Fall through comments needed to silence gcc 7 warnings. */
         switch (member->type.type) {
         case vt_compound_type_ref:
             if (member->type.ct->symbol.kind == fb_is_struct) {

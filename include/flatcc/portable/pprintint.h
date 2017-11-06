@@ -181,6 +181,7 @@ static int print_uint16(uint16_t n, char *p)
     p += k;
     *p = '\0';
     if (k & 1) {
+        /* Fall through comments needed to silence gcc 7 warnings. */
         switch (k) {
         case 5:
             __print_stage();
@@ -192,6 +193,7 @@ static int print_uint16(uint16_t n, char *p)
             p[-1] = n + '0';
         }
     } else {
+        /* Fall through comments needed to silence gcc 7 warnings. */
         switch (k) {
         case 4:
             __print_stage();
@@ -244,6 +246,7 @@ static int print_uint32(uint32_t n, char *p)
     p += k;
     *p = '\0';
     if (k & 1) {
+        /* Fall through comments needed to silence gcc 7 warnings. */
         switch (k) {
         case 9:
             __print_stage();
@@ -261,6 +264,7 @@ static int print_uint32(uint32_t n, char *p)
             p[-1] = n + '0';
         }
     } else {
+        /* Fall through comments needed to silence gcc 7 warnings. */
         switch (k) {
         case 10:
             __print_stage();
@@ -331,6 +335,7 @@ static int print_uint64(uint64_t n, char *p)
     p += k;
     *p = '\0';
     if (k & 1) {
+        /* Fall through comments needed to silence gcc 7 warnings. */
         switch (k) {
         case 19:
             __print_stage();
@@ -349,6 +354,7 @@ static int print_uint64(uint64_t n, char *p)
             __print_short_stage();
         }
     } else {
+        /* Fall through comments needed to silence gcc 7 warnings. */
         switch (k) {
         case 20:
             __print_stage();
