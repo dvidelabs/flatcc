@@ -1017,7 +1017,7 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
     }
     if (x <= b) {
         gen_trie(out, trie, x, b, pos);
-    } else {
+    } else if (a >= k) {
         trie->gen_unmatched(out);
     }
     if (prefix_guard) {

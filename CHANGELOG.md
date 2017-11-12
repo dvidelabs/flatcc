@@ -10,6 +10,7 @@
 - Fix regressions in verifier fix in 0.4.3 that might report out of
   bounds in rare cases (#60).
 - Silence gcc 7.x warnings about implicit fallthrough (#61).
+- Fix rare special in JSON parser causing spurious unknown symbol.
 
 ## [0.4.3]
 - Fix issue with initbuild.sh for custom builds (#43)
