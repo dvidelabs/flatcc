@@ -11,6 +11,22 @@
   bounds in rare cases (#60).
 - Silence gcc 7.x warnings about implicit fallthrough (#61).
 - Fix rare special in JSON parser causing spurious unknown symbol.
+- Reading and writing union vectors. The C++ interface also supports
+  these types, but other languages likely won't for a while.
+- New `_union(t)` method for accessing a union fields type and member
+  table in a single call. The method also supports union vectors to
+  retrieve the type vector and member vector as a single object.
+- BREAKING: In generated builder code for union references of the form
+  `<union-name>_union_ref_t` the union members and the hidden `_member`
+  field has been replaced with a single `member` field. Union
+  constructors work as before: `Any_union_ref_t uref =
+  Any_as_weapon(weapon_ref)` Otherwise use `.type` and `.member` fields
+  directly. This change was necessary to support the builder API's new
+  union vectors without hitting strict aliasing rules, for example as
+  argument to `flatcc_builder_union_vector_push`. Expected impact: low
+  or none. The physical struct layout remains unchanged.
+- Fix off-by-one indexing in `flatbuffers_generic_table_vec_at`. Impact
+  low since it was hardly relevant before union vectors were introduced.
 
 ## [0.4.3]
 - Fix issue with initbuild.sh for custom builds (#43)

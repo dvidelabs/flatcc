@@ -115,6 +115,7 @@ table Monster {
   testarrayofstring:[string] (id: 10);
   testarrayofbools:[bool] (id: 24);
   enemy:MyGame.Example.Monster (id:12);  // Test referring by full namespace.
+  // id 7 resever for Any_type
   test:Any (id: 8);
   test4:[Test] (id: 9);
   testnestedflatbuffer:[ubyte] (id:13, nested_flatbuffer: "Monster");
@@ -131,6 +132,8 @@ table Monster {
   testjsonprefixparsing:TestJSONPrefixParsing (id:25);
   testjsonprefixparsing2:TestJSONPrefixParsing2 (id:26);
   testjsonprefixparsing3:TestJSONPrefixParsing3 (id:27);
+  // id 28 reserver for manyany_type
+  manyany: [Any] (id:29);
 }
 
 table TypeAliases {

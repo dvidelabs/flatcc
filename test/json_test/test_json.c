@@ -111,7 +111,7 @@ int edge_case_tests()
  * more complicated parser or restrict the places where symbols are
  * allowed.
  */
-#if 0 
+#if 0
     TEST(   "{ name: \"Monster\", color: \"Green Blue Red Blue\"}",
             "{\"name\":\"Monster\",\"color\":\"Red Green Blue\"}");
 #else
@@ -377,7 +377,7 @@ int main()
     TEST(   "{ name: \"Monster\", color: 8}",
             "{\"name\":\"Monster\"}");
 #endif
-#if UQL 
+#if UQL
     TEST(   "{ name: \"Monster\", color: Green Red }",
             "{\"name\":\"Monster\",\"color\":\"Red Green\"}");
 #endif
@@ -584,6 +584,26 @@ int main()
 
     TEST(   "{ \"name\": \"Monster\", \"testjsonprefixparsing3\": { \"aaaa_bbbb_steps\": 19, \"aaaa_bbbb_start_steps\": 17 } }",
             "{\"name\":\"Monster\",\"testjsonprefixparsing3\":{\"aaaa_bbbb_steps\":19,\"aaaa_bbbb_start_steps\":17}}" );
+
+    /* Union vector */
+
+    TEST(   "{ \"name\": \"Monster\", \"manyany_type\": [ \"Monster\" ], \"manyany\": [{\"name\": \"Joe\"}] }",
+            "{\"name\":\"Monster\",\"manyany_type\":[\"Monster\"],\"manyany\":[{\"name\":\"Joe\"}]}");
+
+    TEST(   "{ \"name\": \"Monster\", \"manyany_type\": [ \"NONE\" ], \"manyany\": [ null ] }",
+            "{\"name\":\"Monster\",\"manyany_type\":[\"NONE\"],\"manyany\":[null]}");
+
+    TEST(   "{ \"name\": \"Monster\", \"manyany_type\": [ \"Monster\", \"NONE\" ], \"manyany\": [{\"name\": \"Joe\"}, null] }",
+            "{\"name\":\"Monster\",\"manyany_type\":[\"Monster\",\"NONE\"],\"manyany\":[{\"name\":\"Joe\"},null]}");
+
+    TEST(   "{ \"name\": \"Monster\", \"manyany_type\": [ \"Monster\" ], \"manyany\": [ { \"name\":\"Joe\", \"test_type\": \"Monster\", \"test\": { \"name\": \"any Monster\" } } ] }",
+            "{\"name\":\"Monster\",\"manyany_type\":[\"Monster\"],\"manyany\":[{\"name\":\"Joe\",\"test_type\":\"Monster\",\"test\":{\"name\":\"any Monster\"}}]}");
+
+    TEST(   "{ \"name\": \"Monster\", \"manyany\": [{\"name\": \"Joe\"}], \"manyany_type\": [ \"Monster\" ] }",
+            "{\"name\":\"Monster\",\"manyany_type\":[\"Monster\"],\"manyany\":[{\"name\":\"Joe\"}]}");
+
+    TEST(   "{ \"name\": \"Monster\", \"manyany\": [{\"name\": \"Joe\", \"manyany\":[null, null], \"manyany_type\": [\"NONE\", \"NONE\"]}], \"manyany_type\": [ \"Monster\" ] }",
+            "{\"name\":\"Monster\",\"manyany_type\":[\"Monster\"],\"manyany\":[{\"name\":\"Joe\",\"manyany_type\":[\"NONE\",\"NONE\"],\"manyany\":[null,null]}]}");
 
     return ret ? -1: 0;
 }

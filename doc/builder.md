@@ -8,6 +8,10 @@
 * [Endinaness](#endinaness)
 * [Buffers](#buffers)
 * [Tables](#tables)
+    * [Adding Fields](#adding-fields)
+    * [Nested Tables](#nested-tables)
+    * [Unions](#unions)
+    * [Union Vectors](#union-vectors)
 * [Strings](#strings)
 * [Structs](#structs)
 * [Nested Buffers](#nested-buffers)
@@ -370,6 +374,8 @@ other emitters. See also [flatcc_builder.h] and the default emitter in
 
 ## Tables
 
+### Adding Fields
+
 If `Monster` is a table, we can create a Monster buffer (after
 builder init) as follows:
 
@@ -430,6 +436,8 @@ If Monster is declared as root, the above may also be called as:
 
 (Calling `Monster_end` instead would require `buffer_end` call
 subsequently, and is basically a violation of nesting).
+
+### Nested Tables
 
 Tables can be nested, for example the Mini field may have type
 Monster table again (a recursive type):
@@ -525,6 +533,8 @@ or
     Monster_create_as_root(B, &vec, 150, 80, name, inventory,
         Color_Red, Any_as_NONE());
 
+### Unions
+
 Unlike the C++ Flatbuffers library, we do not expose a separate union
 type field except via a small struct with a union of typed references
 and a type field. This struct is given to the create argument, and above
@@ -566,13 +576,69 @@ or
     Any_union_ref_t test;
     Pickup_start(B);
     Pickup_location_create(B, 0, 0, 17);
-    test.Pickup = Pickup_end(B);
+    /* test.Pickup = Pickup_end(B); no longer possible as of v0.5.0 */
+    test.member = Pickup_ned(B); /* As of v0.5.0, or test._member before. */
     test.type = Any_Pickup;
     Monster_test_add(B, test);
+
+_Note the union structure has been change for v0.5.0. Before each union
+had its own structure which a union of members with a field for each
+member type. These fields have been removed because of conflicts with
+strict aliasing rules when casting. Now each union type has a typedef to
+a generic union struct. This change makes it possible to handle union
+vectors in the low level builder API._
 
 The following is valid and will not return an error, but also has no effect:
 
     Monster_test_add(B, Any_as_NONE());
+
+### Union Vectors
+
+Only as of flatcc v0.5.0 and currently not widely supported. C++ supports union
+vectors.
+
+The `monster_test.fbs` schema has a field named ManyAny in the Monster
+table. It is vector of unions of type Any.
+
+We can create a vector using
+
+    Any_union_vec_ref_t anyvec_ref;
+
+    Any_vec_start(B);
+    Any_vec_push(TestSimpleTableWithEnum_create(B));
+    anyvec_ref = Any_vec_end(B);
+    Monster_add_ManyAny(anyvec_ref);
+
+A union can be constructed with type specific `_push` or `_push_create` operations:
+
+    Monster_add_ManyAny_start(B);
+    Monster_ManyAny_push(B, Any_as_TestSimpleTableWithEnum(ref));
+    Monster_add_ManyAny_end(B);
+
+    Monster_add_ManyAny_start(B);
+    Monster_ManyAny_TestSimpleTableWithEnum_push(B, ref);
+    Monster_add_ManyAny_end(B);
+
+    Monster_add_ManyAny_start(B);
+    Monster_ManyAny_TestSimpleTableWithEnum_push_create(B, args);
+    Monster_add_ManyAny_end(B);
+
+and other similar operations, much like other vectors.
+
+Note that internally `anyvec_ref` is really two references, one to type
+vector and one to a table vector. The vector is constructed a single
+vector of unions and later split into two before final storage. If it is
+necessary to create a union vector from a vector of tables and types,
+the low level builder interface has a `direct` call to do this.
+
+Union vectos generally use more temporary stack space because during
+construction because each element as a struct of type and reference
+which don't back as densely as a two separate tables. In addition the
+separated type and table vectors must be constructed temporarily. The
+finaly buffer result is resonably compatct since the type vector does
+not use much space. Unions will also be somewhat slower to construct,
+but not unreasonably so.
+
 
 Packing tables:
 

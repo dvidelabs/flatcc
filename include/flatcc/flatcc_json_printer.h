@@ -449,6 +449,7 @@ struct flatcc_json_printer_table_descriptor {
     int vsize;
     int ttl;
     int count;
+    uint8_t type; /* Only used with unions. */
 };
 
 typedef void flatcc_json_printer_table_f(flatcc_json_printer_t *ctx,
@@ -458,6 +459,7 @@ typedef void flatcc_json_printer_struct_f(flatcc_json_printer_t *ctx,
         const void *p);
 
 /* Generated value to name map callbacks. */
+typedef void flatcc_json_printer_union_type_f(flatcc_json_printer_t *ctx, flatbuffers_utype_t type);
 typedef void flatcc_json_printer_uint8_enum_f(flatcc_json_printer_t *ctx, uint8_t v);
 typedef void flatcc_json_printer_uint16_enum_f(flatcc_json_printer_t *ctx, uint16_t v);
 typedef void flatcc_json_printer_uint32_enum_f(flatcc_json_printer_t *ctx, uint32_t v);
@@ -639,6 +641,12 @@ void flatcc_json_printer_table_vector_field(flatcc_json_printer_t *ctx,
         int id, const char *name, int len,
         flatcc_json_printer_table_f pf);
 
+void flatcc_json_printer_union_vector_field(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_table_descriptor_t *td,
+        int id, const char *name, int len,
+        flatcc_json_printer_union_type_f ptf,
+        flatcc_json_printer_table_f pf);
+
 void flatcc_json_printer_struct_as_nested_root(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
         int id, const char *name, int len,
@@ -651,13 +659,10 @@ void flatcc_json_printer_table_as_nested_root(flatcc_json_printer_t *ctx,
         const char *fid,
         flatcc_json_printer_table_f pf);
 
-int flatcc_json_printer_read_union_type(
+void flatcc_json_printer_union_field(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
-        int id);
-
-void flatcc_json_printer_union_type(flatcc_json_printer_t *ctx,
-        flatcc_json_printer_table_descriptor_t *td,
-        const char *name, int len, int type,
-        const char *type_name, int type_len);
+        int id, const char *name, int len,
+        flatcc_json_printer_union_type_f ptf,
+        flatcc_json_printer_table_f pf);
 
 #endif /* FLATCC_JSON_PRINTER_H */

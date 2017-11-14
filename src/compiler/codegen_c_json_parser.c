@@ -225,6 +225,13 @@ static int dict_cmp(const void *x, const void *y)
     return k ? k : a->len - b->len;
 }
 
+/* Includes union vectors. */
+static inline int is_union_member(fb_member_t *member)
+{
+    return (member->type.type == vt_compound_type_ref || member->type.type == vt_vector_compound_type_ref)
+            && member->type.ct->symbol.kind == fb_is_union;
+}
+
 static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
 {
     fb_symbol_t *sym;
@@ -234,6 +241,7 @@ static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
     char *strbuf = 0;
     int strbufsiz = 0;
     int is_union;
+    int union_index = 0;
 
     n = 0;
     for (sym = ct->members; sym; sym = sym->link) {
@@ -241,8 +249,7 @@ static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
         if (member->metadata_flags & fb_f_deprecated) {
             continue;
         }
-        is_union = member->type.type == vt_compound_type_ref
-                && member->type.ct->symbol.kind == fb_is_union;
+        is_union = is_union_member(member);
         if (is_union) {
             ++n;
             strbufsiz += member->symbol.ident->len + 6;
@@ -269,9 +276,9 @@ static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
         de->data = member;
         de->hint = 0;
         ++de;
-        is_union = member->type.type == vt_compound_type_ref
-                && member->type.ct->symbol.kind == fb_is_union;
+        is_union = is_union_member(member);
         if (is_union) {
+            member->export_index = union_index++;
             de->len = member->symbol.ident->len + 5;
             de->text = strbuf;
             memcpy(strbuf, member->symbol.ident->text, member->symbol.ident->len);
@@ -404,6 +411,8 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     int is_table = 0;
     int is_struct = 0;
     int is_union = 0;
+    int is_union_vector = 0;
+    int is_union_type_vector = 0;
     int is_nested = 0;
     int st = 0;
     const char *tname_prefix = "n/a", *tname = "n/a"; /* suppress compiler warnigns */
@@ -449,6 +458,14 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     }
     if (is_union_type) {
         is_scalar = 0;
+    }
+    if (is_vector && is_union_type) {
+        is_union_type_vector = 1;
+        is_vector = 0;
+    }
+    if (is_vector && is_union) {
+        is_union_vector = 1;
+        is_vector = 0;
     }
 
     if (is_nested == 1) {
@@ -579,8 +596,13 @@ repeat_nested:
         println(out, "if (buf == end) goto failed;");
         println(out, "ref = flatcc_builder_end_table(ctx->ctx);");
     } else if (is_union) {
-        println(out, "buf = flatcc_json_parser_union(ctx, buf, end, %"PRIu64", %"PRIu64", %s_parse_json_union);",
+        if (is_union_vector) {
+            println(out, "buf = flatcc_json_parser_union_vector(ctx, buf, end, %"PRIu64", %"PRIu64", h_unions, %s_parse_json_union_table);",
                 (uint64_t)member->export_index, member->id, snref.text);
+        } else {
+            println(out, "buf = flatcc_json_parser_union(ctx, buf, end, %"PRIu64", %"PRIu64", h_unions, %s_parse_json_union);",
+                (uint64_t)member->export_index, member->id, snref.text);
+        }
     } else if (is_union_type) {
         println(out, "static flatcc_json_parser_integral_symbol_f *symbolic_parsers[] = {");
         indent(); indent();
@@ -588,8 +610,13 @@ repeat_nested:
         println(out, "%s_local_%sjson_parser_enum,", out->S->basename, scope_name);
         println(out, "%s_global_json_parser_enum, 0 };", out->S->basename);
         unindent(); unindent();
-        println(out, "buf = flatcc_json_parser_union_type(ctx, buf, end, %"PRIu64", %"PRIu64", symbolic_parsers, %s_parse_json_union);",
+        if (is_union_type_vector) {
+        println(out, "buf = flatcc_json_parser_union_type_vector(ctx, buf, end, %"PRIu64", %"PRIu64", h_unions, symbolic_parsers, %s_parse_json_union_table, %s_json_union_accept_type);",
+                (uint64_t)member->export_index, member->id, snref.text, snref.text);
+        } else {
+            println(out, "buf = flatcc_json_parser_union_type(ctx, buf, end, %"PRIu64", %"PRIu64", h_unions, symbolic_parsers, %s_parse_json_union);",
                 (uint64_t)member->export_index, member->id, snref.text);
+        }
     } else if (!is_vector) {
         gen_panic(out, "internal error: unexpected type for trie member\n");
         return -1;
@@ -1329,12 +1356,7 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
 
     trie.union_total = 0;
     for (i = 0; i < n; ++i) {
-        member = trie.dict[i].data;
-        is_union = member->type.type == vt_compound_type_ref
-            && member->type.ct->symbol.kind == fb_is_union;
-        if (is_union) {
-            member->export_index = trie.union_total++;
-        }
+        trie.union_total += !!trie.dict[i].hint;
     }
 
     fb_clear(snt);
@@ -1349,12 +1371,15 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
         println(out, "const char *mark;");
         println(out, "uint64_t w;");
     }
+    if (trie.union_total) {
+        println(out, "size_t h_unions;");
+    }
     println(out, "");
 
     println(out, "if (flatcc_builder_start_table(ctx->ctx, %"PRIu64")) goto failed;",
         ct->count);
     if (trie.union_total) {
-        println(out, "if (end == flatcc_json_parser_prepare_unions(ctx, buf, end, %"PRIu64")) goto failed;", (uint64_t)trie.union_total);
+        println(out, "if (end == flatcc_json_parser_prepare_unions(ctx, buf, end, %"PRIu64", &h_unions)) goto failed;", (uint64_t)trie.union_total);
     }
     println(out, "buf = flatcc_json_parser_object_start(ctx, buf, end, &more);");
     println(out, "while (more) {"); indent();
@@ -1368,13 +1393,13 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
     }
     println(out, "buf = flatcc_json_parser_object_end(ctx, buf, end, &more);");
     unindent(); println(out, "}");
+    println(out, "if (ctx->error) goto failed;");
     for (first = 1, i = 0; i < n; ++i) {
         member = trie.dict[i].data;
         if (member->metadata_flags & fb_f_deprecated) {
             continue;
         }
-        is_union = member->type.type == vt_compound_type_ref &&
-                member->type.ct->symbol.kind == fb_is_union;
+        is_union = is_union_member(member);
         is_required = member->metadata_flags & fb_f_required;
         if (is_required) {
             if (first) {
@@ -1393,7 +1418,7 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
         unindent(); println(out, "}");
     }
     if (trie.union_total) {
-        println(out, "buf = flatcc_json_parser_finalize_unions(ctx, buf, end);");
+        println(out, "buf = flatcc_json_parser_finalize_unions(ctx, buf, end, h_unions);");
     }
     println(out, "return buf;");
     /* Set runtime error if no other error was set already. */
@@ -1427,7 +1452,8 @@ static int gen_union_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "");
     println(out, "switch (type) {");
     println(out, "case 0:"); indent();
-    println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_union_none);"); unindent();
+    println(out, "return flatcc_json_parser_none(ctx, buf, end);");
+    unindent();
     for (sym = ct->members; sym; sym = sym->link) {
         member = (fb_member_t *)sym;
         if (member->type.type == vt_missing) {
@@ -1461,6 +1487,85 @@ static int gen_union_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "failed:");
     unmargin();
     println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);");
+    unindent(); println(out, "}");
+    println(out, "");
+    return 0;
+}
+
+/* Used with union vectors. */
+static int gen_union_table_parser(fb_output_t *out, fb_compound_type_t *ct)
+{
+    fb_scoped_name_t snt, snref;
+    fb_symbol_t *sym;
+    fb_member_t *member;
+
+    fb_clear(snt);
+    fb_clear(snref);
+    fb_compound_name(ct, &snt);
+    println(out, "static const char *%s_parse_json_union_table(flatcc_json_parser_t *ctx, const char *buf, const char *end, uint8_t type, flatcc_builder_ref_t *pref)", snt.text);
+    println(out, "{"); indent();
+    println(out, "switch (type) {");
+    println(out, "case 0:"); indent();
+    println(out, "*pref = 0;");
+    println(out, "return flatcc_json_parser_none(ctx, buf, end);");
+    unindent();
+    for (sym = ct->members; sym; sym = sym->link) {
+        member = (fb_member_t *)sym;
+        if (member->type.type == vt_missing) {
+            /* NONE is of type vt_missing and already handled. */
+            continue;
+        }
+        assert(member->type.type == vt_compound_type_ref);
+        fb_compound_name(member->type.ct, &snref);
+        println(out, "case %u:", (unsigned)member->value.u); indent();
+        println(out, "buf = %s_parse_json_table(ctx, buf, end);", snref.text);
+        println(out, "break;");
+        unindent();
+    }
+    /* Unknown union, but not an error if we allow schema forwarding. */
+    println(out, "default:"); indent();
+    println(out, "*pref = 0;");
+    println(out, "if (!(ctx->flags & flatcc_json_parser_f_skip_unknown)) {"); indent();
+    println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_unknown_union);");
+    unindent(); println(out, "} else {"); indent();
+    println(out, "return flatcc_json_parser_generic_json(ctx, buf, end);");
+    unindent(); println(out, "}");
+    unindent(); println(out, "}");
+    println(out, "if (ctx->error) return buf;");
+    println(out, "*pref = flatcc_builder_end_table(ctx->ctx);");
+    println(out, "if (!*pref) {");
+    indent(); println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);");
+    unindent(); println(out, "}");
+    println(out, "return buf;");
+    unindent(); println(out, "}");
+    println(out, "");
+    return 0;
+}
+
+static int gen_union_accept_type(fb_output_t *out, fb_compound_type_t *ct)
+{
+    fb_scoped_name_t snt, snref;
+    fb_symbol_t *sym;
+    fb_member_t *member;
+
+    fb_clear(snt);
+    fb_clear(snref);
+    fb_compound_name(ct, &snt);
+    println(out, "static int %s_json_union_accept_type(uint8_t type)", snt.text);
+    println(out, "{"); indent();
+    println(out, "switch (type) {");
+    for (sym = ct->members; sym; sym = sym->link) {
+        member = (fb_member_t *)sym;
+        if (member->type.type == vt_missing) {
+            println(out, "case 0: return 1;");
+            continue;
+        }
+        assert(member->type.type == vt_compound_type_ref);
+        println(out, "case %u: return 1;", (unsigned)member->value.u);
+    }
+    /* Unknown union, but not an error if we allow schema forwarding. */
+    println(out, "default: return 0;"); indent();
+    unindent(); println(out, "}");
     unindent(); println(out, "}");
     println(out, "");
     return 0;
@@ -1606,6 +1711,8 @@ static int gen_json_parser_prototypes(fb_output_t *out)
         case fb_is_union:
             fb_compound_name((fb_compound_type_t *)sym, &snt);
             println(out, "static const char *%s_parse_json_union(flatcc_json_parser_t *ctx, const char *buf, const char *end, uint8_t type, flatbuffers_voffset_t id);", snt.text);
+            println(out, "static const char *%s_parse_json_union_table(flatcc_json_parser_t *ctx, const char *buf, const char *end, uint8_t type, flatcc_builder_ref_t *pref);", snt.text);
+            println(out, "static int %s_json_union_accept_type(uint8_t type);", snt.text);
             /* A union also has an enum parser to get the type. */
             println(out, "static const char *%s_parse_json_enum(flatcc_json_parser_t *ctx, const char *buf, const char *end,", snt.text);
             indent(); indent();
@@ -1646,6 +1753,8 @@ static int gen_json_parsers(fb_output_t *out)
         switch (sym->kind) {
         case fb_is_union:
             gen_union_parser(out, (fb_compound_type_t *)sym);
+            gen_union_table_parser(out, (fb_compound_type_t *)sym);
+            gen_union_accept_type(out, (fb_compound_type_t *)sym);
             gen_enum_parser(out, (fb_compound_type_t *)sym);
             break;
         case fb_is_struct:

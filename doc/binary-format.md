@@ -521,7 +521,7 @@ value field MUST be absent and the type field MAY be absent because a
 union type always defaults to the value NONE.
 
 Vectors of unions is a late addition to the FlatBuffers format. FlatCC
-does currently not suppport them but they will be added eventually.
+supports union vectors as of v0.5.0.
 
 Vectors of unions have the same two fields as normal unions but they
 both store a vector and both vectors MUST have the same length or both

@@ -1,6 +1,17 @@
 #include "flatcc/flatcc_rtconfig.h"
 #include "flatcc/flatcc_json_parser.h"
 
+#define uoffset_t flatbuffers_uoffset_t
+#define soffset_t flatbuffers_soffset_t
+#define voffset_t flatbuffers_voffset_t
+#define utype_t flatbuffers_utype_t
+
+#define uoffset_size sizeof(uoffset_t)
+#define soffset_size sizeof(soffset_t)
+#define voffset_size sizeof(voffset_t)
+#define utype_size sizeof(utype_t)
+
+#define offset_size uoffset_size
 #if FLATCC_USE_GRISU3 && !defined(PORTABLE_USE_GRISU3)
 #define PORTABLE_USE_GRISU3 1
 #endif
@@ -793,9 +804,12 @@ failed:
 typedef struct {
     const char *backtrace;
     const char *line_start;
+    int line;
     uint8_t type_present;
     uint8_t type;
-    int line;
+    /* Union vectors: */
+    uoffset_t count;
+    size_t h_types;
 } __flatcc_json_parser_union_entry_t;
 
 typedef struct {
@@ -805,7 +819,7 @@ typedef struct {
 } __flatcc_json_parser_union_frame_t;
 
 const char *flatcc_json_parser_prepare_unions(flatcc_json_parser_t *ctx,
-        const char *buf, const char *end, size_t union_total)
+        const char *buf, const char *end, size_t union_total, size_t *handle)
 {
     __flatcc_json_parser_union_frame_t *f;
 
@@ -816,26 +830,27 @@ const char *flatcc_json_parser_prepare_unions(flatcc_json_parser_t *ctx,
     }
     /* Frames have zeroed memory. */
     f->union_total = union_total;
+    *handle = flatcc_builder_get_user_frame_handle(ctx->ctx);
     return buf;
 }
 
 const char *flatcc_json_parser_finalize_unions(flatcc_json_parser_t *ctx,
-        const char *buf, const char *end)
+        const char *buf, const char *end, size_t handle)
 {
-    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame(ctx->ctx);
+    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_from_handle(ctx->ctx, handle);
 
     if (f->union_count) {
         buf = flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_union_incomplete);
     }
-    flatcc_builder_exit_user_frame(ctx->ctx);
+    flatcc_builder_exit_user_frame_from_handle(ctx->ctx, handle);
     return buf;
 }
 
 const char *flatcc_json_parser_union(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, size_t union_index,
-        flatbuffers_voffset_t id, flatcc_json_parser_union_f *parse)
+        flatbuffers_voffset_t id, size_t handle, flatcc_json_parser_union_f *parse)
 {
-    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame(ctx->ctx);
+    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_from_handle(ctx->ctx, handle);
     __flatcc_json_parser_union_entry_t *e = &f->unions[union_index];
 
     if (e->backtrace) {
@@ -849,7 +864,7 @@ const char *flatcc_json_parser_union(flatcc_json_parser_t *ctx,
         buf = flatcc_json_parser_generic_json(ctx, (e->backtrace = buf), end);
     } else {
         if (e->type == 0) {
-            return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_union_none);
+            return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_union_none_present);
         }
         --f->union_count;
         buf = parse(ctx, buf, end, e->type, id);
@@ -859,10 +874,11 @@ const char *flatcc_json_parser_union(flatcc_json_parser_t *ctx,
 
 const char *flatcc_json_parser_union_type(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, size_t union_index, flatbuffers_voffset_t id,
+        size_t handle,
         flatcc_json_parser_integral_symbol_f *type_parsers[],
         flatcc_json_parser_union_f *union_parser)
 {
-    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame(ctx->ctx);
+    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_from_handle(ctx->ctx, handle);
     __flatcc_json_parser_union_entry_t *e = f->unions + union_index;
 
     const char *mark;
@@ -902,4 +918,153 @@ const char *flatcc_json_parser_union_type(flatcc_json_parser_t *ctx,
     ctx->line = line;
     ctx->line_start = line_start;
     return buf;
+}
+
+static const char *_parse_union_table_vector(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, size_t h_types, uoffset_t count,
+        flatbuffers_voffset_t id, flatcc_json_parser_union_table_f *union_parser)
+{
+    flatcc_builder_ref_t ref = 0, *pref;
+    utype_t *types;
+    int more;
+    size_t i;
+
+    if (flatcc_builder_start_offset_vector(ctx->ctx)) goto failed;
+    buf = flatcc_json_parser_array_start(ctx, buf, end, &more);
+    i = 0;
+    while (more) {
+        if (i == count) {
+            return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_union_vector_length);
+        }
+        /* Frame must be restored between calls to table parser. */
+        types = flatcc_builder_get_user_frame_from_handle(ctx->ctx, h_types);
+        buf = union_parser(ctx, buf, end, types[i], &ref);
+        if (buf == end) {
+            return buf;
+        }
+        if (!(pref = flatcc_builder_extend_offset_vector(ctx->ctx, 1))) goto failed;
+        *pref = ref;
+        buf = flatcc_json_parser_array_end(ctx, buf, end, &more);
+        ++i;
+    }
+    if (i != count) {
+        return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_union_vector_length);
+    }
+    /* Frame must be restored between calls to table parser. */
+    types = flatcc_builder_get_user_frame_from_handle(ctx->ctx, h_types);
+    if (!(ref = flatcc_builder_end_offset_vector_for_unions(ctx->ctx, types))) goto failed;
+    if (!(pref = flatcc_builder_table_add_offset(ctx->ctx, id))) goto failed;
+    *pref = ref;
+    return buf;
+failed:
+    return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);
+}
+
+const char *flatcc_json_parser_union_vector(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, size_t union_index,
+        flatbuffers_voffset_t id, size_t handle, flatcc_json_parser_union_table_f *union_parser)
+{
+    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_from_handle(ctx->ctx, handle);
+    __flatcc_json_parser_union_entry_t *e = f->unions + union_index;
+
+    if (e->backtrace) {
+        return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_duplicate);
+    }
+    if (!e->type_present) {
+        ++f->union_count;
+        e->line = ctx->line;
+        e->line_start = ctx->line_start;
+        buf = flatcc_json_parser_generic_json(ctx, (e->backtrace = buf), end);
+    } else {
+        --f->union_count;
+        buf = _parse_union_table_vector(ctx, buf, end, e->h_types, e->count, id, union_parser);
+    }
+    return buf;
+}
+
+const char *flatcc_json_parser_union_type_vector(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, size_t union_index, flatbuffers_voffset_t id,
+        size_t handle,
+        flatcc_json_parser_integral_symbol_f *type_parsers[],
+        flatcc_json_parser_union_table_f *union_parser,
+        flatcc_json_parser_is_known_type_f accept_type)
+{
+    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_from_handle(ctx->ctx, handle);
+    __flatcc_json_parser_union_entry_t *e = f->unions + union_index;
+
+    const char *mark;
+    int line;
+    const char *line_start;
+    int more;
+    utype_t val;
+    void *pval;
+    flatcc_builder_ref_t ref, *pref;
+    utype_t *types;
+    size_t size;
+    size_t h_types;
+    uoffset_t count;
+
+#if FLATBUFFERS_UTYPE_MAX != UINT8_MAX
+#error "Update union vector parser to support current union type definition."
+#endif
+
+    if (e->type_present) {
+        return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_duplicate);
+    }
+    e->type_present = 1;
+    if (flatcc_builder_start_vector(ctx->ctx, 1, 1, FLATBUFFERS_COUNT_MAX((utype_size)))) goto failed;
+    buf = flatcc_json_parser_array_start(ctx, buf, end, &more);
+    while (more) {
+        if (!(pval = flatcc_builder_extend_vector(ctx->ctx, 1))) goto failed;
+        buf = flatcc_json_parser_uint8(ctx, (mark = buf), end, &val);
+        if (mark == buf) {
+            buf = flatcc_json_parser_symbolic_uint8(ctx, (mark = buf), end, type_parsers, &val);
+            if (buf == mark || buf == end) goto failed;
+        }
+        /* Parse unknown types as NONE */
+        if (!accept_type(val)) {
+            if (!(ctx->flags & flatcc_json_parser_f_skip_unknown)) {
+                return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_unknown_union);
+            }
+            val = 0;
+        }
+        flatbuffers_uint8_write_to_pe(pval, val);
+        buf = flatcc_json_parser_array_end(ctx, buf, end, &more);
+    }
+    e->count = count = flatcc_builder_vector_count(ctx->ctx);
+    size = count * utype_size;
+    /* Store type vector so it is accessible to the table vector parser.  */
+    types = flatcc_builder_enter_user_frame(ctx->ctx, size);
+    h_types = flatcc_builder_get_user_frame_handle(ctx->ctx);
+    memcpy(types, flatcc_builder_vector_edit(ctx->ctx), size);
+    if (!((ref = flatcc_builder_end_vector(ctx->ctx)))) goto failed;
+    if (!(pref = flatcc_builder_table_add_offset(ctx->ctx, id - 1))) goto failed;
+    *pref = ref;
+
+    /* Restore union frame after possible invalidation due to types frame allocation. */
+    f = flatcc_builder_get_user_frame_from_handle(ctx->ctx, handle);
+    e = f->unions + union_index;
+
+    e->h_types = h_types;
+    if (e->backtrace == 0) {
+        ++f->union_count;
+        return buf;
+    }
+    assert(f->union_count);
+    --f->union_count;
+    line = ctx->line;
+    line_start = ctx->line_start;
+    ctx->line = e->line;
+    ctx->line_start = e->line_start;
+    /* We must not assign buf here because we are backtracking. */
+    if (end == _parse_union_table_vector(ctx, e->backtrace, end, h_types, count, id, union_parser)) return end;
+    /*
+     * NOTE: We do not need the user frame anymore, but if we did, it
+     * would have to be restored from its handle due to the above parse.
+     */
+    ctx->line = line;
+    ctx->line_start = line_start;
+    return buf;
+failed:
+    return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);
 }

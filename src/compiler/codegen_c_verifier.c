@@ -46,7 +46,7 @@ static int gen_union_verifier(fb_output_t *out, fb_compound_type_t *ct)
     fb_compound_name(ct, &snt);
 
     fprintf(out->fp,
-            "static int __%s_union_verifier(flatcc_table_verifier_descriptor_t *td, flatbuffers_voffset_t id, uint8_t type)\n{\n    switch(type) {\n",
+            "static int __%s_union_verifier(flatcc_table_verifier_descriptor_t *td)\n{\n    switch(td->type) {\n",
             snt.text);
     for (sym = ct->members; sym; sym = sym->link) {
         member = (fb_member_t *)sym;
@@ -57,7 +57,7 @@ static int gen_union_verifier(fb_output_t *out, fb_compound_type_t *ct)
         assert(member->type.type == vt_compound_type_ref);
         fb_compound_name(member->type.ct, &snref);
         fprintf(out->fp,
-                "    case %u: return flatcc_verify_table_field(td, id, 0, __%s_table_verifier);\n",
+                "    case %u: return __%s_table_verifier(td);\n",
                 (unsigned)member->value.u, snref.text);
     }
     fprintf(out->fp,
@@ -168,6 +168,11 @@ static int gen_table_verifier(fb_output_t *out, fb_compound_type_t *ct)
                 fprintf(out->fp,
                         "flatcc_verify_vector_field(td, %"PRIu64", %d, %"PRId16", %"PRIu64", %"PRIu64"ULL)",
                         member->id, required, member->align, member->size, (uint64_t)FLATBUFFERS_COUNT_MAX(member->size));
+                break;
+            case fb_is_union:
+                fprintf(out->fp,
+                        "flatcc_verify_union_vector_field(td, %"PRIu64", %d, &__%s_union_verifier)",
+                        member->id, required, snref.text);
                 break;
             default:
                 gen_panic(out, "internal error: unexpected vector compound type for table verifier");

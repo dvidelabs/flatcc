@@ -39,6 +39,9 @@ const char *flatcc_json_printer_error_string(int err)
     }
 }
 
+#define flatcc_json_printer_utype_enum_f flatcc_json_printer_union_type_f
+#define flatbuffers_utype_read_from_pe __flatbuffers_utype_read_from_pe
+
 #define uoffset_t flatbuffers_uoffset_t
 #define soffset_t flatbuffers_soffset_t
 #define voffset_t flatbuffers_voffset_t
@@ -51,8 +54,15 @@ const char *flatcc_json_printer_error_string(int err)
 
 #define offset_size uoffset_size
 
-/* This hardcodes utype to uint8 so change if relevant. */
+#if FLATBUFFERS_UTYPE_MAX == UINT8_MAX
 #define print_utype print_uint8
+#else
+#ifdef FLATBUFFERS_UTYPE_MIN
+#define print_utype print_int64
+#else
+#define print_utype print_uint64
+#endif
+#endif
 
 static inline const void *read_uoffset_ptr(const void *p)
 {
@@ -79,6 +89,13 @@ static inline const void *get_field_ptr(flatcc_json_printer_table_descriptor_t *
 }
 
 #define print_char(c) *ctx->p++ = (c)
+
+#define print_null() do {                                                   \
+    print_char('n');                                                        \
+    print_char('u');                                                        \
+    print_char('l');                                                        \
+    print_char('l');                                                        \
+} while (0)
 
 #define print_start(c) do {                                                 \
     ++ctx->level;                                                           \
@@ -265,19 +282,23 @@ void flatcc_json_printer_string(flatcc_json_printer_t *ctx, const char *s, int n
 {
     print_string(ctx, s, n);
 }
+
 void flatcc_json_printer_write(flatcc_json_printer_t *ctx, const char *s, int n)
 {
     print_string_part(ctx, s, n);
 }
+
 void flatcc_json_printer_nl(flatcc_json_printer_t *ctx)
 {
     print_char('\n');
     flatcc_json_printer_flush_partial(ctx);
 }
+
 void flatcc_json_printer_char(flatcc_json_printer_t *ctx, char c)
 {
     print_char(c);
 }
+
 void flatcc_json_printer_indent(flatcc_json_printer_t *ctx)
 {
     /*
@@ -286,40 +307,15 @@ void flatcc_json_printer_indent(flatcc_json_printer_t *ctx)
      */
     print_indent(ctx);
 }
+
 void flatcc_json_printer_add_level(flatcc_json_printer_t *ctx, int n)
 {
     ctx->level += n;
 }
+
 int flatcc_json_printer_get_level(flatcc_json_printer_t *ctx)
 {
     return ctx->level;
-}
-
-static inline void print_type(flatcc_json_printer_t *ctx, const char *name, size_t len, utype_t type, const char *type_name, size_t type_len)
-{
-    print_nl();
-    *ctx->p = '\"';
-    ctx->p += !ctx->unquote;
-    if (ctx->p + len < ctx->pflush) {
-        memcpy(ctx->p, name, len);
-        ctx->p += len;
-    } else {
-        print_string_part(ctx, name, len);
-    }
-    print_string_part(ctx, "_type", 5);
-    *ctx->p = '\"';
-    ctx->p += !ctx->unquote;
-    print_char(':');
-    print_space();
-    if (ctx->noenum || type_name == 0) {
-        ctx->p += print_utype(type, ctx->p);
-    } else {
-        *ctx->p = '\"';
-        ctx->p += !ctx->unquote;
-        print_string_part(ctx, type_name, type_len);
-        *ctx->p = '\"';
-        ctx->p += !ctx->unquote;
-    }
 }
 
 static inline void print_symbol(flatcc_json_printer_t *ctx, const char *name, size_t len)
@@ -487,7 +483,7 @@ void flatcc_json_printer_ ## TN ## _enum_field(flatcc_json_printer_t *ctx,  \
 }
 
 static inline void print_table_object(flatcc_json_printer_t *ctx,
-        const void *p, int ttl, flatcc_json_printer_table_f pf)
+        const void *p, int ttl, utype_t type, flatcc_json_printer_table_f pf)
 {
     flatcc_json_printer_table_descriptor_t td;
 
@@ -496,6 +492,7 @@ static inline void print_table_object(flatcc_json_printer_t *ctx,
         return;
     }
     print_start('{');
+    td.type = type;
     td.count = 0;
     td.ttl = ttl;
     td.table = p;
@@ -521,7 +518,8 @@ void flatcc_json_printer_string_field(flatcc_json_printer_t *ctx,
 }
 
 #define __define_print_scalar_vector_field(TN, T)                           \
-void flatcc_json_printer_ ## TN ## _vector_field(flatcc_json_printer_t *ctx,\
+void flatcc_json_printer_ ## TN ## _vector_field(                           \
+        flatcc_json_printer_t *ctx,                                         \
         flatcc_json_printer_table_descriptor_t *td,                         \
         int id, const char *name, int len)                                  \
 {                                                                           \
@@ -558,7 +556,8 @@ void flatcc_json_printer_ ## TN ## _vector_field(flatcc_json_printer_t *ctx,\
 }
 
 #define __define_print_enum_vector_field(TN, T)                             \
-void flatcc_json_printer_ ## TN ## _enum_vector_field(flatcc_json_printer_t *ctx,\
+void flatcc_json_printer_ ## TN ## _enum_vector_field(                      \
+        flatcc_json_printer_t *ctx,                                         \
         flatcc_json_printer_table_descriptor_t *td,                         \
         int id, const char *name, int len,                                  \
         flatcc_json_printer_ ## TN ##_enum_f *pf)                           \
@@ -640,6 +639,7 @@ __define_print_enum_struct_field(int32, int32_t)
 __define_print_enum_struct_field(int64, int64_t)
 __define_print_enum_struct_field(bool, flatbuffers_bool_t)
 
+__define_print_scalar_vector_field(utype, flatbuffers_utype_t)
 __define_print_scalar_vector_field(uint8, uint8_t)
 __define_print_scalar_vector_field(uint16, uint16_t)
 __define_print_scalar_vector_field(uint32, uint32_t)
@@ -652,6 +652,7 @@ __define_print_scalar_vector_field(bool, flatbuffers_bool_t)
 __define_print_scalar_vector_field(float, float)
 __define_print_scalar_vector_field(double, double)
 
+__define_print_enum_vector_field(utype, flatbuffers_utype_t)
 __define_print_enum_vector_field(uint8, uint8_t)
 __define_print_enum_vector_field(uint16, uint16_t)
 __define_print_enum_vector_field(uint32, uint32_t)
@@ -748,17 +749,75 @@ void flatcc_json_printer_table_vector_field(flatcc_json_printer_t *ctx,
         print_name(ctx, name, len);
         print_start('[');
         if (count) {
-            print_table_object(ctx, read_uoffset_ptr(p), td->ttl, pf);
+            print_table_object(ctx, read_uoffset_ptr(p), td->ttl, 0, pf);
             --count;
         }
         while (count--) {
             ++p;
             print_char(',');
-            print_table_object(ctx, read_uoffset_ptr(p), td->ttl, pf);
+            print_table_object(ctx, read_uoffset_ptr(p), td->ttl, 0, pf);
         }
         print_end(']');
     }
 }
+
+void flatcc_json_printer_union_vector_field(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_table_descriptor_t *td,
+        int id, const char *name, int len,
+        flatcc_json_printer_union_type_f ptf,
+        flatcc_json_printer_table_f pf)
+{
+    const uoffset_t *pt = get_field_ptr(td, id - 1);
+    const uoffset_t *p = get_field_ptr(td, id);
+    utype_t *types, type;
+    uoffset_t count;
+    char type_name[FLATCC_JSON_PRINT_NAME_LEN_MAX + 5];
+    
+    if (len > FLATCC_JSON_PRINT_NAME_LEN_MAX) {
+        RAISE_ERROR(bad_input);
+        assert(0 && "identifier too long");
+        return;
+    }
+    memcpy(type_name, name, len);
+    memcpy(type_name + len, "_type", 5);
+    if (p && pt) {
+        flatcc_json_printer_utype_enum_vector_field(ctx, td, id - 1,
+                type_name, len + 5, ptf);
+        if (td->count++) {
+            print_char(',');
+        }
+        p = read_uoffset_ptr(p);
+        pt = read_uoffset_ptr(pt);
+        count = __flatbuffers_uoffset_read_from_pe(p);
+        ++p;
+        ++pt;
+        types = (utype_t *)pt;
+        print_name(ctx, name, len);
+        print_start('[');
+        if (count) {
+            type = __flatbuffers_utype_read_from_pe(types);
+            if (type != 0) {
+                print_table_object(ctx, read_uoffset_ptr(p), td->ttl, type, pf);
+            } else {
+                print_null();
+            }
+            --count;
+        }
+        while (count--) {
+            ++p;
+            ++types;
+            type = __flatbuffers_utype_read_from_pe(types);
+            print_char(',');
+            if (type != 0) {
+                print_table_object(ctx, read_uoffset_ptr(p), td->ttl, type, pf);
+            } else {
+                print_null();
+            }
+        }
+        print_end(']');
+    }
+}
+
 
 void flatcc_json_printer_table_field(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
@@ -772,7 +831,50 @@ void flatcc_json_printer_table_field(flatcc_json_printer_t *ctx,
             print_char(',');
         }
         print_name(ctx, name, len);
-        print_table_object(ctx, read_uoffset_ptr(p), td->ttl, pf);
+        print_table_object(ctx, read_uoffset_ptr(p), td->ttl, 0, pf);
+    }
+}
+
+void flatcc_json_printer_union_field(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_table_descriptor_t *td,
+        int id, const char *name, int len,
+        flatcc_json_printer_union_type_f ptf,
+        flatcc_json_printer_table_f pf)
+{
+    const void *pt = get_field_ptr(td, id - 1);
+    const void *p = get_field_ptr(td, id);
+    utype_t type;
+
+    if (!p || !pt) {
+        return;
+    }
+    type = __flatbuffers_utype_read_from_pe(pt);
+    if (td->count++) {
+        print_char(',');
+    }
+    print_nl();
+    *ctx->p = '\"';
+    ctx->p += !ctx->unquote;
+    if (ctx->p + len < ctx->pflush) {
+        memcpy(ctx->p, name, len);
+        ctx->p += len;
+    } else {
+        print_string_part(ctx, name, len);
+    }
+    print_string_part(ctx, "_type", 5);
+    *ctx->p = '\"';
+    ctx->p += !ctx->unquote;
+    print_char(':');
+    print_space();
+    if (ctx->noenum) {
+        ctx->p += print_utype(type, ctx->p);
+    } else {
+        ptf(ctx, type);
+    }
+    if (type != 0) {
+        print_char(',');
+        print_name(ctx, name, len);
+        print_table_object(ctx, read_uoffset_ptr(p), td->ttl, type, pf);
     }
 }
 
@@ -855,7 +957,7 @@ int flatcc_json_printer_table_as_root(flatcc_json_printer_t *ctx,
     if (!accept_header(ctx, buf, bufsiz, fid)) {
         return -1;
     }
-    print_table_object(ctx, read_uoffset_ptr(buf), FLATCC_JSON_PRINT_MAX_LEVELS, pf);
+    print_table_object(ctx, read_uoffset_ptr(buf), FLATCC_JSON_PRINT_MAX_LEVELS, 0, pf);
     print_last_nl();
     return flatcc_json_printer_get_error(ctx) ? -1 : (int)ctx->total;
 }
@@ -908,28 +1010,7 @@ void flatcc_json_printer_table_as_nested_root(flatcc_json_printer_t *ctx,
         print_char(',');
     }
     print_name(ctx, name, len);
-    print_table_object(ctx, read_uoffset_ptr(buf), td->ttl, pf);
-}
-
-int flatcc_json_printer_read_union_type(
-        flatcc_json_printer_table_descriptor_t *td,
-        int id)
-{
-    const void *p = get_field_ptr(td, id - 1);
-
-    int x = p ? __flatbuffers_utype_read_from_pe(p) : 0;
-    return x;
-}
-
-void flatcc_json_printer_union_type(flatcc_json_printer_t *ctx,
-        flatcc_json_printer_table_descriptor_t *td,
-        const char *name, int len, int type,
-        const char *type_name, int type_len)
-{
-    if (td->count++) {
-        print_char(',');
-    }
-    print_type(ctx, name, len, type, type_name, type_len);
+    print_table_object(ctx, read_uoffset_ptr(buf), td->ttl, 0, pf);
 }
 
 static void __flatcc_json_printer_flush(flatcc_json_printer_t *ctx, int all)

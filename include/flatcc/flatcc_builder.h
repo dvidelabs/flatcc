@@ -9,7 +9,7 @@
  *
  * The builder has two API layers: a stack based `start/end` approach,
  * and a direct `create`, and they may be fixed freely. The direct
- * appraoch may be used as part of more specialized optimizations such
+ * approach may be used as part of more specialized optimizations such
  * as rewriting buffers while the stack approach is convenient for state
  * machine driven parsers without a stack, or with a very simple stack
  * without extra allocations.
@@ -105,6 +105,21 @@
  * and must be a signed type.
  */
 typedef flatbuffers_soffset_t flatcc_builder_ref_t;
+typedef flatbuffers_utype_t flatcc_builder_utype_t;
+
+/**
+ * This type must be compatible with code generation that
+ * creates union specific ref types.
+ */
+typedef struct flatcc_builder_union_ref {
+    flatcc_builder_utype_t type;
+    flatcc_builder_ref_t member;
+} flatcc_builder_union_ref_t;
+
+typedef struct flatcc_builder_union_vec_ref {
+    flatcc_builder_ref_t types;
+    flatcc_builder_ref_t members;
+} flatcc_builder_union_vec_ref_t;
 
 /**
  * Virtual tables are off by one to avoid being mistaken for error at
@@ -812,7 +827,8 @@ enum flatcc_builder_type {
     flatcc_builder_table,
     flatcc_builder_vector,
     flatcc_builder_offset_vector,
-    flatcc_builder_string
+    flatcc_builder_string,
+    flatcc_builder_union_vector
 };
 
 /**
@@ -1297,7 +1313,7 @@ flatcc_builder_ref_t flatcc_builder_create_vector(flatcc_builder_t *B,
  * Do not use these calls for string or offset vectors, but do store
  * scalars, enums and structs, always in little endian encoding.
  *
- * Use `extend_vector` subseequentlu to add zero, one or more elements
+ * Use `extend_vector` subsequently to add zero, one or more elements
  * at time.
  *
  * See `create_vector` for `max_count` argument (strings and offset
@@ -1331,27 +1347,11 @@ size_t flatcc_builder_vector_count(flatcc_builder_t *B);
 void *flatcc_builder_vector_edit(flatcc_builder_t *B);
 
 /**
- * Similar to `end_vector` but updates all stored references so they
- * become offsets to the vector start.
- */
-flatcc_builder_ref_t flatcc_builder_end_offset_vector(flatcc_builder_t *B);
-
-/** Returns the number of elements currently on the stack. */
-size_t flatcc_builder_offset_vector_count(flatcc_builder_t *B);
-
-/**
- * Returns a pointer ot the first vector element on stack,
- * accessible up to the number of elements currently on stack.
- */
-void *flatcc_builder_offset_vector_edit(flatcc_builder_t *B);
-
-
-/**
  * Returns a zero initialized buffer to a new region of the vector which
  * is extended at the end. The buffer must be consumed before other api
  * calls that may affect the stack, including `extend_vector`.
  *
- * Do not use for strings or offset vectors. May be used for nested
+ * Do not use for strings, offset or union vectors. May be used for nested
  * buffers, but these have dedicated calls to provide better alignment.
  */
 void *flatcc_builder_extend_vector(flatcc_builder_t *B, size_t count);
@@ -1398,7 +1398,7 @@ flatcc_builder_ref_t flatcc_builder_create_offset_vector(flatcc_builder_t *B,
         const flatcc_builder_ref_t *data, size_t count);
 
 /*
- * NOTE: this call takes non-const source vector of references
+ * NOTE: this call takes non-const source array of references
  * and destroys the content.
  *
  * This is a faster version of `create_offset_vector` where the
@@ -1418,14 +1418,39 @@ flatcc_builder_ref_t flatcc_builder_create_offset_vector_direct(flatcc_builder_t
 int flatcc_builder_start_offset_vector(flatcc_builder_t *B);
 
 /**
+ * Similar to `end_vector` but updates all stored references so they
+ * become offsets to the vector start.
+ */
+flatcc_builder_ref_t flatcc_builder_end_offset_vector(flatcc_builder_t *B);
+
+/**
+ * Same as `flatcc_builder_end_offset_vector` except null references are
+ * permitted when the corresponding `types` entry is 0 (the 'NONE' type).
+ * This makes it possible to build union vectors with less overhead when
+ * the `types` vector is already known. Use standand offset vector calls
+ * prior to this call.
+ */
+flatcc_builder_ref_t flatcc_builder_end_offset_vector_for_unions(flatcc_builder_t *B,
+        const flatcc_builder_utype_t *types);
+
+/** Returns the number of elements currently on the stack. */
+size_t flatcc_builder_offset_vector_count(flatcc_builder_t *B);
+
+/**
+ * Returns a pointer ot the first vector element on stack,
+ * accessible up to the number of elements currently on stack.
+ */
+void *flatcc_builder_offset_vector_edit(flatcc_builder_t *B);
+
+/**
  * Similar to `extend_vector` but returns a buffer indexable as
  * `flatcc_builder_ref_t` array. All elements must be set to a valid
  * unique non-null reference, but truncate and extend may be used to
- * perform edits. All produced references must be stored at most
- * once in the buffer, including vectors. There are no checks, and this
- * is an easy place to make mistakes. Unused references will leave
- * garbage in the buffer. References should not originate from any other
- * buffer than the current, including parents and nested buffers.
+ * perform edits. Unused references will leave garbage in the buffer.
+ * References should not originate from any other buffer than the
+ * current, including parents and nested buffers.  It is valid to reuse
+ * references in DAG form when contained in the sammer, excluding any
+ * nested, sibling or parent buffers.
  */
 flatcc_builder_ref_t *flatcc_builder_extend_offset_vector(flatcc_builder_t *B, size_t count);
 
@@ -1449,6 +1474,94 @@ flatcc_builder_ref_t *flatcc_builder_offset_vector_push(flatcc_builder_t *B,
  */
 flatcc_builder_ref_t *flatcc_builder_append_offset_vector(flatcc_builder_t *B,
         const flatcc_builder_ref_t *refs, size_t count);
+
+/** 
+ * All union vector operations are like offset vector operations,
+ * except they take a struct with a type and a reference rather than
+ * just a reference. The finished union vector is returned as a struct
+ * of two references, one for the type vector and one for the table offset
+ * vector. Each reference goes to a separate table field where the type
+ * offset vector id must be one larger than the type vector.
+ */
+
+/**
+ * Creates a union vector which is in reality two vectors, a type vector
+ * and an offset vector. Both vectors references are returned.
+ */
+flatcc_builder_union_vec_ref_t flatcc_builder_create_union_vector(flatcc_builder_t *B,
+        const flatcc_builder_union_ref_t *data, size_t count);
+
+/*
+ * NOTE: this call takes non-const source array of references
+ * and destroys the content. The type array remains intact.
+ *
+ * This is a faster version of `create_union_vector` where the source
+ * references are destroyed and where the types are given in a separate
+ * array. In return the vector can be emitted directly without passing
+ * over the stack.
+ *
+ * Unlike `create_offset_vector` we do allow null references but only if
+ * the union type is NONE (0).
+ */
+flatcc_builder_union_vec_ref_t flatcc_builder_create_union_vector_direct(flatcc_builder_t *B,
+        const flatcc_builder_utype_t *types, flatcc_builder_ref_t *data, size_t count);
+
+
+/**
+ * Starts a vector holding types and offsets to tables or strings. Before
+ * completion it will hold `flatcc_builder_union_ref_t` references because the
+ * offset is not known until the vector start location is known, which
+ * depends to the final size, which for parsers is generally unknown,
+ * and also because the union type must be separated out into a separate
+ * vector. It would not be practicaly to push on two different vectors
+ * during construction.
+ */
+int flatcc_builder_start_union_vector(flatcc_builder_t *B);
+
+/**
+ * Similar to `end_vector` but updates all stored references so they
+ * become offsets to the vector start and splits the union references
+ * into a type vector and an offset vector.
+ */
+flatcc_builder_union_vec_ref_t flatcc_builder_end_union_vector(flatcc_builder_t *B);
+
+/** Returns the number of elements currently on the stack. */
+size_t flatcc_builder_union_vector_count(flatcc_builder_t *B);
+
+/**
+ * Returns a pointer ot the first vector element on stack,
+ * accessible up to the number of elements currently on stack.
+ */
+void *flatcc_builder_union_vector_edit(flatcc_builder_t *B);
+
+/**
+ * Similar to `extend_offset_vector` but returns a buffer indexable as a
+ * `flatcc_builder_union_ref_t` array. All elements must be set to a valid
+ * unique non-null reference with a valid union type to match, or it
+ * must be null with a zero union type.
+ */
+flatcc_builder_union_ref_t *flatcc_builder_extend_union_vector(flatcc_builder_t *B, size_t count);
+
+/** Similar to truncate_vector. */
+int flatcc_builder_truncate_union_vector(flatcc_builder_t *B, size_t count);
+
+/**
+ * A specialized extend that pushes a single element.
+ *
+ * Returns the buffer holding a modifiable copy of the added content,
+ * or null on error.
+ */
+flatcc_builder_union_ref_t *flatcc_builder_union_vector_push(flatcc_builder_t *B,
+        flatcc_builder_union_ref_t ref);
+
+/**
+ * Takes an array of union_refs as argument to do a multi push operation.
+ *
+ * Returns the buffer holding a modifiable copy of the added content,
+ * or null on error.
+ */
+flatcc_builder_union_ref_t *flatcc_builder_append_union_vector(flatcc_builder_t *B,
+        const flatcc_builder_union_ref_t *refs, size_t count);
 
 /**
  * Faster string operation that avoids temporary stack storage. The

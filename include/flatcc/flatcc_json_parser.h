@@ -50,10 +50,12 @@ enum flatcc_json_parser_flags {
     XX(expected_array,          "expected array")                           \
     XX(expected_scalar,         "expected literal or symbolic scalar")      \
     XX(expected_union_type,     "expected union type")                      \
-    XX(union_none,              "union is NONE")                            \
+    XX(union_none_present,      "union present with type NONE")             \
+    XX(union_none_not_null,     "union of type NONE is not null")           \
     XX(union_incomplete,        "table has incomplete union")               \
     XX(duplicate,               "table has duplicate field")                \
     XX(required,                "required field missing")                   \
+    XX(union_vector_length,     "union vector length mismatch")             \
     XX(runtime,                 "runtime error")                            \
     XX(not_supported,           "not supported")
 
@@ -616,6 +618,16 @@ static inline const char *flatcc_json_parser_null(const char *buf, const char *e
     return buf;
 }
 
+static inline const char *flatcc_json_parser_none(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end)
+{
+    if (end - buf >= 4 && memcmp(buf, "null", 4) == 0) {
+        return buf + 4;
+    }
+    return flatcc_json_parser_set_error(ctx, buf, end,
+            flatcc_json_parser_error_union_none_not_null);
+}
+
 /*
  * `parsers` is a null terminated array of parsers with at least one
  * valid parser. A numeric literal parser may also be included.
@@ -781,22 +793,45 @@ const char *flatcc_json_parser_generic_json(flatcc_json_parser_t *ctx, const cha
 
 typedef const char *flatcc_json_parser_union_f(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, uint8_t type, flatbuffers_voffset_t id);
+/*
+ * TODO: we should only have one kind of union parser, but for now we
+ * need a different method for union vectors.
+ */
+/* Constructs a table object unless the type is 0 or unknown. */
+typedef const char *flatcc_json_parser_union_table_f(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, uint8_t type, flatcc_builder_ref_t *pref);
+
+typedef int flatcc_json_parser_is_known_type_f(uint8_t type);
 
 /* Called at start by table parsers with at least 1 union. */
 const char *flatcc_json_parser_prepare_unions(flatcc_json_parser_t *ctx,
-        const char *buf, const char *end, size_t union_total);
+        const char *buf, const char *end, size_t union_total, size_t *handle);
 
 const char *flatcc_json_parser_finalize_unions(flatcc_json_parser_t *ctx,
-        const char *buf, const char *end);
+        const char *buf, const char *end, size_t handle);
 
 const char *flatcc_json_parser_union(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, size_t union_index,
-        flatbuffers_voffset_t id, flatcc_json_parser_union_f *parse);
+        flatbuffers_voffset_t id, size_t handle,
+        flatcc_json_parser_union_f *union_parser);
 
 const char *flatcc_json_parser_union_type(flatcc_json_parser_t *ctx,
-        const char *buf, const char *end, size_t union_index, flatbuffers_voffset_t id,
+        const char *buf, const char *end, size_t union_index,
+        flatbuffers_voffset_t id, size_t handle,
         flatcc_json_parser_integral_symbol_f *type_parsers[],
         flatcc_json_parser_union_f *union_parser);
+
+const char *flatcc_json_parser_union_vector(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, size_t union_index,
+        flatbuffers_voffset_t id, size_t handle,
+        flatcc_json_parser_union_table_f *union_parser);
+
+const char *flatcc_json_parser_union_type_vector(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, size_t union_index,
+        flatbuffers_voffset_t id, size_t handle,
+        flatcc_json_parser_integral_symbol_f *type_parsers[],
+        flatcc_json_parser_union_table_f *union_parser,
+        flatcc_json_parser_is_known_type_f accept_type);
 
 #include "flatcc/portable/pdiagnostic_pop.h"
 #endif /* FLATCC_JSON_PARSE_H */

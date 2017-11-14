@@ -69,6 +69,11 @@
 #define FLATCC_JSON_PRINT_MAX_LEVELS 100
 #endif
 
+/* Maximum length of names printed exluding _type suffix. */
+#ifndef FLATCC_JSON_PRINT_NAME_LEN_MAX
+#define FLATCC_JSON_PRINT_NAME_LEN_MAX 100
+#endif
+
 /*
  * Print float and double values with C99 hexadecimal floating point
  * notation. This option is not valid JSON but it avoids precision

@@ -69,8 +69,9 @@
     XX(table_offset_out_of_range_or_unaligned, "table offset out of range or unaligned")\
     XX(table_size_out_of_range, "table size out of range")\
     XX(type_field_absent_from_required_union_field, "type field absent from required union field")\
+    XX(type_field_absent_from_required_union_vector_field, "type field absent from required union vector field")\
     XX(union_cannot_have_a_table_without_a_type, "union cannot have a table without a type")\
-    XX(union_type_NONE_cannot_have_a_table, "union type NONE cannot have a table")\
+    XX(union_type_NONE_cannot_have_a_table, "union table field present with type NONE")\
     XX(vector_count_exceeds_representable_vector_size, "vector count exceeds representable vector size")\
     XX(vector_out_of_range, "vector out of range")\
     XX(vtable_header_out_of_range, "vtable header out of range")\
@@ -78,6 +79,10 @@
     XX(vtable_offset_out_of_range_or_unaligned, "vtable offset out of range or unaligned")\
     XX(vtable_size_out_of_range_or_unaligned, "vtable size out of range or unaligned")\
     XX(vtable_size_overflow, "vtable size overflow")\
+    XX(union_element_absent_without_type_NONE, "union element absent without type NONE")\
+    XX(union_element_present_with_type_NONE, "union element present with type NONE")\
+    XX(union_vector_length_mismatch, "union type and table vectors have different lengths")\
+    XX(union_vector_verification_not_supported, "union vector verification not supported")\
     XX(not_supported, "not supported")
 
 
@@ -118,15 +123,13 @@ struct flatcc_table_verifier_descriptor {
     flatbuffers_voffset_t tsize;
     /* Size of vtable in bytes. */
     flatbuffers_voffset_t vsize;
+    /* Union type when verifying unions. */
+    flatbuffers_utype_t type;
     /* Time to live: number nesting levels left before failure. */
     int ttl;
 };
 
 typedef int flatcc_table_verifier_f(flatcc_table_verifier_descriptor_t *td);
-
-typedef int flatcc_union_verifier_f(flatcc_table_verifier_descriptor_t *td,
-        flatbuffers_voffset_t id, uint8_t type);
-
 
 /*
  * The `as_root` functions are normally the only functions called
@@ -176,7 +179,8 @@ int flatcc_verify_table_field(flatcc_table_verifier_descriptor_t *td,
     flatbuffers_voffset_t id, int required, flatcc_table_verifier_f tvf);
 int flatcc_verify_table_vector_field(flatcc_table_verifier_descriptor_t *td,
     flatbuffers_voffset_t id, int required, flatcc_table_verifier_f tvf);
-
+int flatcc_verify_union_vector_field(flatcc_table_verifier_descriptor_t *td,
+    flatbuffers_voffset_t id, int required, flatcc_table_verifier_f tvf);
 /* Table verifiers pass 0 as fid. */
 int flatcc_verify_struct_as_nested_root(flatcc_table_verifier_descriptor_t *td,
         flatbuffers_voffset_t id, int required, const char *fid,
@@ -198,6 +202,6 @@ int flatcc_verify_table_as_nested_root(flatcc_table_verifier_descriptor_t *td,
  * missing union which fails if required.
  */
 int flatcc_verify_union_field(flatcc_table_verifier_descriptor_t *td,
-        flatbuffers_voffset_t id, int required, flatcc_union_verifier_f *uvf);
+        flatbuffers_voffset_t id, int required, flatcc_table_verifier_f tvf);
 
 #endif /* FLATCC_VERIFIER_H */
