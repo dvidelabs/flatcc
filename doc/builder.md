@@ -597,7 +597,7 @@ The following is valid and will not return an error, but also has no effect:
 Only as of flatcc v0.5.0 and currently not widely supported. C++ supports union
 vectors.
 
-The `monster_test.fbs` schema has a field named ManyAny in the Monster
+The `monster_test.fbs` schema has a field named manyany in the Monster
 table. It is vector of unions of type Any.
 
 We can create a vector using
@@ -607,21 +607,21 @@ We can create a vector using
     Any_vec_start(B);
     Any_vec_push(TestSimpleTableWithEnum_create(B));
     anyvec_ref = Any_vec_end(B);
-    Monster_add_ManyAny(anyvec_ref);
+    Monster_manyany_add(anyvec_ref);
 
 A union can be constructed with type specific `_push` or `_push_create` operations:
 
-    Monster_add_ManyAny_start(B);
-    Monster_ManyAny_push(B, Any_as_TestSimpleTableWithEnum(ref));
-    Monster_add_ManyAny_end(B);
+    Monster_manyany_start(B);
+    Monster_manyany_push(B, Any_as_TestSimpleTableWithEnum(ref));
+    Monster_manyany_end(B);
 
-    Monster_add_ManyAny_start(B);
-    Monster_ManyAny_TestSimpleTableWithEnum_push(B, ref);
-    Monster_add_ManyAny_end(B);
+    Monster_manyany_start(B);
+    Monster_manyany_TestSimpleTableWithEnum_push(B, ref);
+    Monster_manyany_end(B);
 
-    Monster_add_ManyAny_start(B);
-    Monster_ManyAny_TestSimpleTableWithEnum_push_create(B, args);
-    Monster_add_ManyAny_end(B);
+    Monster_manyany_start(B);
+    Monster_manyany_TestSimpleTableWithEnum_push_create(B, args);
+    Monster_manyany_end(B);
 
 and other similar operations, much like other vectors.
 
