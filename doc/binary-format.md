@@ -59,8 +59,9 @@ provide guidelines on the preferred order. Two vtables might mean
 different things but accidentally have the same structure. Such vtables
 can be shared between different tables. vtable sharing is important when
 vectors store many similar tables. Structs a dense memory regions of
-scalar fields and smaller structs but they are generally only found
-inside other blocks and holds no references.
+scalar fields and smaller structs. They are mostly found embedded in
+tables but they are independent blocks when referenced from a union or
+union vector, or when used as a buffer root. Structs hold no references.
 
 Space between the above blocks are zero padded and present in order to
 ensure proper alignment. Structs must be packed as densely as possible
@@ -260,6 +261,16 @@ of times and can be emulated by creating a struct that does exactly
 that. As such, this limitation is at the schema level and on not in the
 binary format.
 
+When used as a table field, a struct is embedded within the table block
+unless it is union value. A vector of structs are placed in a separate
+memory block, similar to vectors of scalars. A vector of unions that has
+a struct as member will reference the struct as an offset, and the
+struct is then an independent memory block like a table.
+
+FlatCC supports that a struct can be the root object of a FlatBuffer, but
+most implementations likely won't support this. Structs as root are very
+resource efficient.
+
 
 ## Internals
 
@@ -388,6 +399,9 @@ not possible for a buffer to contain cycles which makes them safe to
 traverse with too much fear of excessive recursion. It also makes it
 possible to efficiently verify that buffers do not point out of bounds.
 
+A vector can also hold unions, but it is not supported by all
+implementations. See unions.
+
 
 ## Type Hashes
 
@@ -503,7 +517,7 @@ A union is a contruction on top of the above primitives. It consists of
 a type and a value.
 
 In the schema a union type is a set of table types with each table name
-assigned a type enumaration starting from 1. 0 is the type NONE meaning
+assigned a type enumeration starting from 1. 0 is the type NONE meaning
 the union has not value assigned. The union type is represented as a
 ubyte enum type, or in the binary format as a value of type
 `union_type_t` which for standard FlatBuffers is an 8-bit unsigned code
@@ -531,6 +545,14 @@ vector element represents the type of the table in the corresponding
 value element. If an element is of type NONE the value offset must be
 stored as 0 which is a circular reference. This is the only offset that
 can have the value 0.
+
+A later addition to the format allows for structs and strings to also be
+member of a union. A union value is always an offset to an independent
+memory block. For strings this is just the offset to the string. For
+tables it is the offset to the table, naturally, and for structs, it is
+an offset to an separate aligned memory block that holds a struct and
+not an offset to memory inside any other table or struct. FlatCC does
+not currently support unions other than tables, but will eventually.
 
 
 ## Alignment
@@ -620,7 +642,7 @@ vtables to grew when unused.
 Enumarations may not change values in future versions. Unions may only
 added new table names to the end of the union list.
 
-Structs cannot change size nor content. The cannot evolve. FlatCC
+Structs cannot change size nor content. They cannot evolve. FlatCC
 permits deprecating fields which means old fields will be zeroed.
 
 Names can be changed to the extend it make sense to the applications already
@@ -728,13 +750,20 @@ A verifier primarily checks that:
   level for the target system both to protect itself and such that
   general recursive buffer operations need not be concerned with stack
   overflow checks (a depth of 100 or so would normally do).
-- verify that if the union type is NONE the table field is absent and
-  if it is not NONE that the table field is present. If the union type
+- verify that if the union type is NONE the value (offset) field is absent and
+  if it is not NONE that the value field is present. If the union type
   is known, the table should be verified. If the type is not known
   the table field should be ignored. A reader using the same schema would
   see the union as NONE. An unknown union is not an error in order to
   support forward versioning.
+- verifies the union value according to the type just like any other
+  field or element.
+- verify that a union vector always has type vector if the offset vector
+  is present and vice versa.
 
+A verifier may choose to reject unknown fields and union types, but this
+should only be an user selectable option, otherwise schema evolution
+will not be possible.
 
 A verifier needs to be very careful in how it deals with overflow and
 signs. Vector elements multiplied by element size can overflow. Adding
