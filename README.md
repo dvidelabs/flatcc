@@ -59,6 +59,7 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Configuration](#configuration)
 * [Using the Compiler and Builder library](#using-the-compiler-and-builder-library)
 * [FlatBuffers Binary Format](#flatbuffers-binary-format)
+* [Security Considerations](#security-considerations)
 * [Benchmarks](#benchmarks)
 
 <!-- vim-markdown-toc -->
@@ -1874,6 +1875,12 @@ generated JSON parser source and runtime source.
 
 Mostly for implementers: [FlatBuffers Binary Format]
 
+
+## Security Considerations
+
+See [Security Considerations].
+
+
 ## Benchmarks
 
 See [Benchmarks]
@@ -1890,3 +1897,4 @@ See [Benchmarks]
 [flatcc_rtconfig.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_rtconfig.h
 [hexdump.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/support/hexdump.h
 [readfile.h]: include/flatcc/support/readfile.h
+[Security Considerations]: https://github.com/dvidelabs/flatcc/blob/master/doc/security.md

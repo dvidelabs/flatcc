@@ -27,6 +27,7 @@
   or none. The physical struct layout remains unchanged.
 - Fix off-by-one indexing in `flatbuffers_generic_table_vec_at`. Impact
   low since it was hardly relevant before union vectors were introduced.
+- Add document on security considerations (#63).
 
 ## [0.4.3]
 - Fix issue with initbuild.sh for custom builds (#43)
