@@ -114,6 +114,37 @@ FlatBuffers are always little endian. The verifier will likely fail an
 unpexcted endian encoding but at least make it safe to access.
 
 
+## Thread Safety
+
+There is no thread safety on the FlatBuffers API but read access does
+not mutate any state. Every read location is a temporary variable so as
+long as the application code is otherwise sane, it is safe read a buffer
+from multiple threads and if the buffer is placed on cache line
+alignment (typically 64 or 128 bytes) it is also efficient without false
+sharing.
+
+A verifier is also safe to use because it it only reads from a buffer.
+
+A builder is inherently NOT safe for multihreaded access. However, with
+proper synchronization there is nothing preventing one thread from doing
+the grunt work and another putting the high level pieces together as
+long as only one thread at a time is access the builder object, or the
+associated allocator and emitter objects. From a performance perspective
+this doesn't make much sense, but it might from an architectural
+perspective.
+
+A builder object can be cleared and reused after a buffer is constructed
+or abandoned. The clear operation can optionally reduce the amount of
+memory or keep all the memory from the previous operation. In either
+case it is safe for new thread to use the builder after it is cleared
+but two threads cannot use the builder at the same time.
+
+It is fairly cheap to create a new builder object, but of course cheaper
+to reuse existing memory. Often the best option is for each thread to
+have its own builder and own memory and defer any sharing to the point
+where the buffer is finished and readable.
+
+
 ## Schema Evolution
 
 Accessing a buffer that was created by a more recent of a FlatBuffers
