@@ -413,6 +413,8 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     int is_union = 0;
     int is_union_vector = 0;
     int is_union_type_vector = 0;
+    int is_base64 = 0;
+    int is_base64url = 0;
     int is_nested = 0;
     int st = 0;
     const char *tname_prefix = "n/a", *tname = "n/a"; /* suppress compiler warnigns */
@@ -450,11 +452,23 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     case vt_vector_type:
         /* Nested types are processed twice, once as an array, once as an object. */
         is_nested = member->nest != 0;
+        is_base64 = member->metadata_flags & fb_f_base64;
+        is_base64url = member->metadata_flags & fb_f_base64url;
         /* Fall through. */
     case vt_scalar_type:
         is_scalar = 1;
         st = member->type.st;
         break;
+    }
+    if (is_base64 || is_base64url) {
+        /* Even if it is nested, parse it as a regular base64 or base64url encoded vector. */
+        if (st != fb_ubyte || !is_vector) {
+            gen_panic(out, "internal error: unexpected base64 or base64url field type\n");
+            return -1;
+        }
+        is_nested = 0;
+        is_vector = 0;
+        is_scalar = 0;
     }
     if (is_union_type) {
         is_scalar = 0;
@@ -510,7 +524,7 @@ repeat_nested:
         println(out, "static flatcc_json_parser_integral_symbol_f *symbolic_parsers[] = {");
         indent(); indent();
         /*
-         * The scopename may be empty when no namespace is used. In that
+         * The scope name may be empty when no namespace is used. In that
          * case the global scope is the same, but performance the
          * duplicate doesn't matter.
          */
@@ -543,7 +557,7 @@ repeat_nested:
         println(out, "buf = flatcc_json_parser_symbolic_%s(ctx, (mark = buf), end, symbolic_parsers, &val);", tname_prefix);
         println(out, "if (buf == mark || buf == end) goto failed;");
         unindent(); println(out, "}");
-        if (!is_struct_container && !is_vector) {
+        if (!is_struct_container && !is_vector && !is_base64 && !is_base64url) {
 #if !FLATCC_JSON_PARSE_FORCE_DEFAULTS
             /* We need to create a check for the default value and create a table field if not the default. */
             switch(member->value.type) {
@@ -591,6 +605,9 @@ repeat_nested:
             println(out, "buf = %s_parse_json_struct(ctx, buf, end, pval);", snref.text);
     } else if (is_string) {
         println(out, "buf = flatcc_json_parser_build_string(ctx, buf, end, &ref);");
+    } else if (is_base64 || is_base64url) {
+        println(out, "buf = flatcc_json_parser_build_uint8_vector_base64(ctx, buf, end, &ref, %u);",
+                !is_base64);
     } else if (is_table) {
         println(out, "buf = %s_parse_json_table(ctx, buf, end);", snref.text);
         println(out, "if (buf == end) goto failed;");
@@ -645,7 +662,7 @@ repeat_nested:
         println(out, "ref = flatcc_builder_end_buffer(ctx->ctx, ref);");
         unindent(); println(out, "} /* end nested */");
     }
-    if (is_nested || is_vector || is_table || is_string) {
+    if (is_nested || is_vector || is_table || is_string || is_base64 || is_base64url) {
         println(out, "if (!ref || !(pref = flatcc_builder_table_add_offset(ctx->ctx, %"PRIu64"))) goto failed;", member->id);
         println(out, "*pref = ref;");
     }

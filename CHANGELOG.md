@@ -28,6 +28,8 @@
 - Fix off-by-one indexing in `flatbuffers_generic_table_vec_at`. Impact
   low since it was hardly relevant before union vectors were introduced.
 - Add document on security considerations (#63).
+- Add support for base64 and base64url attributes in JSON printing and
+  parsing of [ubyte] table fields.
 
 ## [0.4.3]
 - Fix issue with initbuild.sh for custom builds (#43)

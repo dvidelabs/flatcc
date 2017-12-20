@@ -134,6 +134,14 @@ table Monster {
   testjsonprefixparsing3:TestJSONPrefixParsing3 (id:27);
   // id 28 reserver for manyany_type
   manyany: [Any] (id:29);
+  testbase64:TestBase64 (id:30);
+}
+
+table TestBase64
+{
+    data:[ubyte] (base64);
+    urldata:[ubyte] (base64url);
+    nested:[ubyte] (nested_flatbuffer: "Monster", base64);
 }
 
 table TypeAliases {

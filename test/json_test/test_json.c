@@ -302,6 +302,51 @@ int error_case_tests()
     return ret;
 }
 
+#define RANDOM_BASE64 "zLOuiUjH49tz4Ap2JnmpTX5NqoiMzlD8hSw45QCS2yaSp7UYoA" \
+    "oE8KpY/5pKYmk+54NI40hyeyZ1zRUE4vKQT0hEdVl0iXq2fqPamkVD1AZlVvQJ1m00PaoXOSgG+64Zv+Uygw=="
+
+#define RANDOM_BASE64URL "zLOuiUjH49tz4Ap2JnmpTX5NqoiMzlD8hSw45QCS2yaSp7UYoA" \
+    "oE8KpY_5pKYmk-54NI40hyeyZ1zRUE4vKQT0hEdVl0iXq2fqPamkVD1AZlVvQJ1m00PaoXOSgG-64Zv-Uygw=="
+
+
+int base64_tests()
+{
+    int ret = 0;
+
+    /* Reference */
+    TEST(   "{ \"name\": \"Monster\" }",
+            "{\"name\":\"Monster\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"testbase64\":{} }",
+            "{\"name\":\"Monster\",\"testbase64\":{}}");
+
+
+    TEST(   "{ \"name\": \"Monster\", \"testbase64\":{ \"data\":\"" RANDOM_BASE64 "\"} }",
+            "{\"name\":\"Monster\",\"testbase64\":{\"data\":\"" RANDOM_BASE64 "\"}}");
+
+    TEST(   "{ \"name\": \"Monster\", \"testbase64\":{ \"urldata\":\"" RANDOM_BASE64URL "\"} }",
+            "{\"name\":\"Monster\",\"testbase64\":{\"urldata\":\"" RANDOM_BASE64URL "\"}}");
+
+
+    TEST_ERROR(   "{ \"name\": \"Monster\", \"testbase64\":{ \"data\":\"" RANDOM_BASE64URL "\"} }",
+            flatcc_json_parser_error_base64);
+
+    TEST_ERROR(   "{ \"name\": \"Monster\", \"testbase64\":{ \"urldata\":\"" RANDOM_BASE64 "\"} }",
+            flatcc_json_parser_error_base64url);
+
+#if 0
+    /*
+     * Our test framework is not geared towards properly testing nested
+     * flatbuffers in base64 JSON, but if the following yields a verification error,
+     * the nested field has parsed a base64 buffer with garbage.
+     */
+    TEST(   "{ \"name\": \"Monster\", \"testbase64\":{ \"nested\":\"" RANDOM_BASE64 "\"} }",
+            "{\"name\":\"Monster\",\"testbase64\":{\"nested\":\"" RANDOM_BASE64 "\"}}");
+#endif
+
+    return ret;
+}
+
 /*
  * Here we cover some border cases around unions and flag
  * enumerations, and nested buffers.
@@ -316,6 +361,7 @@ int main()
 
     ret |= edge_case_tests();
     ret |= error_case_tests();
+    ret |= base64_tests();
 
     /* Allow trailing comma. */
     TEST(   "{ \"name\": \"Monster\", }",

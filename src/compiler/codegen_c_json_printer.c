@@ -386,7 +386,12 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
             }
             break;
         case vt_vector_type:
-            if (member->nest) {
+            if (member->metadata_flags & (fb_f_base64 | fb_f_base64url)) {
+                fprintf(out->fp,
+                        "flatcc_json_printer_uint8_vector_base64_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %u);",
+                        member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len,
+                        !(member->metadata_flags & fb_f_base64));
+            } else if (member->nest) {
                 fb_compound_name((fb_compound_type_t *)&member->nest->symbol, &snref);
                 if (member->nest->symbol.kind == fb_is_table) {
                     /*

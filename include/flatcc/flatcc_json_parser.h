@@ -56,6 +56,8 @@ enum flatcc_json_parser_flags {
     XX(duplicate,               "table has duplicate field")                \
     XX(required,                "required field missing")                   \
     XX(union_vector_length,     "union vector length mismatch")             \
+    XX(base64,                  "invalid base64 content")                   \
+    XX(base64url,               "invalid base64url content")                \
     XX(runtime,                 "runtime error")                            \
     XX(not_supported,           "not supported")
 
@@ -777,6 +779,10 @@ __flatcc_json_parser_define_symbolic_integral_parser(bool, uint8_t)
 /* We still parse integral values, but coerce to float or double. */
 __flatcc_json_parser_define_symbolic_integral_parser(float, float)
 __flatcc_json_parser_define_symbolic_integral_parser(double, double)
+
+/* Parse vector as a base64 or base64url encoded string with no spaces permitted. */
+const char *flatcc_json_parser_build_uint8_vector_base64(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, flatcc_builder_ref_t *ref, int urlsafe);
 
 /*
  * This doesn't do anything other than validate and advance past

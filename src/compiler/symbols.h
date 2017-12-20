@@ -271,6 +271,8 @@ enum fb_known_attributes {
     fb_attr_key = 7,
     fb_attr_required = 8,
     fb_attr_hash = 9,
+    fb_attr_base64 = 10,
+    fb_attr_base64url = 11,
     KNOWN_ATTR_COUNT
 };
 
@@ -284,7 +286,9 @@ enum fb_known_attribute_flags {
     fb_f_nested_flatbuffer = 1 << fb_attr_nested_flatbuffer,
     fb_f_key = 1 << fb_attr_key,
     fb_f_required = 1 << fb_attr_required,
-    fb_f_hash = 1 << fb_attr_hash
+    fb_f_hash = 1 << fb_attr_hash,
+    fb_f_base64 = 1 << fb_attr_base64,
+    fb_f_base64url = 1 << fb_attr_base64url
 };
 
 struct fb_attribute {

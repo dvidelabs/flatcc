@@ -571,6 +571,10 @@ __define_print_enum_vector_field_proto(int32, int32_t)
 __define_print_enum_vector_field_proto(int64, int64_t)
 __define_print_enum_vector_field_proto(bool, flatbuffers_bool_t)
 
+void flatcc_json_printer_uint8_vector_base64_field(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_table_descriptor_t *td,
+        int id, const char *name, int len, int urlsafe);
+
 /*
  * If `fid` is null, the identifier is not checked and is allowed to be
  * entirely absent.

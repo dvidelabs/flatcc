@@ -23,6 +23,8 @@
 
 #include "flatcc/portable/pprintint.h"
 #include "flatcc/portable/pprintfp.h"
+#include "flatcc/portable/pbase64.h"
+
 
 #define RAISE_ERROR(err) flatcc_json_printer_set_error(ctx, flatcc_json_printer_error_##err)
 
@@ -240,6 +242,40 @@ static void print_string(flatcc_json_printer_t *ctx, const char *name, size_t le
         --len;
         ++name;
     }
+    print_char('\"');
+}
+
+static void print_uint8_vector_base64_object(flatcc_json_printer_t *ctx, const void *p, int mode)
+{
+    const int unpadded_mode = mode & ~base64_enc_modifier_padding;
+    size_t k, n, len;
+    const uint8_t *data;
+    size_t data_len, src_len;
+
+    data_len = (size_t)__flatbuffers_uoffset_read_from_pe(p);
+    data = (const uint8_t *)p + uoffset_size;
+
+    print_char('\"');
+
+    len = base64_encoded_size(data_len, mode);
+    if (ctx->p + len >= ctx->pflush) {
+        ctx->flush(ctx, 0);
+    }
+    while (ctx->p + len > ctx->pflush) {
+        /* Multiples of 4 output chars consumes exactly 3 bytes before final padding. */
+        k = (ctx->pflush - ctx->p) & ~(size_t)3;
+        n = k * 3 / 4;
+        assert(n > 0);
+        src_len = k * 3 / 4;
+        base64_encode((uint8_t *)ctx->p, data, 0, &src_len, unpadded_mode);
+        ctx->p += k;
+        data += n;
+        data_len -= n;
+        ctx->flush(ctx, 0);
+        len = base64_encoded_size(data_len, mode);
+    }
+    base64_encode((uint8_t *)ctx->p, data, 0, &data_len, mode);
+    ctx->p += len;
     print_char('\"');
 }
 
@@ -514,6 +550,25 @@ void flatcc_json_printer_string_field(flatcc_json_printer_t *ctx,
         }
         print_name(ctx, name, len);
         print_string_object(ctx, read_uoffset_ptr(p));
+    }
+}
+
+void flatcc_json_printer_uint8_vector_base64_field(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_table_descriptor_t *td,
+        int id, const char *name, int len, int urlsafe)
+{
+    const void *p = get_field_ptr(td, id);
+    int mode;
+    
+    mode = urlsafe ? base64_mode_url : base64_mode_rfc4648;
+    mode |= base64_enc_modifier_padding;
+
+    if (p) {
+        if (td->count++) {
+            print_char(',');
+        }
+        print_name(ctx, name, len);
+        print_uint8_vector_base64_object(ctx, read_uoffset_ptr(p), mode);
     }
 }
 

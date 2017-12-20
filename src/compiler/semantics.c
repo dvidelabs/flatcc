@@ -16,11 +16,13 @@ static const char *fb_known_attribute_names[] = {
     "nested_flatbuffer",
     "key",
     "required",
-    "hash"
+    "hash",
+    "base64",
+    "base64url",
 };
 
 static const int fb_known_attribute_types[] = {
-    vt_invalid, /* Uknowns have arbitrary types. */
+    vt_invalid, /* Unknowns have arbitrary types. */
     vt_uint,
     vt_missing,
     vt_missing,
@@ -29,7 +31,9 @@ static const int fb_known_attribute_types[] = {
     vt_string,
     vt_missing,
     vt_missing,
-    vt_string
+    vt_string,
+    vt_missing,
+    vt_missing,
 };
 
 static fb_scalar_type_t map_scalar_token_type(fb_token_t *t)
@@ -723,13 +727,27 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         if (member->type.type == vt_scalar_type || member->type.type == vt_vector_type) {
             member->type.st = map_scalar_token_type(member->type.t);
         }
-        member->metadata_flags = process_metadata(P, member->metadata, fb_f_id |
-                fb_f_nested_flatbuffer | fb_f_deprecated | fb_f_key | fb_f_required | fb_f_hash, knowns);
+        member->metadata_flags = process_metadata(P, member->metadata,
+                fb_f_id | fb_f_nested_flatbuffer | fb_f_deprecated | fb_f_key |
+                fb_f_required | fb_f_hash | fb_f_base64 | fb_f_base64url, knowns);
         if ((m = knowns[fb_attr_nested_flatbuffer])) {
             define_nested_table(P, ct->scope, member, m);
         }
         if ((member->metadata_flags & fb_f_required) && member->type.type == vt_scalar_type) {
             error_sym(P, sym, "'required' attribute is redundant on scalar table field");
+        }
+        /* Note: we allow base64 and base64url with nested attribute. */
+        if ((member->metadata_flags & fb_f_base64) &&
+                (member->type.type != vt_vector_type || member->type.st != fb_ubyte)) {
+            error_sym(P, sym, "'base64' attribute is only allowed on vectors of type ubyte");
+        }
+        if ((member->metadata_flags & fb_f_base64url) &&
+                (member->type.type != vt_vector_type || member->type.st != fb_ubyte)) {
+            error_sym(P, sym, "'base64url' attribute is only allowed on vectors of type ubyte");
+        }
+        if ((member->metadata_flags & (fb_f_base64 | fb_f_base64url)) ==
+                (fb_f_base64 | fb_f_base64url)) {
+            error_sym(P, sym, "'base64' and 'base64url' attributes cannot both be set");
         }
         m = knowns[fb_attr_id];
         if (m && count == 0) {

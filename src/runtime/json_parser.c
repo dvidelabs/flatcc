@@ -16,6 +16,7 @@
 #define PORTABLE_USE_GRISU3 1
 #endif
 #include "flatcc/portable/pparsefp.h"
+#include "flatcc/portable/pbase64.h"
 
 #if FLATCC_USE_SSE4_2
 #ifdef __SSE4_2__
@@ -709,6 +710,61 @@ const char *flatcc_json_parser_integer(flatcc_json_parser_t *ctx, const char *bu
     }
     *value = x;
     return buf;
+}
+
+/* Array Creation - depends on flatcc builder. */
+
+const char *flatcc_json_parser_build_uint8_vector_base64(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, flatcc_builder_ref_t *ref, int urlsafe)
+{
+    const char *mark;
+    uint8_t *pval;
+    size_t max_len;
+    size_t decoded_len, src_len;
+    int mode;
+    int ret;
+
+    mode = urlsafe ? base64_mode_url : base64_mode_rfc4648;
+    buf = flatcc_json_parser_string_start(ctx, buf, end);
+    buf = flatcc_json_parser_string_part(ctx, (mark = buf), end);
+    if (buf == end || *buf != '\"') {
+        goto base64_failed;
+    }
+    max_len = base64_decoded_size(buf - mark);
+    if (flatcc_builder_start_vector(ctx->ctx, 1, 1, FLATBUFFERS_COUNT_MAX((utype_size)))) {
+        goto failed;
+    }
+    if (!(pval = flatcc_builder_extend_vector(ctx->ctx, max_len))) {
+        goto failed;
+    }
+    src_len = (size_t)(buf - mark);
+    decoded_len = max_len;
+    if ((ret = base64_decode(pval, (const uint8_t *)mark, &decoded_len, &src_len, mode))) {
+        buf = mark + src_len;
+        goto base64_failed;
+    }
+    if (src_len != (size_t)(buf - mark)) {
+        buf = mark + src_len;
+        goto base64_failed;
+    }
+    if (decoded_len < max_len) {
+        if (flatcc_builder_truncate_vector(ctx->ctx, max_len - decoded_len)) {
+            goto failed;
+        }
+    }
+    if (!(*ref = flatcc_builder_end_vector(ctx->ctx))) {
+        goto failed;
+    }
+    return flatcc_json_parser_string_end(ctx, buf, end);
+
+failed:
+    *ref = 0;
+    return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);
+
+base64_failed:
+    *ref = 0;
+    return flatcc_json_parser_set_error(ctx, buf, end,
+            urlsafe ? flatcc_json_parser_error_base64url : flatcc_json_parser_error_base64);
 }
 
 /* String Creation - depends on flatcc builder. */
