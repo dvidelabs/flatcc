@@ -1717,8 +1717,25 @@ void *flatcc_builder_finalize_buffer(flatcc_builder_t *B, size_t *size_out);
  * implemented via `flatcc_flatbuffers.h`. `free` will usually work but
  * is not portable to platforms without posix_memalign or C11
  * aligned_alloc support.
+ *
+ * NOTE: if a library might be compiled with a version of aligned_free
+ * that differs from the application using it, use
+ * `flatcc_builder_aligned_free` to make sure the correct deallocation
+ * function is used.
  */
 void *flatcc_builder_finalize_aligned_buffer(flatcc_builder_t *B, size_t *size_out);
+
+/*
+ * A stable implementation of `aligned_alloc` that is not sensitive
+ * to the applications compile time flags.
+ */
+void *flatcc_builder_aligned_alloc(size_t alignment, size_t size);
+
+/*
+ * A stable implementation of `aligned_free` that is not sensitive
+ * to the applications compile time flags.
+ */
+void flatcc_builder_aligned_free(void *p);
 
 /*
  * Only for use with the default emitter.

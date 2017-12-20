@@ -30,6 +30,7 @@
 - Add document on security considerations (#63).
 - Add support for base64 and base64url attributes in JSON printing and
   parsing of [ubyte] table fields.
+- Added `flatcc_builder_aligned_free` and `flatcc_builder_aligned_alloc`.
 
 ## [0.4.3]
 - Fix issue with initbuild.sh for custom builds (#43)

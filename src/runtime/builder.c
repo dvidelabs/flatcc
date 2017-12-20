@@ -1942,6 +1942,16 @@ done:
     return buffer;
 }
 
+void *flatcc_builder_aligned_alloc(size_t alignment, size_t size)
+{
+    return FLATCC_BUILDER_ALIGNED_ALLOC(alignment, size);
+}
+
+void flatcc_builder_aligned_free(void *p)
+{
+    FLATCC_BUILDER_ALIGNED_FREE(p);
+}
+
 void *flatcc_builder_get_emit_context(flatcc_builder_t *B)
 {
     return B->emit_context;
