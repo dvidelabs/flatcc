@@ -4,7 +4,10 @@ Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/gi
 # FlatCC FlatBuffers in C for C
 
 _NOTE: ongoing work towards version 0.5.0 features might cause minor
-breakage. For full backwards compatibility use the v0.4.3 tag._
+breakage. For full backwards compatibility use the v0.4.3 tag.
+If you work with JSON parsing, you may want to patch v0.4.3 with commit
+[1cb266](https://github.com/dvidelabs/flatcc/commit/1cb2664dcd104b2051d410955018cb255370302e)
+which only affects code generation, not the runtime library._
 
 `flatcc` has no external dependencies except for build and compiler
 tools, and the C runtime library. With concurrent Ninja builds, a small
@@ -238,7 +241,8 @@ fi
 ## Status
 
 0.5.0 is in development on master branch primarily adding support for
-union vectors.
+union vectors and base64 JSON encoded [ubyte] vectors (test reports are
+welcome).
 
 0.4.3 is a bug fix release covering nested FlatBuffers, JSON and grisu3
 numeric errors, special cases for JSON keyword parsing, improved C++
