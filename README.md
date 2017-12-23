@@ -241,9 +241,12 @@ fi
 ## Status
 
 0.5.0 is in development on master branch primarily adding support for
-union vectors and unions that can have strings and structs as members in
-addition to tables, and base64 JSON encoded [ubyte] vectors. (Test
-reports are welcome).
+union vectors and base64 JSON encoded [ubyte] vectors. (Test reports are
+welcome).
+
+0.5.0 _may_ also add support for unions that can have strings and structs
+as members in addition to tables, but this is still undecided. C++
+recently added support this along with union vectors.
 
 0.4.3 is a bug fix release covering nested FlatBuffers, JSON and grisu3
 numeric errors, special cases for JSON keyword parsing, improved C++
