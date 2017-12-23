@@ -11,6 +11,7 @@
     * [Adding Fields](#adding-fields)
     * [Nested Tables](#nested-tables)
     * [Unions](#unions)
+    * [Unions of Strings and Structs](#unions-of-strings-and-structs)
     * [Union Vectors](#union-vectors)
 * [Strings](#strings)
 * [Structs](#structs)
@@ -580,7 +581,7 @@ or
     Pickup_start(B);
     Pickup_location_create(B, 0, 0, 17);
     /* test.Pickup = Pickup_end(B); no longer possible as of v0.5.0 */
-    test.member = Pickup_ned(B); /* As of v0.5.0, or test._member before. */
+    test.member = Pickup_end(B); /* As of v0.5.0, or test._member before. */
     test.type = Any_Pickup;
     Monster_test_add(B, test);
 
@@ -594,6 +595,13 @@ vectors in the low level builder API._
 The following is valid and will not return an error, but also has no effect:
 
     Monster_test_add(B, Any_as_NONE());
+
+### Unions of Strings and Structs
+
+_Note as of v0.5.0 unions can also contain strings and structs in
+addition to tables. Suppor for these types in other languages may vary,
+but C++ does support them too._
+
 
 ### Union Vectors
 
