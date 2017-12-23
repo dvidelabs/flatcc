@@ -130,7 +130,7 @@ input. `flatcc` generates schema specific code to read and write JSON
 at runtime. While the `flatcc` approach is likely much faster and also
 easier to deploy, the `flatc` approach is likely more convenient when
 manually working with JSON such as editing game scenes. Both tools have
-their place. 
+their place.
 
 **NOTE: Big-endian platforms are only supported as of release 0.4.0.**
 
@@ -138,7 +138,7 @@ their place.
 ## Poll on Meson Build
 
 It is being considered adding support for the Meson build system, but it
-would be good with some feedback on this via 
+would be good with some feedback on this via
 [issue #56](https://github.com/dvidelabs/flatcc/issues/56)
 
 
@@ -241,8 +241,9 @@ fi
 ## Status
 
 0.5.0 is in development on master branch primarily adding support for
-union vectors and base64 JSON encoded [ubyte] vectors (test reports are
-welcome).
+union vectors and unions that can have strings and structs as members in
+addition to tables, and base64 JSON encoded [ubyte] vectors. (Test
+reports are welcome).
 
 0.4.3 is a bug fix release covering nested FlatBuffers, JSON and grisu3
 numeric errors, special cases for JSON keyword parsing, improved C++
@@ -271,7 +272,7 @@ Supported platforms:
 
 - Ubuntu gcc 4.4-4.8 and clang 3.5-3.8
 - OS-X current clang / gcc
-- Windows MSVC 2010, 2013, 2015, 2015 Win64 
+- Windows MSVC 2010, 2013, 2015, 2015 Win64
 - IBM XLC on AIX big endian Power PC has been tested for release 0.4.0
   but is not part of regular release tests.
 
@@ -324,7 +325,7 @@ may be higher but eventually smaller buffers will be hit by call
 overhead and thus we get down to 300MB/s at about 150ns/op encoding
 small buffers. These numbers are just a rough guideline - they obviously
 depend on hardware, compiler, and data encoded. Measurements are
-excluding an ininitial warmup step. 
+excluding an ininitial warmup step.
 
 The generated JSON parsers are roughly 4 times slower than building a
 FlatBuffer directly in C or C++, or about 2200ns vs 600ns for a 700 byte
@@ -372,7 +373,7 @@ builders considering they do less work: The compatibility test reads a
 pre-generated binary `monsterdata_test.golden` monster file and verifies
 that all content is as expected. This results in a 13K optimized binary
 executable or a 6K object file. The source for this check is 5K
-excluding header files. Readers do not need to link with a library. 
+excluding header files. Readers do not need to link with a library.
 
 JSON parsers bloat the compiled C binary compared to pure Flatbuffer
 usage because they inline the parser decision tree. A JSON parser for
@@ -853,7 +854,7 @@ The JSON parser and printer can also be used to create and display
 buffers. The parser will use the builder API correctly or issue a syntax
 error or an error on required field missing. This can rule out some
 uncertainty about using the api correctly. The [test_json.c] file has a
-test function that can be adapted for custom tests. 
+test function that can be adapted for custom tests.
 
 For advanced debugging the [hexdump.h] file can be used to dump the buffer
 contents. It is used in [test_json.c] and also in [monster_test.c].
@@ -930,7 +931,7 @@ In this example the type hash is derived from the string
 generators that supports type hashes.
 
 The value 0 is used to indicate that one does not care about the
-identifier in the buffer. 
+identifier in the buffer.
 
     ...
     MyGame_Example_Monster_create_as_typed_root(B, ...);
@@ -947,7 +948,7 @@ identifier in the buffer.
     ...
     if (flatbuffers_get_type_hash(buffer) ==
         flatbuffers_type_hash_from_name("Some.Old.Buffer")) {
-        printf("Buffer is the old version, not supported.\n"); 
+        printf("Buffer is the old version, not supported.\n");
     }
 
 More API calls are available to naturally extend the existing API. See
@@ -1353,7 +1354,7 @@ field such as `Monster.equipped` in the samples schema will have two
 accessors: `MyGame_Sample_Monster_equipped(t)` of type
 `flatcc_generic_table_t` and
 `MyGame_Sample_Monster_equipped_type(t)` of type
-`MyGame_Sample_Equipment_union_type_t`. A generic table is 
+`MyGame_Sample_Equipment_union_type_t`. A generic table is
 is just a const void pointer that can be cast to the expected table type.
 The enumeration has a member for each table in the union and also
 `MyGame_Sample_Equipment_NONE` which has the value 0.
