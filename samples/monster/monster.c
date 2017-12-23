@@ -328,7 +328,8 @@ int main(int argc, char *argv[])
     // Instead, we're going to access it right away (as if we just received it).
     //access_monster_buffer(buf);
 
-    aligned_free(buf);
+    // prior to v0.5.0, use `aligned_free`
+    flatcc_builder_aligned_free(buf);
     //free(buf);
     //
     // The builder object can optionally be reused after a reset which
@@ -338,7 +339,7 @@ int main(int argc, char *argv[])
     test_assert(0 == create_monster_bottom_up(&builder, 1));
     buf = flatcc_builder_finalize_aligned_buffer(&builder, &size);
     access_monster_buffer(buf);
-    aligned_free(buf);
+    flatcc_builder_aligned_free(buf);
     flatcc_builder_reset(&builder);
     create_monster_top_down(&builder);
     buf = flatcc_builder_finalize_buffer(&builder, &size);

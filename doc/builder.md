@@ -60,11 +60,14 @@ the emitter and we can use a default finalizer only because we use the
 default emitter - it allocates and populates a linear buffer from a
 paged emitter ring buffer.
 
-Note that in must cases `flatcc_builder_finalize_buffer` is sufficient,
+Note that in most cases `flatcc_builder_finalize_buffer` is sufficient,
 but to be strictly portable, use
 `flatcc_builder_finalize_aligned_buffer` and `aligned_free`.
 `aligned_free` is often implemented as `free` in `flatcc/portable` but
-not on all platforms.
+not on all platforms. As of flatcc version 0.5.0
+`flatcc_builder_aligned_free` is provided to add robustness in case the
+applications `aligned_free` implementation might differ from the library
+version due to changes in compile time flags.
 
 Generally we use the monster example with various extensions, but to
 show a simple complete example we use a very simple schema (`myschema.fbs`):
@@ -95,7 +98,7 @@ show a simple complete example we use a very simple schema (`myschema.fbs`):
         assert(mytable_myfield2(mt) == 2);
 
         /* free(buffer); */
-        aligned_free(buffer);
+        flatcc_builder_aligned_free(buffer);
 
         /*
          * Reset, but keep allocated stack etc.,

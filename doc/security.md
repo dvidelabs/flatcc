@@ -38,8 +38,11 @@ often sufficient because it normally aligns to the largest word that
 could cause access violations when unaligned. For special use case such
 as GPU memory access more alignment may be needed and FlatBuffers
 support higher alignments in the schema. Portable `aligned_alloc` and
-`aligned_free` support methods are avaiable to help allocate memory with
-sufficient alignment.
+`aligned_free` support methods are available to help allocate memory with
+sufficient alignment. Because compile time flags can change between
+compilation of the runtime library and the application,
+`flatcc_builder_aligned_free` ensures a consistent deallocation method
+for aligned buffers allocated by the runtime library.
 
 A verifier for C requires the buffer to placed in aligned memory and it
 will fail if the buffer content is not properly aligned relative to the

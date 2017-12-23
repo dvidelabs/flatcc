@@ -800,7 +800,8 @@ See also `include/flatcc/flatcc_verifier.h`.
 
 When verifying buffers returned directly from the builder, it may be
 necessary to use the `flatcc_builder_finalize_aligned_buffer` to ensure
-proper alignment and use `aligned_free` to free the buffer, see also the
+proper alignment and use `aligned_free` to free the buffer (or as of
+v0.5.0 also `flatcc_builder_aligned_free`), see also the
 [Builder Interface Reference]. Buffers may also be copied into aligned
 memory via mmap or using the portable layers `paligned_alloc.h` feature
 which is available when including generated headers.
