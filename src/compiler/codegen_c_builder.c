@@ -428,7 +428,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "#define __%sbuild_union_field(ID, NS, N, TN)\\\n"
         "static inline int N ## _add(NS ## builder_t *B, TN ## _union_ref_t uref)\\\n"
         "{ NS ## ref_t *_p; TN ## _union_type_t *_pt; if (uref.type == TN ## _NONE) return 0; if (uref.member == 0) return -1;\\\n"
-        "  if (!(_pt = (TN ## _union_type_t *)flatcc_builder_table_add(B, ID - 1, sizeof(*_pt), sizeof(_pt))) ||\\\n"
+        "  if (!(_pt = (TN ## _union_type_t *)flatcc_builder_table_add(B, ID - 1, sizeof(*_pt), sizeof(*_pt))) ||\\\n"
         "  !(_p = flatcc_builder_table_add_offset(B, ID))) return -1; *_pt = uref.type; *_p = uref.member; return 0; }\\\n"
         "static inline int N ## _add_type(NS ## builder_t *B, TN ## _union_type_t type)\\\n"
         "{ TN ## _union_type_t *_pt; if (type == TN ## _NONE) return 0; return (_pt = (TN ## _union_type_t *)flatcc_builder_table_add(B, ID - 1,\\\n"
