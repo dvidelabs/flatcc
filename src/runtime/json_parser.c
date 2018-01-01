@@ -1099,7 +1099,8 @@ const char *flatcc_json_parser_union_type_vector(flatcc_json_parser_t *ctx,
         flatbuffers_uint8_write_to_pe(pval, val);
         buf = flatcc_json_parser_array_end(ctx, buf, end, &more);
     }
-    e->count = count = flatcc_builder_vector_count(ctx->ctx);
+    count = (uoffset_t)flatcc_builder_vector_count(ctx->ctx);
+    e->count = count;
     size = count * utype_size;
     /* Store type vector so it is accessible to the table vector parser.  */
     types = flatcc_builder_enter_user_frame(ctx->ctx, size);

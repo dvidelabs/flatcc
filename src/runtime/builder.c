@@ -356,7 +356,7 @@ static int alloc_ht(flatcc_builder_t *B)
         size *= 2;
     }
     size /= field_size;
-    for (k = 0; (UINT32_C(1) << k) < size; ++k) {
+    for (k = 0; (1 << k) < size; ++k) {
     }
     B->ht_width = k;
     return 0;
@@ -1537,7 +1537,7 @@ flatcc_builder_union_vec_ref_t flatcc_builder_create_union_vector(flatcc_builder
     if (0 == flatcc_builder_extend_offset_vector(B, count)) {
         return uvref;
     }
-    if (0 == (types = push_ds(B, utype_size * count))) {
+    if (0 == (types = push_ds(B, (uoffset_t)(utype_size * count)))) {
         return uvref;
     }
 
@@ -1600,7 +1600,7 @@ flatcc_builder_union_vec_ref_t flatcc_builder_end_union_vector(flatcc_builder_t 
      * We assume the stack is sufficiently aligned as is.
      */
     count = flatcc_builder_union_vector_count(B);
-    if (0 == (refs = push_ds(B, count * (utype_size + field_size)))) {
+    if (0 == (refs = push_ds(B, (uoffset_t)(count * (utype_size + field_size))))) {
         return uvref;
     }
     types = (flatcc_builder_utype_t *)(refs + count);
