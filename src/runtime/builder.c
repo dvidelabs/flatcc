@@ -356,7 +356,7 @@ static int alloc_ht(flatcc_builder_t *B)
         size *= 2;
     }
     size /= field_size;
-    for (k = 0; (1 << k) < size; ++k) {
+    for (k = 0; (((size_t)1) << k) < size; ++k) {
     }
     B->ht_width = k;
     return 0;
