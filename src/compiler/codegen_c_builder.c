@@ -238,7 +238,6 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "{ return flatcc_builder_union_vector_push(B, ref); }\n"
         "\n"
         "#define __%sbuild_union_vector(NS, N)\\\n"
-        "typedef NS ## union_vec_ref_t N ## _union_vec_ref_t;\\\n"
         "static inline int N ## _vec_start(NS ## builder_t *B)\\\n"
         "{ return flatcc_builder_start_union_vector(B); }\\\n"
         "static inline N ## _union_vec_ref_t N ## _vec_end(NS ## builder_t *B)\\\n"
