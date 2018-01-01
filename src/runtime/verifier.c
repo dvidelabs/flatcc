@@ -503,7 +503,7 @@ int flatcc_verify_struct_as_root(const void *buf, size_t bufsiz, const char *fid
 int flatcc_verify_struct_as_typed_root(const void *buf, size_t bufsiz, flatbuffers_thash_t thash, size_t size, uint16_t align)
 {
     check_result(flatcc_verify_typed_buffer_header(buf, bufsiz, thash));
-    return verify_struct((uoffset_t)bufsiz, 0, read_uoffset(buf, 0), align, (uoffset_t)size);
+    return verify_struct((uoffset_t)bufsiz, 0, read_uoffset(buf, 0), (uoffset_t)size, align);
 }
 
 int flatcc_verify_table_as_root(const void *buf, size_t bufsiz, const char *fid, flatcc_table_verifier_f *tvf)

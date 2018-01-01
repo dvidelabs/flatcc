@@ -58,6 +58,8 @@
 - Place type identifiers early in generated `_reader.h` file to avoid
   circular reference issue with nested buffers when nested buffer type
   is placed after referencing table in schema.
+- Fix verify bug on struct buffers - and in test case - not affecting
+  ordinary buffers with table as root.
 
 ## [0.4.3]
 - Fix issue with initbuild.sh for custom builds (#43)
