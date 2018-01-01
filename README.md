@@ -261,11 +261,15 @@ Main features supported as of 0.5.0
 
 Supported platforms:
 
-- Ubuntu gcc 4.4-4.8 and clang 3.5-3.8
+- Ubuntu Trusty gcc 4.4, 4.6-4.9, 5, 6, 7 and clang 3.6, 3.8
 - OS-X current clang / gcc
-- Windows MSVC 2010, 2013, 2015, 2015 Win64
+- Windows MSVC 2010, 2013, 2015, 2015 Win64, 2017, 2017 Win64
 - IBM XLC on AIX big endian Power PC has been tested for release 0.4.0
   but is not part of regular release tests.
+
+Some previously testet compiler versions may have been outphased as the
+CI environment gets updated. See `.travis.yml` and `appveyor.yml` in
+the `ci-more` branch for the current configuration.
 
 Users have been testing on FreeRTOS as well which requires changing the
 runtime allocation method.
