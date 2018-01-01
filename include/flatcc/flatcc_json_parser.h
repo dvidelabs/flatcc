@@ -50,10 +50,14 @@ enum flatcc_json_parser_flags {
     XX(expected_array,          "expected array")                           \
     XX(expected_scalar,         "expected literal or symbolic scalar")      \
     XX(expected_union_type,     "expected union type")                      \
-    XX(union_none,              "union is NONE")                            \
+    XX(union_none_present,      "union present with type NONE")             \
+    XX(union_none_not_null,     "union of type NONE is not null")           \
     XX(union_incomplete,        "table has incomplete union")               \
     XX(duplicate,               "table has duplicate field")                \
     XX(required,                "required field missing")                   \
+    XX(union_vector_length,     "union vector length mismatch")             \
+    XX(base64,                  "invalid base64 content")                   \
+    XX(base64url,               "invalid base64url content")                \
     XX(runtime,                 "runtime error")                            \
     XX(not_supported,           "not supported")
 
@@ -151,6 +155,13 @@ static inline const char *flatcc_json_parser_string_end(flatcc_json_parser_t *ct
     return ++buf;
 }
 
+/*
+ * Creates a string. Returns *ref == 0 on unrecoverable error or
+ * sets *ref to a valid new string reference.
+ */
+const char *flatcc_json_parser_build_string(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, flatcc_builder_ref_t *ref);
+
 typedef char flatcc_json_parser_escape_buffer_t[4];
 /*
  * If the buffer does not hold a valid escape sequence, an error is
@@ -186,7 +197,9 @@ static inline const char *flatcc_json_parser_symbol_start(flatcc_json_parser_t *
     }
     if (*buf == '\"') {
         ++buf;
+#if FLATCC_JSON_PARSE_ALLOW_UNQUOTED
         ctx->unquoted = 0;
+#endif
     } else {
 #if FLATCC_JSON_PARSE_ALLOW_UNQUOTED
         if (*buf == '.') {
@@ -210,15 +223,24 @@ static inline uint64_t flatcc_json_parser_symbol_part_ext(const char *buf, const
     }
     /* This can bloat inlining for a rarely executed case. */
 #if 1
+    /* Fall through comments needed to silence gcc 7 warnings. */
     switch (n) {
     case 8: w |= ((uint64_t)buf[7]) << (0 * 8);
+        /* Fall through */
     case 7: w |= ((uint64_t)buf[6]) << (1 * 8);
+        /* Fall through */
     case 6: w |= ((uint64_t)buf[5]) << (2 * 8);
+        /* Fall through */
     case 5: w |= ((uint64_t)buf[4]) << (3 * 8);
+        /* Fall through */
     case 4: w |= ((uint64_t)buf[3]) << (4 * 8);
+        /* Fall through */
     case 3: w |= ((uint64_t)buf[2]) << (5 * 8);
+        /* Fall through */
     case 2: w |= ((uint64_t)buf[1]) << (6 * 8);
+        /* Fall through */
     case 1: w |= ((uint64_t)buf[0]) << (7 * 8);
+        /* Fall through */
     case 0:
         break;
     }
@@ -327,7 +349,11 @@ static inline const char *flatcc_json_parser_symbol_end(flatcc_json_parser_t *ct
 static inline const char *flatcc_json_parser_constant_start(flatcc_json_parser_t *ctx, const char *buf, const char *end)
 {
     buf = flatcc_json_parser_symbol_start(ctx, buf, end);
+#if FLATCC_JSON_PARSE_ALLOW_UNQUOTED
     if (!ctx->unquoted) {
+#else
+    {
+#endif
         buf = flatcc_json_parser_space(ctx, buf, end);
     }
     return buf;
@@ -594,6 +620,16 @@ static inline const char *flatcc_json_parser_null(const char *buf, const char *e
     return buf;
 }
 
+static inline const char *flatcc_json_parser_none(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end)
+{
+    if (end - buf >= 4 && memcmp(buf, "null", 4) == 0) {
+        return buf + 4;
+    }
+    return flatcc_json_parser_set_error(ctx, buf, end,
+            flatcc_json_parser_error_union_none_not_null);
+}
+
 /*
  * `parsers` is a null terminated array of parsers with at least one
  * valid parser. A numeric literal parser may also be included.
@@ -744,6 +780,10 @@ __flatcc_json_parser_define_symbolic_integral_parser(bool, uint8_t)
 __flatcc_json_parser_define_symbolic_integral_parser(float, float)
 __flatcc_json_parser_define_symbolic_integral_parser(double, double)
 
+/* Parse vector as a base64 or base64url encoded string with no spaces permitted. */
+const char *flatcc_json_parser_build_uint8_vector_base64(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, flatcc_builder_ref_t *ref, int urlsafe);
+
 /*
  * This doesn't do anything other than validate and advance past
  * a JSON value which may use unquoted symbols.
@@ -757,24 +797,41 @@ __flatcc_json_parser_define_symbolic_integral_parser(double, double)
  */
 const char *flatcc_json_parser_generic_json(flatcc_json_parser_t *ctx, const char *buf, const char *end);
 
+/* Constructs a table, struct, or string object unless the type is 0 or unknown. */
 typedef const char *flatcc_json_parser_union_f(flatcc_json_parser_t *ctx,
-        const char *buf, const char *end, uint8_t type, flatbuffers_voffset_t id);
+        const char *buf, const char *end, uint8_t type, flatcc_builder_ref_t *pref);
+
+typedef int flatcc_json_parser_is_known_type_f(uint8_t type);
 
 /* Called at start by table parsers with at least 1 union. */
 const char *flatcc_json_parser_prepare_unions(flatcc_json_parser_t *ctx,
-        const char *buf, const char *end, size_t union_total);
+        const char *buf, const char *end, size_t union_total, size_t *handle);
 
 const char *flatcc_json_parser_finalize_unions(flatcc_json_parser_t *ctx,
-        const char *buf, const char *end);
+        const char *buf, const char *end, size_t handle);
 
 const char *flatcc_json_parser_union(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, size_t union_index,
-        flatbuffers_voffset_t id, flatcc_json_parser_union_f *parse);
+        flatbuffers_voffset_t id, size_t handle,
+        flatcc_json_parser_union_f *union_parser);
 
 const char *flatcc_json_parser_union_type(flatcc_json_parser_t *ctx,
-        const char *buf, const char *end, size_t union_index, flatbuffers_voffset_t id,
+        const char *buf, const char *end, size_t union_index,
+        flatbuffers_voffset_t id, size_t handle,
         flatcc_json_parser_integral_symbol_f *type_parsers[],
         flatcc_json_parser_union_f *union_parser);
+
+const char *flatcc_json_parser_union_vector(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, size_t union_index,
+        flatbuffers_voffset_t id, size_t handle,
+        flatcc_json_parser_union_f *union_parser);
+
+const char *flatcc_json_parser_union_type_vector(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, size_t union_index,
+        flatbuffers_voffset_t id, size_t handle,
+        flatcc_json_parser_integral_symbol_f *type_parsers[],
+        flatcc_json_parser_union_f *union_parser,
+        flatcc_json_parser_is_known_type_f accept_type);
 
 #include "flatcc/portable/pdiagnostic_pop.h"
 #endif /* FLATCC_JSON_PARSE_H */

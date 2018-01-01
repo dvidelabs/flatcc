@@ -35,10 +35,16 @@ typedef struct fb_schema fb_schema_t;
 
 enum {
     tok_kw_base = LEX_TOK_KW_BASE,
-    tok_kw_int,
     tok_kw_bool,
     tok_kw_byte,
     tok_kw_enum,
+    tok_kw_float32,
+    tok_kw_float64,
+    tok_kw_int,
+    tok_kw_int8,
+    tok_kw_int16,
+    tok_kw_int32,
+    tok_kw_int64,
     tok_kw_long,
     tok_kw_true,
     tok_kw_uint,
@@ -47,6 +53,10 @@ enum {
     tok_kw_short,
     tok_kw_table,
     tok_kw_ubyte,
+    tok_kw_uint8,
+    tok_kw_uint16,
+    tok_kw_uint32,
+    tok_kw_uint64,
     tok_kw_ulong,
     tok_kw_union,
     tok_kw_double,
@@ -261,6 +271,8 @@ enum fb_known_attributes {
     fb_attr_key = 7,
     fb_attr_required = 8,
     fb_attr_hash = 9,
+    fb_attr_base64 = 10,
+    fb_attr_base64url = 11,
     KNOWN_ATTR_COUNT
 };
 
@@ -274,7 +286,9 @@ enum fb_known_attribute_flags {
     fb_f_nested_flatbuffer = 1 << fb_attr_nested_flatbuffer,
     fb_f_key = 1 << fb_attr_key,
     fb_f_required = 1 << fb_attr_required,
-    fb_f_hash = 1 << fb_attr_hash
+    fb_f_hash = 1 << fb_attr_hash,
+    fb_f_base64 = 1 << fb_attr_base64,
+    fb_f_base64url = 1 << fb_attr_base64url
 };
 
 struct fb_attribute {
@@ -361,6 +375,8 @@ static inline fb_compound_type_t *get_enum_if_visible(fb_schema_t *schema, fb_sy
     fb_compound_type_t *ct = 0;
 
     switch (sym->kind) {
+    case fb_is_union:
+        /* Fall through. */
     case fb_is_enum:
         ct = (fb_compound_type_t *)sym;
         if (!ptr_set_exists(&schema->visible_schema, ct->schema)) {

@@ -86,9 +86,6 @@ int create_monster_bottom_up(flatcc_builder_t *B, int flexible)
         //
         // Note that the Equipment union only take up one argument in C, where
         // C++ takes a type and an object argument.
-        //
-        // Also note that unlike C++ we do not use `&pos` because `pos`
-        // is already a reference type.
         ns(Monster_create_as_root(B, &pos, mana, hp, name, inventory, ns(Color_Red),
                              weapons, equipped));
 
@@ -181,7 +178,6 @@ int create_monster_top_down(flatcc_builder_t *B)
         ns(Weapon_name_create_str(B, "Sword"));
         ns(Weapon_damage_add(B, 3));
         ns(Monster_weapons_push_end(B));
-        ns(Monster_weapons_push_start(B));
         ns(Monster_weapons_push_start(B));
         ns(Weapon_name_create_str(B, "Axe"));
         ns(Weapon_damage_add(B, 5));
@@ -328,7 +324,8 @@ int main(int argc, char *argv[])
     // Instead, we're going to access it right away (as if we just received it).
     //access_monster_buffer(buf);
 
-    aligned_free(buf);
+    // prior to v0.5.0, use `aligned_free`
+    flatcc_builder_aligned_free(buf);
     //free(buf);
     //
     // The builder object can optionally be reused after a reset which
@@ -338,7 +335,7 @@ int main(int argc, char *argv[])
     test_assert(0 == create_monster_bottom_up(&builder, 1));
     buf = flatcc_builder_finalize_aligned_buffer(&builder, &size);
     access_monster_buffer(buf);
-    aligned_free(buf);
+    flatcc_builder_aligned_free(buf);
     flatcc_builder_reset(&builder);
     create_monster_top_down(&builder);
     buf = flatcc_builder_finalize_buffer(&builder, &size);

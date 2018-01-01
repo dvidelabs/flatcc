@@ -24,6 +24,9 @@
 #undef ns
 #define ns(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Example, x)
 
+#undef nsf
+#define nsf(x) FLATBUFFERS_WRAP_NAMESPACE(Fantasy, x)
+
 /*
  * Wrap the common namespace (flatbuffers_). Many operations in the
  * common namespace such as `flatbuffers_string_create` are also mapped
@@ -122,6 +125,62 @@ int test_enums(flatcc_builder_t *B)
         return -1;
     }
     return 0;
+}
+
+int test_type_aliases(flatcc_builder_t *B)
+{
+    int ret = 0;
+    void *buffer = 0;
+    size_t size;
+    ns(TypeAliases_table_t) ta;
+    flatbuffers_uint8_vec_ref_t v8_ref;
+    flatbuffers_double_vec_ref_t vf64_ref;
+
+    flatcc_builder_reset(B);
+
+    v8_ref = flatbuffers_uint8_vec_create(B, 0, 0);
+    vf64_ref = flatbuffers_double_vec_create(B, 0, 0);
+    ns(TypeAliases_create_as_root(B,
+          INT8_MIN, UINT8_MAX, INT16_MIN, UINT16_MAX,
+          INT32_MIN, UINT32_MAX, INT64_MIN, UINT64_MAX, 2.3f, 2.3, v8_ref, vf64_ref));
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+    if ((ret = ns(TypeAliases_verify_as_root(buffer, size)))) {
+
+        hexdump("TypeAliases buffer", buffer, size, stderr);
+        printf("could not verify TypeAliases table, got %s\n", flatcc_verify_error_string(ret));
+        goto done;
+    }
+    ta = ns(TypeAliases_as_root(buffer));
+
+    if (ns(TypeAliases_i8(ta)) != INT8_MIN) goto failed;
+    if (ns(TypeAliases_i16(ta)) != INT16_MIN) goto failed;
+    if (ns(TypeAliases_i32(ta)) != INT32_MIN) goto failed;
+    if (ns(TypeAliases_i64(ta)) != INT64_MIN) goto failed;
+    if (ns(TypeAliases_u8(ta)) != UINT8_MAX) goto failed;
+    if (ns(TypeAliases_u16(ta)) != UINT16_MAX) goto failed;
+    if (ns(TypeAliases_u32(ta)) != UINT32_MAX) goto failed;
+    if (ns(TypeAliases_u64(ta)) != UINT64_MAX) goto failed;
+    if (ns(TypeAliases_f32(ta)) != 2.3f) goto failed;
+    if (ns(TypeAliases_f64(ta)) != 2.3) goto failed;
+    if (sizeof(ns(TypeAliases_i8(ta))) != 1) goto failed;
+    if (sizeof(ns(TypeAliases_i16(ta))) != 2) goto failed;
+    if (sizeof(ns(TypeAliases_i32(ta))) != 4) goto failed;
+    if (sizeof(ns(TypeAliases_i64(ta))) != 8) goto failed;
+    if (sizeof(ns(TypeAliases_u8(ta))) != 1) goto failed;
+    if (sizeof(ns(TypeAliases_u16(ta))) != 2) goto failed;
+    if (sizeof(ns(TypeAliases_u32(ta))) != 4) goto failed;
+    if (sizeof(ns(TypeAliases_u64(ta))) != 8) goto failed;
+    if (sizeof(ns(TypeAliases_f32(ta))) != 4) goto failed;
+    if (sizeof(ns(TypeAliases_f64(ta))) != 8) goto failed;
+
+done:
+    aligned_free(buffer);
+    return ret;
+
+failed:
+    ret = -1;
+    printf("Scalar type alias has unexpected value or size\n");
+    goto done;
 }
 
 int test_empty_monster(flatcc_builder_t *B)
@@ -400,6 +459,8 @@ int verify_monster(void *buffer)
 {
     ns(Monster_table_t) monster, mon, mon2;
     ns(Monster_vec_t) monsters;
+    ns(Any_union_type_t) test_type;
+    ns(Any_union_t) test_union;
     /* This is an encoded struct pointer. */
     ns(Vec3_struct_t) vec;
     const char *name;
@@ -506,6 +567,39 @@ int verify_monster(void *buffer)
     }
     if (strcmp(ns(Color_name)(ns(Color_Green)), "Green")) {
         printf("Enum name map does not have a green solution\n");
+        return -1;
+    }
+    /*
+     * This is bit tricky because Color is a bit flag, so we can have
+     * combinations that are expected, but that we do not know. The
+     * known value logic does not accomodate for that.
+     */
+    if (!ns(Color_is_known_value(ns(Color_Green)))) {
+        printf("Color enum does not recognize the value of the Green flag\n");
+        return -1;
+    }
+    if (!ns(Color_is_known_value(1))) {
+        printf("Color enum does not recognize the value of the Red flag\n");
+        return -1;
+    }
+    if (ns(Color_is_known_value(4))) {
+        printf("Color enum recognizes a value it shouldn't\n");
+        return -1;
+    }
+    if (!ns(Color_is_known_value(8))) {
+        printf("Color enum does not recognize the value of the Blue flag\n");
+        return -1;
+    }
+    if (ns(Color_is_known_value(9))) {
+        printf("Color enum recognizes a value it shouldn't\n");
+        return -1;
+    }
+    if (!ns(Any_is_known_type(ns(Any_Monster)))) {
+        printf("Any type does not accept Monster\n");
+        return -1;
+    }
+    if (ns(Any_is_known_type(42))) {
+        printf("Any type recognizes unexpected type\n");
         return -1;
     }
     inv = ns(Monster_inventory(monster));
@@ -658,7 +752,8 @@ int verify_monster(void *buffer)
             return -1;
         }
     }
-    if (ns(Monster_test_type(monster)) != ns(Any_Monster)) {
+    test_type = ns(Monster_test_type(monster));
+    if (test_type != ns(Any_Monster)) {
         printf("the monster test type is not Any_Monster\n");
         return -1;
     }
@@ -674,6 +769,15 @@ int verify_monster(void *buffer)
     }
     if (ns(Monster_test_type(mon)) != ns(Any_NONE)) {
         printf("the enemy test type is not Any_NONE\n");
+        return -1;
+    }
+    test_union = ns(Monster_test_union(monster));
+    if (test_union.type != test_type) {
+        printf("the monster test union type is not Any_Monster\n");
+        return -1;
+    }
+    if (test_union.member != ns(Monster_test(monster))) {
+        printf("the union monster has gone awol\n");
         return -1;
     }
     monsters = ns(Monster_testarrayoftables(mon));
@@ -1662,6 +1766,321 @@ done:
     return ret;
 }
 
+int test_union_vector(flatcc_builder_t *B)
+{
+    void *buffer;
+    size_t size;
+    size_t n;
+    int color;
+    int ret = -1;
+    ns(Monster_table_t) mon;
+    ns(Stat_table_t) stat;
+    ns(Any_union_vec_ref_t) anyvec_ref;
+    ns(TestSimpleTableWithEnum_ref_t) kermit_ref;
+    ns(TestSimpleTableWithEnum_table_t) kermit;
+    flatbuffers_generic_vec_t anyvec;
+    ns(Any_vec_t) anyvec_type;
+    ns(Any_union_vec_t) anyvec_union;
+    ns(Any_union_t) anyelem;
+
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+    ns(Monster_name_create_str(B, "Kermit"));
+
+    kermit_ref = ns(TestSimpleTableWithEnum_create(B,
+                ns(Color_Green), ns(Color_Green),
+                ns(Color_Green), ns(Color_Green)));
+    ns(Any_vec_start(B));
+    ns(Any_vec_push(B, ns(Any_as_TestSimpleTableWithEnum(kermit_ref))));
+    anyvec_ref = ns(Any_vec_end(B));
+    ns(Monster_manyany_add(B, anyvec_ref));
+
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+
+    if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
+        printf("Monster buffer with union vector failed to verify, got: %s\n", flatcc_verify_error_string(ret));
+        return -1;
+    }
+
+    mon = ns(Monster_as_root(buffer));
+    if (!ns(Monster_manyany_is_present(mon))) {
+        printf("manyany union vector should be present.\n");
+        goto done;
+    }
+    anyvec_type = ns(Monster_manyany_type(mon));
+    anyvec = ns(Monster_manyany(mon));
+    n = ns(Any_vec_len(anyvec_type));
+    if (n != 1) {
+        printf("manyany union vector has wrong length.\n");
+        goto done;
+    }
+    if (nsc(union_type_vec_at(anyvec_type, 0)) != ns(Any_TestSimpleTableWithEnum)) {
+        printf("manyany union vector has wrong element type.\n");
+        goto done;
+    }
+    kermit = flatbuffers_generic_vec_at(anyvec, 0);
+    if (!kermit) {
+        printf("Kermit is lost.\n");
+        goto done;
+    }
+    color = ns(TestSimpleTableWithEnum_color(kermit));
+    if (color != ns(Color_Green)) {
+        printf("Kermit has wrong color: %i.\n", (int)color);
+        goto done;
+    }
+    anyvec_union = ns(Monster_manyany_union(mon));
+    if (ns(Any_union_vec_len(anyvec_union)) != 1) {
+        printf("manyany union vector has wrong length from a different perspective.\n");
+        goto done;
+    }
+    anyelem = ns(Any_union_vec_at(anyvec_union, 0));
+    if (anyelem.type != nsc(union_type_vec_at(anyvec_type, 0))) {
+        printf("Kermit is now different.\n");
+        goto done;
+    }
+    if (anyelem.member != kermit) {
+        printf("Kermit is incoherent.\n");
+        goto done;
+    }
+
+    ret = 0;
+done:
+    aligned_free(buffer);
+    return ret;
+}
+
+int test_mixed_type_union(flatcc_builder_t *B)
+{
+    void *buffer;
+    size_t size;
+    size_t n;
+    int ret = -1;
+    /* Builder */
+    nsf(Character_union_ref_t) ut;
+    nsf(Rapunzel_ref_t) cameo_ref;
+    nsf(Attacker_ref_t) attacker_ref;
+    nsf(BookReader_ref_t) br_ref;
+    nsf(BookReader_t *) pbr;
+    nsf(Movie_table_t) mov;
+
+    /* Reader */
+    nsf(Character_union_vec_t) characters;
+    nsf(Character_union_t) character;
+    nsf(Rapunzel_struct_t) rapunzel;
+    nsf(Attacker_table_t) attacker;
+    nsc(string_t) text;
+
+    flatcc_builder_reset(B);
+
+    nsf(Movie_start_as_root(B));
+    br_ref = nsf(BookReader_create(B, 10));
+    cameo_ref = nsf(Rapunzel_create(B, 22));
+    ut = nsf(Character_as_Rapunzel(cameo_ref));
+    nsf(Movie_main_character_Rapunzel_create(B, 19));
+    nsf(Movie_cameo_Rapunzel_add(B, cameo_ref));
+    attacker_ref = nsf(Attacker_create(B, 42));
+    nsf(Movie_antagonist_MuLan_add(B, attacker_ref));
+    nsf(Movie_side_kick_Other_create_str(B, "Nemo"));
+    nsf(Movie_characters_start(B));
+    nsf(Movie_characters_push(B, ut));
+    nsf(Movie_characters_MuLan_push(B, attacker_ref));
+    nsf(Movie_characters_MuLan_push_create(B, 1));
+    nsf(Character_vec_push(B, nsf(Character_as_Other(nsc(string_create_str(B, "other"))))));
+    nsf(Movie_characters_Belle_push(B, br_ref));
+    pbr = nsf(Movie_characters_Belle_push_start(B));
+    pbr->books_read = 3;
+    nsf(Movie_characters_Belle_push_end(B));
+    nsf(Movie_characters_Belle_push(B, nsf(BookReader_create(B, 1))));
+    nsf(Movie_characters_Belle_push_create(B, 2));
+    nsf(Movie_characters_Other_push(B, nsc(string_create_str(B, "another"))));
+    nsf(Movie_characters_Other_push_create_str(B, "yet another"));
+    nsf(Movie_characters_end(B));
+    nsf(Movie_end_as_root(B));
+
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+
+    hexdump("Movie buffer", buffer, size, stderr);
+    if ((ret = nsf(Movie_verify_as_root(buffer, size)))) {
+        printf("Movie buffer with mixed type union and union vector failed to verify, got: %s\n", flatcc_verify_error_string(ret));
+        return -1;
+    }
+    ret = -1;
+
+    mov = nsf(Movie_as_root(buffer));
+    if (!nsf(Movie_main_character_is_present(mov))) {
+        printf("Main_charactery union should be present.\n");
+        goto done;
+    }
+    if (!nsf(Movie_characters_is_present(mov))) {
+        printf("Characters union vector should be present.\n");
+        goto done;
+    }
+    character = nsf(Movie_main_character_union(mov));
+    if (character.type != nsf(Character_Rapunzel)) {
+        printf("Unexpected main character.\n");
+        goto done;
+    };
+    /*
+     * Tables and structs can cast by void pointer assignment while
+     * strings require an explicit cast.
+     */
+    rapunzel = character.member;
+    if (!rapunzel) {
+        printf("Rapunzel has gone AWOL\n");
+    }
+    if (nsf(Rapunzel_hair_length(rapunzel)) > 19) {
+        printf("Rapunzel's hair has grown unexpectedly\n");
+        goto done;
+    }
+    if (nsf(Rapunzel_hair_length(rapunzel)) < 19) {
+        printf("Rapunzel's hair has been trimmed unexpectedly\n");
+        goto done;
+    }
+    if (nsf(Movie_cameo_type(mov)) != nsf(Character_Rapunzel)) {
+        printf("Rapunzel did was not selected for cameo appearance.\n");
+        goto done;
+    }
+    rapunzel = nsf(Movie_cameo(mov));
+    if (!rapunzel) {
+        printf("Rapunzel did not show up for cameo appearance.\n");
+        goto done;
+    }
+    if (nsf(Rapunzel_hair_length(rapunzel)) != 22) {
+        printf("Rapunzel didn't style her hair for cameo role.\n");
+        goto done;
+    }
+    if (nsf(Movie_antagonist_type(mov)) != nsf(Character_MuLan)) {
+        printf("Unexpected antagonist.\n");
+        goto done;
+    }
+    attacker = nsf(Movie_antagonist(mov));
+    if (!attacker || nsf(Attacker_sword_attack_damage(attacker)) != 42) {
+        printf("Unexpected sword attack damamage.\n");
+        goto done;
+    }
+    if (nsf(Movie_side_kick_type(mov)) != nsf(Character_Other)) {
+        printf("Unexpected side kick.\n");
+        goto done;
+    }
+    /*
+     * We need to cast because generic pointers refer to the start
+     * of the memory block which is the string length, not the first
+     * character in the string.
+     */
+    text = nsc(string_cast_from_generic(nsf(Movie_side_kick(mov))));
+    if (!text) {
+        printf("missing side kick string.\n");
+        goto done;
+    }
+    if (strcmp(text, "Nemo")) {
+        printf("unexpected side kick string: '%s'.\n", text);
+        goto done;
+    }
+    text = nsf(Movie_side_kick_as_string(mov));
+    if (!text) {
+        printf("missing side kick string.\n");
+        goto done;
+    }
+    if (strcmp(text, "Nemo")) {
+        printf("unexpected side kick string (take 2): '%s'.\n", text);
+        goto done;
+    }
+    character = nsf(Movie_side_kick_union(mov));
+    text = nsc(string_cast_from_union(character));
+    if (strcmp(text, "Nemo")) {
+        printf("unexpected side kick string (take 3): '%s'.\n", text);
+        goto done;
+    }
+    characters = nsf(Movie_characters_union(mov));
+    character = nsf(Character_union_vec_at(characters, 0));
+    if (character.type != nsf(Character_Rapunzel)) {
+        printf("The first character is not Rapunzel.");
+        goto done;
+    };
+    character = nsf(Character_union_vec_at(characters, 1));
+    if (character.type != nsf(Character_MuLan)) {
+        printf("The second character is not MuLan.");
+        goto done;
+    };
+    attacker = character.member;
+    if (nsf(Attacker_sword_attack_damage(attacker) != 42)) {
+        printf("The second character has unexpected sword damage.");
+        goto done;
+    }
+    character = nsf(Character_union_vec_at(characters, 2));
+    if (character.type != nsf(Character_MuLan)) {
+        printf("The third character is not MuLan.");
+        goto done;
+    };
+    attacker = character.member;
+    if (nsf(Attacker_sword_attack_damage(attacker) != 1)) {
+        printf("The third character has unexpected sword damage.");
+        goto done;
+    }
+    if (nsc(union_type_vec_at(nsf(Movie_characters_type(mov)), 3)) != nsf(Character_Other)) {
+        printf("The fourth character was not of type 'Other'!\n");
+        goto done;
+    }
+    text = nsf(Character_union_vec_at_as_string(characters, 3));
+    if (!text || strcmp(text, "other")) {
+        printf("The fourth character was not described as 'other'.\n");
+        goto done;
+    }
+    character = nsf(Character_union_vec_at(characters, 3));
+    if (character.type != nsf(Character_Other)) {
+        printf("The fourth character is not of type 'Other' (take two).");
+        goto done;
+    };
+    text = nsc(string_cast_from_union(character));
+    if (!text || strcmp(text, "other")) {
+        printf("The fourth character was not described as 'other' (take two).\n");
+        goto done;
+    }
+    character = nsf(Character_union_vec_at(characters, 4));
+    if (character.type != nsf(Character_Belle)) {
+        printf("The fifth character is not Belle.");
+        goto done;
+    };
+    character = nsf(Character_union_vec_at(characters, 5));
+    if (character.type != nsf(Character_Belle)) {
+        printf("The sixth character is not Belle.");
+        goto done;
+    };
+    character = nsf(Character_union_vec_at(characters, 6));
+    if (character.type != nsf(Character_Belle)) {
+        printf("The seventh character is not Belle.");
+        goto done;
+    };
+    character = nsf(Character_union_vec_at(characters, 7));
+    if (character.type != nsf(Character_Belle)) {
+        printf("The eighth character is not Belle.");
+        goto done;
+    };
+    character = nsf(Character_union_vec_at(characters, 8));
+    if (character.type != nsf(Character_Other)) {
+        printf("The ninth character is not of type 'Other'.");
+        goto done;
+    };
+    character = nsf(Character_union_vec_at(characters, 9));
+    if (character.type != nsf(Character_Other)) {
+        printf("The ninth character is not of type 'Other'.");
+        goto done;
+    };
+    if (nsf(Character_union_vec_len(characters) != 10)) {
+        printf("The 11'th character should not exist.");
+        goto done;
+    };
+
+    ret = 0;
+done:
+    flatcc_builder_aligned_free(buffer);
+    return ret;
+}
+
 int test_add_set_defaults(flatcc_builder_t *B)
 {
     void *buffer;
@@ -1762,6 +2181,121 @@ int test_nested_buffer(flatcc_builder_t *B)
     assert(ns(Monster_name(nested)));
     if (strcmp(ns(Monster_name(nested)), "MyNestedMonster")) {
         printf("got the wrong nested monster\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int test_nested_buffer_first(flatcc_builder_t *B)
+{
+    void *buffer;
+    size_t size;
+    ns(Monster_table_t) mon, nested;
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+    /*
+     * Note:
+     *   ns(Monster_testnestedflatbuffer_start(B));
+     * would start a raw ubyte array so we use start_as_root.
+     *
+     * Here we create the nested buffer first, and the parent
+     * string after so the emitter sees the nested buffer first.
+     */
+    ns(Monster_testnestedflatbuffer_start_as_root(B));
+    ns(Monster_name_create_str(B, "MyNestedMonster"));
+    ns(Monster_testnestedflatbuffer_end_as_root(B));
+    ns(Monster_hp_add(B, 10));
+    ns(Monster_name_create_str(B, "MyMonster"));
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_get_direct_buffer(B, &size);
+    hexdump("nested flatbuffer", buffer, size, stderr);
+
+    mon = ns(Monster_as_root(buffer));
+    if (strcmp(ns(Monster_name(mon)), "MyMonster")) {
+        printf("got the wrong root monster\n");
+        return -1;
+    }
+    /*
+     * Note:
+     *   nested = ns(Monster_testnestedflatbuffer(mon));
+     * would return a raw ubyte vector not a monster.
+     */
+    nested = ns(Monster_testnestedflatbuffer_as_root(mon));
+
+    if (ns(Monster_hp(mon)) != 10) {
+        printf("health points wrong at root monster\n");
+        return -1;
+    }
+
+    assert(ns(Monster_name(nested)));
+    if (strcmp(ns(Monster_name(nested)), "MyNestedMonster")) {
+        printf("got the wrong nested monster\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int test_nested_buffer_using_nest(flatcc_builder_t *B)
+{
+    void *buffer;
+    uint8_t nested_buffer[1024];
+    size_t size, nested_size;
+    ns(Monster_table_t) mon, nested;
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+    ns(Monster_name_create_str(B, "MyNestedMonster"));
+    ns(Monster_mana_add(B, 42));
+    ns(Monster_end_as_root(B));
+
+    nested_size = flatcc_builder_get_buffer_size(B);
+    if (!flatcc_builder_copy_buffer(B, nested_buffer, sizeof(nested_buffer))) {
+        printf("nested buffer copy failed\n");
+        return -1;
+    }
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+    ns(Monster_testnestedflatbuffer_nest(B, nested_buffer, nested_size, 0));
+    ns(Monster_hp_add(B, 10));
+    ns(Monster_name_create_str(B, "MyMonster"));
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_get_direct_buffer(B, &size);
+    hexdump("nested flatbuffer [using _nest()]", buffer, size, stderr);
+
+    mon = ns(Monster_as_root(buffer));
+    if (strcmp(ns(Monster_name(mon)), "MyMonster")) {
+        printf("got the wrong root monster\n");
+        return -1;
+    }
+    /*
+     * Note:
+     *   nested = ns(Monster_testnestedflatbuffer(mon));
+     * would return a raw ubyte vector not a monster.
+     */
+    nested = ns(Monster_testnestedflatbuffer_as_root(mon));
+
+    if (ns(Monster_hp(mon)) != 10) {
+        printf("health points wrong at root monster\n");
+        return -1;
+    }
+
+    assert(ns(Monster_name(nested)));
+    if (strcmp(ns(Monster_name(nested)), "MyNestedMonster")) {
+        printf("got the wrong nested monster\n");
+        return -1;
+    }
+
+    if (ns(Monster_mana(nested)) != 42) {
+        printf("mana points wrong in nested monster\n");
         return -1;
     }
 
@@ -2095,6 +2629,12 @@ int main(int argc, char *argv[])
     }
 #endif
 #if 1
+    if (test_union_vector(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
     if (test_basic_sort(B)) {
         printf("TEST FAILED\n");
         return -1;
@@ -2119,7 +2659,31 @@ int main(int argc, char *argv[])
     }
 #endif
 #if 1
+    if (test_nested_buffer_first(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_nested_buffer_using_nest(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
     if (verify_include(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_type_aliases(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_mixed_type_union(B)) {
         printf("TEST FAILED\n");
         return -1;
     }

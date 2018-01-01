@@ -103,9 +103,15 @@ static inline const char *parse_float(const char *buf, int len, float *result)
 {
     const char *end;
     double v;
+    union { uint32_t u32; float f32; } inf;
+    inf.u32 = 0x7f800000;
 
     end = parse_double(buf, len, &v);
     *result = (float)v;
+    if (parse_float_isinf(*result)) {
+        *result = v < 0 ? -inf.f32 : inf.f32;
+        return buf;
+    }
     return end;
 }
 

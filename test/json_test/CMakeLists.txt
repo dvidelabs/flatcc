@@ -39,3 +39,25 @@ add_test(test_json_parser test_json_parser${CMAKE_EXECUTABLE_SUFFIX})
 add_test(test_json_printer test_json_printer${CMAKE_EXECUTABLE_SUFFIX})
 add_test(test_json test_json${CMAKE_EXECUTABLE_SUFFIX})
 
+# Compile without default library in order to test various runtime flags
+set(RTPATH "${PROJECT_SOURCE_DIR}/src/runtime")
+set(RTSRC
+    "${RTPATH}/builder.c"
+    "${RTPATH}/emitter.c"
+    "${RTPATH}/verifier.c"
+    "${RTPATH}/json_parser.c"
+    "${RTPATH}/json_printer.c"
+)
+
+macro(jstest trg flags)
+    add_executable(${trg} test_json.c ${RTSRC})
+    add_dependencies(${trg} gen_monster_test_json)
+    add_test(${trg} ${trg}${CMAKE_EXECUTABLE_SUFFIX})
+    set_target_properties(${trg} PROPERTIES COMPILE_FLAGS ${flags})
+endmacro()
+
+jstest(json_test_uql "-DFLATCC_JSON_PARSE_ALLOW_UNQUOTED_LIST=1")
+jstest(json_test_uql_off "-DFLATCC_JSON_PARSE_ALLOW_UNQUOTED_LIST=0")
+jstest(json_test_uq "-DFLATCC_JSON_PARSE_ALLOW_UNQUOTED=1")
+jstest(json_test_uq_off "-DFLATCC_JSON_PARSE_ALLOW_UNQUOTED=0")
+jstest(json_test "-DFLATCC_JSON_PARSE_WIDE_SPACE=1")

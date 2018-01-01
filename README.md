@@ -3,6 +3,12 @@ Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/gi
 
 # FlatCC FlatBuffers in C for C
 
+_NOTE: ongoing work towards version 0.5.0 features might cause minor
+breakage. For full backwards compatibility use the v0.4.3 tag.
+If you work with JSON parsing, you may want to patch v0.4.3 with commit
+[1cb266](https://github.com/dvidelabs/flatcc/commit/1cb2664dcd104b2051d410955018cb255370302e)
+which only affects code generation, not the runtime library._
+
 `flatcc` has no external dependencies except for build and compiler
 tools, and the C runtime library. With concurrent Ninja builds, a small
 client project can build flatcc with libraries, generate schema code,
@@ -12,7 +18,57 @@ between 15K and 60K, read small buffers in 30ns, build FlatBuffers in
 about 600ns, and with a larger executable handle optional json parsing
 or printing in less than 2 us for a 10 field mixed type message.
 
-See also experimental meson branch, and [sample client project](https://github.com/dvidelabs/flatcc-meson-sample)
+
+<!-- vim-markdown-toc GFM -->
+* [Project Details](#project-details)
+* [Poll on Meson Build](#poll-on-meson-build)
+* [Reporting Bugs](#reporting-bugs)
+* [Status](#status)
+* [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
+* [Generated Files](#generated-files)
+* [Using flatcc](#using-flatcc)
+* [Quickstart](#quickstart)
+    * [Reading a Buffer](#reading-a-buffer)
+    * [Compiling for Read-Only](#compiling-for-read-only)
+    * [Building a Buffer](#building-a-buffer)
+    * [Verifying a Buffer](#verifying-a-buffer)
+    * [Debugging a Buffer](#debugging-a-buffer)
+* [File and Type Identifiers](#file-and-type-identifiers)
+    * [File Identifiers](#file-identifiers)
+    * [Type Identifiers](#type-identifiers)
+* [JSON Parsing and Printing](#json-parsing-and-printing)
+    * [Base64 Encoding](#base64-encoding)
+    * [Performance Notes](#performance-notes)
+* [Global Scope and Included Schema](#global-scope-and-included-schema)
+* [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
+* [Fast Buffers](#fast-buffers)
+* [Types](#types)
+* [Unions](#unions)
+* [Endianness](#endianness)
+* [Pitfalls in Error Handling](#pitfalls-in-error-handling)
+* [Searching and Sorting](#searching-and-sorting)
+* [Null Values](#null-values)
+* [Portability Layer](#portability-layer)
+* [Building](#building)
+    * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
+    * [Windows Build (MSVC)](#windows-build-msvc)
+    * [Cross-compilation](#cross-compilation)
+    * [Custom Allocation](#custom-allocation)
+    * [Shared Libraries](#shared-libraries)
+* [Distribution](#distribution)
+    * [Unix Files](#unix-files)
+    * [Windows Files](#windows-files)
+* [Running Tests on Unix](#running-tests-on-unix)
+* [Running Tests on Windows](#running-tests-on-windows)
+* [Configuration](#configuration)
+* [Using the Compiler and Builder library](#using-the-compiler-and-builder-library)
+* [FlatBuffers Binary Format](#flatbuffers-binary-format)
+* [Security Considerations](#security-considerations)
+* [Benchmarks](#benchmarks)
+
+<!-- vim-markdown-toc -->
+
+## Project Details
 
 NOTE: see
 [CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md).
@@ -48,9 +104,9 @@ See also:
 
 - [Quickstart](https://github.com/dvidelabs/flatcc#quickstart)
 
-- [Status](https://github.com/dvidelabs/flatcc#status)
+- [Builder Interface Reference]
 
-- [Benchmark](https://github.com/dvidelabs/flatcc#benchmark)
+- [Benchmarks]
 
 The `flatcc` compiler is implemented as a standalone tool instead of
 extending Googles `flatc` compiler in order to have a pure portable C
@@ -62,41 +118,127 @@ team at Googles FPL lab has been very helpful in providing feedback and
 answering many questions to help ensure the best possible compatibility.
 Notice the name `flatcc` (FlatBuffers C Compiler) vs Googles `flatc`.
 
-The `flatcc` compiler has some extra features such as allowing for
-referencing structs defined later in the schema - which makes sense
-since it is already possible with other types. The binary schema format
-also does not preserve the order of structs. The option is controlled by
-a flag in `config.h` The generated source supports both bottom-up and
-top-down construction mixed freely.
-
 The JSON format is compatible with Googles `flatc` tool. The `flatc`
 tool converts JSON from the command line using a schema and a buffer as
 input. `flatcc` generates schema specific code to read and write JSON
 at runtime. While the `flatcc` approach is likely much faster and also
 easier to deploy, the `flatc` approach is likely more convenient when
 manually working with JSON such as editing game scenes. Both tools have
-their place. 
+their place.
 
 **NOTE: Big-endian platforms are only supported as of release 0.4.0.**
 
+
+## Poll on Meson Build
+
+It is being considered adding support for the Meson build system, but it
+would be good with some feedback on this via
+[issue #56](https://github.com/dvidelabs/flatcc/issues/56)
+
+
 ## Reporting Bugs
 
-If possible, please provide a short reproducible schema and
-source file using [issue4](https://github.com/dvidelabs/flatcc/issues/4)
-as an example. The first comment in this issue details how to quickly
-set up a new temporary project using the `scripts/setup.sh` script.
+If possible, please provide a short reproducible schema and source file
+with a main program the returns 1 on error and 0 on success and a small
+build script. Preferably generate a hexdump and call the buffer verifier
+to ensure the input is valid and link with the debug library
+`flatccrt_d`.
 
+See also [Debugging a Buffer](#debugging-a-buffer), and [readfile.h]
+useful for reading an existing buffer for verification.
+
+Example:
+
+[samples/bugreport](samples/bugreport)
+
+eclectic.fbs :
+
+```c
+namespace Eclectic;
+
+enum Fruit : byte { Banana = -1, Orange = 42 }
+table FooBar {
+    meal      : Fruit = Banana;
+    density   : long (deprecated);
+    say       : string;
+    height    : short;
+}
+file_identifier "NOOB";
+root_type FooBar;
+```
+
+myissue.c :
+
+```c
+/* Minimal test with all headers generated into a single file. */
+#include "build/myissue_generated.h"
+#include "flatcc/support/hexdump.h"
+
+int main(int argc, char *argv[])
+{
+    int ret;
+    void *buf;
+    size_t size;
+    flatcc_builder_t builder, *B;
+
+    (void)argc;
+    (void)argv;
+
+    B = &builder;
+    flatcc_builder_init(B);
+
+    Eclectic_FooBar_start_as_root(B);
+    Eclectic_FooBar_say_create_str(B, "hello");
+    Eclectic_FooBar_meal_add(B, Eclectic_Fruit_Orange);
+    Eclectic_FooBar_height_add(B, -8000);
+    Eclectic_FooBar_end_as_root(B);
+    buf = flatcc_builder_get_direct_buffer(B, &size);
+#if defined(PROVOKE_ERROR) || 0
+    /* Provoke error for testing. */
+    ((char*)buf)[0] = 42;
+#endif
+    ret = Eclectic_FooBar_verify_as_root(buf, size);
+    if (ret) {
+        hexdump("Eclectic.FooBar buffer for myissue", buf, size, stdout);
+        printf("could not verify Electic.FooBar table, got %s\n", flatcc_verify_error_string(ret));
+    }
+    flatcc_builder_clear(B);
+    return ret;
+}
+```
+build.sh :
+```sh
+#!/bin/sh
+cd $(dirname $0)
+
+FLATBUFFERS_DIR=../..
+NAME=myissue
+SCHEMA=eclectic.fbs
+OUT=build
+
+FLATCC_EXE=$FLATBUFFERS_DIR/bin/flatcc
+FLATCC_INCLUDE=$FLATBUFFERS_DIR/include
+FLATCC_LIB=$FLATBUFFERS_DIR/lib
+
+mkdir -p $OUT
+$FLATCC_EXE --outfile $OUT/${NAME}_generated.h -a $SCHEMA || exit 1
+cc -I$FLATCC_INCLUDE -g -o $OUT/$NAME $NAME.c -L$FLATCC_LIB -lflatccrt_d || exit 1
+echo "running $OUT/$NAME"
+if $OUT/$NAME; then
+    echo "success"
+else
+    echo "failed"
+    exit 1
+fi
+```
 
 ## Status
 
-0.4.2 is featurewise on par with 0.4.1 but improves compatibility with
-C++ in portable headers and fixes `aligned_alloc` for older GCC
-versions. 0.4.2. also fixes a memory corruption bug when building with a
-nesting level of 8 or above (number of open buffers, tables, and
-vectors).
+0.5.0 is in development on master branch primarily adding support for
+union vectors and mixed type unions that can include tables, structs and
+strings, and base64 JSON encoded [ubyte] vectors.
 
-
-Main features supported as of 0.4.2
+Main features supported as of 0.5.0
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -112,15 +254,21 @@ Main features supported as of 0.4.2
 - fast build times
 - support for big endian platforms (as of 0.4.0)
 - support for big endian encoded flatbuffers on both le and be platforms. Enabled on `be` branch.
-- size prefixed buffers - see also `doc/builder.md`
+- size prefixed buffers - see also [Builder Interface Reference]
+- flexible configuration of malloc alternatives.
+- base64 encoded binary data in JSON.
+- union vectors and mixed type unions of strings, structs, and tables.
 
 Supported platforms:
 
 - Ubuntu gcc 4.4-4.8 and clang 3.5-3.8
 - OS-X current clang / gcc
-- Windows MSVC 2010, 2013, 2015, 2015 Win64 
+- Windows MSVC 2010, 2013, 2015, 2015 Win64
 - IBM XLC on AIX big endian Power PC has been tested for release 0.4.0
   but is not part of regular release tests.
+
+Users have been testing on FreeRTOS as well which requires changing the
+runtime allocation method.
 
 The monster sample does not work with MSVC 2010 because it intentionally
 uses C99 style code to better follow the C++ version.
@@ -168,7 +316,7 @@ may be higher but eventually smaller buffers will be hit by call
 overhead and thus we get down to 300MB/s at about 150ns/op encoding
 small buffers. These numbers are just a rough guideline - they obviously
 depend on hardware, compiler, and data encoded. Measurements are
-excluding an ininitial warmup step. 
+excluding an ininitial warmup step.
 
 The generated JSON parsers are roughly 4 times slower than building a
 FlatBuffer directly in C or C++, or about 2200ns vs 600ns for a 700 byte
@@ -216,7 +364,7 @@ builders considering they do less work: The compatibility test reads a
 pre-generated binary `monsterdata_test.golden` monster file and verifies
 that all content is as expected. This results in a 13K optimized binary
 executable or a 6K object file. The source for this check is 5K
-excluding header files. Readers do not need to link with a library. 
+excluding header files. Readers do not need to link with a library.
 
 JSON parsers bloat the compiled C binary compared to pure Flatbuffer
 usage because they inline the parser decision tree. A JSON parser for
@@ -241,7 +389,7 @@ abstractions and eventually have a set of predefined files for types
 beyond the standard 32-bit unsigned offset (`uoffset_t`). The runtime
 library is specific to one set of type definitions.
 
-Refer to `monster_test.c` and the generated files for detailed guidance
+Refer to [monster_test.c] and the generated files for detailed guidance
 on use. The monster schema used in this project is a slight adaptation
 to the original to test some additional edge cases.
 
@@ -249,7 +397,7 @@ For building flatbuffers a separate builder header file is generated per
 schema. It requires a `flatbuffers_common_builder.h` file also generated
 by the compiler and a small runtime library `libflatccrt.a`. It is
 because of this requirement that the reader and builder generated code
-is kept separate. Typical uses can be seen in the `monster_test.c` file.
+is kept separate. Typical uses can be seen in the [monster_test.c] file.
 The builder allows of repeated pushing of content to a vector or a
 string while a containing table is being updated which simplifies
 parsing of external formats. It is also possible to build nested buffers
@@ -276,14 +424,18 @@ buffer emitter object. The separate emitter ensures a buffer can be
 constructed without requiring a full buffer to be present in memory at
 once, if so desired.
 
-The typeless builder library is documented in `flatcc_builder.h` and
-`flatcc_emitter.h` while the generated typed builder api for C is
-documented in `doc/builder.md`.
+The typeless builder library is documented in [flatcc_builder.h] and
+[flatcc_emitter.h] while the generated typed builder api for C is
+documented in [Builder Interface Reference].
 
 
 ## Using flatcc
 
 Refer to `flatcc -h` for details.
+
+An online version listed here: [flatcc-help.md] but please use `flatcc
+-h` for an up to date reference.
+
 
 The compiler can either generate a single header file or headers for all
 included schema and a common file and with or without support for both
@@ -351,9 +503,8 @@ To write your own schema files please follow the main FlatBuffers
 project documentation on [writing schema
 files](https://google.github.io/flatbuffers/flatbuffers_guide_writing_schema.html).
 
-The [builder interface
-reference](https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md)
-may be useful after studying the monster sample and quickstart below.
+The [Builder Interface Reference] may be useful after studying the
+monster sample and quickstart below.
 
 When looking for advanced examples such as sorting vectors and finding
 elements by a key, you should find these in the
@@ -367,13 +518,13 @@ than general FlatBuffers concepts.
 You can still use the setup tool to create an empty project and
 follow along, but there are no assumptions about that in the text below.
 
-## Quickstart - reading a buffer
+### Reading a Buffer
 
 Here we provide a quick example of read-only access to Monster flatbuffer -
-it is an adapted extract of the `monster_test.c` file.
+it is an adapted extract of the [monster_test.c] file.
 
 First we compile the schema read-only with common (-c) support header and we
-add the recursion because `monster_test.fbs` includes other files.
+add the recursion because [monster_test.fbs] includes other files.
 
     flatcc -cr test/monster_test/monster_test.fbs
 
@@ -451,7 +602,7 @@ Namespaces can be long so we optionally use a macro to manage this.
     /* main() {...} */
 
 
-## Quickstart - compiling for read-only
+### Compiling for Read-Only
 
 Assuming our above file is `monster_example.c` the following are a few
 ways to compile the project for read-only - compilation with runtime
@@ -469,10 +620,10 @@ flag includes additional files to support compilers lacking c11
 features.
 
 
-## Quickstart - building a buffer
+### Building a Buffer
 
 Here we provide a very limited example of how to build a buffer - only a few
-fields are updated. Pleaser refer to `monster_test.c` and the doc directory
+fields are updated. Pleaser refer to [monster_test.c] and the doc directory
 for more information.
 
 First we must generate the files:
@@ -515,15 +666,15 @@ to provide a custom emitter and for example emit pages over the network
 as soon as they complete rather than merging all pages into a single
 buffer using `flatcc_builder_finalize_buffer`, or the simplistic
 `flatcc_builder_get_direct_buffer` which returns null if the buffer is
-too large. See also documentation comments in `flatcc_builder.h` and
-`flatcc_emitter.h`. See also `flatc_builder_finalize_aligned_buffer` in
-`builder.h` and `builder.md` when malloc aligned buffers are
-insufficent.
+too large. See also documentation comments in [flatcc_builder.h] and
+[flatcc_emitter.h]. See also `flatc_builder_finalize_aligned_buffer` in
+`builder.h` and the [Builder Interface Reference] when malloc aligned
+buffers are insufficent.
 
 
     #include "monster_test_builder.h"
 
-    /* See `monster_test.c` for more advanced examples. */
+    /* See [monster_test.c] for more advanced examples. */
     void build_monster(flatcc_builder_t *B)
     {
         ns(Vec3_t *vec);
@@ -594,7 +745,7 @@ obvious from the filenames except that JSON parsing also requires the
 builder and emitter source files.
 
 
-## Verifying a Buffer
+### Verifying a Buffer
 
 A buffer can be verified to ensure it does not contain any ranges that
 point outside the the given buffer size, that all data structures are
@@ -612,6 +763,9 @@ In the builder example above, we can apply a verifier to the output:
         printf("Monster buffer is invalid: %s\n",
         flatcc_verify_error_string(ret));
     }
+
+The [readfile.h] utility may also be helpful in reading an existing
+buffer for verification.
 
 Flatbuffers can optionally leave out the identifier, here "MONS". Use a
 null pointer as identifier argument to ignore any existing identifiers
@@ -637,15 +791,66 @@ See also `include/flatcc/flatcc_verifier.h`.
 
 When verifying buffers returned directly from the builder, it may be
 necessary to use the `flatcc_builder_finalize_aligned_buffer` to ensure
-proper alignment and use `aligned_free` to free the buffer, see also
-`doc/builder.md`. Buffers may also be copied into aligned memory via
-mmap or using the portable layers `paligned_alloc.h` feature which is
-available when including generated headers.
+proper alignment and use `aligned_free` to free the buffer (or as of
+v0.5.0 also `flatcc_builder_aligned_free`), see also the
+[Builder Interface Reference]. Buffers may also be copied into aligned
+memory via mmap or using the portable layers `paligned_alloc.h` feature
+which is available when including generated headers.
 `test/flatc_compat/flatc_compat.c` is an example of how this can be
 done. For the majority of use cases, standard allocation would be
 sufficient, but for example standard 32-bit Windows only allocates on an
 8-byte boundary and can break the monster schema because it has 16-byte
 aligned fields.
+
+
+### Debugging a Buffer
+
+When reading a FlatBuffer does not provide the expected results, the
+first line of defense is to ensure that the code being tested is linked
+against `flatccrt_d`, the debug build of the runtime library. This will
+raise an assertion if calls to the builder are not properly balanced or
+if required fields are not being set.
+
+To dig further into a buffer, call the buffer verifier and see if the
+buffer is actually valid with respect to the expected buffer type.
+
+Strings and tables will be returned as null pointers when their
+corresponding field is not set in the buffer. User code should test for
+this but it might also be helpful to temporarily or permanently set the
+`required` attribute in the schema. The builder will then detect missing fields
+when cerating buffers and the verifier can will detect their absence in
+an existing buffer.
+
+If the verifier rejects a buffer, the error can be printed (see
+[Verifying a Buffer](#verifying-a-buffer)), but it will not say exactly
+where the problem was found. To go further, the verifier can be made to
+assert where the problem is encountered so the buffer content can be
+analyzed. This is enabled with:
+
+    -DFLATCC_DEBUG_VERIFY=1
+
+Note that this will break test cases where a buffer is expected to fail
+verification.
+
+To dump detailed contents of a valid buffer, or the valid contents up to
+the point of failure, use:
+
+    -DFLATCC_TRACE_VERIFY=1
+
+Both of these options can be set as CMake options, or in the
+[flatcc_rtconfig.h] file.
+
+When reporting bugs, output from the above might also prove helpful.
+
+The JSON parser and printer can also be used to create and display
+buffers. The parser will use the builder API correctly or issue a syntax
+error or an error on required field missing. This can rule out some
+uncertainty about using the api correctly. The [test_json.c] file has a
+test function that can be adapted for custom tests.
+
+For advanced debugging the [hexdump.h] file can be used to dump the buffer
+contents. It is used in [test_json.c] and also in [monster_test.c].
+See also [FlatBuffers Binary Format].
 
 
 ## File and Type Identifiers
@@ -718,7 +923,7 @@ In this example the type hash is derived from the string
 generators that supports type hashes.
 
 The value 0 is used to indicate that one does not care about the
-identifier in the buffer. 
+identifier in the buffer.
 
     ...
     MyGame_Example_Monster_create_as_typed_root(B, ...);
@@ -735,11 +940,11 @@ identifier in the buffer.
     ...
     if (flatbuffers_get_type_hash(buffer) ==
         flatbuffers_type_hash_from_name("Some.Old.Buffer")) {
-        printf("Buffer is the old version, not supported.\n"); 
+        printf("Buffer is the old version, not supported.\n");
     }
 
 More API calls are available to naturally extend the existing API. See
-`test/monster_test/monster_test.c` for more.
+[monster_test.c] for more.
 
 The type identifiers are defined like:
 
@@ -754,7 +959,7 @@ NOTE: The generated `_type_identifier` strings should not normally be
 used when an identifier string is expected in the generated API because
 it may contain null bytes which will be zero padded after the first null
 before comparison. Use the API calls that take a type hash instead. The
-`type_identifier` can be used in low level `flatcc_builder` calls
+`type_identifier` can be used in low level [flatcc_builder.h] calls
 because it handles identifiers as a fixed byte array and handles type
 hashes and strings the same.
 
@@ -845,11 +1050,11 @@ quoted in order to be compatible with Googles flatc tool for Flatbuffers
 
     color: "Green Red"
 
-The following is only permitted if explicitly enabled at compile time.
+_Unquoted multi-valued enums can be enabled at compile time but this is
+deprecated because it is incompatible with both Googles flatc JSON and
+also with other possible future extensions: `color: Green Red`_
 
-    color: Green Red
-
-These multi value expressions are originally intended for enums that
+These value-valued expressions were originally intended for enums that
 have the bit flag attribute defined (which Color does have), but this is
 tricky to process, so therefore any symblic value can be listed in a
 sequence with or without namespace as appropriate. Because this further
@@ -909,9 +1114,12 @@ usual, and an enum to indicate the type which has the same name with a
 `_type` suffix and accepts a numeric or symbolic type code:
 
     {
-      name: "Container Monster", test_type: Monster,
+      name: "Container Monster",
+      test_type: Monster,
       test: { name: "Contained Monster" }
     }
+
+based on the schema is defined in [monster_test.fbs].
 
 Because other json processors may sort fields, it is possible to receive
 the type field after the test field. The parser does not store temporary
@@ -923,6 +1131,60 @@ for nested unions this can still expand). Needless to say this slows down
 parsing. It is an error to provide only the table field or the type
 field alone, except if the type is `NONE` or `0` in which case the table
 is not allowed to be present.
+
+Union vectors are supported as of v0.5.0. A union vector is represented
+as two vectors, one with a vector of tables and one with a vector of
+types, similar to ordinary unions. It is more efficient to place the
+type vector first because it avoids backtracking. Because a union of
+type NONE cannot be represented by abasence of table field when dealing
+with vectors of unions, a table must have the value `null` if its type
+is NONE in the corresponding type vector. In other cases a table should
+be absent, and not null.
+
+Here is an example of JSON containing Monster root table with a union
+vector field named `manyany` which is a vector of `Any` unions in the
+[monster_test.fbs] schema:
+
+    {
+        "name": "Monster",
+        "manyany_type": [ "Monster", "NONE" ],
+        "manyany": [{"name": "Joe"}, null]
+    }
+
+### Base64 Encoding
+
+As of v0.5.0 it is possible to encode and decode a vector of type
+`[uint8]` (aka `[ubyte]`) as a base64 encoded string or a base64url
+encode string as documented in RFC 4648. Any other type, notably the
+string type, do not handle base64 encoding.
+
+Limiting the support to `[uint8]` avoids introducing binary data into
+strings and also avoids dealing with sign and endian encoding of binary
+data of other types. Furthermore, array encoding of values larger than 8
+bits are not necessarily less efficient than base64.
+
+Base64 padding is always printed and is optional when parsed. Spaces,
+linebreaks, JSON string escape character '\', or any other character not
+in the base64(url) alphabet are rejected as a parse error.
+
+The schema must add the attribute `(base64)` or `(base64url)` to the
+field holding the vector, for example:
+
+    table Monster {
+        name: string;
+        sprite: [uint8] (base64);
+        token: [uint8] (base64url);
+    }
+
+If more complex data needs to be encoded as base64 such as vectors of
+structs, this can be done via nested FlatBuffers which are also of type
+`[uint8]`.
+
+Note that for some use cases it might be desireable to read binary data as
+base64 into memory aligned to more than 8 bits. This is not currently
+possible, but it is recognized that a `(force_align: n)` attribute on
+`[ubyte]` vectors could be useful, but it can also be handled via nested
+flatbuffers which also align data.
 
 
 ### Performance Notes
@@ -1025,7 +1287,7 @@ measurements suggests there is a limit to how fast this can go (about
 buffers which involves zeroing allocated buffers. Small tables with a
 simple vector achieve roughly half that speed. For really high speed a
 dedicated builder for structs would be needed. See also
-`monster_test.c`.
+[monster_test.c].
 
 
 ## Types
@@ -1036,18 +1298,16 @@ types are read-only pointers into endian encoded data. Enum types are
 just constants easily grasped from the generated code. Tables are dense so
 they are never accessed directly.
 
+Enums support schema evolution meaning that more names can be added to
+the enumeration in a future schema version. As of v0.5.0 the function
+`_is_known_value` can be used ot check if an enum value is known to the
+current schema version.
+
 Structs have a dual purpose because they are also valid types in native
 format, yet the native reprsention has a slightly different purpose.
 Thus the convention is that a const pointer to a struct encoded in a
 flatbuffer has the type `Vec3_struct_t` where as a writeable pointer to
 a native struct has the type `Vec3_t *` or `struct Vec3 *`.
-
-Union types are just any of a set of possible table types and an enum
-named as for example `Any_union_type_t`. There is a compound union type
-that can store both type and table reference such that `create` calls
-can represent unions as a single argument - see `flatcc_builder.h` and
-`doc/builder.md`. Union table fields return a pointer of type
-`flatbuffers_generic_table_t` which is defined as `const void *`.
 
 All types have a `_vec_t` suffix which is a const pointer to the
 underlying type. For example `Monster_table_t` has the vector type
@@ -1092,6 +1352,94 @@ replaced by `_vec_at` and `_vec_len`. For example
 or `_vec_len` will be 0 if the vector is missing whereas `_vec_at` will
 assert in debug or behave undefined in release builds following out of
 bounds access. This also applies to related string operations.
+
+The FlatBuffers schema uses the following scalar types: `ubyte`, `byte`,
+`ushort`, `short, uint`, `int`, `ulong`, and `long` to represent
+unsigned and signed integer types of length 8, 16, 32, and 64
+respectively. The schema syntax has been updated to also support the
+type aliases `uint8`, `int8`, `uint16`, `int16`, `uint32`, `int32`,
+`uint64`, `int64` to represent the same basic types. Likewise, the
+schema uses the types `float` and `double` to represent IEEE-754
+binary32 and binary64 floating point formats where the updated syntax
+also supports the type aliases `float32` and `float64`.
+
+The C interface uses the standard C types such as uint8 and double to
+represent scalar types and this is unaffected by the schema type name
+used, so the schema vector type `[float64]` is represented as
+`flatbuffers_double_vec_t` the same as `[double]` would be.
+
+Note that the C standard does not guarantee that the C types `float` and
+`double` are represented by the IEEE-754 binary32 single precision
+format and the binary64 double precision format respectively, although
+they usually are. If this is not the case FlatCC cannot work correctly
+with FlatBuffers floating point values. (If someone really has this
+problem, it would be possible to fix).
+
+Unions are represented with a two table fields, one with a table field
+and one with a type field. See separate section on Unions. As of flatcc
+v0.5.0 union vectors are also supported.
+
+## Unions
+
+A union represents one of several possible tables. A table with a union
+field such as `Monster.equipped` in the samples schema will have two
+accessors: `MyGame_Sample_Monster_equipped(t)` of type
+`flatbuffers_generic_t` and `MyGame_Sample_Monster_equipped_type(t)` of
+type `MyGame_Sample_Equipment_union_type_t`. A generic type is is just a
+const void pointer that can be assigned to the expected table type,
+struct type, or string type.  The enumeration has a member for each
+table in the union and also `MyGame_Sample_Equipment_NONE` which has the
+value 0.
+
+It is possible to observe a union `_type` value that is not expected
+because forward schema evolution supports adding more members to a union
+in a future version. As of v0.5.0 `_is_known_type` can be used to check
+if the `_type` is know to the current version of the schema.
+
+Unions before v0.5.0 could only contain tables but can now also have
+struct and string type members. For this reason
+`flatbuffers_generic_table_t` has been renamed to
+`flatbuffers_generic_t` of type `const void *`. Such mixed unions are
+not widely supported but C++ also supports them. To see how to define
+such unions, see the `Character` union and `Movie` table in
+[monster_test.fbs] and the mixed type union test case in
+[monster_test.c]. Note that strings require a
+`flatbuffers_string_cast_from_generic` or
+`flatbuffers_string_cast_from_union` while structs and tables can be
+cast by void pointer assignment.
+
+As of v0.5.0 it is possible to retrieve a union as
+`MyGame_Sample_Monster_equipped_union(t)` of type
+`MyGame_Sample_Equipment_union_t` which returns a struct with a `type`
+and a `member` field of type. This is just a typedef to
+`flatbuffers_union_t` because structs cannot be cast in modern C.
+
+When building unions there as a separate, but similar `union_ref_t`
+struct for this purpose. Before v0.5.0 this struct was type specific and
+had member values with typed pointers, but now it only has the fields
+`type` and `member`. This change was necessary in order to handle
+union vectors uniformly. See also [Builder Interface Reference].
+
+Union vectors are supported as of v0.5.0 and can be access similar to
+single value union fields. The field with the the `_type` suffix returns
+a vector of types, for example of type `MyGame_Sample_Equiment_vec_t` -
+note that this is a scalar vector not a vector of union objects.
+v0.5.0 also introduces `flatbuffers_union_type_t` and
+`flatbuffers_union_type_vec_*` methods to navigate type arrays directly.
+The other field returns a vector of type `flatcc_generic_vec_t`.
+Both vectors have same length. Union vectors can also be access with with the
+`_union(t)` method which returns a struct with two two members named
+`type` and `member` as before but where the type and member are the
+vectors just discussed. The struct can have the type
+`MyGame_Sample_Equipment_union_vec_t` which is just a typedef to
+`flatbuffers_union_vec_t`. It is possible to access elements with
+`_union_vec_at`, and `_union_vec_len` as with other vector types. The
+element returned is a struct of type `MyGame_Sample_Equipment_union_t`.
+Be careful to not confuse the union vector type with the scalar type
+vector with a similar name.
+
+There is a test in [monster_test.c] covering union vectors and a
+separate test focusing on mixed type unions that also has union vectors.
 
 
 ## Endianness
@@ -1154,31 +1502,6 @@ endian for the time being. To test which is supported, use the define
 defines as 1 and 0 respectively.
 
 
-## Offset Sizes and Direction
-
-FlatBuffers use 32-bit `uoffset_t` and 16-bit `voffset_t`. `soffset_t`
-always has the same size as `uoffset_t`. These types can be changed by
-preprocessor defines without regenerating code. However, it is important
-that `libflatccrt.a` is compiled with the same types as defined in
-`flatcc_types.h`.
-
-`uoffset_t` currently always point forward like `flatc`. In retrospect
-it would probably have simplified buffer constrution if offsets pointed
-the opposite direction. This is a major change and not likely to happen
-for reasons of effort and compatibility, but it is worth keeping in mind
-for a v2.0 of the format.
-
-Vector header fields storing the length are defined as `uoffset_t` which
-is 32-bit wide by default. If `uoffset_t` is redefined this will
-therefore also affect vectors and strings. The vector and string length
-and index arguments are exposed as `size_t` in user code regardless of
-underlying `uoffset_t` type.
-
-The practical buffer size is limited to about half of the `uoffset_t` range
-because vtable references are signed which in effect means that buffers
-are limited to about 2GB by default.
-
-
 ## Pitfalls in Error Handling
 
 The builder API often returns a reference or a pointer where null is
@@ -1228,7 +1551,7 @@ and `b` can also conveniently be the result of a previous search.
 element. `rscan_ex` accepts the same range arguments as `scan_ex`. If
 `a >= b or a >= len` the range is considered empty and
 `flatbuffers_not_found` is returned. `[r]scan[_ex]_n[_by_name]` is for
-length terminated string keys. See `monster_test.c` for examples.
+length terminated string keys. See [monster_test.c] for examples.
 
 Note that `find` requires `key` attribute in the schema. `scan` is also
 available on keyed fields. By default `flatcc` will also enable scan by
@@ -1236,16 +1559,16 @@ any other field but this can be disabled by a compile time flag.
 
 Basic types such as `uint8_vec` also have search operations.
 
-See also `doc/builder.md` and `test/monster_test/monster_test.c`.
+See also [Builder Interface Reference] and [monster_test.c].
 
 
 ## Null Values
 
 The FlatBuffers format does not fully distinguish between default values
 and missing or null values but it is possible to force values to be
-written to the buffer.  This is discussed further in the `builder.md`.
-For SQL data roundtrips this may be more important that having compact
-data.
+written to the buffer. This is discussed further in the
+[Builder Interface Reference]. For SQL data roundtrips this may be more
+important that having compact data.
 
 The `_is_present` suffix on table access methods can be used to detect if
 value is present in a vtable, for example `Monster_hp_present`. Unions
@@ -1417,6 +1740,38 @@ It is highly recommended to at least run the `tests/monster_test`
 project on a new platform.
 
 
+### Custom Allocation
+
+Some target systems will not work with Posix `malloc`, `realloc`, `free`
+and C11 `aligned_alloc`. Or they might, but more allocation control is
+desired. The best approach is to use `flatcc_builder_custom_init` to
+provide a custom allocator and emitter object, but for simpler case or
+while piloting a new platform
+[flatcc_alloc.h](include/flatcc/flatcc_alloc.h) can be used to override
+runtime allocation functions. _Carefully_ read the comments in this file
+if doing so. There is a test case implementing a new emitter, and a
+custom allocator can be copied from the one embedded in the builder
+library source.
+
+
+### Shared Libraries
+
+By default libraries are built statically.
+
+Occasionally there are requests
+[#42](https://github.com/dvidelabs/flatcc/pull/42) for also building shared
+libraries. It is not clear how to build both static and shared libraries
+at the same time without choosing some unconvential naming scheme that
+might affect install targets unexpectedly.
+
+CMake supports building shared libraries out of the box using the
+standard library name using the following option:
+
+    CMAKE ... -DBUILD_SHARED_LIBS=ON ...
+
+See also [CMake Gold: Static + shared](http://cgold.readthedocs.io/en/latest/tutorials/libraries/static-shared.html).
+
+
 ## Distribution
 
 Install targes may be built with:
@@ -1565,154 +1920,34 @@ source files directly.  For debugging, it is useful to use the
 in assertions.
 
 The runtime library may also be used by other languages. See comments
-in `include/flatcc/flatcc_builder.h`. JSON parsing is on example of an
+in [flatcc_builder.h]. JSON parsing is on example of an
 alternative use of the builder library so it may help to inspect the
 generated JSON parser source and runtime source.
 
+## FlatBuffers Binary Format
 
-## Benchmark
-
-Benchmarks are defined for raw C structs, Googles `flatc` generated C++
-and the `flatcc` compilers C ouput.
-
-These can be run with:
-
-    scripts/benchmark.sh
-
-and requires a C++ compiler installed - the benchmark for flatcc alone can be
-run with:
-
-    test/benchmark/benchflatcc/run.sh
-
-this only requires a system C compiler (cc) to be installed (and
-flatcc's build environment).
-
-A summary for OS-X 2.2 GHz Haswell core-i7 is found below. Generated
-files for OS-X and Ubuntu are found in the benchmark folder.
-
-The benchmarks use the same schema and dataset as Google FPL's
-FlatBuffers benchmark.
-
-In summary, 1 million iterations runs at about 500-540MB/s at 620-700
-ns/op encoding buffers and 29-34ns/op traversing buffers. `flatc` and
-`flatcc` are close enough in performance for it not to matter much.
-`flatcc` is a bit faster encoding but it is likely due to less memory
-allocation. Throughput and time per operatin are of course very specific
-to this test case.
-
-Generated JSON parser/printer shown below, for flatcc only but for OS-X
-and Linux.
+Mostly for implementers: [FlatBuffers Binary Format]
 
 
-### operation: flatbench for raw C structs encode (optimized)
-    elapsed time: 0.055 (s)
-    iterations: 1000000
-    size: 312 (bytes)
-    bandwidth: 5665.517 (MB/s)
-    throughput in ops per sec: 18158707.100
-    throughput in 1M ops per sec: 18.159
-    time per op: 55.070 (ns)
+## Security Considerations
 
-### operation: flatbench for raw C structs decode/traverse (optimized)
-    elapsed time: 0.012 (s)
-    iterations: 1000000
-    size: 312 (bytes)
-    bandwidth: 25978.351 (MB/s)
-    throughput in ops per sec: 83263946.711
-    throughput in 1M ops per sec: 83.264
-    time per op: 12.010 (ns)
-
-### operation: flatc for C++ encode (optimized)
-    elapsed time: 0.702 (s)
-    iterations: 1000000
-    size: 344 (bytes)
-    bandwidth: 490.304 (MB/s)
-    throughput in ops per sec: 1425301.380
-    throughput in 1M ops per sec: 1.425
-    time per op: 701.606 (ns)
-
-### operation: flatc for C++ decode/traverse (optimized)
-    elapsed time: 0.029 (s)
-    iterations: 1000000
-    size: 344 (bytes)
-    bandwidth: 11917.134 (MB/s)
-    throughput in ops per sec: 34642832.398
-    throughput in 1M ops per sec: 34.643
-    time per op: 28.866 (ns)
+See [Security Considerations].
 
 
-### operation: flatcc for C encode (optimized)
-    elapsed time: 0.626 (s)
-    iterations: 1000000
-    size: 336 (bytes)
-    bandwidth: 536.678 (MB/s)
-    throughput in ops per sec: 1597255.277
-    throughput in 1M ops per sec: 1.597
-    time per op: 626.074 (ns)
+## Benchmarks
 
-### operation: flatcc for C decode/traverse (optimized)
-    elapsed time: 0.029 (s)
-    iterations: 1000000
-    size: 336 (bytes)
-    bandwidth: 11726.930 (MB/s)
-    throughput in ops per sec: 34901577.551
-    throughput in 1M ops per sec: 34.902
-    time per op: 28.652 (ns)
+See [Benchmarks]
 
-## JSON benchmark
-
-*Note: this benchmark is only available for `flatcc`. It uses the exact
-same data set as above.*
-
-The benchmark uses Grisu3 floating point parsing and printing algorithm
-with exact fallback to strtod/sprintf when the algorithm fails to be
-exact. Better performance can be gained by enabling inexact Grisu3 and
-SSE 4.2 in build options, but likely not worthwhile in praxis.
-
-### operation: flatcc json parser and printer for C encode (optimized)
-
-(encode means printing from existing binary buffer to JSON)
-
-    elapsed time: 1.407 (s)
-    iterations: 1000000
-    size: 722 (bytes)
-    bandwidth: 513.068 (MB/s)
-    throughput in ops per sec: 710619.931
-    throughput in 1M ops per sec: 0.711
-    time per op: 1.407 (us)
-
-### operation: flatcc json parser and printer for C decode/traverse (optimized)
-
-(decode/traverse means parsing json to flatbuffer binary and calculating checksum)
-
-    elapsed time: 2.218 (s)
-    iterations: 1000000
-    size: 722 (bytes)
-    bandwidth: 325.448 (MB/s)
-    throughput in ops per sec: 450758.672
-    throughput in 1M ops per sec: 0.451
-    time per op: 2.218 (us)
-
-## JSON parsing and printing on same hardware in Virtual Box Ubuntu
-
-Numbers for Linux included because parsing is significantly faster.
-
-### operation: flatcc json parser and printer for C encode (optimized)
-
-    elapsed time: 1.210 (s)
-    iterations: 1000000
-    size: 722 (bytes)
-    bandwidth: 596.609 (MB/s)
-    throughput in ops per sec: 826328.137
-    throughput in 1M ops per sec: 0.826
-    time per op: 1.210 (us)
-
-### operation: flatcc json parser and printer for C decode/traverse
-
-    elapsed time: 1.772 (s)
-    iterations: 1000000
-    size: 722 (bytes)
-    bandwidth: 407.372 (MB/s)
-    throughput in ops per sec: 564227.736
-    throughput in 1M ops per sec: 0.564
-    time per op: 1.772 (us)
+[Builder Interface Reference]: https://github.com/dvidelabs/flatcc/blob/master/doc/builder.md
+[FlatBuffers Binary Format]: https://github.com/dvidelabs/flatcc/blob/master/doc/binary-format.md
+[Benchmarks]: https://github.com/dvidelabs/flatcc/blob/master/doc/benchmarks.md
+[monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
+[monster_test.fbs]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.fbs
+[test_json.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json_parser.c
+[flatcc_builder.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_builder.h
+[flatcc_emitter.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_emitter.h
+[flatcc-help.md]: https://github.com/dvidelabs/flatcc/blob/master/doc/flatcc-help.md
+[flatcc_rtconfig.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_rtconfig.h
+[hexdump.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/support/hexdump.h
+[readfile.h]: include/flatcc/support/readfile.h
+[Security Considerations]: https://github.com/dvidelabs/flatcc/blob/master/doc/security.md

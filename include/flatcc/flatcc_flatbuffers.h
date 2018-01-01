@@ -19,12 +19,7 @@
 /* Needed by C99 compilers without FLATCC_PORTABLE. */
 #include "flatcc/portable/pstdalign.h"
 
-/*
- * Implements `aligned_alloc` and `aligned_free`.
- * Even with C11, this implements non-standard aligned_free needed for portable
- * aligned_alloc implementations.
- */
-#include "flatcc/portable/paligned_alloc.h"
+#include "flatcc/flatcc_alloc.h"
 
 #define __FLATBUFFERS_PASTE2(a, b) a ## b
 #define __FLATBUFFERS_PASTE3(a, b, c) a ## b ## c

@@ -19,13 +19,22 @@
  * in switch statements, and encoded as a little endian C string for use
  * as a file identifier.
  */
-static void print_type_identifier(fb_output_t *out, const char *name, uint32_t type_hash)
+static void print_type_identifier(fb_output_t *out, fb_compound_type_t *ct)
 {
     uint8_t buf[17];
     uint8_t *p;
     uint8_t x;
     int i;
     const char *nsc = out->nsc;
+    fb_scoped_name_t snt;
+    const char *name;
+    uint32_t type_hash;
+
+    fb_clear(snt);
+
+    fb_compound_name(ct, &snt);
+    name = snt.text;
+    type_hash = ct->type_hash;
 
     fprintf(out->fp,
             "#ifndef %s_identifier\n"
@@ -151,6 +160,82 @@ static void gen_find(fb_output_t *out)
         "{ return N ## _vec_find_by_ ## NK(vec, s); }\\\n"
         "static inline size_t N ## _vec_find_n(N ## _vec_t vec, const char *s, int n)\\\n"
         "{ return N ## _vec_find_n_by_ ## NK(vec, s, n); }\n",
+        nsc);
+
+}
+
+static void gen_union(fb_output_t *out)
+{
+    const char *nsc = out->nsc;
+
+    fprintf(out->fp,
+        "typedef struct %sunion {\n"
+        "    %sunion_type_t type;\n"
+        "    %sgeneric_t member;\n"
+        "} %sunion_t;\n"
+        "typedef struct %sunion_vec {\n"
+        "    const %sunion_type_t *type;\n"
+        "    const %suoffset_t *member;\n"
+        "} %sunion_vec_t;\n",
+        nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+        "#define __%sunion_type_field(ID, t)\\\n"
+        "{\\\n"
+        "    __%sread_vt(ID, offset, t)\\\n"
+        "    return offset ? __%sread_scalar_at_byteoffset(__%sutype, t, offset) : 0;\\\n"
+        "}\n",
+        nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+        "static inline %sstring_t %sstring_cast_from_union(const %sunion_t u)\\\n"
+        "{ return %sstring_cast_from_generic(u.member); }\n",
+        nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_union_field(NS, ID, N, NK, T, r)\\\n"
+        "static inline T ## _union_type_t N ## _ ## NK ## _type(N ## _table_t t)\\\n"
+        "__## NS ## union_type_field(((ID) - 1), t)\\\n"
+        "static inline NS ## generic_t N ## _ ## NK(N ## _table_t t)\\\n"
+        "__## NS ## table_field(NS ## generic_t, ID, t, r)\\\n"
+        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
+        "__## NS ## field_present(ID, t)\\\n"
+        "static inline T ## _union_t N ## _ ## NK ## _union(N ## _table_t t)\\\n"
+        "{ T ## _union_t u = { 0, 0 }; u.type = N ## _ ## NK ## _type(t);\\\n"
+        "  if (u.type == 0) return u; u.member = N ## _ ## NK (t); return u; }\\\n"
+        "static inline NS ## string_t N ## _ ## NK ## _as_string(N ## _table_t t)\\\n"
+        "{ return NS ## string_cast_from_generic(N ## _ ## NK(t)); }\\\n"
+        "\n",
+        nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_union_vector_ops(NS, T)\\\n"
+        "static inline size_t T ## _union_vec_len(T ## _union_vec_t uv)\\\n"
+        "{ return NS ## vec_len(uv.type); }\\\n"
+        "static inline T ## _union_t T ## _union_vec_at(T ## _union_vec_t uv, size_t i)\\\n"
+        "{ T ## _union_t u = { 0, 0 }; size_t n = NS ## vec_len(uv.type);\\\n"
+        "  assert(n > (i) && \"index out of range\"); u.type = uv.type[i];\\\n"
+        "  /* Unknown type is treated as NONE for schema evolution. */\\\n"
+        "  if (u.type == 0) return u;\\\n"
+        "  u.member = NS ## generic_vec_at(uv.member, i); return u; }\\\n"
+        "static inline NS ## string_t T ## _union_vec_at_as_string(T ## _union_vec_t uv, size_t i)\\\n"
+        "{ return NS ## generic_vec_at_as_string(uv.member, i); }\\\n"
+        "\n",
+        nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_union_vector(NS, T)\\\n"
+        "typedef NS ## union_vec_t T ## _union_vec_t;\\\n"
+        "__## NS ## define_union_vector_ops(NS, T)\n",
+        nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_union(NS, T)\\\n"
+        "typedef NS ## union_t T ## _union_t;\\\n"
+        "__## NS ## define_union_vector(NS, T)\n",
+        nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_union_vector_field(NS, ID, N, NK, T, r)\\\n"
+        "__## NS ## define_vector_field(ID - 1, N, NK ## _type, T ## _vec_t, r)\\\n"
+        "__## NS ## define_vector_field(ID, N, NK, flatbuffers_generic_vec_t, r)\\\n"
+        "static inline T ## _union_vec_t N ## _ ## NK ## _union(N ## _table_t t)\\\n"
+        "{ T ## _union_vec_t uv; uv.type = N ## _ ## NK ## _type(t); uv.member = N ## _ ## NK(t);\\\n"
+        "  assert(NS ## vec_len(uv.type) == NS ## vec_len(uv.member)\\\n"
+        "  && \"union vector type length mismatch\"); return uv; }\n",
         nsc);
 }
 
@@ -325,7 +410,10 @@ static void gen_helpers(fb_output_t *out)
                 "#define %sendian flatbuffers_endian\n"
                 "__flatcc_define_basic_scalar_accessors(%s, flatbuffers_endian)"
                 "__flatcc_define_integer_accessors(%sbool, flatbuffers_bool_t,\\\n"
-                "        FLATBUFFERS_BOOL_WIDTH, flatbuffers_endian)\n",
+                "        FLATBUFFERS_BOOL_WIDTH, flatbuffers_endian)\\\n"
+                "__flatcc_define_integer_accessors(%sunion_type, flatbuffers_union_type_t,\n"
+                "        FLATBUFFERS_UTYPE_WIDTH, flatbuffers_endian)\\\n",
+                "\n",
                 nsc, nsc, nsc);
         fprintf(out->fp,
                 "__flatcc_define_integer_accessors(__%suoffset, flatbuffers_uoffset_t,\n"
@@ -366,22 +454,6 @@ static void gen_helpers(fb_output_t *out)
     fprintf(out->fp,
             "#define __%sfield_present(ID, t) { __%sread_vt(ID, offset, t) return offset != 0; }\n",
             nsc, nsc);
-    fprintf(out->fp,
-        "#define __%sunion_type_field(ID, t)\\\n"
-        "{\\\n"
-        "    __%sread_vt(ID, offset, t)\\\n"
-        "    return offset ? __%sread_scalar_at_byteoffset(__%sutype, t, offset) : 0;\\\n"
-        "}\n",
-        nsc, nsc, nsc, nsc);
-    fprintf(out->fp,
-        "#define __%sdefine_union_field(ID, N, NK, r)\\\n"
-        "static inline %sutype_t N ## _ ## NK ## _type(N ## _table_t t)\\\n"
-        "__%sunion_type_field(((ID) - 1), t)\\\n"
-        "static inline %sgeneric_table_t N ## _ ## NK(N ## _table_t t)\\\n"
-        "__%stable_field(%sgeneric_table_t, ID, t, r)\\\n"
-        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
-        "__%sfield_present(ID, t)\n",
-        nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_scalar_field(ID, N, NK, TK, T, V)\\\n"
         "static inline T N ## _ ## NK (N ## _table_t t)\\\n"
@@ -508,9 +580,22 @@ static void gen_helpers(fb_output_t *out)
             "static inline %sstring_t %sstring_vec_at(%sstring_vec_t vec, size_t i)\n"
             "__%soffset_vec_at(%sstring_t, vec, i, sizeof(vec[0]))\n",
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+    fprintf(out->fp, "typedef const void *%sgeneric_t;\n", nsc);
     fprintf(out->fp,
-            "typedef const void *%sgeneric_table_t;\n",
-            nsc);
+        "static inline %sstring_t %sstring_cast_from_generic(const %sgeneric_t p)\\\n"
+        "{ return p ? ((const char *)p) + __%suoffset__size() : 0; }\n",
+        nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+            "typedef const %suoffset_t *%sgeneric_vec_t;\n"
+            "typedef %suoffset_t *%sgeneric_table_mutable_vec_t;\n"
+            "static inline size_t %sgeneric_vec_len(%sgeneric_vec_t vec)\n"
+            "__%svec_len(vec)\n"
+            "static inline %sgeneric_t %sgeneric_vec_at(%sgeneric_vec_t vec, size_t i)\n"
+            "__%soffset_vec_at(%sgeneric_t, vec, i, 0)\\\n"
+            "static inline %sgeneric_t %sgeneric_vec_at_as_string(%sgeneric_vec_t vec, size_t i)\n"
+            "__%soffset_vec_at(%sgeneric_t, vec, i, sizeof(vec[0]))\\\n",
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+    gen_union(out);
     gen_find(out);
     gen_scan(out);
     if (out->opts->cgen_sort) {
@@ -550,9 +635,10 @@ static void gen_helpers(fb_output_t *out)
             "__%sdefine_scalar_vector(%suint64, uint64_t)\n"
             "__%sdefine_scalar_vector(%sint64, int64_t)\n"
             "__%sdefine_scalar_vector(%sfloat, float)\n"
-            "__%sdefine_scalar_vector(%sdouble, double)\n",
-            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
-            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+            "__%sdefine_scalar_vector(%sdouble, double)\n"
+            "__%sdefine_scalar_vector(%sunion_type, %sunion_type_t)\n",
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "static inline size_t %sstring_vec_find(%sstring_vec_t vec, const char *s)\n"
             "__%sfind_by_string_field(__%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s)\n"
@@ -969,7 +1055,6 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
     }
     fprintf(out->fp, "static inline size_t %s__size() { return %llu; }\n",
             snt.text, llu(ct->size));
-    print_type_identifier(out, snt.text, ct->type_hash);
     fprintf(out->fp,
             "static inline size_t %s_vec_len(%s_vec_t vec)\n"
             "__%svec_len(vec)\n",
@@ -1131,9 +1216,14 @@ static void gen_enum(fb_output_t *out, fb_compound_type_t *ct)
     fprintf(out->fp,
             "typedef %s%s %s_%s_t;\n",
             tname_ns, tname, snt.text, kind);
+    fprintf(out->fp,
+            "__%sdefine_integer_type(%s, %s_%s_t, %u)\n",
+            nsc, snt.text, snt.text, kind, w);
+    if (is_union) {
         fprintf(out->fp,
-                "__%sdefine_integer_type(%s, %s_%s_t, %u)\n",
-                nsc, snt.text, snt.text, kind, w);
+            "__%sdefine_union(%s, %s)\n",
+            nsc, nsc, snt.text);
+    }
     for (sym = ct->members; sym; sym = sym->link) {
         member = (fb_member_t *)sym;
         print_doc(out, "", member->doc);
@@ -1159,6 +1249,7 @@ static void gen_enum(fb_output_t *out, fb_compound_type_t *ct)
                 snt.text, snt.text);
     }
 
+
     if (is_union) {
         fprintf(out->fp, "    switch (type) {\n");
     } else {
@@ -1182,6 +1273,40 @@ static void gen_enum(fb_output_t *out, fb_compound_type_t *ct)
             "    }\n"
             "}\n");
     fprintf(out->fp, "\n");
+
+    if (is_union) {
+        fprintf(out->fp, "static inline int %s_is_known_type(%s_union_type_t type)\n"
+                "{\n",
+                snt.text, snt.text);
+    } else {
+        fprintf(out->fp, "static inline int %s_is_known_value(%s_enum_t value)\n"
+                "{\n",
+                snt.text, snt.text);
+    }
+    if (is_union) {
+        fprintf(out->fp, "    switch (type) {\n");
+    } else {
+        fprintf(out->fp, "    switch (value) {\n");
+    }
+    for (sym = ct->members; sym; sym = sym->link) {
+        member = (fb_member_t *)sym;
+        symbol_name(&member->symbol, &n, &s);
+        if (sym->flags & fb_duplicate) {
+            fprintf(out->fp,
+                    "    /* case %s_%.*s: return 1; (duplicate) */\n",
+                    snt.text, n, s);
+        } else {
+            fprintf(out->fp,
+                    "    case %s_%.*s: return 1;\n",
+                    snt.text, n, s);
+        }
+    }
+    fprintf(out->fp,
+            "    default: return 0;\n"
+            "    }\n"
+            "}\n");
+    fprintf(out->fp, "\n");
+
 }
 
 static void gen_nested_root(fb_output_t *out, fb_symbol_t *root_type, fb_symbol_t *container, fb_symbol_t *member)
@@ -1250,7 +1375,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             "struct %s_table { uint8_t unused__; };\n"
             "\n",
             snt.text);
-    print_type_identifier(out, snt.text, ct->type_hash);
     fprintf(out->fp,
             "static inline size_t %s_vec_len(%s_vec_t vec)\n"
             "__%svec_len(vec)\n",
@@ -1437,8 +1561,8 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             case fb_is_union:
                 present_id--;
                 fprintf(out->fp,
-                    "__%sdefine_union_field(%llu, %s, %.*s, %u)\n",
-                    nsc, llu(member->id), snt.text, n, s, r);
+                    "__%sdefine_union_field(%s, %llu, %s, %.*s, %s, %u)\n",
+                    nsc, nsc, llu(member->id), snt.text, n, s, snref.text, r);
                 break;
             default:
                 gen_panic(out, "internal error: unexpected compound type in table during code generation");
@@ -1455,15 +1579,21 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             case fb_is_enum:
                 break;
             case fb_is_union:
-                gen_panic(out, "internal error: unexpected vector of union present in table");
                 break;
             default:
                 gen_panic(out, "internal error: unexpected vector compound type in table during code generation");
                 break;
             }
-            fprintf(out->fp,
-                "__%sdefine_vector_field(%llu, %s, %.*s, %s_vec_t, %u)\n",
-                nsc, llu(member->id), snt.text, n, s, snref.text, r);
+            if (member->type.ct->symbol.kind == fb_is_union) {
+                present_id--;
+                fprintf(out->fp,
+                    "__%sdefine_union_vector_field(%s, %llu, %s, %.*s, %s, %u)\n",
+                    nsc, nsc, llu(member->id), snt.text, n, s, snref.text, r);
+            } else {
+                fprintf(out->fp,
+                    "__%sdefine_vector_field(%llu, %s, %.*s, %s_vec_t, %u)\n",
+                    nsc, llu(member->id), snt.text, n, s, snref.text, r);
+            }
             break;
         default:
             gen_panic(out, "internal error: unexpected table member type during code generation");
@@ -1496,6 +1626,16 @@ int fb_gen_c_reader(fb_output_t *out)
         switch (sym->kind) {
         case fb_is_table:
             gen_forward_decl(out, (fb_compound_type_t *)sym);
+            break;
+        }
+    }
+    /* Must be placed early due to nested buffer circular references. */
+    for (sym = out->S->symbols; sym; sym = sym->link) {
+        switch (sym->kind) {
+        case fb_is_struct:
+            /* Fall through. */
+        case fb_is_table:
+            print_type_identifier(out, (fb_compound_type_t *)sym);
             break;
         }
     }

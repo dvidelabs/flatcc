@@ -9,6 +9,18 @@
 #define FLATCC_JSON_PRINT_RESERVE 64
 #define FLATCC_JSON_PRINT_BUFFER_SIZE (FLATCC_JSON_PRINT_FLUSH_SIZE + FLATCC_JSON_PRINT_RESERVE)
 
+#ifndef FLATCC_JSON_PRINTER_ALLOC
+#define FLATCC_JSON_PRINTER_ALLOC(n) FLATCC_ALLOC(n)
+#endif
+
+#ifndef FLATCC_JSON_PRINTER_FREE
+#define FLATCC_JSON_PRINTER_FREE(p) FLATCC_FREE(p)
+#endif
+
+#ifndef FLATCC_JSON_PRINTER_REALLOC
+#define FLATCC_JSON_PRINTER_REALLOC(p, n) FLATCC_REALLOC(p, n)
+#endif
+
 /* Initial size that grows exponentially. */
 #define FLATCC_JSON_PRINT_DYN_BUFFER_SIZE 4096
 
@@ -439,13 +451,25 @@ struct flatcc_json_printer_table_descriptor {
     int count;
 };
 
+typedef struct flatcc_json_printer_union_descriptor flatcc_json_printer_union_descriptor_t;
+
+struct flatcc_json_printer_union_descriptor {
+    const void *member;
+    int ttl;
+    uint8_t type;
+};
+
 typedef void flatcc_json_printer_table_f(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td);
 
 typedef void flatcc_json_printer_struct_f(flatcc_json_printer_t *ctx,
         const void *p);
 
+typedef void flatcc_json_printer_union_f(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_union_descriptor_t *ud);
+
 /* Generated value to name map callbacks. */
+typedef void flatcc_json_printer_union_type_f(flatcc_json_printer_t *ctx, flatbuffers_utype_t type);
 typedef void flatcc_json_printer_uint8_enum_f(flatcc_json_printer_t *ctx, uint8_t v);
 typedef void flatcc_json_printer_uint16_enum_f(flatcc_json_printer_t *ctx, uint16_t v);
 typedef void flatcc_json_printer_uint32_enum_f(flatcc_json_printer_t *ctx, uint32_t v);
@@ -557,6 +581,10 @@ __define_print_enum_vector_field_proto(int32, int32_t)
 __define_print_enum_vector_field_proto(int64, int64_t)
 __define_print_enum_vector_field_proto(bool, flatbuffers_bool_t)
 
+void flatcc_json_printer_uint8_vector_base64_field(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_table_descriptor_t *td,
+        int id, const char *name, int len, int urlsafe);
+
 /*
  * If `fid` is null, the identifier is not checked and is allowed to be
  * entirely absent.
@@ -627,6 +655,12 @@ void flatcc_json_printer_table_vector_field(flatcc_json_printer_t *ctx,
         int id, const char *name, int len,
         flatcc_json_printer_table_f pf);
 
+void flatcc_json_printer_union_vector_field(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_table_descriptor_t *td,
+        int id, const char *name, int len,
+        flatcc_json_printer_union_type_f ptf,
+        flatcc_json_printer_union_f pf);
+
 void flatcc_json_printer_struct_as_nested_root(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
         int id, const char *name, int len,
@@ -639,13 +673,21 @@ void flatcc_json_printer_table_as_nested_root(flatcc_json_printer_t *ctx,
         const char *fid,
         flatcc_json_printer_table_f pf);
 
-int flatcc_json_printer_read_union_type(
+void flatcc_json_printer_union_field(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
-        int id);
+        int id, const char *name, int len,
+        flatcc_json_printer_union_type_f ptf,
+        flatcc_json_printer_union_f pf);
 
-void flatcc_json_printer_union_type(flatcc_json_printer_t *ctx,
-        flatcc_json_printer_table_descriptor_t *td,
-        const char *name, int len, int type,
-        const char *type_name, int type_len);
+void flatcc_json_printer_union_table(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_union_descriptor_t *ud,
+        flatcc_json_printer_table_f pf);
+
+void flatcc_json_printer_union_struct(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_union_descriptor_t *ud,
+        flatcc_json_printer_struct_f pf);
+
+void flatcc_json_printer_union_string(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_union_descriptor_t *ud);
 
 #endif /* FLATCC_JSON_PRINTER_H */

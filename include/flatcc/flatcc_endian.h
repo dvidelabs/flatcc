@@ -77,6 +77,8 @@
 
  __flatcc_define_integer_accessors(flatbuffers_bool, flatbuffers_bool_t,
          FLATBUFFERS_BOOL_WIDTH, flatbuffers_endian)
+ __flatcc_define_integer_accessors(flatbuffers_union_type, flatbuffers_union_type_t,
+         FLATBUFFERS_UTYPE_WIDTH, flatbuffers_endian)
 
  __flatcc_define_integer_accessors(__flatbuffers_uoffset, flatbuffers_uoffset_t,
          FLATBUFFERS_UOFFSET_WIDTH, flatbuffers_endian)

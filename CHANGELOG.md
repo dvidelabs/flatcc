@@ -1,13 +1,90 @@
 # Change Log
 
-## [0.4.3-pre]
+## [0.5.0-pre]
+- New schema type aliases: int8, uint8, int16, uint16, int32, uint32,
+  int64, uint64, float32, float64.
+- Low-level: access multiple user frames in builder via handles.
+- Support for `_is_known_type` and `_is_known_value` on union and enum
+  types.
+- More casts for C++ compatiblity (#59).
+- Fix regressions in verifier fix in 0.4.3 that might report out of
+  bounds in rare cases (#60).
+- Silence gcc 7.x warnings about implicit fallthrough (#61).
+- Fix rare special in JSON parser causing spurious unknown symbol.
+- Reading and writing union vectors. The C++ interface also supports
+  these types, but other languages likely won't for a while.
+- New `_union(t)` method for accessing a union fields type and member
+  table in a single call. The method also supports union vectors to
+  retrieve the type vector and member vector as a single object.
+- BREAKING: In generated builder code for union references of the form
+  `<union-name>_union_ref_t` the union members and the hidden `_member`
+  field has been replaced with a single `member` field. Union
+  constructors work as before: `Any_union_ref_t uref =
+  Any_as_weapon(weapon_ref)` Otherwise use `.type` and `.member` fields
+  directly. This change was necessary to support the builder API's new
+  union vectors without hitting strict aliasing rules, for example as
+  argument to `flatcc_builder_union_vector_push`. Expected impact: low
+  or none. The physical struct layout remains unchanged.
+- BREAKING: `flatbuffers_generic_table_[vec_]t` has been renamed to 
+  `flatbuffers_generic_[vec_]t`.
+- BREAKING: The verifiers runtime library interface has changed argument
+  order from `align, size` to `size, align` in order to be consistent
+  with the builders interface so generated code must match library
+  version. No impact on user code calling generated verifier functions.
+- BREAKING: generated json table parser now calls `table_end` and
+  returns the reference in a new `pref` argument. Generated json struct
+  parsers now renamed with an `_inline` suffix and the orignal name now
+  parses a non-inline struct similar to the table parsers. No impact to
+  user code that only calls the generated root parser.
+- Fix off-by-one indexing in `flatbuffers_generic_vec_at`. Impact
+  low since it was hardly relevant before union vectors were introduced
+  in this release.
+- Add document on security considerations (#63).
+- Add support for base64 and base64url attributes in JSON printing and
+  parsing of [ubyte] table fields.
+- Added `flatcc_builder_aligned_free` and `flatcc_builder_aligned_alloc`
+  to ensure `aligned_free` implemnentation matches allocation compiled
+  into the runtime library.
+- Support for struct and string types in unions.
+- Add missing `_create` method on table union member fields.
+- Add `_clone` and `_clone_as_[typed_]root[_with_size]` methods on structs.
+  `_clone` was already supported on structs inlined in table fields.
+- Fix harmless but space consuming overalignment of union types.
+- Add `flatbuffers_union_type_t` with `flatbuffers_union_type_vec` operations.
+- Fix scoping bug on union types in JSON parser: symbolic names of the form
+  `MyUnion.MyUnionMember` were not accepted on a union type field but
+  `MyNamespace.MyUnion.MyMember` and `MyMember` was supported. This has been
+  fixed so all forms are valid. Plain enums did not have this issue.
+- Place type identifiers early in generated `_reader.h` file to avoid
+  circular reference issue with nested buffers when nested buffer type
+  is placed after referencing table in schema.
+
+## [0.4.3]
 - Fix issue with initbuild.sh for custom builds (#43)
 - Add casts to aid clean C++ builds (#47)
 - Add missing const specifier in generated `buffer_start` methods - removes C++
   warnings (#48)
-- Update external/hash, remove buggy Sorted Robin Hash that wasn't
+- Update external/hash, removed buggy Sorted Robin Hood Hash that wasn't
   faster anyway - no impact on flatcc.
 - Fix JSON parsing bug where some names are prefixes of others (#50).
+- A Table of Contents in documentation :-)
+- Move repetitive generated JSON string parsing into library.
+- Add tests for JSON runtime compiled with different flags such as
+  permitting unquoted keys.
+- Fix building nested buffers when the parent buffer has not yet emitted
+  any data (#51).
+- Fix building nested buffers using the _nest() call (#52).
+- Add `FLATCC_TRACE_VERIFY` as build option.
+- Allow more costumization of allocation functions (#55).
+- Avoid dependency on PORTABLE_H include guard which is too common (#55).
+- (possibly breaking) Fix duplicate field check in flatcc_builder_table_add call.
+- Fix incorrect infinity result in grisu3 parser and double to float
+  overflow handling in parse_float in portable library (affects JSON
+  of abnormal numeric values).
+- Fix return value handling of parse_float, parse_double in JSON parser.
+- Fix verifier vector alignment check - affects vectors with element size 8+.
+- Fix missing static in generated enum and union functions in JSON
+  printer (#57).
 
 ## [0.4.2]
 - Fix SIGNIFICANT bug miscalculating the number of builder frames in
@@ -15,8 +92,8 @@
 - Fix minor memory leak in flatcc compiler.
 - Reduce collisions in builders vtable hash.
 - Remove broken dependency on `<mm_malloc.h>` for some GCC versions in
-  `paligned_alloc.h` (#40)
-- Allow C++ files to include `pstdalign.h` and `paligned_alloc.h` (#39)
+  `paligned_alloc.h` (#40).
+- Allow C++ files to include `pstdalign.h` and `paligned_alloc.h` (#39).
 
 ## [0.4.1]
 - Test for `posix_memalign` on GCC platforms and fix fallback
