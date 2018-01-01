@@ -2402,8 +2402,8 @@ int test_typed_struct_buffer(flatcc_builder_t *B)
         printf("wrong Vec3 type identifier (via define)\n");
         return -1;
     }
-    if (!ns(Vec3_verify_as_root_with_type_hash(buffer, size, ns(Vec3_type_hash)))) {
-        printf("verify failed with Vec3 type hash)\n");
+    if (flatcc_verify_ok != ns(Vec3_verify_as_root_with_type_hash(buffer, size, ns(Vec3_type_hash)))) {
+        printf("verify failed with Vec3 type hash\n");
         return -1;
     }
     vec3 = ns(Vec3_as_typed_root(buffer));
@@ -2411,8 +2411,8 @@ int test_typed_struct_buffer(flatcc_builder_t *B)
         printf("typed Vec3 could not be read\n");
         return -1;
     }
-    if (!ns(Vec3_verify_as_typed_root(buffer, size))) {
-        printf("verify failed with Vec3 type hash)\n");
+    if (flatcc_verify_ok != ns(Vec3_verify_as_typed_root(buffer, size))) {
+        printf("verify failed with Vec3 as typed root\n");
         return -1;
     }
     /* Convert buffer to native in place - a nop on native platform. */
