@@ -534,8 +534,8 @@ present the type field MUST also be present. If the type is NONE the
 value field MUST be absent and the type field MAY be absent because a
 union type always defaults to the value NONE.
 
-Vectors of unions is a late addition to the FlatBuffers format. FlatCC
-supports union vectors as of v0.5.0.
+Vectors of unions is a late addition (mid 2017) to the FlatBuffers
+format. FlatCC supports union vectors as of v0.5.0.
 
 Vectors of unions have the same two fields as normal unions but they
 both store a vector and both vectors MUST have the same length or both
@@ -546,13 +546,13 @@ value element. If an element is of type NONE the value offset must be
 stored as 0 which is a circular reference. This is the only offset that
 can have the value 0.
 
-A later addition to the format allows for structs and strings to also be
-member of a union. A union value is always an offset to an independent
-memory block. For strings this is just the offset to the string. For
-tables it is the offset to the table, naturally, and for structs, it is
-an offset to an separate aligned memory block that holds a struct and
-not an offset to memory inside any other table or struct. FlatCC does
-not currently support unions other than tables, but will eventually.
+A later addition (mid 2017) to the format allows for structs and strings
+to also be member of a union. A union value is always an offset to an
+independent memory block. For strings this is just the offset to the
+string. For tables it is the offset to the table, naturally, and for
+structs, it is an offset to an separate aligned memory block that holds
+a struct and not an offset to memory inside any other table or struct.
+FlatCC supports mixed type unions and vectors of these as of v0.5.0.
 
 
 ## Alignment
