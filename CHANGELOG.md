@@ -55,6 +55,9 @@
   `MyUnion.MyUnionMember` were not accepted on a union type field but
   `MyNamespace.MyUnion.MyMember` and `MyMember` was supported. This has been
   fixed so all forms are valid. Plain enums did not have this issue.
+- Place type identifiers early in generated `_reader.h` file to avoid
+  circular reference issue with nested buffers when nested buffer type
+  is placed after referencing table in schema.
 
 ## [0.4.3]
 - Fix issue with initbuild.sh for custom builds (#43)

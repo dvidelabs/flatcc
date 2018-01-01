@@ -19,13 +19,22 @@
  * in switch statements, and encoded as a little endian C string for use
  * as a file identifier.
  */
-static void print_type_identifier(fb_output_t *out, const char *name, uint32_t type_hash)
+static void print_type_identifier(fb_output_t *out, fb_compound_type_t *ct)
 {
     uint8_t buf[17];
     uint8_t *p;
     uint8_t x;
     int i;
     const char *nsc = out->nsc;
+    fb_scoped_name_t snt;
+    const char *name;
+    uint32_t type_hash;
+
+    fb_clear(snt);
+
+    fb_compound_name(ct, &snt);
+    name = snt.text;
+    type_hash = ct->type_hash;
 
     fprintf(out->fp,
             "#ifndef %s_identifier\n"
@@ -1046,7 +1055,6 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
     }
     fprintf(out->fp, "static inline size_t %s__size() { return %llu; }\n",
             snt.text, llu(ct->size));
-    print_type_identifier(out, snt.text, ct->type_hash);
     fprintf(out->fp,
             "static inline size_t %s_vec_len(%s_vec_t vec)\n"
             "__%svec_len(vec)\n",
@@ -1367,7 +1375,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             "struct %s_table { uint8_t unused__; };\n"
             "\n",
             snt.text);
-    print_type_identifier(out, snt.text, ct->type_hash);
     fprintf(out->fp,
             "static inline size_t %s_vec_len(%s_vec_t vec)\n"
             "__%svec_len(vec)\n",
@@ -1619,6 +1626,16 @@ int fb_gen_c_reader(fb_output_t *out)
         switch (sym->kind) {
         case fb_is_table:
             gen_forward_decl(out, (fb_compound_type_t *)sym);
+            break;
+        }
+    }
+    /* Must be placed early due to nested buffer circular references. */
+    for (sym = out->S->symbols; sym; sym = sym->link) {
+        switch (sym->kind) {
+        case fb_is_struct:
+            /* Fall through. */
+        case fb_is_table:
+            print_type_identifier(out, (fb_compound_type_t *)sym);
             break;
         }
     }

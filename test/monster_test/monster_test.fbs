@@ -101,6 +101,13 @@ table TestJSONPrefixParsing3
     aaaa_bbbb_start_steps: uint;
 }
 
+table TestBase64
+{
+    data:[ubyte] (base64);
+    urldata:[ubyte] (base64url);
+    nested:[ubyte] (nested_flatbuffer: "Monster", base64);
+}
+
 table Monster {
   pos:Vec3 (id: 0);
   hp:short = 100 (id: 2);
@@ -136,13 +143,6 @@ table Monster {
   manyany: [Any] (id:29);
   testbase64:TestBase64 (id:30);
   movie:Fantasy.Movie (id:31);
-}
-
-table TestBase64
-{
-    data:[ubyte] (base64);
-    urldata:[ubyte] (base64url);
-    nested:[ubyte] (nested_flatbuffer: "Monster", base64);
 }
 
 table TypeAliases {
