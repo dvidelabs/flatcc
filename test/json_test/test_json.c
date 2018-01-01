@@ -347,6 +347,79 @@ int base64_tests()
     return ret;
 }
 
+int mixed_type_union_tests()
+{
+    int ret = 0;
+
+    /* Reference */
+    TEST(   "{ \"name\": \"Monster\" }",
+            "{\"name\":\"Monster\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"movie\":{} }",
+            "{\"name\":\"Monster\",\"movie\":{}}");
+
+    TEST(   "{ \"name\": \"Monster\", \"movie\":"
+            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 } }}",
+            "{\"name\":\"Monster\",\"movie\":"
+            "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19}}}");
+
+    TEST(   "{ \"name\": \"Monster\", \"movie\":"
+            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
+            "  \"side_kick_type\": \"Other\", \"side_kick\": \"a donkey\"}}",
+            "{\"name\":\"Monster\",\"movie\":"
+            "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19},"
+            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\"}}");
+
+    TEST(   "{ \"name\": \"Monster\", \"movie\":"
+            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
+            "  \"side_kick_type\": \"Fantasy.Character.Other\", \"side_kick\": \"a donkey\"}}",
+            "{\"name\":\"Monster\",\"movie\":"
+            "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19},"
+            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\"}}");
+
+    TEST(   "{ \"name\": \"Monster\", \"movie\":"
+            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
+            "  \"side_kick_type\": \"Fantasy.Character.Other\", \"side_kick\": \"a donkey\","
+            "  \"antagonist_type\": \"MuLan\", \"antagonist\": {\"sword_attack_damage\": 42}}}",
+            "{\"name\":\"Monster\",\"movie\":"
+            "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19},"
+            "\"antagonist_type\":\"MuLan\",\"antagonist\":{\"sword_attack_damage\":42},"
+            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\"}}");
+
+    TEST(   "{ \"name\": \"Monster\", \"movie\":"
+            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
+            "  \"side_kick_type\": \"Fantasy.Character.Other\", \"side_kick\": \"a donkey\","
+            "  \"antagonist_type\": \"MuLan\", \"antagonist\": {\"sword_attack_damage\": 42},"
+            " \"characters_type\": [], \"characters\": []}}",
+            "{\"name\":\"Monster\",\"movie\":"
+            "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19},"
+            "\"antagonist_type\":\"MuLan\",\"antagonist\":{\"sword_attack_damage\":42},"
+            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\","
+            "\"characters_type\":[],\"characters\":[]}}")
+
+    TEST(   "{ \"name\": \"Monster\", \"movie\":"
+            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
+            "  \"side_kick_type\": \"Fantasy.Character.Other\", \"side_kick\": \"a donkey\","
+            "  \"antagonist_type\": \"MuLan\", \"antagonist\": {\"sword_attack_damage\": 42},"
+            " \"characters_type\": [\"Fantasy.Character.Rapunzel\", \"Other\", 0, \"MuLan\"],"
+            " \"characters\": [{\"hair_length\":19}, \"unattributed extras\", null, {\"sword_attack_damage\":2}]}}",
+            "{\"name\":\"Monster\",\"movie\":"
+            "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19},"
+            "\"antagonist_type\":\"MuLan\",\"antagonist\":{\"sword_attack_damage\":42},"
+            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\","
+            "\"characters_type\":[\"Rapunzel\",\"Other\",\"NONE\",\"MuLan\"],"
+            "\"characters\":[{\"hair_length\":19},\"unattributed extras\",null,{\"sword_attack_damage\":2}]}}")
+
+    TEST(   "{ \"name\": \"Monster\", \"movie\":"
+            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
+            "  \"side_kick_type\": \"Character.Other\", \"side_kick\": \"a donkey\"}}",
+            "{\"name\":\"Monster\",\"movie\":"
+            "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19},"
+            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\"}}");
+
+    return ret;
+}
+
 /*
  * Here we cover some border cases around unions and flag
  * enumerations, and nested buffers.
@@ -362,6 +435,7 @@ int main()
     ret |= edge_case_tests();
     ret |= error_case_tests();
     ret |= base64_tests();
+    ret |= mixed_type_union_tests();
 
     /* Allow trailing comma. */
     TEST(   "{ \"name\": \"Monster\", }",

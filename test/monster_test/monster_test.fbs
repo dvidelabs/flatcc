@@ -75,14 +75,14 @@ table TestJSONPrefixParsing
 {
   aaaa: string;
   aaaa12345: uint;
-  
+
   bbbb: string;
   bbbb1234: long;
-  
+
   cccc: string;
   cccc1234: long;
   cccc12345: uint;
-  
+
   dddd1234: long;
   dddd12345: uint;
 }
@@ -135,6 +135,7 @@ table Monster {
   // id 28 reserver for manyany_type
   manyany: [Any] (id:29);
   testbase64:TestBase64 (id:30);
+  movie:Fantasy.Movie (id:31);
 }
 
 table TestBase64
@@ -157,6 +158,40 @@ table TypeAliases {
     f64:float64;
     v8:[int8];
     vf64:[float64];
+}
+
+// Demonstrates the ability to have vectors of unions, and also to
+// store structs and strings in unions.
+
+namespace Fantasy;
+
+table Attacker {
+    sword_attack_damage: int;
+}
+
+struct Rapunzel {
+    hair_length: uint16;
+}
+
+struct BookReader {
+    books_read: int;
+}
+
+union Character {
+    MuLan: Attacker = 2,  // Can have name be different from type.
+    Rapunzel = 8,         // Or just both the same, as before.
+    Belle: Fantasy.BookReader,
+    BookFan: BookReader,
+    Other: string,
+    Unused: string = 255
+}
+
+table Movie {
+    main_character: Character;
+    antagonist: Character;
+    side_kick: Character;
+    cameo: Character;
+    characters: [Character];
 }
 
 root_type MyGame.Example.Monster;

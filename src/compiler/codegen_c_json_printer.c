@@ -81,7 +81,7 @@ static int gen_json_printer_enum(fb_output_t *out, fb_compound_type_t *ct)
     }
 
     fprintf(out->fp,
-            "static void __%s_print_json_enum(flatcc_json_printer_t *ctx, %s%s v)\n{\n",
+            "static void %s_print_json_enum(flatcc_json_printer_t *ctx, %s%s v)\n{\n",
             snt.text, ns, tn);
     if (bit_flags) {
         if (strcmp(ut, tn)) {
@@ -171,14 +171,13 @@ static int gen_json_printer_union_type(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_symbol_t *sym;
     fb_member_t *member;
-    fb_scoped_name_t snt, snref;
+    fb_scoped_name_t snt;
 
     fb_clear(snt);
-    fb_clear(snref);
     fb_compound_name(ct, &snt);
 
     fprintf(out->fp,
-            "static void __%s_print_json_union_type(flatcc_json_printer_t *ctx, flatbuffers_utype_t type)\n"
+            "static void %s_print_json_union_type(flatcc_json_printer_t *ctx, flatbuffers_utype_t type)\n"
             "{\n    switch (type) {\n",
             snt.text);
     for (sym = ct->members; sym; sym = sym->link) {
@@ -186,8 +185,6 @@ static int gen_json_printer_union_type(fb_output_t *out, fb_compound_type_t *ct)
         if (member->type.type == vt_missing) {
             continue;
         }
-        assert(member->type.type == vt_compound_type_ref);
-        fb_compound_name(member->type.ct, &snref);
         fprintf(out->fp,
                 "    case %u:\n"
                 "        flatcc_json_printer_enum(ctx, \"%.*s\", %ld);\n"
@@ -203,7 +200,7 @@ static int gen_json_printer_union_type(fb_output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-static int gen_json_printer_union_table(fb_output_t *out, fb_compound_type_t *ct)
+static int gen_json_printer_union_member(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_symbol_t *sym;
     fb_member_t *member;
@@ -214,21 +211,46 @@ static int gen_json_printer_union_table(fb_output_t *out, fb_compound_type_t *ct
     fb_compound_name(ct, &snt);
 
     fprintf(out->fp,
-            "static void __%s_print_json_union_table(flatcc_json_printer_t *ctx, flatcc_json_printer_table_descriptor_t *td)\n"
-            "{\n    switch (td->type) {\n",
+            "static void %s_print_json_union(flatcc_json_printer_t *ctx, flatcc_json_printer_union_descriptor_t *ud)\n"
+            "{\n    switch (ud->type) {\n",
             snt.text);
     for (sym = ct->members; sym; sym = sym->link) {
         member = (fb_member_t *)sym;
-        if (member->type.type == vt_missing) {
+        switch (member->type.type) {
+        case vt_missing:
             continue;
+        case vt_compound_type_ref:
+            fb_compound_name(member->type.ct, &snref);
+            switch (member->type.ct->symbol.kind) {
+            case fb_is_table:
+                fprintf(out->fp,
+                        "    case %u:\n"
+                        "        flatcc_json_printer_union_table(ctx, ud, %s_print_json_table);\n"
+                        "        break;\n",
+                        (unsigned)member->value.u, snref.text);
+                continue;
+            case fb_is_struct:
+                fprintf(out->fp,
+                        "    case %u:\n"
+                        "        flatcc_json_printer_union_struct(ctx, ud, %s_print_json_struct);\n"
+                        "        break;\n",
+                        (unsigned)member->value.u, snref.text);
+                continue;
+            default:
+                gen_panic(out, "internal error: unexpected union type\n");
+                return -1;
+            }
+        case vt_string_type:
+            fprintf(out->fp,
+                    "    case %u:\n"
+                    "        flatcc_json_printer_union_string(ctx, ud);\n"
+                    "        break;\n",
+                        (unsigned)member->value.u);
+            continue;
+        default:
+            gen_panic(out, "internal error: unexpected union type\n");
+            return -1;
         }
-        assert(member->type.type == vt_compound_type_ref);
-        fb_compound_name(member->type.ct, &snref);
-        fprintf(out->fp,
-                "    case %u:\n"
-                "        __%s_print_json_table(ctx, td);\n"
-                "        break;\n",
-                (unsigned)member->value.u, snref.text);
     }
     fprintf(out->fp,
                 "    default:\n"
@@ -241,7 +263,7 @@ static int gen_json_printer_union_table(fb_output_t *out, fb_compound_type_t *ct
 static int gen_json_printer_union(fb_output_t *out, fb_compound_type_t *ct)
 {
     gen_json_printer_union_type(out, ct);
-    gen_json_printer_union_table(out, ct);
+    gen_json_printer_union_member(out, ct);
     return 0;
 }
 
@@ -258,7 +280,7 @@ static int gen_json_printer_struct(fb_output_t *out, fb_compound_type_t *ct)
     fb_compound_name(ct, &snt);
 
     fprintf(out->fp,
-            "static void __%s_print_json_struct(flatcc_json_printer_t *ctx, const void *p)\n"
+            "static void %s_print_json_struct(flatcc_json_printer_t *ctx, const void *p)\n"
             "{\n",
             snt.text);
     for (sym = ct->members; sym; ++index, sym = sym->link) {
@@ -281,7 +303,7 @@ static int gen_json_printer_struct(fb_output_t *out, fb_compound_type_t *ct)
 #if FLATCC_JSON_PRINT_MAP_ENUMS
                 tp = scalar_type_prefix(member->type.ct->type.st);
                 fprintf(out->fp,
-                        "    flatcc_json_printer_%s_enum_struct_field(ctx, %d, p, %"PRIu64", \"%.*s\", %ld, &__%s_print_json_enum);\n",
+                        "    flatcc_json_printer_%s_enum_struct_field(ctx, %d, p, %"PRIu64", \"%.*s\", %ld, %s_print_json_enum);\n",
                         tp, index, (uint64_t)member->offset, (int)sym->ident->len, sym->ident->text, sym->ident->len, snref.text);
                 break;
 #else
@@ -294,7 +316,7 @@ static int gen_json_printer_struct(fb_output_t *out, fb_compound_type_t *ct)
 #endif
             case fb_is_struct:
                 fprintf(out->fp,
-                        "    flatcc_json_printer_embedded_struct_field(ctx, %d, p, %"PRIu64", \"%.*s\", %ld, &__%s_print_json_struct);\n",
+                        "    flatcc_json_printer_embedded_struct_field(ctx, %d, p, %"PRIu64", \"%.*s\", %ld, %s_print_json_struct);\n",
                         index, (uint64_t)member->offset, (int)sym->ident->len, sym->ident->text, sym->ident->len, snref.text);
                 break;
             }
@@ -303,7 +325,7 @@ static int gen_json_printer_struct(fb_output_t *out, fb_compound_type_t *ct)
     fprintf(out->fp, "}\n\n");
     fprintf(out->fp,
             "static inline int %s_print_json_as_root(flatcc_json_printer_t *ctx, const void *buf, size_t bufsiz, const char *fid)\n"
-            "{\n    return flatcc_json_printer_struct_as_root(ctx, buf, bufsiz, fid, &__%s_print_json_struct);\n}\n\n",
+            "{\n    return flatcc_json_printer_struct_as_root(ctx, buf, bufsiz, fid, %s_print_json_struct);\n}\n\n",
             snt.text, snt.text);
     return 0;
 }
@@ -344,7 +366,7 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
         map[member->id] = member;
     }
     fprintf(out->fp,
-            "static void __%s_print_json_table(flatcc_json_printer_t *ctx, flatcc_json_printer_table_descriptor_t *td)\n"
+            "static void %s_print_json_table(flatcc_json_printer_t *ctx, flatcc_json_printer_table_descriptor_t *td)\n"
             "{",
             snt.text);
 
@@ -399,7 +421,7 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
                      * We do know the type from the field attribute.
                      */
                     fprintf(out->fp,
-                        "flatcc_json_printer_table_as_nested_root(ctx, td, %"PRIu64", \"%.*s\", %ld, 0, __%s_print_json_table);",
+                        "flatcc_json_printer_table_as_nested_root(ctx, td, %"PRIu64", \"%.*s\", %ld, 0, %s_print_json_table);",
                         member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, snref.text);
                 } else {
                     /*
@@ -407,7 +429,7 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
                      * We do know the type from the field attribute.
                      */
                     fprintf(out->fp,
-                        "flatcc_json_printer_struct_as_nested_root(ctx, td, %"PRIu64", \"%.*s\", %ld, 0, __%s_print_json_struct);",
+                        "flatcc_json_printer_struct_as_nested_root(ctx, td, %"PRIu64", \"%.*s\", %ld, 0, %s_print_json_struct);",
                         member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, snref.text);
                 }
             } else {
@@ -437,12 +459,12 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
 #if FLATCC_JSON_PRINT_MAP_ENUMS
                 case vt_uint:
                     fprintf( out->fp,
-                        "flatcc_json_printer_%s_enum_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRIu64", &__%s_print_json_enum);",
+                        "flatcc_json_printer_%s_enum_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRIu64", %s_print_json_enum);",
                         tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, member->value.u, snref.text);
                     break;
                 case vt_int:
                     fprintf( out->fp,
-                        "flatcc_json_printer_%s_enum_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRId64", &__%s_print_json_enum);",
+                        "flatcc_json_printer_%s_enum_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRId64", %s_print_json_enum);",
                         tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, member->value.i, snref.text);
                     break;
 #else
@@ -464,26 +486,19 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
                 break;
             case fb_is_struct:
                 fprintf(out->fp,
-                        "flatcc_json_printer_struct_field(ctx, td, %"PRIu64", \"%.*s\", %ld, &__%s_print_json_struct);",
+                        "flatcc_json_printer_struct_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %s_print_json_struct);",
                         member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, snref.text);
                 break;
             case fb_is_table:
                 fprintf(out->fp,
-                        "flatcc_json_printer_table_field(ctx, td, %"PRIu64", \"%.*s\", %ld, &__%s_print_json_table);",
+                        "flatcc_json_printer_table_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %s_print_json_table);",
                         member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, snref.text);
                 break;
             case fb_is_union:
-                //TODO:
-#if 0
-                fprintf(out->fp,
-                        "__%s_print_json_union(ctx, td, %"PRIu64", \"%.*s\", %ld);",
-                        snref.text, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len);
-#else
                 fprintf(out->fp,
                         "flatcc_json_printer_union_field(ctx, td, %"PRIu64", \"%.*s\", %ld, "
-                        "&__%s_print_json_union_type, &__%s_print_json_union_table);",
+                        "%s_print_json_union_type, %s_print_json_union);",
                         member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, snref.text, snref.text);
-#endif
                 break;
             default:
                 gen_panic(out, "internal error: unexpected compound type for table json_print");
@@ -495,14 +510,14 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
             switch (member->type.ct->symbol.kind) {
             case fb_is_table:
                 fprintf(out->fp,
-                        "flatcc_json_printer_table_vector_field(ctx, td, %"PRIu64", \"%.*s\", %ld, &__%s_print_json_table);",
+                        "flatcc_json_printer_table_vector_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %s_print_json_table);",
                         member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, snref.text);
                 break;
             case fb_is_enum:
 #if FLATCC_JSON_PRINT_MAP_ENUMS
                 tp = scalar_type_prefix(member->type.st);
                 fprintf(out->fp,
-                        "flatcc_json_printer_%s_enum_vector_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRIu64", &__%s_print_json_enum);",
+                        "flatcc_json_printer_%s_enum_vector_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRIu64", %s_print_json_enum);",
                         tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, (uint64_t)ct->size, snref.text);
                 break;
 #else
@@ -514,13 +529,13 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
 #endif
             case fb_is_struct:
                 fprintf(out->fp,
-                        "flatcc_json_printer_struct_vector_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRIu64", &__%s_print_json_struct);",
+                        "flatcc_json_printer_struct_vector_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRIu64", %s_print_json_struct);",
                         member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, (uint64_t)member->size, snref.text);
                 break;
             case fb_is_union:
                 fprintf(out->fp,
                         "flatcc_json_printer_union_vector_field(ctx, td, %"PRIu64", \"%.*s\", %ld, "
-                        "&__%s_print_json_union_type, &__%s_print_json_union_table);",
+                        "%s_print_json_union_type, %s_print_json_union);",
                         member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, snref.text, snref.text);
                 break;
 
@@ -534,7 +549,7 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
     fprintf(out->fp, "\n}\n\n");
     fprintf(out->fp,
             "static inline int %s_print_json_as_root(flatcc_json_printer_t *ctx, const void *buf, size_t bufsiz, const char *fid)\n"
-            "{\n    return flatcc_json_printer_table_as_root(ctx, buf, bufsiz, fid, &__%s_print_json_table);\n}\n\n",
+            "{\n    return flatcc_json_printer_table_as_root(ctx, buf, bufsiz, fid, %s_print_json_table);\n}\n\n",
             snt.text, snt.text);
 done:
     if (map) {
@@ -584,14 +599,20 @@ static int gen_json_printer_prototypes(fb_output_t *out)
         case fb_is_union:
             fb_compound_name((fb_compound_type_t *)sym, &snt);
             fprintf(out->fp,
-                    "static void __%s_print_json_union_type(flatcc_json_printer_t *ctx, flatbuffers_utype_t type);\n"
-                    "static void __%s_print_json_union_table(flatcc_json_printer_t *ctx, flatcc_json_printer_table_descriptor_t *td);\n",
+                    "static void %s_print_json_union_type(flatcc_json_printer_t *ctx, flatbuffers_utype_t type);\n"
+                    "static void %s_print_json_union(flatcc_json_printer_t *ctx, flatcc_json_printer_union_descriptor_t *ud);\n",
                     snt.text, snt.text);
             break;
         case fb_is_table:
             fb_compound_name((fb_compound_type_t *)sym, &snt);
             fprintf(out->fp,
-                    "static void __%s_print_json_table(flatcc_json_printer_t *ctx, flatcc_json_printer_table_descriptor_t *td);\n",
+                    "static void %s_print_json_table(flatcc_json_printer_t *ctx, flatcc_json_printer_table_descriptor_t *td);\n",
+                    snt.text);
+            break;
+        case fb_is_struct:
+            fb_compound_name((fb_compound_type_t *)sym, &snt);
+            fprintf(out->fp,
+                    "static void %s_print_json_struct(flatcc_json_printer_t *ctx, const void *p);\n",
                     snt.text);
             break;
         }

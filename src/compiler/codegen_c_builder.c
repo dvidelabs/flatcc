@@ -115,7 +115,15 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "  N ## _create(B __ ## N ## _call_args), A, 0); }\\\n"
         "static inline NS ## buffer_ref_t N ## _create_as_typed_root_with_size(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
         "{ return flatcc_builder_create_buffer(B, TFID, 0,\\\n"
-        "  N ## _create(B __ ## N ## _call_args), A, flatcc_builder_with_size); }\n"
+        "  N ## _create(B __ ## N ## _call_args), A, flatcc_builder_with_size); }\\\n"
+        "static inline NS ## buffer_ref_t N ## _clone_as_root(NS ## builder_t *B, N ## _struct_t p)\\\n"
+        "{ return flatcc_builder_create_buffer(B, FID, 0, N ## _clone(B, p), A, 0); }\\\n"
+        "static inline NS ## buffer_ref_t N ## _clone_as_root_with_size(NS ## builder_t *B, N ## _struct_t p)\\\n"
+        "{ return flatcc_builder_create_buffer(B, FID, 0, N ## _clone(B, p), A, flatcc_builder_with_size); }\\\n"
+        "static inline NS ## buffer_ref_t N ## _clone_as_typed_root(NS ## builder_t *B, N ## _struct_t p)\\\n"
+        "{ return flatcc_builder_create_buffer(B, TFID, 0, N ## _clone(B, p), A, 0); }\\\n"
+        "static inline NS ## buffer_ref_t N ## _clone_as_typed_root_with_size(NS ## builder_t *B, N ## _struct_t p)\\\n"
+        "{ return flatcc_builder_create_buffer(B, TFID, 0, N ## _clone(B, p), A, flatcc_builder_with_size); }\n"
         "\n",
         nsc);
 
@@ -392,6 +400,9 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "static inline N ## _ref_t N ## _create(NS ## builder_t *B __ ## N ## _formal_args)\\\n"
         "{ N ## _t *_p = N ## _start(B); if (!_p) return 0; N ##_assign_to_pe(_p __ ## N ## _call_args);\\\n"
         "  return N ## _end_pe(B); }\\\n"
+        "static inline N ## _ref_t N ## _clone(NS ## builder_t *B, N ## _struct_t p)\\\n"
+        "{ N ## _t *_p = N ## _start(B); if (!_p) return 0;\\\n"
+        "  N ## _copy(_p, p); return N ##_end_pe(B); }\\\n"
         "__%sbuild_vector(NS, N, N ## _t, S, A)\\\n"
         "__%sbuild_struct_root(NS, N, A, FID, TFID)\n"
         "\n",
@@ -441,15 +452,49 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
 
     fprintf(out->fp,
         "/* M is the union member name and T is its type, i.e. the qualified name. */\n"
-        "#define __%sbuild_union_member_field(NS, N, NU, M, T)\\\n"
+        "#define __%sbuild_union_table_member_field(NS, N, NU, M, T)\\\n"
         "static inline int N ## _ ## M ## _add(NS ## builder_t *B, T ## _ref_t ref)\\\n"
         "{ return N ## _add(B, NU ## _as_ ## M (ref)); }\\\n"
         "static inline int N ## _ ## M ## _start(NS ## builder_t *B)\\\n"
         "{ return T ## _start(B); }\\\n"
         "static inline int N ## _ ## M ## _end(NS ## builder_t *B)\\\n"
-        "{ return N ## _ ## M ## _add(B, T ## _end(B)); }\n"
+        "{ T ## _ref_t ref = T ## _end(B);\\\n"
+        "  return ref ? N ## _ ## M ## _add(B, ref) : -1; }\\\n"
+        "static inline int N ## _ ## M ## _create(NS ## builder_t *B __ ## T ##_formal_args)\\\n"
+        "{ T ## _ref_t ref = T ## _create(B __ ## T ## _call_args);\\\n"
+        "  return ref ? N ## _add(B, NU ## _as_ ## M(ref)) : -1; }\n"
         "\n",
         nsc);
+
+    fprintf(out->fp,
+        "/* M is the union member name and T is its type, i.e. the qualified name. */\n"
+        "#define __%sbuild_union_struct_member_field(NS, N, NU, M, T)\\\n"
+        "static inline int N ## _ ## M ## _add(NS ## builder_t *B, T ## _ref_t ref)\\\n"
+        "{ return N ## _add(B, NU ## _as_ ## M (ref)); }\\\n"
+        "static inline T ## _t *N ## _ ## M ## _start(NS ## builder_t *B)\\\n"
+        "{ return T ## _start(B); }\\\n"
+        "static inline int N ## _ ## M ## _end(NS ## builder_t *B)\\\n"
+        "{ T ## _ref_t ref = T ## _end(B);\\\n"
+        "  return ref ? N ## _ ## M ## _add(B, ref) : -1; }\\\n"
+        "static inline int N ## _ ## M ## _create(NS ## builder_t *B __ ## T ##_formal_args)\\\n"
+        "{ T ## _ref_t ref = T ## _create(B __ ## T ## _call_args);\\\n"
+        "  return ref ? N ## _add(B, NU ## _as_ ## M(ref)) : -1; }\\\n"
+        "static inline int N ## _ ## M ## _end_pe(NS ## builder_t *B)\\\n"
+        "{ T ## _ref_t ref = T ## _end_pe(B);\\\n"
+        "  return ref ? N ## _add(B, NU ## _as_ ## M(ref)) : -1; }\\\n"
+        "static inline int N ## _ ## M ## _clone(NS ## builder_t *B, T ## _struct_t p)\\\n"
+        "{ T ## _ref_t ref = T ## _clone(B, p);\\\n"
+        "  return ref ? N ## _add(B, NU ## _as_ ## M(ref)) : -1; }\n"
+        "\n",
+        nsc);
+
+    fprintf(out->fp,
+        "#define __%sbuild_union_string_member_field(NS, N, NU, M)\\\n"
+        "static inline int N ## _ ## M ## _add(NS ## builder_t *B, NS ## string_ref_t ref)\\\n"
+        "{ return N ## _add(B, NU ## _as_ ## M (ref)); }\\\n"
+        "__%sbuild_string_field_ops(NS, N ## _ ## M)\n"
+        "\n",
+        nsc, nsc);
 
     fprintf(out->fp,
         "/* NS: common namespace, ID: table field id (not offset), TN: name of type T,\n"
@@ -460,7 +505,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "  TN ## _assign_to_pe(_p, v); return 0; }\\\n"
         "static inline int N ## _force_add(NS ## builder_t *B, const T v)\\\n"
         "{ T *_p; if (!(_p = (T *)flatcc_builder_table_add(B, ID, S, A))) return -1;\\\n"
-        "  TN ## _assign_to_pe(_p, v); return 0; }\\\n"
+        "  TN ## _assign_to_pe(_p, v); return 0; }\n"
         "\n",
         nsc);
 
@@ -519,9 +564,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         nsc, nsc);
 
     fprintf(out->fp,
-        "#define __%sbuild_string_field(ID, NS, N)\\\n"
-        "static inline int N ## _add(NS ## builder_t *B, NS ## string_ref_t ref)\\\n"
-        "{ NS ## string_ref_t *_p; return (ref && (_p = flatcc_builder_table_add_offset(B, ID))) ? ((*_p = ref), 0) : -1; }\\\n"
+        "#define __%sbuild_string_field_ops(NS, N)\\\n"
         "static inline int N ## _start(NS ## builder_t *B)\\\n"
         "{ return flatcc_builder_start_string(B); }\\\n"
         "static inline int N ## _end(NS ## builder_t *B)\\\n"
@@ -537,6 +580,14 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "static inline int N ## _slice(NS ## builder_t *B, NS ## string_t string, size_t index, size_t len)\\\n"
         "{ return N ## _add(B, NS ## string_slice(B, string, index, len)); }\\\n"
         "__%sbuild_string_ops(NS, N)\n"
+        "\n",
+        nsc, nsc);
+
+    fprintf(out->fp,
+        "#define __%sbuild_string_field(ID, NS, N)\\\n"
+        "static inline int N ## _add(NS ## builder_t *B, NS ## string_ref_t ref)\\\n"
+        "{ NS ## string_ref_t *_p; return (ref && (_p = flatcc_builder_table_add_offset(B, ID))) ? ((*_p = ref), 0) : -1; }\\\n"
+        "__%sbuild_string_field_ops(NS, N)\n"
         "\n",
         nsc, nsc);
 
@@ -564,7 +615,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         nsc, nsc);
 
     fprintf(out->fp,
-        "#define __%sbuild_union_vector_member_field(NS, N, NU, M, T)\\\n"
+        "#define __%sbuild_union_table_vector_member_field(NS, N, NU, M, T)\\\n"
         "static inline int N ## _ ## M ## _push_start(NS ## builder_t *B)\\\n"
         "{ return T ## _start(B); }\\\n"
         "static inline NU ## _union_ref_t *N ## _ ## M ## _push_end(NS ## builder_t *B)\\\n"
@@ -573,6 +624,40 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "{ return NU ## _vec_push(B, NU ## _as_ ## M (ref)); }\\\n"
         "static inline NU ## _union_ref_t *N ## _ ## M ## _push_create(NS ## builder_t *B __ ## T ##_formal_args)\\\n"
         "{ return NU ## _vec_push(B, NU ## _as_ ## M(T ## _create(B __ ## T ## _call_args))); }\n"
+        "\n",
+        nsc);
+
+    fprintf(out->fp,
+        "#define __%sbuild_union_struct_vector_member_field(NS, N, NU, M, T)\\\n"
+        "static inline T ## _t *N ## _ ## M ## _push_start(NS ## builder_t *B)\\\n"
+        "{ return T ## _start(B); }\\\n"
+        "static inline NU ## _union_ref_t *N ## _ ## M ## _push_end(NS ## builder_t *B)\\\n"
+        "{ return NU ## _vec_push(B, NU ## _as_ ## M (T ## _end(B))); }\\\n"
+        "static inline NU ## _union_ref_t *N ## _ ## M ## _push(NS ## builder_t *B, T ## _ref_t ref)\\\n"
+        "{ return NU ## _vec_push(B, NU ## _as_ ## M (ref)); }\\\n"
+        "static inline NU ## _union_ref_t *N ## _ ## M ## _push_create(NS ## builder_t *B __ ## T ##_formal_args)\\\n"
+        "{ return NU ## _vec_push(B, NU ## _as_ ## M(T ## _create(B __ ## T ## _call_args))); }\n"
+        "\n",
+        nsc);
+
+    fprintf(out->fp,
+        "#define __%sbuild_union_string_vector_member_field(NS, N, NU, M)\\\n"
+        "static inline NU ## _union_ref_t *N ## _ ## M ## _push(NS ## builder_t *B, NS ## string_ref_t ref)\\\n"
+        "{ return NU ## _vec_push(B, NU ## _as_ ## M (ref)); }\\\n"
+        "static inline int N ## _ ## M ## _push_start(NS ## builder_t *B)\\\n"
+        "{ return NS ## string_start(B); }\\\n"
+        "static inline NU ## _union_ref_t *N ## _ ## M ## _push_end(NS ## builder_t *B)\\\n"
+        "{ return NU ## _vec_push(B, NU ## _as_ ## M(NS ## string_end(B))); }\\\n"
+        "static inline NU ## _union_ref_t *N ## _ ## M ## _push_create(NS ## builder_t *B, const char *s, size_t len)\\\n"
+        "{ return NU ## _vec_push(B, NU ## _as_ ## M(NS ## string_create(B, s, len))); }\\\n"
+        "static inline NU ## _union_ref_t *N ## _ ## M ## _push_create_str(NS ## builder_t *B, const char *s)\\\n"
+        "{ return NU ## _vec_push(B, NU ## _as_ ## M(NS ## string_create_str(B, s))); }\\\n"
+        "static inline NU ## _union_ref_t *N ## _ ## M ## _push_create_strn(NS ## builder_t *B, const char *s, size_t max_len)\\\n"
+        "{ return NU ## _vec_push(B, NU ## _as_ ## M(NS ## string_create_strn(B, s, max_len))); }\\\n"
+        "static inline NU ## _union_ref_t *N ## _ ## M ## _push_clone(NS ## builder_t *B, NS ## string_t string)\\\n"
+        "{ return NU ## _vec_push(B, NU ## _as_ ## M(NS ## string_clone(B, string))); }\\\n"
+        "static inline NU ## _union_ref_t *N ## _ ## M ## _push_slice(NS ## builder_t *B, NS ## string_t string, size_t index, size_t len)\\\n"
+        "{ return NU ## _vec_push(B, NU ## _as_ ## M(NS ## string_slice(B, string, index, len))); }\n"
         "\n",
         nsc);
 
@@ -1253,16 +1338,36 @@ static int gen_union_fields(fb_output_t *out, const char *st, int n, const char 
     fb_compound_name(ct, &snref);
     for (sym = ct->members; sym; sym = sym->link) {
         member = (fb_member_t *)sym;
+        symbol_name(sym, &nu, &su);
         switch (member->type.type) {
+        case vt_missing:
+            break;
         case vt_compound_type_ref:
             fb_compound_name(member->type.ct, &snu);
-            symbol_name(sym, &nu, &su);
+            switch (member->type.ct->symbol.kind) {
+            case fb_is_table:
+                fprintf(out->fp,
+                        "__%sbuild_union_table_%s_field(%s, %s_%.*s, %s, %.*s, %s)\n",
+                        nsc, kind, nsc, st, n, s, snref.text, nu, su, snu.text);
+                break;
+            case fb_is_struct:
+                fprintf(out->fp,
+                        "__%sbuild_union_struct_%s_field(%s, %s_%.*s, %s, %.*s, %s)\n",
+                        nsc, kind, nsc, st, n, s, snref.text, nu, su, snu.text);
+                break;
+            default:
+                gen_panic(out, "internal error: unexpected union member compound type");
+                return -1;
+            }
+            break;
+        case vt_string_type:
             fprintf(out->fp,
-                    "__%sbuild_union_%s_field(%s, %s_%.*s, %s, %.*s, %s)\n",
-                    nsc, kind, nsc, st, n, s, snref.text, nu, su, snu.text);
+                    "__%sbuild_union_string_%s_field(%s, %s_%.*s, %s, %.*s)\n",
+                    nsc, kind, nsc, st, n, s, snref.text, nu, su);
             break;
         default:
-            break;
+            gen_panic(out, "internal error: unexpected union member type");
+            return -1;
         }
     }
     return 0;
@@ -1484,6 +1589,14 @@ static int gen_union(fb_output_t *out, fb_compound_type_t *ct)
                 "static inline %s_union_ref_t %s_as_%.*s(%s_ref_t ref)\n"
                 "{ %s_union_ref_t uref; uref.type = %s_%.*s; uref.member = ref; return uref; }\n",
                 snt.text, snt.text, n, s, snref.text,
+                snt.text, snt.text, n, s);
+            break;
+        case vt_string_type:
+            symbol_name(sym, &n, &s);
+            fprintf(out->fp,
+                "static inline %s_union_ref_t %s_as_%.*s(%sstring_ref_t ref)\n"
+                "{ %s_union_ref_t uref; uref.type = %s_%.*s; uref.member = ref; return uref; }\n",
+                snt.text, snt.text, n, s, nsc,
                 snt.text, snt.text, n, s);
             break;
         case vt_missing:

@@ -449,7 +449,14 @@ struct flatcc_json_printer_table_descriptor {
     int vsize;
     int ttl;
     int count;
-    uint8_t type; /* Only used with unions. */
+};
+
+typedef struct flatcc_json_printer_union_descriptor flatcc_json_printer_union_descriptor_t;
+
+struct flatcc_json_printer_union_descriptor {
+    const void *member;
+    int ttl;
+    uint8_t type;
 };
 
 typedef void flatcc_json_printer_table_f(flatcc_json_printer_t *ctx,
@@ -457,6 +464,9 @@ typedef void flatcc_json_printer_table_f(flatcc_json_printer_t *ctx,
 
 typedef void flatcc_json_printer_struct_f(flatcc_json_printer_t *ctx,
         const void *p);
+
+typedef void flatcc_json_printer_union_f(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_union_descriptor_t *ud);
 
 /* Generated value to name map callbacks. */
 typedef void flatcc_json_printer_union_type_f(flatcc_json_printer_t *ctx, flatbuffers_utype_t type);
@@ -649,7 +659,7 @@ void flatcc_json_printer_union_vector_field(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
         int id, const char *name, int len,
         flatcc_json_printer_union_type_f ptf,
-        flatcc_json_printer_table_f pf);
+        flatcc_json_printer_union_f pf);
 
 void flatcc_json_printer_struct_as_nested_root(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
@@ -667,6 +677,17 @@ void flatcc_json_printer_union_field(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
         int id, const char *name, int len,
         flatcc_json_printer_union_type_f ptf,
+        flatcc_json_printer_union_f pf);
+
+void flatcc_json_printer_union_table(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_union_descriptor_t *ud,
         flatcc_json_printer_table_f pf);
+
+void flatcc_json_printer_union_struct(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_union_descriptor_t *ud,
+        flatcc_json_printer_struct_f pf);
+
+void flatcc_json_printer_union_string(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_union_descriptor_t *ud);
 
 #endif /* FLATCC_JSON_PRINTER_H */

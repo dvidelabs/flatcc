@@ -74,6 +74,8 @@ typedef uint16_t flatbuffers_voffset_t;
 typedef uint8_t flatbuffers_utype_t;
 typedef uint8_t flatbuffers_bool_t;
 typedef uint32_t flatbuffers_thash_t;
+/* Public facing type operations. */
+typedef flatbuffers_utype_t flatbuffers_union_type_t;
 
 static const flatbuffers_bool_t flatbuffers_true = FLATBUFFERS_TRUE;
 static const flatbuffers_bool_t flatbuffers_false = FLATBUFFERS_FALSE;

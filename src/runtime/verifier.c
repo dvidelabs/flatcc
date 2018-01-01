@@ -151,10 +151,15 @@ static inline int check_aligned_header(uoffset_t end, uoffset_t base, uoffset_t 
     return k > base && k + offset_size <= end && !((k + offset_size) & ((offset_size - 1) | (align - 1)));
 }
 
-static inline int verify_struct(uoffset_t end, uoffset_t base, uint16_t align, uoffset_t size)
+static inline int verify_struct(uoffset_t end, uoffset_t base, uoffset_t offset, uoffset_t size, uint16_t align)
 {
-    verify(uoffset_size <= voffset_size && base + size < base, flatcc_verify_error_struct_size_overflow);
-    verify(base > 0 && base + size <= end, flatcc_verify_error_struct_out_of_range);
+    /* Structs can have zero size so `end` is a valid value. */
+    if (offset == 0 || base + offset > end) {
+        return flatcc_verify_error_offset_out_of_range;
+    }
+    base += offset;
+    verify(base + size >= base, flatcc_verify_error_struct_size_overflow);
+    verify(base + size <= end, flatcc_verify_error_struct_out_of_range);
     verify (!(base & (align - 1)), flatcc_verify_error_struct_unaligned);
     return flatcc_verify_ok;
 }
@@ -177,7 +182,7 @@ static inline const void *get_field_ptr(flatcc_table_verifier_descriptor_t *td, 
 }
 
 static int verify_field(flatcc_table_verifier_descriptor_t *td,
-        voffset_t id, int required, uint16_t align, uoffset_t size)
+        voffset_t id, int required, uoffset_t size, uint16_t align)
 {
     uoffset_t k, k2;
     voffset_t vte;
@@ -258,7 +263,7 @@ static inline int verify_string(const void *buf, uoffset_t end, uoffset_t base, 
 {
     uoffset_t n;
 
-    verify(check_header(end, base, offset), flatcc_verify_error_table_offset_out_of_range_or_unaligned);
+    verify(check_header(end, base, offset), flatcc_verify_error_string_header_out_of_range_or_unaligned);
     base += offset;
     n = read_uoffset(buf, base);
     base += offset_size;
@@ -271,11 +276,11 @@ static inline int verify_string(const void *buf, uoffset_t end, uoffset_t base, 
  * Keep interface somwewhat similar ot flatcc_builder_start_vector.
  * `max_count` is a precomputed division to manage overflow check on vector length.
  */
-static inline int verify_vector(const void *buf, uoffset_t end, uoffset_t base, uoffset_t offset, uint16_t align, uoffset_t elem_size, uoffset_t max_count)
+static inline int verify_vector(const void *buf, uoffset_t end, uoffset_t base, uoffset_t offset, uoffset_t elem_size, uint16_t align, uoffset_t max_count)
 {
     uoffset_t n;
 
-    verify(check_aligned_header(end, base, offset, align), flatcc_verify_error_table_header_out_of_range_or_unaligned);
+    verify(check_aligned_header(end, base, offset, align), flatcc_verify_error_vector_header_out_of_range_or_unaligned);
     base += offset;
     n = read_uoffset(buf, base);
     base += offset_size;
@@ -300,7 +305,7 @@ static inline int verify_string_vector(const void *buf, uoffset_t end, uoffset_t
 }
 
 static inline int verify_table(const void *buf, uoffset_t end, uoffset_t base, uoffset_t offset,
-        utype_t type, int ttl, flatcc_table_verifier_f tvf)
+        int ttl, flatcc_table_verifier_f tvf)
 {
     uoffset_t vbase, vend;
     flatcc_table_verifier_descriptor_t td;
@@ -326,8 +331,6 @@ static inline int verify_table(const void *buf, uoffset_t end, uoffset_t base, u
     td.vtable = (uint8_t *)buf + vbase;
     td.buf = buf;
     td.end = end;
-    /* Normally 0, only used with unions. */
-    td.type = type;
     return tvf(&td);
 }
 
@@ -341,15 +344,16 @@ static inline int verify_table_vector(const void *buf, uoffset_t end, uoffset_t 
     n = read_uoffset(buf, base);
     base += offset_size;
     for (i = 0; i < n; ++i, base += offset_size) {
-        check_result(verify_table(buf, end, base, read_uoffset(buf, base), 0, ttl, tvf));
+        check_result(verify_table(buf, end, base, read_uoffset(buf, base), ttl, tvf));
     }
     return flatcc_verify_ok;
 }
 
 static inline int verify_union_vector(const void *buf, uoffset_t end, uoffset_t base, uoffset_t offset,
-        uoffset_t count, const utype_t *types, int ttl, flatcc_table_verifier_f tvf)
+        uoffset_t count, const utype_t *types, int ttl, flatcc_union_verifier_f uvf)
 {
     uoffset_t i, n, elem;
+    flatcc_union_verifier_descriptor_t ud;
 
     verify(ttl-- > 0, flatcc_verify_error_max_nesting_level_reached);
     check_result(verify_vector(buf, end, base, offset, offset_size, offset_size, FLATBUFFERS_COUNT_MAX(offset_size)));
@@ -357,6 +361,11 @@ static inline int verify_union_vector(const void *buf, uoffset_t end, uoffset_t 
     n = read_uoffset(buf, base);
     verify(n == count, flatcc_verify_error_union_vector_length_mismatch);
     base += offset_size;
+
+    ud.buf = buf;
+    ud.end = end;
+    ud.ttl = ttl;
+
     for (i = 0; i < n; ++i, base += offset_size) {
         /* Table vectors can never be null, but unions can when the type is NONE. */
         elem = read_uoffset(buf, base);
@@ -364,16 +373,19 @@ static inline int verify_union_vector(const void *buf, uoffset_t end, uoffset_t 
             verify(types[i] == 0, flatcc_verify_error_union_element_absent_without_type_NONE);
         } else {
             verify(types[i] != 0, flatcc_verify_error_union_element_present_with_type_NONE);
-            check_result(verify_table(buf, end, base, elem, types[i], ttl, tvf));
+            ud.type = types[i];
+            ud.base = base;
+            ud.offset = elem;
+            check_result(uvf(&ud));
         }
     }
     return flatcc_verify_ok;
 }
 
 int flatcc_verify_field(flatcc_table_verifier_descriptor_t *td,
-        voffset_t id, uint16_t align, size_t size)
+        voffset_t id, size_t size, uint16_t align)
 {
-    check_result(verify_field(td, id, 0, align, (uoffset_t)size));
+    check_result(verify_field(td, id, 0, (uoffset_t)size, align));
     return flatcc_verify_ok;
 }
 
@@ -387,13 +399,13 @@ int flatcc_verify_string_field(flatcc_table_verifier_descriptor_t *td,
 }
 
 int flatcc_verify_vector_field(flatcc_table_verifier_descriptor_t *td,
-        voffset_t id, int required, uint16_t align, size_t elem_size, size_t max_count)
+        voffset_t id, int required, size_t elem_size, uint16_t align, size_t max_count)
 {
     uoffset_t base;
 
     check_field(td, id, required, base);
     return verify_vector(td->buf, td->end, base, read_uoffset(td->buf, base),
-        align, (uoffset_t)elem_size, (uoffset_t)max_count);
+        (uoffset_t)elem_size, align, (uoffset_t)max_count);
 }
 
 int flatcc_verify_string_vector_field(flatcc_table_verifier_descriptor_t *td,
@@ -411,7 +423,7 @@ int flatcc_verify_table_field(flatcc_table_verifier_descriptor_t *td,
     uoffset_t base;
 
     check_field(td, id, required, base);
-    return verify_table(td->buf, td->end, base, read_uoffset(td->buf, base), 0, td->ttl, tvf);
+    return verify_table(td->buf, td->end, base, read_uoffset(td->buf, base), td->ttl, tvf);
 }
 
 int flatcc_verify_table_vector_field(flatcc_table_verifier_descriptor_t *td,
@@ -421,6 +433,21 @@ int flatcc_verify_table_vector_field(flatcc_table_verifier_descriptor_t *td,
 
     check_field(td, id, required, base);
     return verify_table_vector(td->buf, td->end, base, read_uoffset(td->buf, base), td->ttl, tvf);
+}
+
+int flatcc_verify_union_table(flatcc_union_verifier_descriptor_t *ud, flatcc_table_verifier_f *tvf)
+{
+    return verify_table(ud->buf, ud->end, ud->base, ud->offset, ud->ttl, tvf);
+}
+
+int flatcc_verify_union_struct(flatcc_union_verifier_descriptor_t *ud, size_t size, uint16_t align)
+{
+    return verify_struct(ud->end, ud->base, ud->offset, (uoffset_t)size, align);
+}
+
+int flatcc_verify_union_string(flatcc_union_verifier_descriptor_t *ud)
+{
+    return verify_string(ud->buf, ud->end, ud->base, ud->offset);
 }
 
 int flatcc_verify_buffer_header(const void *buf, size_t bufsiz, const char *fid)
@@ -467,32 +494,32 @@ int flatcc_verify_typed_buffer_header(const void *buf, size_t bufsiz, flatbuffer
     return flatcc_verify_ok;
 }
 
-int flatcc_verify_struct_as_root(const void *buf, size_t bufsiz, const char *fid, uint16_t align, size_t size)
+int flatcc_verify_struct_as_root(const void *buf, size_t bufsiz, const char *fid, size_t size, uint16_t align)
 {
     check_result(flatcc_verify_buffer_header(buf, bufsiz, fid));
-    return verify_struct((uoffset_t)bufsiz, read_uoffset(buf, 0), align, (uoffset_t)size);
+    return verify_struct((uoffset_t)bufsiz, 0, read_uoffset(buf, 0), (uoffset_t)size, align);
 }
 
-int flatcc_verify_struct_as_typed_root(const void *buf, size_t bufsiz, flatbuffers_thash_t thash, uint16_t align, size_t size)
+int flatcc_verify_struct_as_typed_root(const void *buf, size_t bufsiz, flatbuffers_thash_t thash, size_t size, uint16_t align)
 {
     check_result(flatcc_verify_typed_buffer_header(buf, bufsiz, thash));
-    return verify_struct((uoffset_t)bufsiz, read_uoffset(buf, 0), align, (uoffset_t)size);
+    return verify_struct((uoffset_t)bufsiz, 0, read_uoffset(buf, 0), align, (uoffset_t)size);
 }
 
 int flatcc_verify_table_as_root(const void *buf, size_t bufsiz, const char *fid, flatcc_table_verifier_f *tvf)
 {
     check_result(flatcc_verify_buffer_header(buf, (uoffset_t)bufsiz, fid));
-    return verify_table(buf, (uoffset_t)bufsiz, 0, read_uoffset(buf, 0), 0, FLATCC_VERIFIER_MAX_LEVELS, tvf);
+    return verify_table(buf, (uoffset_t)bufsiz, 0, read_uoffset(buf, 0), FLATCC_VERIFIER_MAX_LEVELS, tvf);
 }
 
 int flatcc_verify_table_as_typed_root(const void *buf, size_t bufsiz, flatbuffers_thash_t thash, flatcc_table_verifier_f *tvf)
 {
     check_result(flatcc_verify_typed_buffer_header(buf, (uoffset_t)bufsiz, thash));
-    return verify_table(buf, (uoffset_t)bufsiz, 0, read_uoffset(buf, 0), 0, FLATCC_VERIFIER_MAX_LEVELS, tvf);
+    return verify_table(buf, (uoffset_t)bufsiz, 0, read_uoffset(buf, 0), FLATCC_VERIFIER_MAX_LEVELS, tvf);
 }
 
 int flatcc_verify_struct_as_nested_root(flatcc_table_verifier_descriptor_t *td,
-        voffset_t id, int required, const char *fid, uint16_t align, size_t size)
+        voffset_t id, int required, const char *fid, size_t size, uint16_t align)
 {
     const uoffset_t *buf;
     uoffset_t bufsiz;
@@ -504,7 +531,7 @@ int flatcc_verify_struct_as_nested_root(flatcc_table_verifier_descriptor_t *td,
     buf = (const uoffset_t *)((size_t)buf + read_uoffset(buf, 0));
     bufsiz = read_uoffset(buf, 0);
     ++buf;
-    return flatcc_verify_struct_as_root(buf, bufsiz, fid, align, size);
+    return flatcc_verify_struct_as_root(buf, bufsiz, fid, size, align);
 }
 
 int flatcc_verify_table_as_nested_root(flatcc_table_verifier_descriptor_t *td,
@@ -526,15 +553,16 @@ int flatcc_verify_table_as_nested_root(flatcc_table_verifier_descriptor_t *td,
      * might not be what is desired anyway. User can do it later.
      */
     check_result(flatcc_verify_buffer_header(buf, bufsiz, fid));
-    return verify_table(buf, bufsiz, 0, read_uoffset(buf, 0), 0, td->ttl, tvf);
+    return verify_table(buf, bufsiz, 0, read_uoffset(buf, 0), td->ttl, tvf);
 }
 
 int flatcc_verify_union_field(flatcc_table_verifier_descriptor_t *td,
-        voffset_t id, int required, flatcc_table_verifier_f tvf)
+        voffset_t id, int required, flatcc_union_verifier_f uvf)
 {
     voffset_t vte_type, vte_table;
     const uint8_t *type;
     uoffset_t base;
+    flatcc_union_verifier_descriptor_t ud;
 
     if (0 == (vte_type = read_vt_entry(td, id - 1))) {
         vte_table = read_vt_entry(td, id);
@@ -547,17 +575,23 @@ int flatcc_verify_union_field(flatcc_table_verifier_descriptor_t *td,
     /* Only now is it safe to read the type. */
     vte_table = read_vt_entry(td, id);
     type = (const uint8_t *)td->buf + td->table + vte_type;
-    verify(*type || vte_table == 0, flatcc_verify_error_union_type_NONE_cannot_have_a_table);
+    verify(*type || vte_table == 0, flatcc_verify_error_union_type_NONE_cannot_have_a_member);
 
     if (*type == 0) {
         return flatcc_verify_ok;
     }
     check_field(td, id, required, base);
-    return verify_table(td->buf, td->end, base, read_uoffset(td->buf, base), 0, td->ttl, tvf);
+    ud.buf = td->buf;
+    ud.end = td->end;
+    ud.ttl = td->ttl;
+    ud.base = base;
+    ud.offset = read_uoffset(td->buf, base);
+    ud.type = *type;
+    return uvf(&ud);
 }
 
 int flatcc_verify_union_vector_field(flatcc_table_verifier_descriptor_t *td,
-    flatbuffers_voffset_t id, int required, flatcc_table_verifier_f tvf)
+    flatbuffers_voffset_t id, int required, flatcc_union_verifier_f uvf)
 {
     voffset_t vte_type, vte_table;
     const uoffset_t *buf;
@@ -581,5 +615,5 @@ int flatcc_verify_union_vector_field(flatcc_table_verifier_descriptor_t *td,
 
     check_field(td, id, required, base);
     return verify_union_vector(td->buf, td->end, base, read_uoffset(td->buf, base),
-            count, types, td->ttl, tvf);
+            count, types, td->ttl, uvf);
 }

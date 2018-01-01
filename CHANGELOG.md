@@ -25,13 +25,36 @@
   union vectors without hitting strict aliasing rules, for example as
   argument to `flatcc_builder_union_vector_push`. Expected impact: low
   or none. The physical struct layout remains unchanged.
-- Fix off-by-one indexing in `flatbuffers_generic_table_vec_at`. Impact
-  low since it was hardly relevant before union vectors were introduced.
+- BREAKING: `flatbuffers_generic_table_[vec_]t` has been renamed to 
+  `flatbuffers_generic_[vec_]t`.
+- BREAKING: The verifiers runtime library interface has changed argument
+  order from `align, size` to `size, align` in order to be consistent
+  with the builders interface so generated code must match library
+  version. No impact on user code calling generated verifier functions.
+- BREAKING: generated json table parser now calls `table_end` and
+  returns the reference in a new `pref` argument. Generated json struct
+  parsers now renamed with an `_inline` suffix and the orignal name now
+  parses a non-inline struct similar to the table parsers. No impact to
+  user code that only calls the generated root parser.
+- Fix off-by-one indexing in `flatbuffers_generic_vec_at`. Impact
+  low since it was hardly relevant before union vectors were introduced
+  in this release.
 - Add document on security considerations (#63).
 - Add support for base64 and base64url attributes in JSON printing and
   parsing of [ubyte] table fields.
-- Added `flatcc_builder_aligned_free` and `flatcc_builder_aligned_alloc`.
+- Added `flatcc_builder_aligned_free` and `flatcc_builder_aligned_alloc`
+  to ensure `aligned_free` implemnentation matches allocation compiled
+  into the runtime library.
+- Support for struct and string types in unions.
+- Add missing `_create` method on table union member fields.
+- Add `_clone` and `_clone_as_[typed_]root[_with_size]` methods on structs.
+  `_clone` was already supported on structs inlined in table fields.
 - Fix harmless but space consuming overalignment of union types.
+- Add `flatbuffers_union_type_t` with `flatbuffers_union_type_vec` operations.
+- Fix scoping bug on union types in JSON parser: symbolic names of the form
+  `MyUnion.MyUnionMember` were not accepted on a union type field but
+  `MyNamespace.MyUnion.MyMember` and `MyMember` was supported. This has been
+  fixed so all forms are valid. Plain enums did not have this issue.
 
 ## [0.4.3]
 - Fix issue with initbuild.sh for custom builds (#43)

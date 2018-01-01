@@ -161,11 +161,11 @@ static void gen_union(fb_output_t *out)
 
     fprintf(out->fp,
         "typedef struct %sunion {\n"
-        "    %sutype_t type;\n"
-        "    %sgeneric_table_t member;\n"
+        "    %sunion_type_t type;\n"
+        "    %sgeneric_t member;\n"
         "} %sunion_t;\n"
         "typedef struct %sunion_vec {\n"
-        "    const %sutype_t *type;\n"
+        "    const %sunion_type_t *type;\n"
         "    const %suoffset_t *member;\n"
         "} %sunion_vec_t;\n",
         nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
@@ -177,16 +177,23 @@ static void gen_union(fb_output_t *out)
         "}\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
+        "static inline %sstring_t %sstring_cast_from_union(const %sunion_t u)\\\n"
+        "{ return %sstring_cast_from_generic(u.member); }\n",
+        nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
         "#define __%sdefine_union_field(NS, ID, N, NK, T, r)\\\n"
         "static inline T ## _union_type_t N ## _ ## NK ## _type(N ## _table_t t)\\\n"
         "__## NS ## union_type_field(((ID) - 1), t)\\\n"
-        "static inline NS ## generic_table_t N ## _ ## NK(N ## _table_t t)\\\n"
-        "__## NS ## table_field(NS ## generic_table_t, ID, t, r)\\\n"
+        "static inline NS ## generic_t N ## _ ## NK(N ## _table_t t)\\\n"
+        "__## NS ## table_field(NS ## generic_t, ID, t, r)\\\n"
         "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
         "__## NS ## field_present(ID, t)\\\n"
         "static inline T ## _union_t N ## _ ## NK ## _union(N ## _table_t t)\\\n"
         "{ T ## _union_t u = { 0, 0 }; u.type = N ## _ ## NK ## _type(t);\\\n"
-        "  if (u.type == 0) return u; u.member = N ## _ ## NK (t); return u; }\n",
+        "  if (u.type == 0) return u; u.member = N ## _ ## NK (t); return u; }\\\n"
+        "static inline NS ## string_t N ## _ ## NK ## _as_string(N ## _table_t t)\\\n"
+        "{ return NS ## string_cast_from_generic(N ## _ ## NK(t)); }\\\n"
+        "\n",
         nsc);
     fprintf(out->fp,
         "#define __%sdefine_union_vector_ops(NS, T)\\\n"
@@ -197,7 +204,10 @@ static void gen_union(fb_output_t *out)
         "  assert(n > (i) && \"index out of range\"); u.type = uv.type[i];\\\n"
         "  /* Unknown type is treated as NONE for schema evolution. */\\\n"
         "  if (u.type == 0) return u;\\\n"
-        "  u.member = NS ## generic_table_vec_at(uv.member, i); return u; }\n",
+        "  u.member = NS ## generic_vec_at(uv.member, i); return u; }\\\n"
+        "static inline NS ## string_t T ## _union_vec_at_as_string(T ## _union_vec_t uv, size_t i)\\\n"
+        "{ return NS ## generic_vec_at_as_string(uv.member, i); }\\\n"
+        "\n",
         nsc);
     fprintf(out->fp,
         "#define __%sdefine_union_vector(NS, T)\\\n"
@@ -212,7 +222,7 @@ static void gen_union(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sdefine_union_vector_field(NS, ID, N, NK, T, r)\\\n"
         "__## NS ## define_vector_field(ID - 1, N, NK ## _type, T ## _vec_t, r)\\\n"
-        "__## NS ## define_vector_field(ID, N, NK, flatbuffers_generic_table_vec_t, r)\\\n"
+        "__## NS ## define_vector_field(ID, N, NK, flatbuffers_generic_vec_t, r)\\\n"
         "static inline T ## _union_vec_t N ## _ ## NK ## _union(N ## _table_t t)\\\n"
         "{ T ## _union_vec_t uv; uv.type = N ## _ ## NK ## _type(t); uv.member = N ## _ ## NK(t);\\\n"
         "  assert(NS ## vec_len(uv.type) == NS ## vec_len(uv.member)\\\n"
@@ -391,7 +401,10 @@ static void gen_helpers(fb_output_t *out)
                 "#define %sendian flatbuffers_endian\n"
                 "__flatcc_define_basic_scalar_accessors(%s, flatbuffers_endian)"
                 "__flatcc_define_integer_accessors(%sbool, flatbuffers_bool_t,\\\n"
-                "        FLATBUFFERS_BOOL_WIDTH, flatbuffers_endian)\n",
+                "        FLATBUFFERS_BOOL_WIDTH, flatbuffers_endian)\\\n"
+                "__flatcc_define_integer_accessors(%sunion_type, flatbuffers_union_type_t,\n"
+                "        FLATBUFFERS_UTYPE_WIDTH, flatbuffers_endian)\\\n",
+                "\n",
                 nsc, nsc, nsc);
         fprintf(out->fp,
                 "__flatcc_define_integer_accessors(__%suoffset, flatbuffers_uoffset_t,\n"
@@ -558,15 +571,21 @@ static void gen_helpers(fb_output_t *out)
             "static inline %sstring_t %sstring_vec_at(%sstring_vec_t vec, size_t i)\n"
             "__%soffset_vec_at(%sstring_t, vec, i, sizeof(vec[0]))\n",
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
-    fprintf(out->fp, "typedef const void *%sgeneric_table_t;\n", nsc);
+    fprintf(out->fp, "typedef const void *%sgeneric_t;\n", nsc);
     fprintf(out->fp,
-            "typedef const %suoffset_t *%sgeneric_table_vec_t;\n"
+        "static inline %sstring_t %sstring_cast_from_generic(const %sgeneric_t p)\\\n"
+        "{ return p ? ((const char *)p) + __%suoffset__size() : 0; }\n",
+        nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+            "typedef const %suoffset_t *%sgeneric_vec_t;\n"
             "typedef %suoffset_t *%sgeneric_table_mutable_vec_t;\n"
-            "static inline size_t %sgeneric_table_vec_len(%sgeneric_table_vec_t vec)\n"
+            "static inline size_t %sgeneric_vec_len(%sgeneric_vec_t vec)\n"
             "__%svec_len(vec)\n"
-            "static inline %sgeneric_table_t %sgeneric_table_vec_at(%sgeneric_table_vec_t vec, size_t i)\n"
-            "__%soffset_vec_at(%sgeneric_table_t, vec, i, 0)\n",
-            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+            "static inline %sgeneric_t %sgeneric_vec_at(%sgeneric_vec_t vec, size_t i)\n"
+            "__%soffset_vec_at(%sgeneric_t, vec, i, 0)\\\n"
+            "static inline %sgeneric_t %sgeneric_vec_at_as_string(%sgeneric_vec_t vec, size_t i)\n"
+            "__%soffset_vec_at(%sgeneric_t, vec, i, sizeof(vec[0]))\\\n",
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     gen_union(out);
     gen_find(out);
     gen_scan(out);
@@ -607,9 +626,10 @@ static void gen_helpers(fb_output_t *out)
             "__%sdefine_scalar_vector(%suint64, uint64_t)\n"
             "__%sdefine_scalar_vector(%sint64, int64_t)\n"
             "__%sdefine_scalar_vector(%sfloat, float)\n"
-            "__%sdefine_scalar_vector(%sdouble, double)\n",
-            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
-            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+            "__%sdefine_scalar_vector(%sdouble, double)\n"
+            "__%sdefine_scalar_vector(%sunion_type, %sunion_type_t)\n",
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "static inline size_t %sstring_vec_find(%sstring_vec_t vec, const char *s)\n"
             "__%sfind_by_string_field(__%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s)\n"

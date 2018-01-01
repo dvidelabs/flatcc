@@ -670,10 +670,12 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
 
 /**
  * Creates a struct within the current buffer without using any
- * allocation. Formally the struct should be used as a root in the
- * `end_buffer` call as there are no other way to use struct while
- * conforming to the FlatBuffer format - noting that tables embed
- * structs in their own data area.
+ * allocation. 
+ *
+ * The struct should be used as a root in the `end_buffer` call or as a
+ * union member as there are no other ways to use struct while conforming
+ * to the FlatBuffer format - noting that tables embed structs in their
+ * own data area except in union fields.
  *
  * The struct should be in little endian format and follow the usual
  * FlatBuffers alignment rules, although this API won't care about what
@@ -690,7 +692,8 @@ flatcc_builder_ref_t flatcc_builder_create_struct(flatcc_builder_t *B,
  * Starts a struct and returns a pointer that should be used immediately
  * to fill in the struct in protocol endian format, and when done,
  * `end_struct` should be called. The returned reference should be used
- * as argument to `end_buffer`. See also `create_struct`.
+ * as argument to `end_buffer` or as a union member. See also
+ * `create_struct`.
  */
 void *flatcc_builder_start_struct(flatcc_builder_t *B,
         size_t size, uint16_t align);
@@ -703,9 +706,9 @@ void *flatcc_builder_struct_edit(flatcc_builder_t *B);
 
 /**
  * Emits the struct started by `start_struct` and returns a reference to
- * be used as root in an enclosing `end_buffer` call.
- * As mentioned in `create_struct`, these can also be used more freely,
- * but not while being conformant FlatBuffers.
+ * be used as root in an enclosing `end_buffer` call or as a union
+ * member.  As mentioned in `create_struct`, these can also be used more
+ * freely, but not while being conformant FlatBuffers.
  */
 flatcc_builder_ref_t flatcc_builder_end_struct(flatcc_builder_t *B);
 
@@ -1279,6 +1282,21 @@ void *flatcc_builder_table_add_copy(flatcc_builder_t *B, int id, const void *dat
  */
 flatcc_builder_ref_t *flatcc_builder_table_add_offset(flatcc_builder_t *B, int id);
 
+/*
+ * Adds a union type and reference in a single operation and returns 0
+ * on success. Stores the type field at `id - 1` and the member at
+ * `id`. The `member` is a reference to a table, to a string, or to a
+ * standalone `struct` outside the table.
+ *
+ * If the type is 0, the member field must also be 0.
+ *
+ * Unions can also be added as separate calls to the type and the offset
+ * separately which can lead to better packing when the type is placed
+ * together will other small fields.
+ */
+int flatcc_builder_table_add_union(flatcc_builder_t *B, int id,
+        flatcc_builder_union_ref_t uref);
+
 /**
  * Creates a vector in a single operation using an externally supplied
  * buffer. This completely bypasses the stack, but the size must be
@@ -1489,7 +1507,7 @@ flatcc_builder_ref_t *flatcc_builder_append_offset_vector(flatcc_builder_t *B,
  * and an offset vector. Both vectors references are returned.
  */
 flatcc_builder_union_vec_ref_t flatcc_builder_create_union_vector(flatcc_builder_t *B,
-        const flatcc_builder_union_ref_t *data, size_t count);
+        const flatcc_builder_union_ref_t *urefs, size_t count);
 
 /*
  * NOTE: this call takes non-const source array of references
@@ -1552,7 +1570,7 @@ int flatcc_builder_truncate_union_vector(flatcc_builder_t *B, size_t count);
  * or null on error.
  */
 flatcc_builder_union_ref_t *flatcc_builder_union_vector_push(flatcc_builder_t *B,
-        flatcc_builder_union_ref_t ref);
+        flatcc_builder_union_ref_t uref);
 
 /**
  * Takes an array of union_refs as argument to do a multi push operation.
@@ -1561,7 +1579,7 @@ flatcc_builder_union_ref_t *flatcc_builder_union_vector_push(flatcc_builder_t *B
  * or null on error.
  */
 flatcc_builder_union_ref_t *flatcc_builder_append_union_vector(flatcc_builder_t *B,
-        const flatcc_builder_union_ref_t *refs, size_t count);
+        const flatcc_builder_union_ref_t *urefs, size_t count);
 
 /**
  * Faster string operation that avoids temporary stack storage. The

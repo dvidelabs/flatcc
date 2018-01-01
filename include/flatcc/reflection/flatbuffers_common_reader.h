@@ -32,8 +32,8 @@ flatbuffers_voffset_t offset = 0;\
 #define __flatbuffers_define_union_field(ID, N, NK, r)\
 static inline flatbuffers_utype_t N ## _ ## NK ## _type(N ## _table_t t)\
 __flatbuffers_union_type_field(((ID) - 1), t)\
-static inline flatbuffers_generic_table_t N ## _ ## NK(N ## _table_t t)\
-__flatbuffers_table_field(flatbuffers_generic_table_t, ID, t, r)\
+static inline flatbuffers_generic_t N ## _ ## NK(N ## _table_t t)\
+__flatbuffers_table_field(flatbuffers_generic_t, ID, t, r)\
 static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\
 __flatbuffers_field_present(ID, t)
 #define __flatbuffers_define_scalar_field(ID, N, NK, TK, T, V)\
@@ -119,7 +119,7 @@ static inline size_t flatbuffers_string_vec_len(flatbuffers_string_vec_t vec)
 __flatbuffers_vec_len(vec)
 static inline flatbuffers_string_t flatbuffers_string_vec_at(flatbuffers_string_vec_t vec, size_t i)
 __flatbuffers_offset_vec_at(flatbuffers_string_t, vec, i, sizeof(vec[0]))
-typedef const void *flatbuffers_generic_table_t;
+typedef const void *flatbuffers_generic_t;
 #include <string.h>
 static size_t flatbuffers_not_found = (size_t)-1;
 static size_t flatbuffers_end = (size_t)-1;

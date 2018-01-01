@@ -860,6 +860,7 @@ static void parse_union_decl(fb_parser_t *P, fb_compound_type_t *ct)
     fb_token_t *t0;
     fb_member_t *member;
     fb_ref_t *ref;
+    fb_token_t *t;
 
     if (!(ct->symbol.ident = match(P, LEX_TOK_ID, "union declaration expected identifier"))) {
         goto fail;
@@ -876,6 +877,7 @@ static void parse_union_decl(fb_parser_t *P, fb_compound_type_t *ct)
         if (P->failed >= FLATCC_MAX_ERRORS) {
             goto fail;
         }
+        t = P->token;
         member = fb_add_member(P, &ct->members);
         parse_ref(P, &ref);
         member->type.ref = ref;
@@ -883,8 +885,15 @@ static void parse_union_decl(fb_parser_t *P, fb_compound_type_t *ct)
         while (ref->link) {
             ref = ref->link;
         }
-        /* The union member is the unqualified reference. */
+        /* The union member name is the unqualified reference. */
         member->symbol.ident = ref->ident;
+        if (optional(P, ':')) {
+            if (member->type.ref->link) {
+                error_tok(P, t, "qualified union member name cannot have an explicit type");
+            }
+            parse_type(P, &member->type);
+            /* Leave type checking to later stage. */
+        }
         if (optional(P, '=')) {
             parse_value(P, &member->value, 0, "integral constant expected");
             /* Leave detailed type (e.g. no floats) and range checking to a later stage. */

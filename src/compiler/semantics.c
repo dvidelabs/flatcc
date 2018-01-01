@@ -1243,9 +1243,12 @@ static int process_enum(fb_parser_t *P, fb_compound_type_t *ct)
             if (member->symbol.ident == &P->t_none) {
                 /* Handle implicit NONE specially. */
                 member->type.type = vt_missing;
+            } else if (member->type.type == vt_string_type) {
+				member->size = 0;
             } else if (member->type.type != vt_type_ref) {
                 if (member->type.type != vt_invalid) {
-                    error_sym_2(P, sym, "union member has unexpected type", &member->symbol);
+                    error_sym(P, sym, "union member type must be string or a reference to a table or a struct");
+                	member->type.type = vt_invalid;
                 }
                 continue;
             } else {
@@ -1255,8 +1258,8 @@ static int process_enum(fb_parser_t *P, fb_compound_type_t *ct)
                     member->type.type = vt_invalid;
                     continue;
                 } else {
-                    if (type_sym->kind != fb_is_table) {
-                        error_sym_2(P, sym, "union member must reference a table, defined here", type_sym);
+                    if (type_sym->kind != fb_is_table && type_sym->kind != fb_is_struct) {
+                        error_sym_2(P, sym, "union member type reference must be a table or a struct, defined here", type_sym);
                         member->type.type = vt_invalid;
                         continue;
                     }

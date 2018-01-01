@@ -37,6 +37,7 @@ or printing in less than 2 us for a 10 field mixed type message.
     * [File Identifiers](#file-identifiers)
     * [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
+    * [Base64 Encoding](#base64-encoding)
     * [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
 * [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
@@ -116,13 +117,6 @@ interfaces that find interfacing with C easier than C++. The FlatBuffers
 team at Googles FPL lab has been very helpful in providing feedback and
 answering many questions to help ensure the best possible compatibility.
 Notice the name `flatcc` (FlatBuffers C Compiler) vs Googles `flatc`.
-
-The `flatcc` compiler has some extra features such as allowing for
-referencing structs defined later in the schema - which makes sense
-since it is already possible with other types. The binary schema format
-also does not preserve the order of structs. The option is controlled by
-a flag in `config.h` The generated source supports both bottom-up and
-top-down construction mixed freely.
 
 The JSON format is compatible with Googles `flatc` tool. The `flatc`
 tool converts JSON from the command line using a schema and a buffer as
@@ -241,18 +235,10 @@ fi
 ## Status
 
 0.5.0 is in development on master branch primarily adding support for
-union vectors and base64 JSON encoded [ubyte] vectors. (Test reports are
-welcome).
+union vectors and mixed type unions that can include tables, structs and
+strings, and base64 JSON encoded [ubyte] vectors.
 
-0.5.0 _may_ also add support for unions that can have strings and structs
-as members in addition to tables, but this is still undecided. C++
-recently added support this along with union vectors.
-
-0.4.3 is a bug fix release covering nested FlatBuffers, JSON and grisu3
-numeric errors, special cases for JSON keyword parsing, improved C++
-compatibility, flexible configuration of malloc alternatives.
-
-Main features supported as of 0.4.3
+Main features supported as of 0.5.0
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -270,6 +256,8 @@ Main features supported as of 0.4.3
 - support for big endian encoded flatbuffers on both le and be platforms. Enabled on `be` branch.
 - size prefixed buffers - see also [Builder Interface Reference]
 - flexible configuration of malloc alternatives.
+- base64 encoded binary data in JSON.
+- union vectors and mixed type unions of strings, structs, and tables.
 
 Supported platforms:
 
@@ -1062,11 +1050,11 @@ quoted in order to be compatible with Googles flatc tool for Flatbuffers
 
     color: "Green Red"
 
-The following is only permitted if explicitly enabled at compile time.
+_Unquoted multi-valued enums can be enabled at compile time but this is
+deprecated because it is incompatible with both Googles flatc JSON and
+also with other possible future extensions: `color: Green Red`_
 
-    color: Green Red
-
-These multi value expressions are originally intended for enums that
+These value-valued expressions were originally intended for enums that
 have the bit flag attribute defined (which Color does have), but this is
 tricky to process, so therefore any symblic value can be listed in a
 sequence with or without namespace as appropriate. Because this further
@@ -1162,6 +1150,41 @@ vector field named `manyany` which is a vector of `Any` unions in the
         "manyany_type": [ "Monster", "NONE" ],
         "manyany": [{"name": "Joe"}, null]
     }
+
+### Base64 Encoding
+
+As of v0.5.0 it is possible to encode and decode a vector of type
+`[uint8]` (aka `[ubyte]`) as a base64 encoded string or a base64url
+encode string as documented in RFC 4648. Any other type, notably the
+string type, do not handle base64 encoding.
+
+Limiting the support to `[uint8]` avoids introducing binary data into
+strings and also avoids dealing with sign and endian encoding of binary
+data of other types. Furthermore, array encoding of values larger than 8
+bits are not necessarily less efficient than base64.
+
+Base64 padding is always printed and is optional when parsed. Spaces,
+linebreaks, JSON string escape character '\', or any other character not
+in the base64(url) alphabet are rejected as a parse error.
+
+The schema must add the attribute `(base64)` or `(base64url)` to the
+field holding the vector, for example:
+
+    table Monster {
+        name: string;
+        sprite: [uint8] (base64);
+        token: [uint8] (base64url);
+    }
+
+If more complex data needs to be encoded as base64 such as vectors of
+structs, this can be done via nested FlatBuffers which are also of type
+`[uint8]`.
+
+Note that for some use cases it might be desireable to read binary data as
+base64 into memory aligned to more than 8 bits. This is not currently
+possible, but it is recognized that a `(force_align: n)` attribute on
+`[ubyte]` vectors could be useful, but it can also be handled via nested
+flatbuffers which also align data.
 
 
 ### Performance Notes
@@ -1275,6 +1298,11 @@ types are read-only pointers into endian encoded data. Enum types are
 just constants easily grasped from the generated code. Tables are dense so
 they are never accessed directly.
 
+Enums support schema evolution meaning that more names can be added to
+the enumeration in a future schema version. As of v0.5.0 the function
+`_is_known_value` can be used ot check if an enum value is known to the
+current schema version.
+
 Structs have a dual purpose because they are also valid types in native
 format, yet the native reprsention has a slightly different purpose.
 Thus the convention is that a const pointer to a struct encoded in a
@@ -1356,34 +1384,49 @@ v0.5.0 union vectors are also supported.
 A union represents one of several possible tables. A table with a union
 field such as `Monster.equipped` in the samples schema will have two
 accessors: `MyGame_Sample_Monster_equipped(t)` of type
-`flatcc_generic_table_t` and
-`MyGame_Sample_Monster_equipped_type(t)` of type
-`MyGame_Sample_Equipment_union_type_t`. A generic table is
-is just a const void pointer that can be cast to the expected table type.
-The enumeration has a member for each table in the union and also
-`MyGame_Sample_Equipment_NONE` which has the value 0.
+`flatbuffers_generic_t` and `MyGame_Sample_Monster_equipped_type(t)` of
+type `MyGame_Sample_Equipment_union_type_t`. A generic type is is just a
+const void pointer that can be assigned to the expected table type,
+struct type, or string type.  The enumeration has a member for each
+table in the union and also `MyGame_Sample_Equipment_NONE` which has the
+value 0.
 
-Note: it is possible to observe types that are not expected because of
-schema evolution. So never assume that if a type is not one value it
-must the other.
+It is possible to observe a union `_type` value that is not expected
+because forward schema evolution supports adding more members to a union
+in a future version. As of v0.5.0 `_is_known_type` can be used to check
+if the `_type` is know to the current version of the schema.
 
-As of v0.5.0 it is also possible to retrieve a union as
+Unions before v0.5.0 could only contain tables but can now also have
+struct and string type members. For this reason
+`flatbuffers_generic_table_t` has been renamed to
+`flatbuffers_generic_t` of type `const void *`. Such mixed unions are
+not widely supported but C++ also supports them. To see how to define
+such unions, see the `Character` union and `Movie` table in
+[monster_test.fbs] and the mixed type union test case in
+[monster_test.c]. Note that strings require a
+`flatbuffers_string_cast_from_generic` or
+`flatbuffers_string_cast_from_union` while structs and tables can be
+cast by void pointer assignment.
+
+As of v0.5.0 it is possible to retrieve a union as
 `MyGame_Sample_Monster_equipped_union(t)` of type
-`MyGame_Sample_Equipment_union_t` which returns a struct with a
-`type` and a `member` field of type. This is just a typedef to
+`MyGame_Sample_Equipment_union_t` which returns a struct with a `type`
+and a `member` field of type. This is just a typedef to
 `flatbuffers_union_t` because structs cannot be cast in modern C.
 
-When building unions there as a separate, but similar struct for this
-purpose. Before v0.5.0 this struct was type specific and had member
-values with typed pointers, but now it only has the fields `type` and
-`members`. This change was necessary ino order to handle union vectors
-uniformly. See also [Builder Interface Reference].
+When building unions there as a separate, but similar `union_ref_t`
+struct for this purpose. Before v0.5.0 this struct was type specific and
+had member values with typed pointers, but now it only has the fields
+`type` and `member`. This change was necessary in order to handle
+union vectors uniformly. See also [Builder Interface Reference].
 
 Union vectors are supported as of v0.5.0 and can be access similar to
 single value union fields. The field with the the `_type` suffix returns
 a vector of types, for example of type `MyGame_Sample_Equiment_vec_t` -
 note that this is a scalar vector not a vector of union objects.
-The other field returns a vector of type `flatcc_generic_table_vec_t`.
+v0.5.0 also introduces `flatbuffers_union_type_t` and
+`flatbuffers_union_type_vec_*` methods to navigate type arrays directly.
+The other field returns a vector of type `flatcc_generic_vec_t`.
 Both vectors have same length. Union vectors can also be access with with the
 `_union(t)` method which returns a struct with two two members named
 `type` and `member` as before but where the type and member are the
@@ -1395,7 +1438,8 @@ element returned is a struct of type `MyGame_Sample_Equipment_union_t`.
 Be careful to not confuse the union vector type with the scalar type
 vector with a similar name.
 
-There is a test in [monster_test.c] covering union vectors.
+There is a test in [monster_test.c] covering union vectors and a
+separate test focusing on mixed type unions that also has union vectors.
 
 
 ## Endianness

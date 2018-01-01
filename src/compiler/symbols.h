@@ -375,6 +375,8 @@ static inline fb_compound_type_t *get_enum_if_visible(fb_schema_t *schema, fb_sy
     fb_compound_type_t *ct = 0;
 
     switch (sym->kind) {
+    case fb_is_union:
+        /* Fall through. */
     case fb_is_enum:
         ct = (fb_compound_type_t *)sym;
         if (!ptr_set_exists(&schema->visible_schema, ct->schema)) {

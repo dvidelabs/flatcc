@@ -797,14 +797,8 @@ const char *flatcc_json_parser_build_uint8_vector_base64(flatcc_json_parser_t *c
  */
 const char *flatcc_json_parser_generic_json(flatcc_json_parser_t *ctx, const char *buf, const char *end);
 
+/* Constructs a table, struct, or string object unless the type is 0 or unknown. */
 typedef const char *flatcc_json_parser_union_f(flatcc_json_parser_t *ctx,
-        const char *buf, const char *end, uint8_t type, flatbuffers_voffset_t id);
-/*
- * TODO: we should only have one kind of union parser, but for now we
- * need a different method for union vectors.
- */
-/* Constructs a table object unless the type is 0 or unknown. */
-typedef const char *flatcc_json_parser_union_table_f(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, uint8_t type, flatcc_builder_ref_t *pref);
 
 typedef int flatcc_json_parser_is_known_type_f(uint8_t type);
@@ -830,13 +824,13 @@ const char *flatcc_json_parser_union_type(flatcc_json_parser_t *ctx,
 const char *flatcc_json_parser_union_vector(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, size_t union_index,
         flatbuffers_voffset_t id, size_t handle,
-        flatcc_json_parser_union_table_f *union_parser);
+        flatcc_json_parser_union_f *union_parser);
 
 const char *flatcc_json_parser_union_type_vector(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, size_t union_index,
         flatbuffers_voffset_t id, size_t handle,
         flatcc_json_parser_integral_symbol_f *type_parsers[],
-        flatcc_json_parser_union_table_f *union_parser,
+        flatcc_json_parser_union_f *union_parser,
         flatcc_json_parser_is_known_type_f accept_type);
 
 #include "flatcc/portable/pdiagnostic_pop.h"

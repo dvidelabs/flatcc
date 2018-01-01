@@ -5,19 +5,21 @@
 * [Size Prefixed Buffers](#size-prefixed-buffers)
 * [Namespaces](#namespaces)
 * [Error Codes](#error-codes)
-* [Endinaness](#endinaness)
+* [Endianess](#endianess)
+    * [Deprecated](#deprecated)
 * [Buffers](#buffers)
 * [Tables](#tables)
     * [Adding Fields](#adding-fields)
     * [Nested Tables](#nested-tables)
-    * [Unions](#unions)
-    * [Unions of Strings and Structs](#unions-of-strings-and-structs)
-    * [Union Vectors](#union-vectors)
+* [Packing tables](#packing-tables)
 * [Strings](#strings)
 * [Structs](#structs)
 * [Nested Buffers](#nested-buffers)
 * [Scalars and Enums](#scalars-and-enums)
 * [Vectors](#vectors)
+* [Unions](#unions)
+    * [Union Vectors](#union-vectors)
+    * [Unions of Strings and Structs](#unions-of-strings-and-structs)
 * [Error Handling](#error-handling)
 * [Limitations](#limitations)
 * [Sorting Vectors](#sorting-vectors)
@@ -238,7 +240,7 @@ Status codes return 0 on success or an error code that is usually -1.
 Status codes may be checked with `flatbuffers_failed(...)`.
 
 
-## Endinaness
+## Endianess
 
 The function `flatbuffers_is_native_pe()` provide an efficient runtime
 check for endianness. Since FlatBuffers are little endian, the function
@@ -255,23 +257,6 @@ protocols.
 
 By testing `is_native_pe` dependencies on speficic compile time flags
 can be avoided, and these are fragile:
-
-The header files tries to define `FLATBUFFERS_LITTLEENDIAN` to 0 or 1
-based on system definitions but otherwise leaves the flag undefined.
-Simply testing for
-
-    #if FLATBUFFERS_LITTLEENDIAN
-    ...
-    #endif
-
-will not fail if the endianness is undetected but rather give the
-impression that the system is big endian, which is not necessarily true.
-The `flatbuffers_is_native_pe()` relates to the detected or system
-provided conversion functions if a suitable `endian.h` file after the
-header file gave up on its own detection (e.g. `le16toh(1) == 1`).
-Therefore, it is better to use `flatbuffers_is_native_pe()` in most
-cases. It also avoids making assumptions on whether the protocol is
-little or big endian.
 
 During build, vectors and structs behave differently from tables: A
 table updates one field at a time, doing endian conversion along the
@@ -298,6 +283,28 @@ works like a single element vector without a length prefix.
 The `clone` operation is a more userfriendly `pe` operation which takes
 an object or a vector from an existing buffer and places it in a new
 buffer without endian conversion.
+
+### Deprecated
+
+__NOTE: `FLATBUFFERS_LITTLEENDIAN` is deprecated and will be removed in
+a future version. It just complicates endina handling.__
+
+The header files tries to define `FLATBUFFERS_LITTLEENDIAN` to 0 or 1
+based on system definitions but otherwise leaves the flag undefined.
+Simply testing for
+
+    #if FLATBUFFERS_LITTLEENDIAN
+    ...
+    #endif
+
+will not fail if the endianness is undetected but rather give the
+impression that the system is big endian, which is not necessarily true.
+The `flatbuffers_is_native_pe()` relates to the detected or system
+provided conversion functions if a suitable `endian.h` file after the
+header file gave up on its own detection (e.g. `le16toh(1) == 1`).
+Therefore, it is better to use `flatbuffers_is_native_pe()` in most
+cases. It also avoids making assumptions on whether the protocol is
+little or big endian.
 
 ## Buffers
 
@@ -537,121 +544,7 @@ or
     Monster_create_as_root(B, &vec, 150, 80, name, inventory,
         Color_Red, Any_as_NONE());
 
-### Unions
-
-Unlike the C++ Flatbuffers library, we do not expose a separate union
-type field except via a small struct with a union of typed references
-and a type field. This struct is given to the create argument, and above
-it is zero initialized meaning default None.
-
-Unions can be created with member specific `start/end/create` calls. The add
-call is not specialized since it takes a union reference:
-
-
-    Monster_test_Weapon_start(B);
-    Weapon_rounds_add(B, 50);
-    Monster_test_Weapon_end(B);
-
-or
-
-    Monster_test_Weapon_create(B, 50);
-
-or
-
-    Monster_test_Weapon_add(B, Weapon_create(B, 50));
-
-or
-
-    Monster_test_Pickup_start(B);
-    Pickup_location_create(B, 0, 0, 17);
-    Pickup_hint_create_str(B, "Jump High!");
-    Monster_test_Pickup_end(B);
-
-or
-
-    Pickup_ref_t test;
-    Pickup_start(B);
-    Pickup_location_create(B, 0, 0, 17);
-    test = Pickup_end(B);
-    Monster_test_add(B, Any_as_Pickup(test));
-
-or
-
-    Any_union_ref_t test;
-    Pickup_start(B);
-    Pickup_location_create(B, 0, 0, 17);
-    /* test.Pickup = Pickup_end(B); no longer possible as of v0.5.0 */
-    test.member = Pickup_end(B); /* As of v0.5.0, or test._member before. */
-    test.type = Any_Pickup;
-    Monster_test_add(B, test);
-
-_Note the union structure has been change for v0.5.0. Before each union
-had its own structure which a union of members with a field for each
-member type. These fields have been removed because of conflicts with
-strict aliasing rules when casting. Now each union type has a typedef to
-a generic union struct. This change makes it possible to handle union
-vectors in the low level builder API._
-
-The following is valid and will not return an error, but also has no effect:
-
-    Monster_test_add(B, Any_as_NONE());
-
-### Unions of Strings and Structs
-
-_Note as of v0.5.0 unions can also contain strings and structs in
-addition to tables. Suppor for these types in other languages may vary,
-but C++ does support them too._
-
-
-### Union Vectors
-
-Only as of flatcc v0.5.0 and currently not widely supported. C++ supports union
-vectors.
-
-The `monster_test.fbs` schema has a field named manyany in the Monster
-table. It is vector of unions of type Any.
-
-We can create a vector using
-
-    Any_union_vec_ref_t anyvec_ref;
-
-    Any_vec_start(B);
-    Any_vec_push(TestSimpleTableWithEnum_create(B));
-    anyvec_ref = Any_vec_end(B);
-    Monster_manyany_add(anyvec_ref);
-
-A union can be constructed with type specific `_push` or `_push_create` operations:
-
-    Monster_manyany_start(B);
-    Monster_manyany_push(B, Any_as_TestSimpleTableWithEnum(ref));
-    Monster_manyany_end(B);
-
-    Monster_manyany_start(B);
-    Monster_manyany_TestSimpleTableWithEnum_push(B, ref);
-    Monster_manyany_end(B);
-
-    Monster_manyany_start(B);
-    Monster_manyany_TestSimpleTableWithEnum_push_create(B, args);
-    Monster_manyany_end(B);
-
-and other similar operations, much like other vectors.
-
-Note that internally `anyvec_ref` is really two references, one to type
-vector and one to a table vector. The vector is constructed a single
-vector of unions and later split into two before final storage. If it is
-necessary to create a union vector from a vector of tables and types,
-the low level builder interface has a `direct` call to do this.
-
-Union vectos generally use more temporary stack space because during
-construction because each element as a struct of type and reference
-which don't back as densely as a two separate tables. In addition the
-separated type and table vectors must be constructed temporarily. The
-finaly buffer result is resonably compatct since the type vector does
-not use much space. Unions will also be somewhat slower to construct,
-but not unreasonably so.
-
-
-Packing tables:
+## Packing tables
 
 By reordering the fields, the table may be packed better, or be better
 able to reuse an existing vtable. The `create` call already does this
@@ -671,6 +564,13 @@ assertion will fail in debug builds.
 
 Required table fields will be asserted in debug builds as part of the
 `end/create` call.  Only offset fields can have a required attribute.
+
+The generated `monster_test_reader.h` from [monster_test.fbs] shows how
+the default packing takes place in generated `create` calls, see for
+example the typealias test. Note that for example vectors are stored
+together with integers like `uint32` because references to vectors have
+the same size as `uint32`.
+
 
 ## Strings
 
@@ -956,6 +856,7 @@ When `Monster_playground` is declared as nested:
 Be aware that `Vec3_t` is for native updates while `Vec3_struct_t` is a const
 pointer to an endian encoded struct used in the reader interface, and actually
 also as source type in the clone operation.
+
 
 ## Nested Buffers
 
@@ -1284,6 +1185,199 @@ There is an internal, but unexposed `flatcc_builder` version
 `create_offset_vector_direct` which destroys the source vector instead
 of allocating a stack copy.
 
+## Unions
+
+Unlike the C++ Flatbuffers library, we do not expose a separate union
+type field except via a small struct with a union of typed references
+and a type field. This struct is given to the create argument, and above
+it is zero initialized meaning default None.
+
+Unions can be created with member specific `start/end/create` calls. The add
+call is not specialized since it takes a union reference:
+
+
+    Monster_test_Weapon_start(B);
+    Weapon_rounds_add(B, 50);
+    Monster_test_Weapon_end(B);
+
+or
+
+    Monster_test_Weapon_create(B, 50);
+
+or
+
+    Monster_test_Weapon_add(B, Weapon_create(B, 50));
+
+or
+
+    Monster_test_Pickup_start(B);
+    Pickup_location_create(B, 0, 0, 17);
+    Pickup_hint_create_str(B, "Jump High!");
+    Monster_test_Pickup_end(B);
+
+or
+
+    Pickup_ref_t test;
+    Pickup_start(B);
+    Pickup_location_create(B, 0, 0, 17);
+    test = Pickup_end(B);
+    Monster_test_add(B, Any_as_Pickup(test));
+
+or
+
+    Any_union_ref_t test;
+    Pickup_start(B);
+    Pickup_location_create(B, 0, 0, 17);
+    /* test.Pickup = Pickup_end(B); no longer possible as of v0.5.0 */
+    test.member = Pickup_end(B); /* As of v0.5.0, or test._member before. */
+    test.type = Any_Pickup;
+    Monster_test_add(B, test);
+
+The following is valid and will not return an error, but also has no effect:
+
+    Monster_test_add(B, Any_as_NONE());
+
+
+_Note: the union structure has been change for v0.5.0. Before each union
+had its own structure which a union of members with a field for each
+member type. These fields have been removed because of conflicts with
+strict aliasing rules when casting. Now each union type has a typedef to
+a generic union struct. This change makes it possible to handle union
+vectors in the low level builder API._
+
+### Union Vectors
+
+Only as of flatcc v0.5.0 and currently not widely supported. C++ supports union
+vectors.
+
+The `monster_test.fbs` schema has a field named manyany in the Monster
+table. It is vector of unions of type Any.
+
+We can create a vector using
+
+    Any_union_vec_ref_t anyvec_ref;
+
+    Any_vec_start(B);
+    Any_vec_push(TestSimpleTableWithEnum_create(B));
+    anyvec_ref = Any_vec_end(B);
+    Monster_manyany_add(anyvec_ref);
+
+A union can be constructed with type specific `_push` or `_push_create` operations:
+
+    Monster_manyany_start(B);
+    Monster_manyany_push(B, Any_as_TestSimpleTableWithEnum(ref));
+    Monster_manyany_end(B);
+
+    Monster_manyany_start(B);
+    Monster_manyany_TestSimpleTableWithEnum_push(B, ref);
+    Monster_manyany_end(B);
+
+    Monster_manyany_start(B);
+    Monster_manyany_TestSimpleTableWithEnum_push_create(B, args);
+    Monster_manyany_end(B);
+
+and other similar operations, much like other vectors.
+
+Note that internally `anyvec_ref` is really two references, one to type
+vector and one to a table vector. The vector is constructed a single
+vector of unions and later split into two before final storage. If it is
+necessary to create a union vector from a vector of tables and types,
+the low level builder interface has a `direct` call to do this.
+
+Union vectos generally use more temporary stack space because during
+construction because each element as a struct of type and reference
+which don't back as densely as a two separate tables. In addition the
+separated type and table vectors must be constructed temporarily. The
+finaly buffer result is resonably compatct since the type vector does
+not use much space. Unions will also be somewhat slower to construct,
+but not unreasonably so.
+
+
+### Unions of Strings and Structs
+
+_Note: as of v0.5.0 unions can also contain strings and structs in
+addition to tables. Support for these types in other languages may vary,
+but C++ does support them too._
+
+All union members are stored by reference. Structs that are not unions
+are stored inline in tables and cannot be shared but unions of struct
+type are stored by reference and can be shared. A union member value is
+therefore always a reference. This is mostly transparent because the
+generated table field methods has `create/start/end` calls for each union
+member type and addition to `add`.
+
+To illustrate the use of these variation we use the Movie table from
+[monster_test.fbs]:
+
+    namespace Fantasy;
+
+    table Attacker {
+        sword_attack_damage: int;
+    }
+
+    struct Rapunzel {
+        hair_length: uint16;
+    }
+
+    struct BookReader {
+        books_read: int;
+    }
+
+    union Character {
+        MuLan: Attacker = 2,  // Can have name be different from type.
+        Rapunzel = 8,         // Or just both the same, as before.
+        Belle: Fantasy.BookReader,
+        BookFan: BookReader,
+        Other: string,
+        Unused: string = 255
+    }
+
+    table Movie {
+        main_character: Character;
+        antagonist: Character;
+        side_kick: Character;
+        cameo: Character;
+        characters: [Character];
+    }
+
+
+and the mixed type test case from [monster_test.c]:
+
+
+    nsf(Character_union_ref_t) ut;
+    nsf(Rapunzel_ref_t) cameo_ref;
+    nsf(Attacker_ref_t) attacker_ref;
+    nsf(BookReader_ref_t) br_ref;
+    nsf(BookReader_t *) pbr;
+    nsf(Movie_table_t) mov;
+
+    nsf(Movie_start_as_root(B));
+    br_ref = nsf(BookReader_create(B, 10));
+    cameo_ref = nsf(Rapunzel_create(B, 22));
+    ut = nsf(Character_as_Rapunzel(cameo_ref));
+    nsf(Movie_main_character_Rapunzel_create(B, 19));
+    nsf(Movie_cameo_Rapunzel_add(B, cameo_ref));
+    attacker_ref = nsf(Attacker_create(B, 42));
+    nsf(Movie_antagonist_MuLan_add(B, attacker_ref));
+    nsf(Movie_side_kick_Other_create_str(B, "Nemo"));
+    nsf(Movie_characters_start(B));
+    nsf(Movie_characters_push(B, ut));
+    nsf(Movie_characters_MuLan_push(B, attacker_ref));
+    nsf(Movie_characters_MuLan_push_create(B, 1));
+    nsf(Character_vec_push(B, nsf(Character_as_Other(nsc(string_create_str(B, "other"))))));
+    nsf(Movie_characters_Belle_push(B, br_ref));
+    pbr = nsf(Movie_characters_Belle_push_start(B));
+    pbr->books_read = 3;
+    nsf(Movie_characters_Belle_push_end(B));
+    nsf(Movie_characters_Belle_push(B, nsf(BookReader_create(B, 1))));
+    nsf(Movie_characters_Belle_push_create(B, 2));
+    nsf(Movie_characters_Other_push(B, nsc(string_create_str(B, "another"))));
+    nsf(Movie_characters_Other_push_create_str(B, "yet another"));
+    nsf(Movie_characters_end(B));
+    nsf(Movie_end_as_root(B));
+
+Note that reading a union of string type requires a cast which can be
+seen in the full test case in [monster_test.c].
 ## Error Handling
 
 The API generally expects all error codes to be checked but the
@@ -1514,3 +1608,4 @@ overhead.
 [monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
 [flatcc_builder.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_builder.h
 [flatcc_emitter.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_emitter.h
+[monster_test.fbs]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.fbs

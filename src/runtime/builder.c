@@ -71,6 +71,7 @@ const uint8_t flatcc_builder_padding_base[512] = { 0 };
 #define store_uoffset __flatbuffers_uoffset_cast_to_pe
 #define store_voffset  __flatbuffers_voffset_cast_to_pe
 #define store_identifier __flatbuffers_uoffset_cast_to_pe
+#define store_utype __flatbuffers_utype_cast_to_pe
 
 #define field_size sizeof(uoffset_t)
 #define max_offset_count FLATBUFFERS_COUNT_MAX(field_size)
@@ -850,6 +851,7 @@ void *flatcc_builder_start_struct(flatcc_builder_t *B, size_t size, uint16_t ali
         return 0;
     }
     frame(type) = flatcc_builder_struct;
+    refresh_ds(B, data_limit);
     return push_ds(B, (uoffset_t)size);
 }
 
@@ -1502,8 +1504,27 @@ size_t flatcc_builder_offset_vector_count(flatcc_builder_t *B)
     return frame(vector.count);
 }
 
+int flatcc_builder_table_add_union(flatcc_builder_t *B, int id,
+    flatcc_builder_union_ref_t uref)
+{
+    flatcc_builder_ref_t *pref;
+    flatcc_builder_utype_t *putype;
+
+    check(frame(type) == flatcc_builder_table, "expected table frame");
+    check_error(uref.type != 0 || uref.member == 0, -1, "expected null member for type NONE");
+    if (uref.member != 0) {
+        pref = flatcc_builder_table_add_offset(B, id);
+        check_error(pref != 0, -1, "unable to add union member");
+        *pref = uref.member;
+    }
+    putype = flatcc_builder_table_add(B, id - 1, utype_size, utype_size);
+    check_error(putype != 0, -1, "unable to add union type");
+    *putype = store_utype(uref.type);
+    return 0;
+}
+
 flatcc_builder_union_vec_ref_t flatcc_builder_create_union_vector(flatcc_builder_t *B,
-        const flatcc_builder_union_ref_t *data, size_t count)
+        const flatcc_builder_union_ref_t *urefs, size_t count)
 {
     flatcc_builder_union_vec_ref_t uvref = { 0, 0 };
     flatcc_builder_utype_t *types;
@@ -1524,8 +1545,8 @@ flatcc_builder_union_vec_ref_t flatcc_builder_create_union_vector(flatcc_builder
     refs = flatcc_builder_offset_vector_edit(B);
 
     for (i = 0; i < count; ++i) {
-        types[i] = data[i].type;
-        refs[i] = data[i].member;
+        types[i] = urefs[i].type;
+        refs[i] = urefs[i].member;
     }
     uvref = flatcc_builder_create_union_vector_direct(B,
             types, refs, count);
@@ -1625,7 +1646,7 @@ int flatcc_builder_truncate_union_vector(flatcc_builder_t *B, size_t count)
 }
 
 flatcc_builder_union_ref_t *flatcc_builder_union_vector_push(flatcc_builder_t *B,
-        flatcc_builder_union_ref_t ref)
+        flatcc_builder_union_ref_t uref)
 {
     flatcc_builder_union_ref_t *p;
 
@@ -1637,18 +1658,18 @@ flatcc_builder_union_ref_t *flatcc_builder_union_vector_push(flatcc_builder_t *B
     if (0 == (p = push_ds(B, union_size))) {
         return 0;
     }
-    *p = ref;
+    *p = uref;
     return p;
 }
 
 flatcc_builder_union_ref_t *flatcc_builder_append_union_vector(flatcc_builder_t *B,
-        const flatcc_builder_union_ref_t *refs, size_t count)
+        const flatcc_builder_union_ref_t *urefs, size_t count)
 {
     check(frame(type) == flatcc_builder_union_vector, "expected union vector frame");
     if (vector_count_add(B, (uoffset_t)count, max_union_count)) {
         return 0;
     }
-    return push_ds_copy(B, refs, union_size * (uoffset_t)count);
+    return push_ds_copy(B, urefs, union_size * (uoffset_t)count);
 }
 
 flatcc_builder_ref_t flatcc_builder_create_string(flatcc_builder_t *B, const char *s, size_t len)
