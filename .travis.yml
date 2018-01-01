@@ -1,5 +1,8 @@
 language: c
 
+# trusty: Ubuntu 14.04
+# https://launchpad.net/~ubuntu-toolchain-r/+archive/ubuntu/test
+
 matrix:
   include:
     - os: linux
@@ -9,11 +12,35 @@ matrix:
     - os: linux
       sudo: false
       dist: trusty
+      compiler: gcc-7
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-7']
+    - os: linux
+      sudo: false
+      dist: trusty
+      compiler: gcc-6
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-6']
+    - os: linux
+      sudo: false
+      dist: trusty
       compiler: gcc-5
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['gcc-5']
+    - os: linux
+      sudo: false
+      dist: trusty
+      compiler: gcc-4.9
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-4.9']
     - os: linux
       sudo: false
       dist: trusty
@@ -38,14 +65,6 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['gcc-4.6']
-    - os: linux
-      sudo: false
-      dist: trusty
-      compiler: gcc-4.5
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['gcc-4.5']
     - os: linux
       sudo: false
       dist: trusty
