@@ -1176,7 +1176,7 @@ vector field named `manyany` which is a vector of `Any` unions in the
 
 As of v0.5.0 it is possible to encode and decode a vector of type
 `[uint8]` (aka `[ubyte]`) as a base64 encoded string or a base64url
-encode string as documented in RFC 4648. Any other type, notably the
+encoded string as documented in RFC 4648. Any other type, notably the
 string type, do not handle base64 encoding.
 
 Limiting the support to `[uint8]` avoids introducing binary data into
@@ -1185,8 +1185,8 @@ data of other types. Furthermore, array encoding of values larger than 8
 bits are not necessarily less efficient than base64.
 
 Base64 padding is always printed and is optional when parsed. Spaces,
-linebreaks, JSON string escape character '\', or any other character not
-in the base64(url) alphabet are rejected as a parse error.
+linebreaks, JSON string escape character '\\', or any other character
+not in the base64(url) alphabet are rejected as a parse error.
 
 The schema must add the attribute `(base64)` or `(base64url)` to the
 field holding the vector, for example:
