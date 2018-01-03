@@ -2,7 +2,11 @@
 #define PBASE64_H
 
 #include <stdlib.h>
+
+/* Guarded to allow inclusion of pstdint.h first, if stdint.h is not supported. */
+#ifndef UINT8_MAX
 #include <stdint.h>
+#endif
 
 #define BASE64_EOK    0
 /* 0 or mure full blocks decoded, remaining content may be parsed with fresh buffer. */
