@@ -234,9 +234,22 @@ fi
 
 ## Status
 
-0.5.0 is in development on master branch primarily adding support for
-union vectors and mixed type unions that can include tables, structs and
-strings, and base64 JSON encoded [ubyte] vectors.
+v0.5.0 is in development on master branch primarily to reach feature
+parity with Googles flatc schema parser as of end 2017. These new
+features are union vectors and mixed type unions that can include
+tables, structs and strings, and type aliases for int8, uint8, int16,
+uint16, int32, uint32, int64, uint64, float32, float64 types in the
+schema. Support for base64(url) JSON encoded [ubyte] vectors has been
+added which will also be added to Googles flatc tool in a future
+release. In addition the following changes have been added: Runtime
+builder library support for `aligned_alloc/free`. Handling of unions is
+slightly incompatible with previous releases as covered in the
+documentation. v0.5.0 fixes a bug that could cause a JSON parser to
+reject some valid symbols for some schemas and also fixes a non-critical
+JSON scoping issue with symbolic union names and a bug verifying buffers
+with a struct as root. Low-level custom frame support has been improved
+in the builder library which is useful for complex parsing scenarios.
+
 
 Main features supported as of 0.5.0
 
@@ -255,17 +268,25 @@ Main features supported as of 0.5.0
 - support for big endian platforms (as of 0.4.0)
 - support for big endian encoded flatbuffers on both le and be platforms. Enabled on `be` branch.
 - size prefixed buffers - see also [Builder Interface Reference]
-- flexible configuration of malloc alternatives.
-- base64 encoded binary data in JSON.
-- union vectors and mixed type unions of strings, structs, and tables.
+- flexible configuration of malloc alternatives and runtime
+  aligned_alloc/free support in builder library.
+- feature parity with C++ FlatBuffers schema features added in 2017
+  union vectors and mixed type unions of strings, structs, and tables.
+- base64(url) encoded binary data in JSON, soon to also be supported by
+  Googles flatc JSON parser.
 
-Supported platforms:
 
-- Ubuntu gcc 4.4-4.8 and clang 3.5-3.8
+Supported platforms (as covered by CI release tests on ci-more branch):
+
+- Ubuntu Trusty gcc 4.4, 4.6-4.9, 5, 6, 7 and clang 3.6, 3.8 
 - OS-X current clang / gcc
-- Windows MSVC 2010, 2013, 2015, 2015 Win64
+- Windows MSVC 2010, 2013, 2015, 2015 Win64, 2017, 2017 Win64
 - IBM XLC on AIX big endian Power PC has been tested for release 0.4.0
   but is not part of regular release tests.
+
+Some previously testet compiler versions may have been outphased as the
+CI environment gets updated. See `.travis.yml` and `appveyor.yml` in
+the `ci-more` branch for the current configuration.
 
 Users have been testing on FreeRTOS as well which requires changing the
 runtime allocation method.
@@ -1155,7 +1176,7 @@ vector field named `manyany` which is a vector of `Any` unions in the
 
 As of v0.5.0 it is possible to encode and decode a vector of type
 `[uint8]` (aka `[ubyte]`) as a base64 encoded string or a base64url
-encode string as documented in RFC 4648. Any other type, notably the
+encoded string as documented in RFC 4648. Any other type, notably the
 string type, do not handle base64 encoding.
 
 Limiting the support to `[uint8]` avoids introducing binary data into
@@ -1164,8 +1185,8 @@ data of other types. Furthermore, array encoding of values larger than 8
 bits are not necessarily less efficient than base64.
 
 Base64 padding is always printed and is optional when parsed. Spaces,
-linebreaks, JSON string escape character '\', or any other character not
-in the base64(url) alphabet are rejected as a parse error.
+linebreaks, JSON string escape character '\\', or any other character
+not in the base64(url) alphabet are rejected as a parse error.
 
 The schema must add the attribute `(base64)` or `(base64url)` to the
 field holding the vector, for example:

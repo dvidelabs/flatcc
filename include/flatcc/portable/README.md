@@ -2,8 +2,11 @@ A small library for adding C11 compatibility to older C compilers, but
 only a small highly useful subset such as static assertions, inline
 functions and alignment.
 
-Many compilers already have the required functionality but named
-slightly different.
+C++ is not a primary target, but the library has been updated to be more
+C++ friendly based on user feedback.
+
+Many compilers already have the required functionality but with slightly
+different names and arguments.
 
 In addition, compatibility with the Linux `<endian.h>` system file is
 provided, and "punaligned.h" is provided for unaligned memory reads
@@ -13,7 +16,7 @@ The library also provides fast integer printing and floating point
 printing and parsing optionally using the grisu3 algorithm, but can fall
 back to strtod and related. The `pgrisu3` folder is header only and
 excludes test cases found in the main grisu3 project the files were
-extracted from.
+extracted from. Base64 conversion is also provided.
 
 Integer conversion is not just an optimization. It is more difficult
 than it would appear to portably parse an integer of known size such as
@@ -48,7 +51,7 @@ cannot be implemented using a system provived `free` call. Use of
 `aligned_free` is thus optional on some systems, but using it increases
 general portablity at the cost of pure C11 compatibility.
 
-IMPORTANT NOTE: this library is not widely tested. It is intended to be
-a starting point. Each use case should test on relevant target platforms
-and if relevant send patches upstream.
-
+IMPORTANT NOTE: this library has been used on various platforms and
+updated with user feedback but it is impossibly to systematically test
+all platforms so please test for specific uses cases and report
+any issues upstream.

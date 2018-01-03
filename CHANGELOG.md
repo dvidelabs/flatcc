@@ -43,8 +43,10 @@
 - Add support for base64 and base64url attributes in JSON printing and
   parsing of [ubyte] table fields.
 - Added `flatcc_builder_aligned_free` and `flatcc_builder_aligned_alloc`
-  to ensure `aligned_free` implemnentation matches allocation compiled
-  into the runtime library.
+  to ensure `aligned_free` implementation matches allocation compiled
+  into the runtime library. Note that alignment and size arguments are
+  ordered opposite to most runtime library calls for consistency with
+  the C11 `aligned_alloc` prototype.
 - Support for struct and string types in unions.
 - Add missing `_create` method on table union member fields.
 - Add `_clone` and `_clone_as_[typed_]root[_with_size]` methods on structs.
