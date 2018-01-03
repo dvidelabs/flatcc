@@ -305,9 +305,14 @@ int error_case_tests()
 #define RANDOM_BASE64 "zLOuiUjH49tz4Ap2JnmpTX5NqoiMzlD8hSw45QCS2yaSp7UYoA" \
     "oE8KpY/5pKYmk+54NI40hyeyZ1zRUE4vKQT0hEdVl0iXq2fqPamkVD1AZlVvQJ1m00PaoXOSgG+64Zv+Uygw=="
 
+#define RANDOM_BASE64_NOPAD "zLOuiUjH49tz4Ap2JnmpTX5NqoiMzlD8hSw45QCS2yaSp7UYoA" \
+    "oE8KpY/5pKYmk+54NI40hyeyZ1zRUE4vKQT0hEdVl0iXq2fqPamkVD1AZlVvQJ1m00PaoXOSgG+64Zv+Uygw"
+
 #define RANDOM_BASE64URL "zLOuiUjH49tz4Ap2JnmpTX5NqoiMzlD8hSw45QCS2yaSp7UYoA" \
     "oE8KpY_5pKYmk-54NI40hyeyZ1zRUE4vKQT0hEdVl0iXq2fqPamkVD1AZlVvQJ1m00PaoXOSgG-64Zv-Uygw=="
 
+#define RANDOM_BASE64URL_NOPAD "zLOuiUjH49tz4Ap2JnmpTX5NqoiMzlD8hSw45QCS2yaSp7UYoA" \
+    "oE8KpY_5pKYmk-54NI40hyeyZ1zRUE4vKQT0hEdVl0iXq2fqPamkVD1AZlVvQJ1m00PaoXOSgG-64Zv-Uygw"
 
 int base64_tests()
 {
@@ -327,6 +332,11 @@ int base64_tests()
     TEST(   "{ \"name\": \"Monster\", \"testbase64\":{ \"urldata\":\"" RANDOM_BASE64URL "\"} }",
             "{\"name\":\"Monster\",\"testbase64\":{\"urldata\":\"" RANDOM_BASE64URL "\"}}");
 
+    TEST(   "{ \"name\": \"Monster\", \"testbase64\":{ \"data\":\"" RANDOM_BASE64_NOPAD "\"} }",
+            "{\"name\":\"Monster\",\"testbase64\":{\"data\":\"" RANDOM_BASE64 "\"}}");
+
+    TEST(   "{ \"name\": \"Monster\", \"testbase64\":{ \"urldata\":\"" RANDOM_BASE64URL_NOPAD "\"} }",
+            "{\"name\":\"Monster\",\"testbase64\":{\"urldata\":\"" RANDOM_BASE64URL "\"}}");
 
     TEST_ERROR(   "{ \"name\": \"Monster\", \"testbase64\":{ \"data\":\"" RANDOM_BASE64URL "\"} }",
             flatcc_json_parser_error_base64);
