@@ -127,13 +127,13 @@ static size_t base64_encoded_size(size_t len, int mode)
 static size_t base64_decoded_size(size_t len)
 {
     size_t k = len % 4;
-    size_t n = ((len + 3) / 4 * 3);
+    size_t n = len / 4 * 3;
 
     switch (k) {
     case 3:
-        return n - 1;
+        return n + 2;
     case 2:
-        return n - 2;
+        return n + 1;
     case 1: /* Not valid without padding. */
     case 0:
     default:
@@ -374,8 +374,7 @@ static int base64_decode(uint8_t *dst, const uint8_t *src, size_t *dst_len, size
             }
         }
         if (limit < 3) {
-            ret = BASE64_EMORE;
-            goto done;
+            goto more;
         }
         dst[0] = (hold[0] << 2) | (hold[1] >> 4);
         dst[1] = (hold[1] << 4) | (hold[2] >> 2);
@@ -396,10 +395,6 @@ done:
     return ret;
 
 tail:
-    if (limit < k) {
-        ret = BASE64_EMORE;
-        goto done;
-    }
     switch (k) {
     case 0:
         break;
@@ -407,12 +402,18 @@ tail:
         if ((hold[1] << 4) & 0xff) {
             goto dirty;
         }
+        if (limit < 1) {
+            goto more;
+        }
         dst[0] = (hold[0] << 2) | (hold[1] >> 4);
         dst += 1;
         break;
     case 3:
         if ((hold[2] << 6) & 0xff) {
             goto dirty;
+        }
+        if (limit < 2) {
+            goto more;
         }
         dst[0] = (hold[0] << 2) | (hold[1] >> 4);
         dst[1] = (hold[1] << 4) | (hold[2] >> 2);
@@ -426,6 +427,9 @@ tail:
     goto done;
 dirty:
     ret = BASE64_EDIRTY;
+    goto done;
+more:
+    ret = BASE64_EMORE;
     goto done;
 }
 
