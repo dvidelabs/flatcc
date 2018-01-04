@@ -879,26 +879,26 @@ const char *flatcc_json_parser_prepare_unions(flatcc_json_parser_t *ctx,
 {
     __flatcc_json_parser_union_frame_t *f;
 
-    if (!(f = flatcc_builder_enter_user_frame(ctx->ctx,
+    if (!(*handle = flatcc_builder_enter_user_frame(ctx->ctx,
                 sizeof(__flatcc_json_parser_union_frame_t) + (union_total - 1) *
                 sizeof(__flatcc_json_parser_union_entry_t)))) {
         return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);
     }
+    f = flatcc_builder_get_user_frame_ptr(ctx->ctx, *handle);
     /* Frames have zeroed memory. */
     f->union_total = union_total;
-    *handle = flatcc_builder_get_user_frame_handle(ctx->ctx);
     return buf;
 }
 
 const char *flatcc_json_parser_finalize_unions(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, size_t handle)
 {
-    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_from_handle(ctx->ctx, handle);
+    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_ptr(ctx->ctx, handle);
 
     if (f->union_count) {
         buf = flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_union_incomplete);
     }
-    flatcc_builder_exit_user_frame_from_handle(ctx->ctx, handle);
+    flatcc_builder_exit_user_frame_at(ctx->ctx, handle);
     return buf;
 }
 
@@ -906,7 +906,7 @@ const char *flatcc_json_parser_union(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, size_t union_index,
         flatbuffers_voffset_t id, size_t handle, flatcc_json_parser_union_f *union_parser)
 {
-    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_from_handle(ctx->ctx, handle);
+    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_ptr(ctx->ctx, handle);
     __flatcc_json_parser_union_entry_t *e = &f->unions[union_index];
     flatcc_builder_union_ref_t uref;
 
@@ -941,7 +941,7 @@ const char *flatcc_json_parser_union_type(flatcc_json_parser_t *ctx,
         flatcc_json_parser_integral_symbol_f *type_parsers[],
         flatcc_json_parser_union_f *union_parser)
 {
-    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_from_handle(ctx->ctx, handle);
+    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_ptr(ctx->ctx, handle);
     __flatcc_json_parser_union_entry_t *e = f->unions + union_index;
 
     flatcc_builder_union_ref_t uref;
@@ -1005,7 +1005,7 @@ static const char *_parse_union_vector(flatcc_json_parser_t *ctx,
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_union_vector_length);
         }
         /* Frame must be restored between calls to table parser. */
-        types = flatcc_builder_get_user_frame_from_handle(ctx->ctx, h_types);
+        types = flatcc_builder_get_user_frame_ptr(ctx->ctx, h_types);
         buf = union_parser(ctx, buf, end, types[i], &ref);
         if (buf == end) {
             return buf;
@@ -1019,7 +1019,7 @@ static const char *_parse_union_vector(flatcc_json_parser_t *ctx,
         return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_union_vector_length);
     }
     /* Frame must be restored between calls to table parser. */
-    types = flatcc_builder_get_user_frame_from_handle(ctx->ctx, h_types);
+    types = flatcc_builder_get_user_frame_ptr(ctx->ctx, h_types);
     if (!(ref = flatcc_builder_end_offset_vector_for_unions(ctx->ctx, types))) goto failed;
     if (!(pref = flatcc_builder_table_add_offset(ctx->ctx, id))) goto failed;
     *pref = ref;
@@ -1032,7 +1032,7 @@ const char *flatcc_json_parser_union_vector(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, size_t union_index,
         flatbuffers_voffset_t id, size_t handle, flatcc_json_parser_union_f *union_parser)
 {
-    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_from_handle(ctx->ctx, handle);
+    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_ptr(ctx->ctx, handle);
     __flatcc_json_parser_union_entry_t *e = f->unions + union_index;
 
     if (e->backtrace) {
@@ -1057,7 +1057,7 @@ const char *flatcc_json_parser_union_type_vector(flatcc_json_parser_t *ctx,
         flatcc_json_parser_union_f *union_parser,
         flatcc_json_parser_is_known_type_f accept_type)
 {
-    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_from_handle(ctx->ctx, handle);
+    __flatcc_json_parser_union_frame_t *f = flatcc_builder_get_user_frame_ptr(ctx->ctx, handle);
     __flatcc_json_parser_union_entry_t *e = f->unions + union_index;
 
     const char *mark;
@@ -1103,15 +1103,15 @@ const char *flatcc_json_parser_union_type_vector(flatcc_json_parser_t *ctx,
     e->count = count;
     size = count * utype_size;
     /* Store type vector so it is accessible to the table vector parser.  */
-    types = flatcc_builder_enter_user_frame(ctx->ctx, size);
-    h_types = flatcc_builder_get_user_frame_handle(ctx->ctx);
+    h_types = flatcc_builder_enter_user_frame(ctx->ctx, size);
+    types = flatcc_builder_get_user_frame_ptr(ctx->ctx, h_types);
     memcpy(types, flatcc_builder_vector_edit(ctx->ctx), size);
     if (!((ref = flatcc_builder_end_vector(ctx->ctx)))) goto failed;
     if (!(pref = flatcc_builder_table_add_offset(ctx->ctx, id - 1))) goto failed;
     *pref = ref;
 
     /* Restore union frame after possible invalidation due to types frame allocation. */
-    f = flatcc_builder_get_user_frame_from_handle(ctx->ctx, handle);
+    f = flatcc_builder_get_user_frame_ptr(ctx->ctx, handle);
     e = f->unions + union_index;
 
     e->h_types = h_types;

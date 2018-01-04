@@ -506,7 +506,7 @@ static inline void get_min_align(uint16_t *align, uint16_t b)
     }
 }
 
-void *flatcc_builder_enter_user_frame(flatcc_builder_t *B, size_t size)
+void *flatcc_builder_enter_user_frame_ptr(flatcc_builder_t *B, size_t size)
 {
     size_t *frame;
 
@@ -517,46 +517,55 @@ void *flatcc_builder_enter_user_frame(flatcc_builder_t *B, size_t size)
     }
     memset(frame, 0, size);
     *frame++ = B->user_frame_offset;
-    B->user_frame_offset = B->user_frame_end;
+    B->user_frame_offset = B->user_frame_end + sizeof(size_t);
     B->user_frame_end += size;
     return frame;
 }
 
-void flatcc_builder_exit_user_frame(flatcc_builder_t *B)
+size_t flatcc_builder_enter_user_frame(flatcc_builder_t *B, size_t size)
+{
+    size_t *frame;
+
+    size = alignup(size, sizeof(size_t)) + sizeof(size_t);
+
+    if (!(frame = reserve_buffer(B, flatcc_builder_alloc_us, B->user_frame_end, size, 0))) {
+        return 0;
+    }
+    memset(frame, 0, size);
+    *frame++ = B->user_frame_offset;
+    B->user_frame_offset = B->user_frame_end + sizeof(size_t);
+    B->user_frame_end += size;
+    return B->user_frame_offset;
+}
+
+
+size_t flatcc_builder_exit_user_frame(flatcc_builder_t *B)
 {
     size_t *hdr;
 
+    assert(B->user_frame_offset > 0);
+
     hdr = us_ptr(B->user_frame_offset);
-    B->user_frame_end = B->user_frame_offset;
-    B->user_frame_offset = *hdr;
+    B->user_frame_end = B->user_frame_offset - sizeof(size_t);
+    return B->user_frame_offset = hdr[-1];
 }
 
-void flatcc_builder_exit_user_frame_from_handle(flatcc_builder_t *B, size_t handle)
+size_t flatcc_builder_exit_user_frame_at(flatcc_builder_t *B, size_t handle)
 {
-    assert(B->user_frame_offset + sizeof(size_t) >= handle);
+    assert(B->user_frame_offset >= handle);
 
-    B->user_frame_offset = handle - sizeof(size_t);
-    flatcc_builder_exit_user_frame(B);
+    B->user_frame_offset = handle;
+    return flatcc_builder_exit_user_frame(B);
 }
 
-void *flatcc_builder_get_user_frame(flatcc_builder_t *B)
+size_t flatcc_builder_get_current_user_frame(flatcc_builder_t *B)
 {
-    return us_ptr(B->user_frame_offset + sizeof(size_t));
+    return B->user_frame_offset;
 }
 
-size_t flatcc_builder_get_user_frame_handle(flatcc_builder_t *B)
-{
-    return B->user_frame_offset + sizeof(size_t);
-}
-
-void *flatcc_builder_get_user_frame_from_handle(flatcc_builder_t *B, size_t handle)
+void *flatcc_builder_get_user_frame_ptr(flatcc_builder_t *B, size_t handle)
 {
     return us_ptr(handle);
-}
-
-int flatcc_builder_has_user_frame(flatcc_builder_t *B)
-{
-    return B->user_frame_end != 0;
 }
 
 static int enter_frame(flatcc_builder_t *B, uint16_t align)
