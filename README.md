@@ -3,12 +3,6 @@ Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/gi
 
 # FlatCC FlatBuffers in C for C
 
-_NOTE: ongoing work towards version 0.5.0 features might cause minor
-breakage. For full backwards compatibility use the v0.4.3 tag.
-If you work with JSON parsing, you may want to patch v0.4.3 with commit
-[1cb266](https://github.com/dvidelabs/flatcc/commit/1cb2664dcd104b2051d410955018cb255370302e)
-which only affects code generation, not the runtime library._
-
 `flatcc` has no external dependencies except for build and compiler
 tools, and the C runtime library. With concurrent Ninja builds, a small
 client project can build flatcc with libraries, generate schema code,
@@ -234,21 +228,21 @@ fi
 
 ## Status
 
-v0.5.0 is in development on master branch primarily to reach feature
-parity with Googles flatc schema parser as of end 2017. These new
-features are union vectors and mixed type unions that can include
-tables, structs and strings, and type aliases for int8, uint8, int16,
-uint16, int32, uint32, int64, uint64, float32, float64 types in the
-schema. Support for base64(url) JSON encoded [ubyte] vectors has been
-added which will also be added to Googles flatc tool in a future
-release. In addition the following changes have been added: Runtime
-builder library support for `aligned_alloc/free`. Handling of unions is
-slightly incompatible with previous releases as covered in the
-documentation. v0.5.0 fixes a bug that could cause a JSON parser to
-reject some valid symbols for some schemas and also fixes a non-critical
-JSON scoping issue with symbolic union names and a bug verifying buffers
-with a struct as root. Low-level custom frame support has been improved
-in the builder library which is useful for complex parsing scenarios.
+Release 0.5.0 aims to reach feature parity with C++ FlatBuffers as of
+end 2017. These new features are union vectors and mixed type unions
+that can include tables, structs and strings, and type aliases for int8,
+uint8, int16, uint16, int32, uint32, int64, uint64, float32, float64
+types in the schema. Support for base64(url) JSON encoded [ubyte]
+vectors has been added which will also be added to Googles flatc tool in
+a future release. In addition the following changes have been added:
+Runtime builder library support for `aligned_alloc/free`. Handling of
+unions is slightly incompatible with previous releases as covered in the
+documentation and the changelog. v0.5.0 fixes a bug that could cause a
+JSON parser to reject some valid symbols for some schemas and also fixes
+a non-critical JSON scoping issue with symbolic union names and a bug
+verifying buffers with a struct as root. Low-level custom frame support
+has been improved in the builder library which is useful for complex
+parsing scenarios.
 
 
 Main features supported as of 0.5.0
@@ -271,9 +265,9 @@ Main features supported as of 0.5.0
 - flexible configuration of malloc alternatives and runtime
   aligned_alloc/free support in builder library.
 - feature parity with C++ FlatBuffers schema features added in 2017
-  union vectors and mixed type unions of strings, structs, and tables.
-- base64(url) encoded binary data in JSON, soon to also be supported by
-  Googles flatc JSON parser.
+  adding support for union vectors and mixed type unions of strings,
+  structs, and tables, and type aliases for uint8, ..., float64.
+- base64(url) encoded binary data in JSON.
 
 
 Supported platforms (as covered by CI release tests on ci-more branch):

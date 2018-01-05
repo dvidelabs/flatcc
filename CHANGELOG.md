@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.5.0-pre]
+## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,
   int64, uint64, float32, float64.
 - Low-level: access multiple user frames in builder via handles.
