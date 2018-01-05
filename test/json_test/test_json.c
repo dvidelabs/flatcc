@@ -344,14 +344,33 @@ int base64_tests()
     TEST_ERROR(   "{ \"name\": \"Monster\", \"testbase64\":{ \"urldata\":\"" RANDOM_BASE64 "\"} }",
             flatcc_json_parser_error_base64url);
 
-#if 0
-    /*
-     * Our test framework is not geared towards properly testing nested
-     * flatbuffers in base64 JSON, but if the following yields a verification error,
-     * the nested field has parsed a base64 buffer with garbage.
-     */
-    TEST(   "{ \"name\": \"Monster\", \"testbase64\":{ \"nested\":\"" RANDOM_BASE64 "\"} }",
-            "{\"name\":\"Monster\",\"testbase64\":{\"nested\":\"" RANDOM_BASE64 "\"}}");
+/* Test case from Googles flatc implementation. */
+#if UQ
+	TEST(	"{name: \"Monster\","
+            "testbase64: {"
+            "data: \"23A/47d450+sdfx9+wRYIS09ckas/asdFBQ=\","
+            "urldata: \"23A_47d450-sdfx9-wRYIS09ckas_asdFBQ=\","
+            "nested: \"FAAAAE1PTlMMAAwAAAAEAAYACAAMAAAAAAAAAAQAAAANAAAATmVzdGVkTW9uc3RlcgAAAA==\""
+            "}}",
+            "{\"name\":\"Monster\","
+            "\"testbase64\":{"
+            "\"data\":\"23A/47d450+sdfx9+wRYIS09ckas/asdFBQ=\","
+            "\"urldata\":\"23A_47d450-sdfx9-wRYIS09ckas_asdFBQ=\","
+            "\"nested\":\"FAAAAE1PTlMMAAwAAAAEAAYACAAMAAAAAAAAAAQAAAANAAAATmVzdGVkTW9uc3RlcgAAAA==\""
+            "}}");
+
+    TEST(   "{name: \"Monster\","
+            "testbase64: {"
+            "data: \"23A/47d450+sdfx9+wRYIS09ckas/asdFBQ\","
+            "urldata: \"23A_47d450-sdfx9-wRYIS09ckas_asdFBQ\","
+            "nested: \"FAAAAE1PTlMMAAwAAAAEAAYACAAMAAAAAAAAAAQAAAANAAAATmVzdGVkTW9uc3RlcgAAAA\""
+            "}}",
+            "{\"name\":\"Monster\","
+            "\"testbase64\":{"
+            "\"data\":\"23A/47d450+sdfx9+wRYIS09ckas/asdFBQ=\","
+            "\"urldata\":\"23A_47d450-sdfx9-wRYIS09ckas_asdFBQ=\","
+            "\"nested\":\"FAAAAE1PTlMMAAwAAAAEAAYACAAMAAAAAAAAAAQAAAANAAAATmVzdGVkTW9uc3RlcgAAAA==\""
+            "}}");
 #endif
 
     return ret;
