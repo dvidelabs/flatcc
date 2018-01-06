@@ -4,7 +4,21 @@ include "include_test1.fbs";
 
 struct InGlobalNamespace {}
 
+namespace MyGame;
+
+table InParentNamespace {}
+
+namespace MyGame.Example2;
+
+table Monster {}  // Test having same name as below, but in different namespace.
+
 namespace MyGame.Example;
+
+// Note: parent namespace resolution only works without namespace prefix
+//
+// Won't work:
+//    union Foo { Example2.InParentNamespace }
+union Foo { InParentNamespace }
 
 // test case for negative enum values
 enum neg_enum:int {
@@ -31,7 +45,13 @@ attribute "priority";
 
 enum Color:byte (bit_flags) { Red = 0, Green, Blue = 3, }
 
-union Any { Monster, TestSimpleTableWithEnum }  // TODO: add more elements
+// Note: flatcc does permit conflicting base names from different
+// namespaces without explicitly resolving the conflict.
+// 
+// Wont' work:
+//    union Any { Monster, TestSimpleTableWithEnum, MyGame.Example2.Monster } 
+
+union Any { Monster, TestSimpleTableWithEnum, Monster2: MyGame.Example2.Monster } 
 
 struct Test { a:short; b:byte; }
 
@@ -143,6 +163,9 @@ table Monster {
   manyany: [Any] (id:29);
   testbase64:TestBase64 (id:30);
   movie:Fantasy.Movie (id:31);
+  vector_of_longs:[long] (id:32);
+  vector_of_doubles:[double] (id:33);
+  parent_namespace_test:InParentNamespace (id:34);
 }
 
 table TypeAliases {

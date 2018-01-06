@@ -182,6 +182,39 @@ static inline int is_in_value_set(fb_value_set_t *vs, fb_value_t *value)
     return 0 != fb_value_set_find_item(vs, value);
 }
 
+/*
+ * An immediate parent scope does not necessarily exist and it might
+ * appear in a later search, so we return the nearest existing parent
+ * and do not cache the parent.
+ */
+static inline fb_scope_t *find_parent_scope(fb_parser_t *P, fb_scope_t *scope) 
+{
+    fb_ref_t *p;
+    int count;
+    fb_scope_t *parent;
+
+    parent = 0;
+    count = 0;
+    if (scope == 0) {
+        return 0;
+    }
+    p = scope->name;
+    while (p) {
+        ++count;
+        p = p->link;
+    }
+    if (count == 0) {
+        return 0;
+    }
+    while (count-- > 1) {
+        if ((parent = fb_find_scope_by_ref(&P->schema, scope->name, count))) {
+            return parent;
+        }
+    }
+    /* Root scope. */
+    return fb_find_scope_by_ref(&P->schema, 0, 0);
+}
+
 static inline fb_symbol_t *lookup_string_reference(fb_parser_t *P, fb_scope_t *local, const char *s, int len)
 {
     fb_symbol_t *sym;
@@ -201,9 +234,15 @@ static inline fb_symbol_t *lookup_string_reference(fb_parser_t *P, fb_scope_t *l
     }
     len -= k;
     if (local && k == 0) {
-        if ((sym = fb_symbol_table_find(&local->symbol_index, basename, len))) {
-            return sym;
-        }
+        do {
+            if ((sym = fb_symbol_table_find(&local->symbol_index, basename, len))) {
+                if (get_compound_if_visible(&P->schema, sym)) {
+                    return sym;
+                }
+            }
+            local = find_parent_scope(P, local);
+        } while (local);
+        return 0;
     }
     if (!(scope = fb_find_scope_by_string(&P->schema, name, k))) {
         return 0;
@@ -215,6 +254,19 @@ static inline fb_symbol_t *lookup_string_reference(fb_parser_t *P, fb_scope_t *l
  * First search the optional local scope, then the scope of the namespace prefix if any.
  * If `enumval` is non-zero, the last namepart is stored in that
  * pointer and the lookup stops before that part.
+ *
+ * If the reference is prefixed with a namespace then the scope is
+ * looked up relative to root then the basename is searched in that
+ * scope.
+ *
+ * If the refernce is not prefixed with a namespace then the name is
+ * search in the local symbol table (which may be the root if null) and
+ * if that fails, the nearest existing parent scope is used as the new
+ * local scope and the process is repeated until local is root.
+ *
+ * This means that namespace prefixes cannot be relative to a parent
+ * namespace or to the current scope, but simple names can be found in a
+ * parent namespace.
  */
 static inline fb_symbol_t *lookup_reference(fb_parser_t *P, fb_scope_t *local, fb_ref_t *name, fb_ref_t **enumval)
 {
@@ -244,11 +296,15 @@ static inline fb_symbol_t *lookup_reference(fb_parser_t *P, fb_scope_t *local, f
         return 0;
     }
     if (local && count == 1) {
-        if ((sym = find_fb_symbol_by_token(&local->symbol_index, basename->ident))) {
-            if (get_compound_if_visible(&P->schema, sym)) {
-                return sym;
+        do {
+            if ((sym = find_fb_symbol_by_token(&local->symbol_index, basename->ident))) {
+                if (get_compound_if_visible(&P->schema, sym)) {
+                    return sym;
+                }
             }
-        }
+            local = find_parent_scope(P, local);
+        } while (local);
+        return 0;
     }
     /* Null name is valid in scope lookup, indicating global scope. */
     if (count == 1) {

@@ -2,6 +2,8 @@
 
 ## [0.5.1-pre]
 
+- Fix parent namespace lookup in the schema parser when the namespace
+  prefix is omitted.
 
 ## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,
