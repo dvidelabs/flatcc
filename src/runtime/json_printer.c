@@ -170,14 +170,14 @@ static void print_ex(flatcc_json_printer_t *ctx, const char *s, size_t n)
     if (ctx->p >= ctx->pflush) {
         ctx->flush(ctx, 0);
     }
-    k = ctx->flush_size;
+    k = ctx->pflush - ctx->p;
     while (n > k) {
         memcpy(ctx->p, s, k);
         ctx->p += k;
         s += k;
         n -= k;
         ctx->flush(ctx, 0);
-        k = ctx->flush_size;
+        k = ctx->pflush - ctx->p;
     } 
     memcpy(ctx->p, s, n);
     ctx->p += n;
@@ -295,13 +295,13 @@ static void print_indent_ex(flatcc_json_printer_t *ctx, size_t n)
     if (ctx->p >= ctx->pflush) {
         ctx->flush(ctx, 0);
     }
-    k = ctx->flush_size;
+    k = ctx->p - ctx->pflush;
     while (n > k) {
         memset(ctx->p, ' ', k);
         ctx->p += k;
         n -= k;
         ctx->flush(ctx, 0);
-        k = ctx->flush_size;
+        k = ctx->p - ctx->pflush;
     }
     memset(ctx->p, ' ', n);
     ctx->p += n;
