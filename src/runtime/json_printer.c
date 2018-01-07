@@ -163,25 +163,34 @@ int flatcc_json_printer_fmt_bool(char *buf, int n)
     return 5;
 }
 
-static void print_string_part(flatcc_json_printer_t *ctx, const char *name, size_t len)
+static void print_ex(flatcc_json_printer_t *ctx, const char *s, size_t n)
 {
     size_t k;
 
-    if (ctx->p + len >= ctx->pflush) {
-        if (ctx->p >= ctx->pflush) {
-            ctx->flush(ctx, 0);
-        }
-        while (ctx->p + len >= ctx->pflush) {
-            k = ctx->pflush - ctx->p;
-            memcpy(ctx->p, name, k);
-            ctx->p += k;
-            name += k;
-            len -= k;
-            ctx->flush(ctx, 0);
-        } 
+    if (ctx->p >= ctx->pflush) {
+        ctx->flush(ctx, 0);
     }
-    memcpy(ctx->p, name, len);
-    ctx->p += len;
+    k = ctx->flush_size;
+    while (n > k) {
+        memcpy(ctx->p, s, k);
+        ctx->p += k;
+        s += k;
+        n -= k;
+        ctx->flush(ctx, 0);
+        k = ctx->flush_size;
+    } 
+    memcpy(ctx->p, s, n);
+    ctx->p += n;
+}
+
+static inline void print(flatcc_json_printer_t *ctx, const char *s, size_t n)
+{
+    if (ctx->p + n >= ctx->pflush) {
+        print_ex(ctx, s, n);
+    } else {
+        memcpy(ctx->p, s, n);
+        ctx->p += n;
+    }
 }
 
 /*
@@ -195,9 +204,9 @@ static void print_string_part(flatcc_json_printer_t *ctx, const char *name, size
  * also supports UTF-16/32 little/big endian but flatbuffers only
  * support UTF-8 and we expect this in JSON input/output too).
  */
-static void print_string(flatcc_json_printer_t *ctx, const char *name, size_t len)
+static void print_string(flatcc_json_printer_t *ctx, const char *s, size_t n)
 {
-    const char *p = name;
+    const char *p = s;
     /* Unsigned is important. */
     unsigned char c, x;
     size_t k;
@@ -210,13 +219,13 @@ static void print_string(flatcc_json_printer_t *ctx, const char *name, size_t le
         while (c >= 0x20 && c != '\"' && c != '\\') {
             c = *++p;
         }
-        k = p - name;
-        print_string_part(ctx, name, k);
-        len -= k;
-        if (len == 0) {
+        k = p - s;
+        print(ctx, s, k);
+        n -= k;
+        if (n == 0) {
             break;
         }
-        name += k;
+        s += k;
         print_char('\\');
         switch (c) {
         case '"': print_char('\"'); break;
@@ -239,8 +248,8 @@ static void print_string(flatcc_json_printer_t *ctx, const char *name, size_t le
             break;
         }
         ++p;
-        --len;
-        ++name;
+        --n;
+        ++s;
     }
     print_char('\"');
 }
@@ -279,34 +288,34 @@ static void print_uint8_vector_base64_object(flatcc_json_printer_t *ctx, const v
     print_char('\"');
 }
 
-static void print_indent_ex(flatcc_json_printer_t *ctx, size_t k)
+static void print_indent_ex(flatcc_json_printer_t *ctx, size_t n)
 {
-    size_t m;
+    size_t k;
 
     if (ctx->p >= ctx->pflush) {
         ctx->flush(ctx, 0);
     }
-    m = ctx->pflush - ctx->p;
-    while (k > m) {
-        memset(ctx->p, ' ', m);
-        ctx->p += m;
-        k -= m;
+    k = ctx->flush_size;
+    while (n > k) {
+        memset(ctx->p, ' ', k);
+        ctx->p += k;
+        n -= k;
         ctx->flush(ctx, 0);
-        m = ctx->flush_size;
+        k = ctx->flush_size;
     }
-    memset(ctx->p, ' ', k);
-    ctx->p += k;
+    memset(ctx->p, ' ', n);
+    ctx->p += n;
 }
 
 static inline void print_indent(flatcc_json_printer_t *ctx)
 {
-    size_t k = ctx->level * ctx->indent;
+    size_t n = ctx->level * ctx->indent;
 
-    if (ctx->p + k > ctx->pflush) {
-        print_indent_ex(ctx, k);
+    if (ctx->p + n > ctx->pflush) {
+        print_indent_ex(ctx, n);
     } else {
-        memset(ctx->p, ' ', k);
-        ctx->p += k;
+        memset(ctx->p, ' ', n);
+        ctx->p += n;
     }
 }
 
@@ -321,7 +330,7 @@ void flatcc_json_printer_string(flatcc_json_printer_t *ctx, const char *s, int n
 
 void flatcc_json_printer_write(flatcc_json_printer_t *ctx, const char *s, int n)
 {
-    print_string_part(ctx, s, n);
+    print(ctx, s, n);
 }
 
 void flatcc_json_printer_nl(flatcc_json_printer_t *ctx)
@@ -362,7 +371,7 @@ static inline void print_symbol(flatcc_json_printer_t *ctx, const char *name, si
         memcpy(ctx->p, name, len);
         ctx->p += len;
     } else {
-        print_string_part(ctx, name, len);
+        print(ctx, name, len);
     }
     *ctx->p = '\"';
     ctx->p += !ctx->unquote;
@@ -414,7 +423,7 @@ void flatcc_json_printer_enum_flag(flatcc_json_printer_t *ctx, int count, const 
 {
     *ctx->p = ' ';
     ctx->p += count > 0;
-    print_string_part(ctx, symbol, len);
+    print(ctx, symbol, len);
 }
 
 static inline void print_string_object(flatcc_json_printer_t *ctx, const void *p)
@@ -920,9 +929,9 @@ void flatcc_json_printer_union_field(flatcc_json_printer_t *ctx,
         memcpy(ctx->p, name, len);
         ctx->p += len;
     } else {
-        print_string_part(ctx, name, len);
+        print(ctx, name, len);
     }
-    print_string_part(ctx, "_type", 5);
+    print(ctx, "_type", 5);
     *ctx->p = '\"';
     ctx->p += !ctx->unquote;
     print_char(':');
