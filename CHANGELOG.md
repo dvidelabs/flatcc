@@ -4,6 +4,8 @@
 
 - Fix parent namespace lookup in the schema parser when the namespace
   prefix is omitted.
+- Fix garbage printing and reading memory out of bounds in json printing
+  when exhausting flush buffer (#70).
 
 ## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,

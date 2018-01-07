@@ -171,14 +171,14 @@ static void print_string_part(flatcc_json_printer_t *ctx, const char *name, size
         if (ctx->p >= ctx->pflush) {
             ctx->flush(ctx, 0);
         }
-        do {
+        while (ctx->p + len >= ctx->pflush) {
             k = ctx->pflush - ctx->p;
             memcpy(ctx->p, name, k);
             ctx->p += k;
             name += k;
             len -= k;
             ctx->flush(ctx, 0);
-        } while (ctx->p + len >= ctx->pflush);
+        } 
     }
     memcpy(ctx->p, name, len);
     ctx->p += len;
