@@ -21,7 +21,8 @@
 
 enum flatcc_json_parser_flags {
     flatcc_json_parser_f_skip_unknown = 1,
-    flatcc_json_parser_f_force_add = 2
+    flatcc_json_parser_f_force_add = 2,
+    flatcc_json_parser_f_with_size = 4,
 };
 
 #define FLATCC_JSON_PARSE_ERROR_MAP(XX)                                     \
@@ -797,6 +798,14 @@ const char *flatcc_json_parser_build_uint8_vector_base64(flatcc_json_parser_t *c
  */
 const char *flatcc_json_parser_generic_json(flatcc_json_parser_t *ctx, const char *buf, const char *end);
 
+/* Parse a JSON table. */
+typedef const char *flatcc_json_parser_table_f(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, flatcc_builder_ref_t *pref);
+
+/* Parses a JSON struct. */
+typedef const char *flatcc_json_parser_struct_f(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, flatcc_builder_ref_t *pref);
+
 /* Constructs a table, struct, or string object unless the type is 0 or unknown. */
 typedef const char *flatcc_json_parser_union_f(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, uint8_t type, flatcc_builder_ref_t *pref);
@@ -832,6 +841,31 @@ const char *flatcc_json_parser_union_type_vector(flatcc_json_parser_t *ctx,
         flatcc_json_parser_integral_symbol_f *type_parsers[],
         flatcc_json_parser_union_f *union_parser,
         flatcc_json_parser_is_known_type_f accept_type);
+
+/*
+ * Parses a table as root.
+ *
+ * Use the flag `flatcc_json_parser_f_with_size` to create a buffer with
+ * size prefix.
+ *
+ * `ctx` may be null or an uninitialized json parser to receive parse results.
+ * `builder` must a newly initialized or reset builder object.
+ * `buf`, `bufsiz` may be larger than the parsed json if trailing
+ * space or zeroes are expected, but they must represent a valid memory buffer.
+ * `fid` must be null, or a valid file identifier.
+ * `flags` default to 0. See also `flatcc_json_parser_flags`.
+ */
+int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
+        const char *buf, size_t bufsiz, int flags, const char *fid,
+        flatcc_json_parser_table_f *parser);
+
+/*
+ * Similar to `flatcc_json_parser_table_as_root` but parses a struct as
+ * root.
+ */
+int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
+        const char *buf, size_t bufsiz, int flags, const char *fid,
+        flatcc_json_parser_struct_f *parser);
 
 #include "flatcc/portable/pdiagnostic_pop.h"
 #endif /* FLATCC_JSON_PARSE_H */

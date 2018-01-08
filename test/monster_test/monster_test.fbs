@@ -1,5 +1,6 @@
 // test schema file
 
+include "attributes.fbs";
 include "include_test1.fbs";
 
 struct InGlobalNamespace {}
@@ -51,7 +52,12 @@ enum Color:byte (bit_flags) { Red = 0, Green, Blue = 3, }
 // Wont' work:
 //    union Any { Monster, TestSimpleTableWithEnum, MyGame.Example2.Monster } 
 
-union Any { Monster, TestSimpleTableWithEnum, Monster2: MyGame.Example2.Monster } 
+union Any {
+    Monster,
+    TestSimpleTableWithEnum,
+    Monster2: MyGame.Example2.Monster,
+    Alt
+} 
 
 struct Test { a:short; b:byte; }
 
@@ -60,7 +66,7 @@ table emptytable {}
 table with_emptystruct { empty: emptystruct; }
 enum notemptyenum:int { x}
 
-table TestSimpleTableWithEnum {
+table TestSimpleTableWithEnum (csharp_partial) {
   color: Color = Green;
   color2: Color = Color.Green;
   uc : ubyte = MyGame.Example.Color.Green;
@@ -85,10 +91,27 @@ struct Vec3 (force_align: 16) {
   test3:Test;
 }
 
+struct Ability {
+  id:uint(key);
+  distance:uint;
+}
+
 table Stat {
   id:string;
   val:long;
   count:ushort;
+}
+
+table Alt {
+  prefix: TestJSONPrefix;
+  movie:Fantasy.Movie;
+  manyany: [Any];
+}
+
+table TestJSONPrefix {
+  testjsonprefixparsing:TestJSONPrefixParsing;
+  testjsonprefixparsing2:TestJSONPrefixParsing2;
+  testjsonprefixparsing3:TestJSONPrefixParsing3;
 }
 
 table TestJSONPrefixParsing
@@ -140,11 +163,14 @@ table Monster {
   /// multiline too
   testarrayoftables:[Monster] (id: 11);
   testarrayofstring:[string] (id: 10);
+  testarrayofstring2:[string] (id: 28);
   testarrayofbools:[bool] (id: 24);
+  testarrayofsortedstruct:[Ability] (id: 29);
   enemy:MyGame.Example.Monster (id:12);  // Test referring by full namespace.
   // id 7 resever for Any_type
   test:Any (id: 8);
   test4:[Test] (id: 9);
+  test5:[Test] (id: 31);
   testnestedflatbuffer:[ubyte] (id:13, nested_flatbuffer: "Monster");
   testempty:Stat (id:14);
   testbool:bool = 1 (id:15);
@@ -153,19 +179,18 @@ table Monster {
   testhashs64_fnv1:long (id:18, hash:"fnv1_64");
   testhashu64_fnv1:ulong (id:19, hash:"fnv1_64");
   testhashs32_fnv1a:int (id:20, hash:"fnv1a_32");
-  testhashu32_fnv1a:uint (id:21, hash:"fnv1a_32");
+  testhashu32_fnv1a:uint (id:21, hash:"fnv1a_32", cpp_type:"Stat");
   testhashs64_fnv1a:long (id:22, hash:"fnv1a_64");
   testhashu64_fnv1a:ulong (id:23, hash:"fnv1a_64");
-  testjsonprefixparsing:TestJSONPrefixParsing (id:25);
-  testjsonprefixparsing2:TestJSONPrefixParsing2 (id:26);
-  testjsonprefixparsing3:TestJSONPrefixParsing3 (id:27);
-  // id 28 reserver for manyany_type
-  manyany: [Any] (id:29);
-  testbase64:TestBase64 (id:30);
-  movie:Fantasy.Movie (id:31);
+  testf:float = 3.0 (id:25);
+  //testf:float = 3.14159 (id:25);
+  testf2:float = 3 (id:26);
+  testf3:float (id:27);
+  flex:[ubyte] (id:30, flexbuffer);
   vector_of_longs:[long] (id:32);
   vector_of_doubles:[double] (id:33);
   parent_namespace_test:InParentNamespace (id:34);
+  testbase64:TestBase64 (id:35);
 }
 
 table TypeAliases {
@@ -181,6 +206,11 @@ table TypeAliases {
     f64:float64;
     v8:[int8];
     vf64:[float64];
+}
+
+rpc_service MonsterStorage {
+  Store(Monster):Stat (streaming: "none");
+  Retrieve(Stat):Monster (streaming: "server", idempotent);
 }
 
 // Demonstrates the ability to have vectors of unions, and also to

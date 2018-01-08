@@ -11,7 +11,43 @@
 #undef ns
 #define ns(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Example, x)
 
-int test_json(char *json, char *expect, int expect_err, int parse_flags, int print_flags, int line)
+#undef nsf
+#define nsf(x) FLATBUFFERS_WRAP_NAMESPACE(Fantasy, x)
+
+struct test_scope {
+    const char *identifier;
+    flatcc_json_parser_table_f *parser;
+    flatcc_json_printer_table_f *printer;
+    flatcc_table_verifier_f *verifier;
+};
+
+static const struct test_scope Monster = {
+    /* The is the schema global file identifier. */
+    ns(Monster_identifier),
+    ns(Monster_parse_json_table),
+    ns(Monster_print_json_table),
+    ns(Monster_table_verify)
+};
+
+static const struct test_scope Alt = {
+    /* This is the type hash identifier. */
+    ns(Alt_type_identifier),
+    ns(Alt_parse_json_table),
+    ns(Alt_print_json_table),
+    ns(Alt_table_verify)
+};
+
+static const struct test_scope Movie = {
+    /* This is the type hash identifier. */
+    nsf(Movie_type_identifier),
+    nsf(Movie_parse_json_table),
+    nsf(Movie_print_json_table),
+    nsf(Movie_table_verify)
+};
+
+int test_json(const struct test_scope *scope, char *json,
+        char *expect, int expect_err,
+        int parse_flags, int print_flags, int line)
 {
     int ret = -1;
     int err;
@@ -19,37 +55,34 @@ int test_json(char *json, char *expect, int expect_err, int parse_flags, int pri
     char *buf = 0;
     size_t flatbuffer_size, buf_size;
     flatcc_builder_t builder, *B;
-    flatcc_json_parser_t parser;
-    flatcc_json_printer_t printer;
+    flatcc_json_parser_t parser_ctx;
+    flatcc_json_printer_t printer_ctx;
     int i;
 
     B = &builder;
     flatcc_builder_init(B);
-    flatcc_json_printer_init_dynamic_buffer(&printer, 0);
-    flatcc_json_printer_set_flags(&printer, print_flags);
-
-    err = monster_test_parse_json(B, &parser, json, strlen(json), parse_flags);
+    flatcc_json_printer_init_dynamic_buffer(&printer_ctx, 0);
+    flatcc_json_printer_set_flags(&printer_ctx, print_flags);
+    err = flatcc_json_parser_table_as_root(B, &parser_ctx, json, strlen(json), parse_flags,
+            scope->identifier, scope->parser);
     if (err != expect_err) {
-        if (expect_err)
-        {
-            if( err )
-            {
-                fprintf(stderr, "%d: json test: parse failed with: %s\n", line, flatcc_json_parser_error_string(err));
-                fprintf(stderr, "but expected to fail with: %s\n", flatcc_json_parser_error_string(expect_err));
+        if (expect_err) {
+            if (err) {
+                fprintf(stderr, "%d: json test: parse failed with: %s\n",
+                        line, flatcc_json_parser_error_string(err));
+                fprintf(stderr, "but expected to fail with: %s\n",
+                        flatcc_json_parser_error_string(expect_err));
+                fprintf(stderr, "%s\n", json);
+            } else {
+                fprintf(stderr, "%d: json test: parse successful, but expected to fail with: %s\n",
+                        line, flatcc_json_parser_error_string(expect_err));
                 fprintf(stderr, "%s\n", json);
             }
-            else
-            {
-                fprintf(stderr, "%d: json test: parse successful, but expected to fail with: %s\n", line, flatcc_json_parser_error_string(expect_err));
-                fprintf(stderr, "%s\n", json);
-            }
-        }
-        else
-        {
+        } else {
             fprintf(stderr, "%d: json test: parse failed: %s\n", line, flatcc_json_parser_error_string(err));
             fprintf(stderr, "%s\n", json);
         }
-        for (i = 0; i < parser.pos - 1; ++i) {
+        for (i = 0; i < parser_ctx.pos - 1; ++i) {
             fprintf(stderr, " ");
         }
         fprintf(stderr, "^\n");
@@ -60,13 +93,14 @@ int test_json(char *json, char *expect, int expect_err, int parse_flags, int pri
         goto done;
     }
     flatbuffer = flatcc_builder_finalize_aligned_buffer(B, &flatbuffer_size);
-    if ((ret = ns(Monster_verify_as_root(flatbuffer, flatbuffer_size)))) {
-        fprintf(stderr, "%s:%d: buffer verification failed: %s\n", __FILE__, line, flatcc_verify_error_string(ret));
+    if ((ret = flatcc_verify_table_as_root(flatbuffer, flatbuffer_size, scope->identifier, scope->verifier))) {
+        fprintf(stderr, "%s:%d: buffer verification failed: %s\n",
+                __FILE__, line, flatcc_verify_error_string(ret));
         goto failed;
     }
 
-    ns(Monster_print_json_as_root(&printer, flatbuffer, flatbuffer_size, "MONS"));
-    buf = flatcc_json_printer_get_buffer(&printer, &buf_size);
+    flatcc_json_printer_table_as_root(&printer_ctx, flatbuffer, flatbuffer_size, scope->identifier, scope->printer);
+    buf = flatcc_json_printer_get_buffer(&printer_ctx, &buf_size);
     if (!buf || strcmp(expect, buf)) {
         fprintf(stderr, "%d: json test: printed buffer not as expected, got:\n", line);
         fprintf(stderr, "%s\n", buf);
@@ -74,36 +108,37 @@ int test_json(char *json, char *expect, int expect_err, int parse_flags, int pri
         fprintf(stderr, "%s\n", expect);
         goto failed;
     }
-
     ret = 0;
+
 done:
-    if (flatbuffer) {
-        aligned_free(flatbuffer);
-    }
+    flatcc_builder_aligned_free(flatbuffer);
     flatcc_builder_clear(B);
-    flatcc_json_printer_clear(&printer);
+    flatcc_json_printer_clear(&printer_ctx);
     return ret;
+
 failed:
     if (flatbuffer) {
         hexdump("parsed buffer", flatbuffer, flatbuffer_size, stderr);
     }
-
     ret = -1;
     goto done;
 }
 
+#define BEGIN_TEST(name) int ret = 0; const struct test_scope *scope = &name
+#define END_TEST() return ret;
+
 #define TEST(x, y) \
-    ret |= test_json((x), (y), 0, 0, 0, __LINE__);
+    ret |= test_json(scope, (x), (y), 0, 0, 0, __LINE__);
 
 #define TEST_ERROR(x, err) \
-    ret |= test_json((x), 0, err, 0, 0, __LINE__);
+    ret |= test_json(scope, (x), 0, err, 0, 0, __LINE__);
 
 #define TEST_FLAGS(fparse, fprint, x, y) \
-    ret |= test_json((x), (y), 0, (fparse), (fprint), __LINE__);
+    ret |= test_json(scope, (x), (y), 0, (fparse), (fprint), __LINE__);
 
 int edge_case_tests()
 {
-    int ret = 0;
+    BEGIN_TEST(Monster);
 /*
  * Each symbolic value is type coerced and added. One might expect
  * or'ing flags together, but it doesn't work with signed values
@@ -142,7 +177,7 @@ int edge_case_tests()
 
     TEST_FLAGS(0, flatcc_json_printer_f_force_default,
             "{ \"name\": \"Monster\"}",
-"{\"mana\":150,\"hp\":100,\"name\":\"Monster\",\"color\":\"Blue\",\"testbool\":true,\"testhashs32_fnv1\":0,\"testhashu32_fnv1\":0,\"testhashs64_fnv1\":0,\"testhashu64_fnv1\":0,\"testhashs32_fnv1a\":0,\"testhashu32_fnv1a\":0,\"testhashs64_fnv1a\":0,\"testhashu64_fnv1a\":0}");
+"{\"mana\":150,\"hp\":100,\"name\":\"Monster\",\"color\":\"Blue\",\"testbool\":true,\"testhashs32_fnv1\":0,\"testhashu32_fnv1\":0,\"testhashs64_fnv1\":0,\"testhashu64_fnv1\":0,\"testhashs32_fnv1a\":0,\"testhashu32_fnv1a\":0,\"testhashs64_fnv1a\":0,\"testhashu64_fnv1a\":0,\"testf\":3,\"testf2\":3,\"testf3\":0}");
 
     TEST_FLAGS(flatcc_json_parser_f_force_add, 0,
             "{ \"name\": \"Monster\", \"color\": \"Blue\"}",
@@ -180,7 +215,7 @@ int edge_case_tests()
 
     TEST_FLAGS(0, flatcc_json_printer_f_force_default,
             "{ name: \"Monster\"}",
-"{\"mana\":150,\"hp\":100,\"name\":\"Monster\",\"color\":\"Blue\",\"testbool\":true,\"testhashs32_fnv1\":0,\"testhashu32_fnv1\":0,\"testhashs64_fnv1\":0,\"testhashu64_fnv1\":0,\"testhashs32_fnv1a\":0,\"testhashu32_fnv1a\":0,\"testhashs64_fnv1a\":0,\"testhashu64_fnv1a\":0}");
+"{\"mana\":150,\"hp\":100,\"name\":\"Monster\",\"color\":\"Blue\",\"testbool\":true,\"testhashs32_fnv1\":0,\"testhashu32_fnv1\":0,\"testhashs64_fnv1\":0,\"testhashu64_fnv1\":0,\"testhashs32_fnv1a\":0,\"testhashu32_fnv1a\":0,\"testhashs64_fnv1a\":0,\"testhashu64_fnv1a\":0,\"testf\":3,\"testf2\":3,\"testf3\":0}");
 
     TEST_FLAGS(flatcc_json_parser_f_force_add, 0,
             "{ name: \"Monster\", color: Blue}",
@@ -228,12 +263,12 @@ int edge_case_tests()
 
 #endif
 
-    return ret;
+    END_TEST();
 }
 
 int error_case_tests()
 {
-    int ret = 0;
+    BEGIN_TEST(Monster);
 
     TEST_ERROR( "{ \"nickname\": \"Monster\" }",
                 flatcc_json_parser_error_unknown_symbol );
@@ -299,7 +334,7 @@ int error_case_tests()
 
 #endif
 
-    return ret;
+    END_TEST();
 }
 
 #define RANDOM_BASE64 "zLOuiUjH49tz4Ap2JnmpTX5NqoiMzlD8hSw45QCS2yaSp7UYoA" \
@@ -316,7 +351,7 @@ int error_case_tests()
 
 int base64_tests()
 {
-    int ret = 0;
+    BEGIN_TEST(Monster);
 
     /* Reference */
     TEST(   "{ \"name\": \"Monster\" }",
@@ -346,7 +381,7 @@ int base64_tests()
 
 /* Test case from Googles flatc implementation. */
 #if UQ
-	TEST(	"{name: \"Monster\","
+    TEST(    "{name: \"Monster\","
             "testbase64: {"
             "data: \"23A/47d450+sdfx9+wRYIS09ckas/asdFBQ=\","
             "urldata: \"23A_47d450-sdfx9-wRYIS09ckas_asdFBQ=\","
@@ -373,80 +408,87 @@ int base64_tests()
             "}}");
 #endif
 
-    return ret;
+    END_TEST();
 }
 
 int mixed_type_union_tests()
 {
-    int ret = 0;
+    BEGIN_TEST(Movie);
 
     /* Reference */
-    TEST(   "{ \"name\": \"Monster\" }",
-            "{\"name\":\"Monster\"}");
 
-    TEST(   "{ \"name\": \"Monster\", \"movie\":{} }",
-            "{\"name\":\"Monster\",\"movie\":{}}");
+    TEST(   "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 } }",
+            "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19}}");
 
-    TEST(   "{ \"name\": \"Monster\", \"movie\":"
-            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 } }}",
-            "{\"name\":\"Monster\",\"movie\":"
-            "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19}}}");
-
-    TEST(   "{ \"name\": \"Monster\", \"movie\":"
-            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
-            "  \"side_kick_type\": \"Other\", \"side_kick\": \"a donkey\"}}",
-            "{\"name\":\"Monster\",\"movie\":"
+    TEST(   "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
+            "  \"side_kick_type\": \"Other\", \"side_kick\": \"a donkey\"}",
             "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19},"
-            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\"}}");
+            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\"}");
 
-    TEST(   "{ \"name\": \"Monster\", \"movie\":"
-            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
+    TEST(   "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
             "  \"side_kick_type\": \"Fantasy.Character.Other\", \"side_kick\": \"a donkey\"}}",
-            "{\"name\":\"Monster\",\"movie\":"
             "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19},"
-            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\"}}");
+            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\"}");
 
-    TEST(   "{ \"name\": \"Monster\", \"movie\":"
-            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
+    TEST(   "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
             "  \"side_kick_type\": \"Fantasy.Character.Other\", \"side_kick\": \"a donkey\","
-            "  \"antagonist_type\": \"MuLan\", \"antagonist\": {\"sword_attack_damage\": 42}}}",
-            "{\"name\":\"Monster\",\"movie\":"
+            "  \"antagonist_type\": \"MuLan\", \"antagonist\": {\"sword_attack_damage\": 42}}",
             "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19},"
             "\"antagonist_type\":\"MuLan\",\"antagonist\":{\"sword_attack_damage\":42},"
-            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\"}}");
+            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\"}");
 
-    TEST(   "{ \"name\": \"Monster\", \"movie\":"
-            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
+    TEST(   "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
             "  \"side_kick_type\": \"Fantasy.Character.Other\", \"side_kick\": \"a donkey\","
             "  \"antagonist_type\": \"MuLan\", \"antagonist\": {\"sword_attack_damage\": 42},"
-            " \"characters_type\": [], \"characters\": []}}",
-            "{\"name\":\"Monster\",\"movie\":"
+            " \"characters_type\": [], \"characters\": []}",
             "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19},"
             "\"antagonist_type\":\"MuLan\",\"antagonist\":{\"sword_attack_damage\":42},"
             "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\","
-            "\"characters_type\":[],\"characters\":[]}}")
+            "\"characters_type\":[],\"characters\":[]}")
 
-    TEST(   "{ \"name\": \"Monster\", \"movie\":"
-            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
+    TEST(   "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
             "  \"side_kick_type\": \"Fantasy.Character.Other\", \"side_kick\": \"a donkey\","
             "  \"antagonist_type\": \"MuLan\", \"antagonist\": {\"sword_attack_damage\": 42},"
             " \"characters_type\": [\"Fantasy.Character.Rapunzel\", \"Other\", 0, \"MuLan\"],"
-            " \"characters\": [{\"hair_length\":19}, \"unattributed extras\", null, {\"sword_attack_damage\":2}]}}",
-            "{\"name\":\"Monster\",\"movie\":"
+            " \"characters\": [{\"hair_length\":19}, \"unattributed extras\", null, {\"sword_attack_damage\":2}]}",
             "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19},"
             "\"antagonist_type\":\"MuLan\",\"antagonist\":{\"sword_attack_damage\":42},"
             "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\","
             "\"characters_type\":[\"Rapunzel\",\"Other\",\"NONE\",\"MuLan\"],"
-            "\"characters\":[{\"hair_length\":19},\"unattributed extras\",null,{\"sword_attack_damage\":2}]}}")
+            "\"characters\":[{\"hair_length\":19},\"unattributed extras\",null,{\"sword_attack_damage\":2}]}")
 
-    TEST(   "{ \"name\": \"Monster\", \"movie\":"
-            "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
-            "  \"side_kick_type\": \"Character.Other\", \"side_kick\": \"a donkey\"}}",
-            "{\"name\":\"Monster\",\"movie\":"
+    TEST(   "{ \"main_character_type\": \"Rapunzel\", \"main_character\": { \"hair_length\": 19 },"
+            "  \"side_kick_type\": \"Character.Other\", \"side_kick\": \"a donkey\"}",
             "{\"main_character_type\":\"Rapunzel\",\"main_character\":{\"hair_length\":19},"
-            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\"}}");
+            "\"side_kick_type\":\"Other\",\"side_kick\":\"a donkey\"}");
 
-    return ret;
+    END_TEST();
+}
+
+int union_vector_tests()
+{
+    BEGIN_TEST(Alt);
+    /* Union vector */
+
+    TEST(   "{ \"manyany_type\": [ \"Monster\" ], \"manyany\": [{\"name\": \"Joe\"}] }",
+            "{\"manyany_type\":[\"Monster\"],\"manyany\":[{\"name\":\"Joe\"}]}");
+
+    TEST(   "{\"manyany_type\": [ \"NONE\" ], \"manyany\": [ null ] }",
+            "{\"manyany_type\":[\"NONE\"],\"manyany\":[null]}");
+
+    TEST(   "{\"manyany_type\": [ \"Monster\", \"NONE\" ], \"manyany\": [{\"name\": \"Joe\"}, null] }",
+            "{\"manyany_type\":[\"Monster\",\"NONE\"],\"manyany\":[{\"name\":\"Joe\"},null]}");
+
+    TEST(   "{\"manyany_type\": [ \"Monster\" ], \"manyany\": [ { \"name\":\"Joe\", \"test_type\": \"Monster\", \"test\": { \"name\": \"any Monster\" } } ] }",
+            "{\"manyany_type\":[\"Monster\"],\"manyany\":[{\"name\":\"Joe\",\"test_type\":\"Monster\",\"test\":{\"name\":\"any Monster\"}}]}");
+
+    TEST(   "{\"manyany\": [{\"name\": \"Joe\"}], \"manyany_type\": [ \"Monster\" ] }",
+            "{\"manyany_type\":[\"Monster\"],\"manyany\":[{\"name\":\"Joe\"}]}");
+
+    TEST(   "{\"manyany\": [{\"manyany\":[null, null], \"manyany_type\": [\"NONE\", \"NONE\"]}], \"manyany_type\": [ \"Alt\" ] }",
+            "{\"manyany_type\":[\"Alt\"],\"manyany\":[{\"manyany_type\":[\"NONE\",\"NONE\"],\"manyany\":[null,null]}]}");
+
+    END_TEST();
 }
 
 /*
@@ -459,10 +501,11 @@ int mixed_type_union_tests()
  */
 int main()
 {
-    int ret = 0;
+    BEGIN_TEST(Monster);
 
     ret |= edge_case_tests();
     ret |= error_case_tests();
+    ret |= union_vector_tests();
     ret |= base64_tests();
     ret |= mixed_type_union_tests();
 
@@ -709,50 +752,43 @@ int main()
 
     /* Test empty table */
     TEST(   "{ \"name\": \"Monster\", \"testempty\": {} }",
-            "{\"name\":\"Monster\",\"testempty\":{}}" );
+            "{\"name\":\"Monster\",\"testempty\":{}}");
 
     /* Test empty array */
     TEST(   "{ \"name\": \"Monster\", \"testarrayoftables\": [] }",
-            "{\"name\":\"Monster\",\"testarrayoftables\":[]}" );
+            "{\"name\":\"Monster\",\"testarrayoftables\":[]}");
 
     /* Test JSON prefix parsing */
-    TEST(   "{ \"name\": \"Monster\", \"testjsonprefixparsing\": { \"aaaa\": \"test\", \"aaaa12345\": 17 } }",
-            "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"aaaa\":\"test\",\"aaaa12345\":17}}" );
+    TEST(   "{ \"name\": \"Monster\", \"test_type\":\"Alt\", \"test\":{\"prefix\":{"
+            "\"testjsonprefixparsing\": { \"aaaa\": \"test\", \"aaaa12345\": 17 } }}}",
+            "{\"name\":\"Monster\",\"test_type\":\"Alt\",\"test\":{\"prefix\":{"
+            "\"testjsonprefixparsing\":{\"aaaa\":\"test\",\"aaaa12345\":17}}}}");
 
-    TEST(   "{ \"name\": \"Monster\", \"testjsonprefixparsing\": { \"bbbb\": \"test\", \"bbbb1234\": 19 } }",
-            "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"bbbb\":\"test\",\"bbbb1234\":19}}" );
+    /* TODO: this parses with the last to }} missing, although it does not add the broken objects. */
+    TEST(   "{ \"name\": \"Monster\", \"test_type\":\"Alt\", \"test\":{\"prefix\":{"
+            "\"testjsonprefixparsing\": { \"bbbb\": \"test\", \"bbbb1234\": 19 } }}}",
+            "{\"name\":\"Monster\",\"test_type\":\"Alt\",\"test\":{\"prefix\":{"
+            "\"testjsonprefixparsing\":{\"bbbb\":\"test\",\"bbbb1234\":19}}}}");
 
-    TEST(   "{ \"name\": \"Monster\", \"testjsonprefixparsing\": { \"cccc\": \"test\", \"cccc1234\": 19, \"cccc12345\": 17 } }",
-            "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"cccc\":\"test\",\"cccc1234\":19,\"cccc12345\":17}}" );
+    TEST(   "{ \"name\": \"Monster\", \"test_type\":\"Alt\", \"test\":{\"prefix\":{"
+            "\"testjsonprefixparsing\": { \"cccc\": \"test\", \"cccc1234\": 19, \"cccc12345\": 17 } }}}",
+            "{\"name\":\"Monster\",\"test_type\":\"Alt\",\"test\":{\"prefix\":{"
+            "\"testjsonprefixparsing\":{\"cccc\":\"test\",\"cccc1234\":19,\"cccc12345\":17}}}}");
 
-    TEST(   "{ \"name\": \"Monster\", \"testjsonprefixparsing\": { \"dddd1234\": 19, \"dddd12345\": 17 } }",
-            "{\"name\":\"Monster\",\"testjsonprefixparsing\":{\"dddd1234\":19,\"dddd12345\":17}}" );
+    TEST(   "{ \"name\": \"Monster\", \"test_type\":\"Alt\", \"test\":{\"prefix\":{"
+            "\"testjsonprefixparsing\": { \"dddd1234\": 19, \"dddd12345\": 17 } }}}",
+            "{\"name\":\"Monster\",\"test_type\":\"Alt\",\"test\":{\"prefix\":{"
+            "\"testjsonprefixparsing\":{\"dddd1234\":19,\"dddd12345\":17}}}}");
 
-    TEST(   "{ \"name\": \"Monster\", \"testjsonprefixparsing2\": { \"aaaa_bbbb_steps\": 19, \"aaaa_bbbb_start_\": 17 } }",
-            "{\"name\":\"Monster\",\"testjsonprefixparsing2\":{\"aaaa_bbbb_steps\":19,\"aaaa_bbbb_start_\":17}}" );
+    TEST(   "{ \"name\": \"Monster\", \"test_type\":\"Alt\", \"test\":{\"prefix\":{"
+            "\"testjsonprefixparsing2\": { \"aaaa_bbbb_steps\": 19, \"aaaa_bbbb_start_\": 17 } }}}",
+            "{\"name\":\"Monster\",\"test_type\":\"Alt\",\"test\":{\"prefix\":{"
+            "\"testjsonprefixparsing2\":{\"aaaa_bbbb_steps\":19,\"aaaa_bbbb_start_\":17}}}}");
 
-    TEST(   "{ \"name\": \"Monster\", \"testjsonprefixparsing3\": { \"aaaa_bbbb_steps\": 19, \"aaaa_bbbb_start_steps\": 17 } }",
-            "{\"name\":\"Monster\",\"testjsonprefixparsing3\":{\"aaaa_bbbb_steps\":19,\"aaaa_bbbb_start_steps\":17}}" );
-
-    /* Union vector */
-
-    TEST(   "{ \"name\": \"Monster\", \"manyany_type\": [ \"Monster\" ], \"manyany\": [{\"name\": \"Joe\"}] }",
-            "{\"name\":\"Monster\",\"manyany_type\":[\"Monster\"],\"manyany\":[{\"name\":\"Joe\"}]}");
-
-    TEST(   "{ \"name\": \"Monster\", \"manyany_type\": [ \"NONE\" ], \"manyany\": [ null ] }",
-            "{\"name\":\"Monster\",\"manyany_type\":[\"NONE\"],\"manyany\":[null]}");
-
-    TEST(   "{ \"name\": \"Monster\", \"manyany_type\": [ \"Monster\", \"NONE\" ], \"manyany\": [{\"name\": \"Joe\"}, null] }",
-            "{\"name\":\"Monster\",\"manyany_type\":[\"Monster\",\"NONE\"],\"manyany\":[{\"name\":\"Joe\"},null]}");
-
-    TEST(   "{ \"name\": \"Monster\", \"manyany_type\": [ \"Monster\" ], \"manyany\": [ { \"name\":\"Joe\", \"test_type\": \"Monster\", \"test\": { \"name\": \"any Monster\" } } ] }",
-            "{\"name\":\"Monster\",\"manyany_type\":[\"Monster\"],\"manyany\":[{\"name\":\"Joe\",\"test_type\":\"Monster\",\"test\":{\"name\":\"any Monster\"}}]}");
-
-    TEST(   "{ \"name\": \"Monster\", \"manyany\": [{\"name\": \"Joe\"}], \"manyany_type\": [ \"Monster\" ] }",
-            "{\"name\":\"Monster\",\"manyany_type\":[\"Monster\"],\"manyany\":[{\"name\":\"Joe\"}]}");
-
-    TEST(   "{ \"name\": \"Monster\", \"manyany\": [{\"name\": \"Joe\", \"manyany\":[null, null], \"manyany_type\": [\"NONE\", \"NONE\"]}], \"manyany_type\": [ \"Monster\" ] }",
-            "{\"name\":\"Monster\",\"manyany_type\":[\"Monster\"],\"manyany\":[{\"name\":\"Joe\",\"manyany_type\":[\"NONE\",\"NONE\"],\"manyany\":[null,null]}]}");
+    TEST(   "{ \"name\": \"Monster\", \"test_type\":\"Alt\", \"test\":{\"prefix\":{"
+            "\"testjsonprefixparsing3\": { \"aaaa_bbbb_steps\": 19, \"aaaa_bbbb_start_steps\": 17 } }}}",
+            "{\"name\":\"Monster\",\"test_type\":\"Alt\",\"test\":{\"prefix\":{"
+            "\"testjsonprefixparsing3\":{\"aaaa_bbbb_steps\":19,\"aaaa_bbbb_start_steps\":17}}}}");
 
     return ret ? -1: 0;
 }

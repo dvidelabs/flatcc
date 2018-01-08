@@ -1137,3 +1137,43 @@ const char *flatcc_json_parser_union_type_vector(flatcc_json_parser_t *ctx,
 failed:
     return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);
 }
+
+int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
+        const char *buf, size_t bufsiz, int flags, const char *fid,
+        flatcc_json_parser_table_f *parser)
+{
+    flatcc_json_parser_t _ctx;
+    flatcc_builder_ref_t root;
+    int builder_flags = flags & flatcc_json_parser_f_with_size ? flatcc_builder_with_size : 0;
+
+    ctx = ctx ? ctx : &_ctx;
+    flatcc_json_parser_init(ctx, B, buf, buf + bufsiz, flags);
+    if (flatcc_builder_start_buffer(B, fid, 0, builder_flags)) return -1;
+    parser(ctx, buf, buf + bufsiz, &root);
+    if (ctx->error) {
+        return ctx->error;
+    }
+    if (!flatcc_builder_end_buffer(B, root)) return -1;
+    ctx->end_loc = buf;
+    return 0;
+}
+
+int flatcc_json_parser_struct_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
+        const char *buf, size_t bufsiz, int flags, const char *fid,
+        flatcc_json_parser_table_f *parser)
+{
+    flatcc_json_parser_t _ctx;
+    flatcc_builder_ref_t root;
+    int builder_flags = flags & flatcc_json_parser_f_with_size ? flatcc_builder_with_size : 0;
+
+    ctx = ctx ? ctx : &_ctx;
+    flatcc_json_parser_init(ctx, B, buf, buf + bufsiz, flags);
+    if (flatcc_builder_start_buffer(B, fid, 0, builder_flags)) return -1;
+    parser(ctx, buf, buf + bufsiz, &root);
+    if (ctx->error) {
+        return ctx->error;
+    }
+    if (!flatcc_builder_end_buffer(B, root)) return -1;
+    ctx->end_loc = buf;
+    return 0;
+}

@@ -1782,6 +1782,7 @@ int test_union_vector(flatcc_builder_t *B)
     ns(Any_vec_t) anyvec_type;
     ns(Any_union_vec_t) anyvec_union;
     ns(Any_union_t) anyelem;
+    ns(Alt_table_t) alt;
 
 
     flatcc_builder_reset(B);
@@ -1795,7 +1796,9 @@ int test_union_vector(flatcc_builder_t *B)
     ns(Any_vec_start(B));
     ns(Any_vec_push(B, ns(Any_as_TestSimpleTableWithEnum(kermit_ref))));
     anyvec_ref = ns(Any_vec_end(B));
-    ns(Monster_manyany_add(B, anyvec_ref));
+    ns(Monster_test_Alt_start(B));
+    ns(Alt_manyany_add(B, anyvec_ref));
+    ns(Monster_test_Alt_end(B));
 
     ns(Monster_end_as_root(B));
 
@@ -1807,12 +1810,17 @@ int test_union_vector(flatcc_builder_t *B)
     }
 
     mon = ns(Monster_as_root(buffer));
-    if (!ns(Monster_manyany_is_present(mon))) {
+    if (ns(Monster_test_type(mon)) != ns(Any_Alt)) {
+        printf("test field does not have Alt type");
+        goto done;
+    }
+    alt = ns(Monster_test(mon));
+    if (!alt || ns(Alt_manyany_is_present(alt))) {
         printf("manyany union vector should be present.\n");
         goto done;
     }
-    anyvec_type = ns(Monster_manyany_type(mon));
-    anyvec = ns(Monster_manyany(mon));
+    anyvec_type = ns(Alt_manyany_type(alt));
+    anyvec = ns(Alt_manyany(alt));
     n = ns(Any_vec_len(anyvec_type));
     if (n != 1) {
         printf("manyany union vector has wrong length.\n");
@@ -1832,7 +1840,7 @@ int test_union_vector(flatcc_builder_t *B)
         printf("Kermit has wrong color: %i.\n", (int)color);
         goto done;
     }
-    anyvec_union = ns(Monster_manyany_union(mon));
+    anyvec_union = ns(Alt_manyany_union(alt));
     if (ns(Any_union_vec_len(anyvec_union)) != 1) {
         printf("manyany union vector has wrong length from a different perspective.\n");
         goto done;

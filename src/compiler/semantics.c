@@ -4,6 +4,8 @@
 #include "semantics.h"
 #include "parser.h"
 #include "coerce.h"
+#include "stdio.h"
+#include "inttypes.h"
 
 /* Same order as enum! */
 static const char *fb_known_attribute_names[] = {
@@ -739,6 +741,7 @@ enum { unused_field = 0, normal_field, type_field };
 
 static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
 {
+    char msg_buf [100];
     fb_symbol_t *sym, *old, *type_sym;
     fb_member_t *member;
     fb_metadata_t *knowns[KNOWN_ATTR_COUNT], *m;
@@ -748,6 +751,8 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
     uint64_t max_id = 0;
     int key_ok, key_count = 0;
     int is_union_vector;
+    uint64_t i;
+    int max_id_errors = 10;
 
     /*
      * This just tracks the presence of a `normal_field` or a hidden
@@ -1075,7 +1080,16 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
     }
     if (!id_failed && need_id) {
         if (count && max_id >= count) {
-            error_sym(P, &ct->symbol, "id field attribute range exceeds field count");
+            for (i = 0; i < max_id; ++i) {
+                if (field_marker[i] == 0) {
+                    if (!max_id_errors--) {
+                        error_sym(P, &ct->symbol, "... more id's missing");
+                        break;
+                    }
+                    sprintf(msg_buf,  "id range not consequtive from 0, missing id: %"PRIu64"", i);
+                    error_sym(P, &ct->symbol, msg_buf);
+                }
+            }
             id_failed = 1;
         }
     }
