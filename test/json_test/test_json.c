@@ -766,6 +766,10 @@ int main()
 
     /* TODO: this parses with the last to }} missing, although it does not add the broken objects. */
     TEST(   "{ \"name\": \"Monster\", \"test_type\":\"Alt\", \"test\":{\"prefix\":{"
+            "\"testjsonprefixparsing\": { \"bbbb\": \"test\", \"bbbb1234\": 19 } }",
+            "{\"name\":\"Monster\"}");
+
+    TEST(   "{ \"name\": \"Monster\", \"test_type\":\"Alt\", \"test\":{\"prefix\":{"
             "\"testjsonprefixparsing\": { \"bbbb\": \"test\", \"bbbb1234\": 19 } }}}",
             "{\"name\":\"Monster\",\"test_type\":\"Alt\",\"test\":{\"prefix\":{"
             "\"testjsonprefixparsing\":{\"bbbb\":\"test\",\"bbbb1234\":19}}}}");
