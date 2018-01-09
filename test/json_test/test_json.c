@@ -26,7 +26,7 @@ static const struct test_scope Monster = {
     ns(Monster_identifier),
     ns(Monster_parse_json_table),
     ns(Monster_print_json_table),
-    ns(Monster_table_verify)
+    ns(Monster_verify_table)
 };
 
 static const struct test_scope Alt = {
@@ -34,7 +34,7 @@ static const struct test_scope Alt = {
     ns(Alt_type_identifier),
     ns(Alt_parse_json_table),
     ns(Alt_print_json_table),
-    ns(Alt_table_verify)
+    ns(Alt_verify_table)
 };
 
 static const struct test_scope Movie = {
@@ -42,7 +42,7 @@ static const struct test_scope Movie = {
     nsf(Movie_type_identifier),
     nsf(Movie_parse_json_table),
     nsf(Movie_print_json_table),
-    nsf(Movie_table_verify)
+    nsf(Movie_verify_table)
 };
 
 int test_json(const struct test_scope *scope, char *json,

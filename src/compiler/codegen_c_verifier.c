@@ -62,7 +62,7 @@ static int gen_union_verifier(fb_output_t *out, fb_compound_type_t *ct)
             switch (member->type.ct->symbol.kind) {
             case fb_is_table:
                 fprintf(out->fp,
-                        "    case %u: return flatcc_verify_union_table(ud, %s_table_verify); /* %.*s */\n",
+                        "    case %u: return flatcc_verify_union_table(ud, %s_verify_table); /* %.*s */\n",
                         (unsigned)member->value.u, snref.text, n, s);
                 continue;
             case fb_is_struct:
@@ -102,7 +102,7 @@ static int gen_table_verifier(fb_output_t *out, fb_compound_type_t *ct)
     fb_compound_name(ct, &snt);
 
     fprintf(out->fp,
-            "static int %s_table_verify(flatcc_table_verifier_descriptor_t *td)\n{\n",
+            "static int %s_verify_table(flatcc_table_verifier_descriptor_t *td)\n{\n",
             snt.text);
 
     for (sym = ct->members; sym; sym = sym->link) {
@@ -131,7 +131,7 @@ static int gen_table_verifier(fb_output_t *out, fb_compound_type_t *ct)
                 if (member->nest->symbol.kind == fb_is_table) {
                     fprintf(out->fp,
                         "flatcc_verify_table_as_nested_root(td, %"PRIu64", "
-                        "%u, 0, %"PRIu16", %s_table_verify)",
+                        "%u, 0, %"PRIu16", %s_verify_table)",
                         member->id, required, member->align, snref.text);
                 } else {
                     fprintf(out->fp,
@@ -166,7 +166,7 @@ static int gen_table_verifier(fb_output_t *out, fb_compound_type_t *ct)
                 break;
             case fb_is_table:
                 fprintf(out->fp,
-                        "flatcc_verify_table_field(td, %"PRIu64", %d, &%s_table_verify)",
+                        "flatcc_verify_table_field(td, %"PRIu64", %d, &%s_verify_table)",
                         member->id, required, snref.text);
                 break;
             case fb_is_union:
@@ -184,7 +184,7 @@ static int gen_table_verifier(fb_output_t *out, fb_compound_type_t *ct)
             switch (member->type.ct->symbol.kind) {
             case fb_is_table:
                 fprintf(out->fp,
-                        "flatcc_verify_table_vector_field(td, %"PRIu64", %d, &%s_table_verify)",
+                        "flatcc_verify_table_vector_field(td, %"PRIu64", %d, &%s_verify_table)",
                         member->id, required, snref.text);
                 break;
             case fb_is_enum:
@@ -213,19 +213,19 @@ static int gen_table_verifier(fb_output_t *out, fb_compound_type_t *ct)
     fprintf(out->fp, "}\n\n");
     fprintf(out->fp,
             "static inline int %s_verify_as_root(const void *buf, size_t bufsiz)\n"
-            "{\n    return flatcc_verify_table_as_root(buf, bufsiz, %s_identifier, &%s_table_verify);\n}\n\n",
+            "{\n    return flatcc_verify_table_as_root(buf, bufsiz, %s_identifier, &%s_verify_table);\n}\n\n",
             snt.text, snt.text, snt.text);
     fprintf(out->fp,
             "static inline int %s_verify_as_typed_root(const void *buf, size_t bufsiz)\n"
-            "{\n    return flatcc_verify_table_as_root(buf, bufsiz, %s_type_identifier, &%s_table_verify);\n}\n\n",
+            "{\n    return flatcc_verify_table_as_root(buf, bufsiz, %s_type_identifier, &%s_verify_table);\n}\n\n",
             snt.text, snt.text, snt.text);
     fprintf(out->fp,
             "static inline int %s_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)\n"
-            "{\n    return flatcc_verify_table_as_root(buf, bufsiz, fid, &%s_table_verify);\n}\n\n",
+            "{\n    return flatcc_verify_table_as_root(buf, bufsiz, fid, &%s_verify_table);\n}\n\n",
             snt.text, snt.text);
     fprintf(out->fp,
             "static inline int %s_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, %sthash_t thash)\n"
-            "{\n    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &%s_table_verify);\n}\n\n",
+            "{\n    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &%s_verify_table);\n}\n\n",
             snt.text, nsc, snt.text);
     return 0;
 }
@@ -268,7 +268,7 @@ static int gen_verifier_prototypes(fb_output_t *out)
         case fb_is_table:
             fb_compound_name((fb_compound_type_t *)sym, &snt);
             fprintf(out->fp,
-                    "static int %s_table_verify(flatcc_table_verifier_descriptor_t *td);\n",
+                    "static int %s_verify_table(flatcc_table_verifier_descriptor_t *td);\n",
                     snt.text);
         }
     }
