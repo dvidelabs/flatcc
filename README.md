@@ -22,38 +22,38 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Generated Files](#generated-files)
 * [Using flatcc](#using-flatcc)
 * [Quickstart](#quickstart)
-	* [Reading a Buffer](#reading-a-buffer)
-	* [Compiling for Read-Only](#compiling-for-read-only)
-	* [Building a Buffer](#building-a-buffer)
-	* [Verifying a Buffer](#verifying-a-buffer)
-	* [Debugging a Buffer](#debugging-a-buffer)
+    * [Reading a Buffer](#reading-a-buffer)
+    * [Compiling for Read-Only](#compiling-for-read-only)
+    * [Building a Buffer](#building-a-buffer)
+    * [Verifying a Buffer](#verifying-a-buffer)
+    * [Debugging a Buffer](#debugging-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
-	* [File Identifiers](#file-identifiers)
-	* [Type Identifiers](#type-identifiers)
+    * [File Identifiers](#file-identifiers)
+    * [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
-	* [Base64 Encoding](#base64-encoding)
-	* [Generic Parsing and Printing.](#generic-parsing-and-printing)
-	* [Performance Notes](#performance-notes)
+    * [Base64 Encoding](#base64-encoding)
+    * [Generic Parsing and Printing.](#generic-parsing-and-printing)
+    * [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
 * [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
 * [Fast Buffers](#fast-buffers)
 * [Types](#types)
 * [Unions](#unions)
-	* [Union Scope Resolution](#union-scope-resolution)
+    * [Union Scope Resolution](#union-scope-resolution)
 * [Endianness](#endianness)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
 * [Searching and Sorting](#searching-and-sorting)
 * [Null Values](#null-values)
 * [Portability Layer](#portability-layer)
 * [Building](#building)
-	* [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
-	* [Windows Build (MSVC)](#windows-build-msvc)
-	* [Cross-compilation](#cross-compilation)
-	* [Custom Allocation](#custom-allocation)
-	* [Shared Libraries](#shared-libraries)
+    * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
+    * [Windows Build (MSVC)](#windows-build-msvc)
+    * [Cross-compilation](#cross-compilation)
+    * [Custom Allocation](#custom-allocation)
+    * [Shared Libraries](#shared-libraries)
 * [Distribution](#distribution)
-	* [Unix Files](#unix-files)
-	* [Windows Files](#windows-files)
+    * [Unix Files](#unix-files)
+    * [Windows Files](#windows-files)
 * [Running Tests on Unix](#running-tests-on-unix)
 * [Running Tests on Windows](#running-tests-on-windows)
 * [Configuration](#configuration)
@@ -870,8 +870,9 @@ When reporting bugs, output from the above might also prove helpful.
 The JSON parser and printer can also be used to create and display
 buffers. The parser will use the builder API correctly or issue a syntax
 error or an error on required field missing. This can rule out some
-uncertainty about using the api correctly. The [test_json.c] file has a
-test function that can be adapted for custom tests.
+uncertainty about using the api correctly. The [test_json.c] file and
+[test_json_parser.c] have 
+test functions that can be adapted for custom tests.
 
 For advanced debugging the [hexdump.h] file can be used to dump the buffer
 contents. It is used in [test_json.c] and also in [monster_test.c].
@@ -2045,7 +2046,8 @@ See [Benchmarks]
 [Benchmarks]: https://github.com/dvidelabs/flatcc/blob/master/doc/benchmarks.md
 [monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
 [monster_test.fbs]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.fbs
-[test_json.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json_parser.c
+[test_json.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json.c
+[test_json_parser.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json_parser.c
 [flatcc_builder.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_builder.h
 [flatcc_emitter.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_emitter.h
 [flatcc-help.md]: https://github.com/dvidelabs/flatcc/blob/master/doc/flatcc-help.md
