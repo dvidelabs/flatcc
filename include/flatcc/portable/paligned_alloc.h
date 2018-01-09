@@ -128,7 +128,7 @@ static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
 
 static inline void __portable_aligned_free(void *p)
 {
-    char *raw = ((void **)p)[-1];
+    char *raw = (char*)((void **)p)[-1];
 
     free(raw);
 }
