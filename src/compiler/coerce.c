@@ -249,13 +249,6 @@ int fb_coerce_scalar_type(fb_parser_t *P, fb_symbol_t *sym, fb_scalar_type_t st,
             value->type = vt_float;
             return 0;
         case vt_float:
-            f = (float)value->f;
-            if ((double)f != value->f) {
-                /* We could make this a warning. */
-                error_sym(P, sym, "precision loss in 32-bit float type assignment");
-                value->type = vt_invalid;
-                return -1;
-            }
             return 0;
         default:
             error_sym(P, sym, "32-bit float type only accepts integer and float values");

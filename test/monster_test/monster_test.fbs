@@ -48,16 +48,16 @@ enum Color:byte (bit_flags) { Red = 0, Green, Blue = 3, }
 
 // Note: flatcc does permit conflicting base names from different
 // namespaces without explicitly resolving the conflict.
-// 
+//
 // Wont' work:
-//    union Any { Monster, TestSimpleTableWithEnum, MyGame.Example2.Monster } 
+//    union Any { Monster, TestSimpleTableWithEnum, MyGame.Example2.Monster }
 
 union Any {
     Monster,
     TestSimpleTableWithEnum,
     Monster2: MyGame.Example2.Monster,
     Alt
-} 
+}
 
 struct Test { a:short; b:byte; }
 
@@ -182,8 +182,12 @@ table Monster {
   testhashu32_fnv1a:uint (id:21, hash:"fnv1a_32", cpp_type:"Stat");
   testhashs64_fnv1a:long (id:22, hash:"fnv1a_64");
   testhashu64_fnv1a:ulong (id:23, hash:"fnv1a_64");
-  testf:float = 3.0 (id:25);
+
+  // Googles flatc uses Pi as default be we don't because it
+  // messes up JSON tests because the numeric print format is
+  // configuration dependent.
   //testf:float = 3.14159 (id:25);
+  testf:float = 3.14159e5 (id:25);
   testf2:float = 3 (id:26);
   testf3:float (id:27);
   flex:[ubyte] (id:30, flexbuffer);

@@ -176,8 +176,19 @@ int edge_case_tests()
             "{\"name\":\"Monster\"}");
 
     TEST_FLAGS(0, flatcc_json_printer_f_force_default,
-            "{ \"name\": \"Monster\"}",
+            "{ \"name\": \"Monster\", \"testf\":3.0}",
 "{\"mana\":150,\"hp\":100,\"name\":\"Monster\",\"color\":\"Blue\",\"testbool\":true,\"testhashs32_fnv1\":0,\"testhashu32_fnv1\":0,\"testhashs64_fnv1\":0,\"testhashu64_fnv1\":0,\"testhashs32_fnv1a\":0,\"testhashu32_fnv1a\":0,\"testhashs64_fnv1a\":0,\"testhashu64_fnv1a\":0,\"testf\":3,\"testf2\":3,\"testf3\":0}");
+
+
+    /* 
+     * Cannot test the default of testf field because float is printed as double with
+     * configuration dependent precision.
+     */
+#if 0 
+    TEST_FLAGS(0, flatcc_json_printer_f_force_default,
+            "{ \"name\": \"Monster\", \"testf3\":3.14159012}",
+"{\"mana\":150,\"hp\":100,\"name\":\"Monster\",\"color\":\"Blue\",\"testbool\":true,\"testhashs32_fnv1\":0,\"testhashu32_fnv1\":0,\"testhashs64_fnv1\":0,\"testhashu64_fnv1\":0,\"testhashs32_fnv1a\":0,\"testhashu32_fnv1a\":0,\"testhashs64_fnv1a\":0,\"testhashu64_fnv1a\":0,\"testf\":3.14159,\"testf2\":3,\"testf3\":0}");
+#endif
 
     TEST_FLAGS(flatcc_json_parser_f_force_add, 0,
             "{ \"name\": \"Monster\", \"color\": \"Blue\"}",
@@ -215,7 +226,7 @@ int edge_case_tests()
 
     TEST_FLAGS(0, flatcc_json_printer_f_force_default,
             "{ name: \"Monster\"}",
-"{\"mana\":150,\"hp\":100,\"name\":\"Monster\",\"color\":\"Blue\",\"testbool\":true,\"testhashs32_fnv1\":0,\"testhashu32_fnv1\":0,\"testhashs64_fnv1\":0,\"testhashu64_fnv1\":0,\"testhashs32_fnv1a\":0,\"testhashu32_fnv1a\":0,\"testhashs64_fnv1a\":0,\"testhashu64_fnv1a\":0,\"testf\":3,\"testf2\":3,\"testf3\":0}");
+"{\"mana\":150,\"hp\":100,\"name\":\"Monster\",\"color\":\"Blue\",\"testbool\":true,\"testhashs32_fnv1\":0,\"testhashu32_fnv1\":0,\"testhashs64_fnv1\":0,\"testhashu64_fnv1\":0,\"testhashs32_fnv1a\":0,\"testhashu32_fnv1a\":0,\"testhashs64_fnv1a\":0,\"testhashu64_fnv1a\":0,\"testf\":314159,\"testf2\":3,\"testf3\":0}");
 
     TEST_FLAGS(flatcc_json_parser_f_force_add, 0,
             "{ name: \"Monster\", color: Blue}",
