@@ -155,7 +155,7 @@ static int base64_encode(uint8_t *dst, const uint8_t *src, size_t *dst_len, size
     const uint8_t *T;
     uint8_t *dst_base = dst;
     int pad = mode & base64_enc_modifier_padding;
-    size_t len;
+    size_t len = 0;
     int ret = BASE64_EMODE;
 
     if (!src_len) {
