@@ -22,36 +22,38 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Generated Files](#generated-files)
 * [Using flatcc](#using-flatcc)
 * [Quickstart](#quickstart)
-    * [Reading a Buffer](#reading-a-buffer)
-    * [Compiling for Read-Only](#compiling-for-read-only)
-    * [Building a Buffer](#building-a-buffer)
-    * [Verifying a Buffer](#verifying-a-buffer)
-    * [Debugging a Buffer](#debugging-a-buffer)
+	* [Reading a Buffer](#reading-a-buffer)
+	* [Compiling for Read-Only](#compiling-for-read-only)
+	* [Building a Buffer](#building-a-buffer)
+	* [Verifying a Buffer](#verifying-a-buffer)
+	* [Debugging a Buffer](#debugging-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
-    * [File Identifiers](#file-identifiers)
-    * [Type Identifiers](#type-identifiers)
+	* [File Identifiers](#file-identifiers)
+	* [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
-    * [Base64 Encoding](#base64-encoding)
-    * [Performance Notes](#performance-notes)
+	* [Base64 Encoding](#base64-encoding)
+	* [Generic Parsing and Printing.](#generic-parsing-and-printing)
+	* [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
 * [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
 * [Fast Buffers](#fast-buffers)
 * [Types](#types)
 * [Unions](#unions)
+	* [Union Scope Resolution](#union-scope-resolution)
 * [Endianness](#endianness)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
 * [Searching and Sorting](#searching-and-sorting)
 * [Null Values](#null-values)
 * [Portability Layer](#portability-layer)
 * [Building](#building)
-    * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
-    * [Windows Build (MSVC)](#windows-build-msvc)
-    * [Cross-compilation](#cross-compilation)
-    * [Custom Allocation](#custom-allocation)
-    * [Shared Libraries](#shared-libraries)
+	* [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
+	* [Windows Build (MSVC)](#windows-build-msvc)
+	* [Cross-compilation](#cross-compilation)
+	* [Custom Allocation](#custom-allocation)
+	* [Shared Libraries](#shared-libraries)
 * [Distribution](#distribution)
-    * [Unix Files](#unix-files)
-    * [Windows Files](#windows-files)
+	* [Unix Files](#unix-files)
+	* [Windows Files](#windows-files)
 * [Running Tests on Unix](#running-tests-on-unix)
 * [Running Tests on Windows](#running-tests-on-windows)
 * [Configuration](#configuration)
@@ -227,6 +229,14 @@ fi
 ```
 
 ## Status
+
+Release 0.5.1 quickly followed 0.5.1 because of a buffer overrun was reported
+in the JSON printer just after the 0.5.0 release. JSON printing and parsing
+have also been made more consistent to help parse and print tables other than
+the schema root as seen in the test driver in [test_json.c]. The
+[monster_test.fbs] file has been reorganized to keep the Monster table more
+consistent with Googles flatc version and a minor schema namespace
+inconsistency has been resolved as a result.
 
 Release 0.5.0 aims to reach feature parity with C++ FlatBuffers as of
 end 2017. These new features are union vectors and mixed type unions
@@ -1166,6 +1176,7 @@ vector field named `manyany` which is a vector of `Any` unions in the
         "manyany": [{"name": "Joe"}, null]
     }
 
+
 ### Base64 Encoding
 
 As of v0.5.0 it is possible to encode and decode a vector of type
@@ -1200,6 +1211,49 @@ base64 into memory aligned to more than 8 bits. This is not currently
 possible, but it is recognized that a `(force_align: n)` attribute on
 `[ubyte]` vectors could be useful, but it can also be handled via nested
 flatbuffers which also align data.
+
+
+### Generic Parsing and Printing.
+
+As of v0.5.1 [test_json.c] demonstrates how a single parser driver can used to parse
+different table types without changes to the driver or to the schema.
+
+For example, the following layout can be used to configure a generic parser or printer.
+
+	struct json_scope {
+		const char *identifier;
+		flatcc_json_parser_table_f *parser;
+		flatcc_json_printer_table_f *printer;
+		flatcc_table_verifier_f *verifier;
+	};
+
+	static const struct json_scope Monster = {
+		/* The is the schema global file identifier. */
+		ns(Monster_identifier),
+		ns(Monster_parse_json_table),
+		ns(Monster_print_json_table),
+		ns(Monster_verify_table)
+	};
+
+The `Monster` scope can now be used by a driver or replaced with a new scope as needed:
+
+	/* Abbreviated ... */
+	struct json_scope = Monster;
+    flatcc_json_parser_table_as_root(B, &parser_ctx, json, strlen(json), parse_flags,
+            scope->identifier, scope->parser);
+	/* Printing and verifying works roughly the same. */
+
+The generated table `MyGame_Example_Monster_parse_json_as_root` is a thin
+convenience wrapper roughly implementing the above.
+
+The generated `monster_test_parse_json` is a higher level convenience wrapper named
+of the schema file itself, not any specific table. It parses the `root_type` configured
+in the schema. This is how the `test_json.c` test driver operated prior to v0.5.1 but
+it made it hard to test parsing and printing distinct table types.
+
+Note that verification is not really needed for JSON parsing because a
+generated JSON parser is supposed to build buffers that always verify (except
+for binary encoded nested buffers), but it is useful for testing.
 
 
 ### Performance Notes
@@ -1455,6 +1509,39 @@ vector with a similar name.
 
 There is a test in [monster_test.c] covering union vectors and a
 separate test focusing on mixed type unions that also has union vectors.
+
+
+### Union Scope Resolution
+
+Googles `monster_test.fbs` schema has the union (details left out):
+    
+	namespace MyGame.Example2;
+	table Monster{}
+
+	namespace MyGame.Example2;
+	table Monster{}
+
+	union Any { Monster, MyGame.Example2.Monster }
+
+where the two Monster tables are defined in separate namespaces.
+
+`flatcc` rejects this schema due to a name conflict because it uses the
+basename of a union type, here `Monster` to generate the union member names
+which are also used in JSON parsing.  This can be resolved by adding an
+explicit name such as `Monster2` to resolve the conflict:
+
+	union Any { Monster, Monster2: MyGame.Example2.Monster }
+
+This syntax is accepted by both `flatc` and `flatcc`.
+
+Both versions will implement the same union with the same type codes in the
+binary format but generated code will differ in how the types are referred to.
+
+In JSON the monster type values are now identified by
+`MyGame.Example.Any.Monster`, or just `Monster`, when assigning the first
+monster type to an Any union field, and `MyGame.Example.Any.Monster2`, or just
+`Monster2` when assigning the second monster type. C uses the usual enum
+namespace prefixed symbols like `MyGame_Example_Any_Monster2`.
 
 
 ## Endianness
