@@ -10,6 +10,10 @@
   allowing for namespace wrapped parse/verify/print table functions.
 - Fix unhelpful error on precision loss from float/double conversion
   in schema and JSON parser.
+- Align `monster_test.fbs` Monster table more closely with Googles flatc
+  version after they diverged a bit. (Subtables may differ).
+- Some C++ compatiblity fixes.
+
 
 ## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,
