@@ -14,6 +14,7 @@
   version after they diverged a bit. (Subtables may differ).
 - Some C++ compatiblity fixes.
 - Fix missing null ptr check in fall-back `aligned_free`.
+- Use -std=gnu11 on GNU systems in order to enable `posix_memalign`.
 
 ## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,

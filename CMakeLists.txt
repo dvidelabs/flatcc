@@ -167,7 +167,8 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     else()
         message(STATUS "Setting GNU C compiler options with c11")
         # -std=c11 only available as of 4.7
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
+        # use -stdx=-gnu11 so posix_memalign is available
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -pedantic -Wall -Wextra")
         if (FLATCC_ALLOW_WERROR)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
         endif()
