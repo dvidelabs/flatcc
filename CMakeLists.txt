@@ -165,10 +165,15 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
         # We need stdalign.h
         set(FLATCC_PORTABLE true)
     else()
-        message(STATUS "Setting GNU C compiler options with c11")
+        message(STATUS "Setting GNU C compiler options with c11 and Posix")
         # -std=c11 only available as of 4.7
-        # use -stdx=-gnu11 so posix_memalign is available
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -pedantic -Wall -Wextra")
+        # use -std=-gnu11 or --std=c11 -D_POSIX_C_SOURCE=200112L
+        # to enable posix_memalign when aligned_alloc is missing,
+        # otherwise a fallback will be used. See also include/flatcc/portable/paligned_alloc
+        # We use std=c11 as it provides better conformance test.
+        # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -pedantic -Wall -Wextra")
+        # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -D_POSIX_C_SOURCE=200112L -pedantic -Wall -Wextra")
         if (FLATCC_ALLOW_WERROR)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
         endif()
