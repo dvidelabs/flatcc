@@ -13,13 +13,20 @@ extern "C" {
  * The same issue is present on some Unix systems not providing
  * posix_memalign.
  *
+ * Note that clang and gcc with -std=c11 or -std=c99 will not define
+ * _POSIX_C_SOURCE and thus posix_memalign cannot be detected but
+ * aligned_alloc is not necessarily available either. We assume
+ * that clang always has posix_memalign although it is not strictly
+ * correct. For gcc, use -std=gnu99 or -std=gnu11 or don't use -std in
+ * order to enable posix_memalign, or live with the fallback until using
+ * a system where glibc has a version that supports aligned_alloc.
+ *
  * For C11 compliant compilers and compilers with posix_memalign,
  * it is valid to use free instead of aligned_free with the above
  * caveats.
  */
 
 #include <stdlib.h>
-
 
 /*
  * Define this to see which version is used so the fallback is not
@@ -28,9 +35,17 @@ extern "C" {
  * #define PORTABLE_DEBUG_ALIGNED_ALLOC
  */
 
+#if 0
+#define PORTABLE_DEBUG_ALIGNED_ALLOC
+#endif
+
 #if !defined(PORTABLE_C11_ALIGNED_ALLOC)
 
-#if defined (__GLIBC__)
+#if defined (_ISOC11_SOURCE)
+/* glibc aligned_alloc detection. */
+#define PORTABLE_C11_ALIGNED_ALLOC 1
+#elif defined (__GLIBC__)
+/* aligned_alloc is not avaialable in glibc just because __STDC_VERSION__ >= 201112L. */
 #define PORTABLE_C11_ALIGNED_ALLOC 0
 #elif defined (__clang__)
 #define PORTABLE_C11_ALIGNED_ALLOC 0
@@ -46,6 +61,7 @@ extern "C" {
 
 /* https://linux.die.net/man/3/posix_memalign */
 #if !defined(PORTABLE_POSIX_MEMALIGN)
+
 /* https://forum.kde.org/viewtopic.php?p=66274 */
 #if (defined _GNU_SOURCE) || ((_XOPEN_SOURCE + 0) >= 600) || (_POSIX_C_SOURCE + 0) >= 200112L 
 #define PORTABLE_POSIX_MEMALIGN 1
