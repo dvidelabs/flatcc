@@ -19,6 +19,13 @@ project (FlatCC C)
 option (FLATCC_PORTABLE
     "include extra headers for compilers that do not support certain C11 features" OFF)
 
+# It is not possible to detect posix_memalign when compiling with
+# -std=c11 but aligned_alloc is not always available either.
+# This options assumes that posix_memalign is then available.
+# Without C11, detection depends on _POSIX_C_SOURCE.
+option (FLATCC_GNU_POSIX_MEMALIGN
+    "use posix_memalign on gnu systems also when C11 is configured" ON)
+
 # Only build the runtime library - mostly intended in combination with
 # FLATCC_INSTALL for cross compiling targets.
 option(FLATCC_RTONLY "enable build of runtime library only" OFF)
@@ -124,6 +131,7 @@ else()
     file(WRITE ${PROJECT_SOURCE_DIR}/build/reflection_disabled "REFLECTION=0")
 endif()
 
+
 if (FLATCC_NATIVE_OPTIM)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native -DFLATCC_USE_SSE4_2=1")
 endif()
@@ -166,14 +174,11 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
         set(FLATCC_PORTABLE true)
     else()
         message(STATUS "Setting GNU C compiler options with c11 and Posix")
-        # -std=c11 only available as of 4.7
-        # use -std=-gnu11 or --std=c11 -D_POSIX_C_SOURCE=200112L
-        # to enable posix_memalign when aligned_alloc is missing,
-        # otherwise a fallback will be used. See also include/flatcc/portable/paligned_alloc
-        # We use std=c11 as it provides better conformance test.
-        # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -pedantic -Wall -Wextra")
-        # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -D_POSIX_C_SOURCE=200112L -pedantic -Wall -Wextra")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
+        if (FLATCC_GNU_POSIX_MEMALIGN)
+            # -std=c11 prevents detection of posix_memalign and aligned_alloc might be missing
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DPORTABLE_POSIX_MEMALIGN=1")
+        endif()
         if (FLATCC_ALLOW_WERROR)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
         endif()
