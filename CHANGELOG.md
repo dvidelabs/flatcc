@@ -13,7 +13,7 @@
 - Align `monster_test.fbs` Monster table more closely with Googles flatc
   version after they diverged a bit. (Subtables may differ).
 - Some C++ compatiblity fixes.
-
+- Fix missing null ptr check in fall-back `aligned_free`.
 
 ## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,
