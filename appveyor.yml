@@ -1,7 +1,7 @@
 version: "win#{build}"
 
 # Should have VS2010 Express installed
- os: Visual Studio 2015
+os: Visual Studio 2015
 
 # does not work with MSVC 2010
 # image: Visual Studio 2017 
