@@ -129,7 +129,7 @@ int test_parse()
 
 done:
     if (flatbuffer) {
-        aligned_free(flatbuffer);
+        flatcc_builder_aligned_free(flatbuffer);
     }
     if (buf) {
         free((void *)buf);

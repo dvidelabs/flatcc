@@ -21,10 +21,6 @@
 #include "flatcc/flatcc_builder.h"
 #include "flatcc/flatcc_emitter.h"
 
-#ifndef aligned_free
-#define aligned_free free
-#endif
-
 /*
  * `check` is designed to handle incorrect use errors that can be
  * ignored in production of a tested product.

@@ -174,7 +174,7 @@ int test_type_aliases(flatcc_builder_t *B)
     if (sizeof(ns(TypeAliases_f64(ta))) != 8) goto failed;
 
 done:
-    aligned_free(buffer);
+    flatcc_builder_aligned_free(buffer);
     return ret;
 
 failed:
@@ -224,7 +224,7 @@ int test_empty_monster(flatcc_builder_t *B)
     }
 
 done:
-    aligned_free(buffer);
+    flatcc_builder_aligned_free(buffer);
     return ret;
 }
 
@@ -303,7 +303,7 @@ int test_typed_empty_monster(flatcc_builder_t *B)
     ret = 0;
 
 done:
-    aligned_free(buffer);
+    flatcc_builder_aligned_free(buffer);
     return ret;
 }
 
@@ -364,7 +364,7 @@ int test_table_with_emptystruct(flatcc_builder_t *B)
      */
     hexdump("table with empty struct", buffer, size, stderr);
     ret = verify_table_with_emptystruct(buffer);
-    aligned_free(buffer);
+    flatcc_builder_aligned_free(buffer);
 
     return ret;
 }
@@ -1027,7 +1027,7 @@ int test_monster(flatcc_builder_t *B)
     }
     ret = verify_monster(buffer);
 
-    aligned_free(buffer);
+    flatcc_builder_aligned_free(buffer);
     return ret;
 }
 
@@ -1059,8 +1059,7 @@ int test_monster_with_size(flatcc_builder_t *B)
     }
     ret = verify_monster(buffer);
 
-    /* Extension in `paligned_alloc.h` */
-    aligned_free(frame);
+    flatcc_builder_aligned_free(frame);
     return ret;
 }
 
@@ -1236,7 +1235,7 @@ int test_sort_find(flatcc_builder_t *B)
     ret = 0;
 
 done:
-    aligned_free(buffer);
+    flatcc_builder_aligned_free(buffer);
     return ret;
 }
 
@@ -1522,7 +1521,7 @@ int test_scan(flatcc_builder_t *B)
     ret = 0;
 
 done:
-    aligned_free(buffer);
+    flatcc_builder_aligned_free(buffer);
     return ret;
 }
 
@@ -1729,7 +1728,7 @@ int test_clone_slice(flatcc_builder_t *B)
     ret = 0;
 
 done:
-    aligned_free(buffer);
+    flatcc_builder_aligned_free(buffer);
     return ret;
 }
 
@@ -1762,7 +1761,7 @@ int test_create_add_field(flatcc_builder_t *B)
     }
     ret = 0;
 done:
-    aligned_free(buffer);
+    flatcc_builder_aligned_free(buffer);
     return ret;
 }
 
@@ -1857,7 +1856,7 @@ int test_union_vector(flatcc_builder_t *B)
 
     ret = 0;
 done:
-    aligned_free(buffer);
+    flatcc_builder_aligned_free(buffer);
     return ret;
 }
 
