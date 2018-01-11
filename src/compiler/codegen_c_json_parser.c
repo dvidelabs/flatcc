@@ -1477,7 +1477,7 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "");
     println(out, "static inline int %s_parse_json_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx, const void *buf, size_t bufsiz, int flags, const char *fid)", snt.text);
     println(out, "{"); indent();
-    println(out, "return flatcc_json_parser_table_as_root(B, ctx, buf, bufsiz, flags, fid, %s_parse_json_table);",
+    println(out, "return flatcc_json_parser_table_as_root(B, ctx, (char*)buf, bufsiz, flags, fid, %s_parse_json_table);",
             snt.text);
     unindent(); println(out, "}");
     println(out, "");
