@@ -45,7 +45,7 @@ extern "C" {
 /* glibc aligned_alloc detection. */
 #define PORTABLE_C11_ALIGNED_ALLOC 1
 #elif defined (__GLIBC__)
-/* aligned_alloc is not avaialable in glibc just because __STDC_VERSION__ >= 201112L. */
+/* aligned_alloc is not available in glibc just because __STDC_VERSION__ >= 201112L. */
 #define PORTABLE_C11_ALIGNED_ALLOC 0
 #elif defined (__clang__)
 #define PORTABLE_C11_ALIGNED_ALLOC 0
