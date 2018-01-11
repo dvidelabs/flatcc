@@ -863,7 +863,7 @@ int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *
  * Similar to `flatcc_json_parser_table_as_root` but parses a struct as
  * root.
  */
-int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
+int flatcc_json_parser_struct_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
         const char *buf, size_t bufsiz, int flags, const char *fid,
         flatcc_json_parser_struct_f *parser);
 

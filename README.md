@@ -236,7 +236,9 @@ have also been made more consistent to help parse and print tables other than
 the schema root as seen in the test driver in [test_json.c]. The
 [monster_test.fbs] file has been reorganized to keep the Monster table more
 consistent with Googles flatc version and a minor schema namespace
-inconsistency has been resolved as a result.
+inconsistency has been resolved as a result. Explicit references to
+portable headers have been moved out of generated source. extern "C" C++
+guards added around generated headers.
 
 Release 0.5.0 aims to reach feature parity with C++ FlatBuffers as of
 end 2017. These new features are union vectors and mixed type unions

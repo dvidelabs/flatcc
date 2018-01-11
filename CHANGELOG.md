@@ -23,7 +23,9 @@
 - Replace `flatcc/portable/pdiagnostic_push/pop.h` includes in generated
   code with `flatcc/flatcc_pro/epilogue.h` and add `__cplusplus extern
   "C"` guards in those. This removes explicit references to the portable
-  headers in generated code and improves C++ compatibility.
+  headers in generated code and improves C++ compatibility (#72).
+- Change inconsistent `const void *` to `const char *` in JSON buffer
+  argument to generated `_as_root` parsers (#73).
 
 ## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,
