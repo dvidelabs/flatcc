@@ -3,12 +3,6 @@ Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/gi
 
 # FlatCC FlatBuffers in C for C
 
-_NOTE: ongoing work towards version 0.5.0 features might cause minor
-breakage. For full backwards compatibility use the v0.4.3 tag.
-If you work with JSON parsing, you may want to patch v0.4.3 with commit
-[1cb266](https://github.com/dvidelabs/flatcc/commit/1cb2664dcd104b2051d410955018cb255370302e)
-which only affects code generation, not the runtime library._
-
 `flatcc` has no external dependencies except for build and compiler
 tools, and the C runtime library. With concurrent Ninja builds, a small
 client project can build flatcc with libraries, generate schema code,
@@ -38,12 +32,14 @@ or printing in less than 2 us for a 10 field mixed type message.
     * [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
     * [Base64 Encoding](#base64-encoding)
+    * [Generic Parsing and Printing.](#generic-parsing-and-printing)
     * [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
 * [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
 * [Fast Buffers](#fast-buffers)
 * [Types](#types)
 * [Unions](#unions)
+    * [Union Scope Resolution](#union-scope-resolution)
 * [Endianness](#endianness)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
 * [Searching and Sorting](#searching-and-sorting)
@@ -234,21 +230,29 @@ fi
 
 ## Status
 
-v0.5.0 is in development on master branch primarily to reach feature
-parity with Googles flatc schema parser as of end 2017. These new
-features are union vectors and mixed type unions that can include
-tables, structs and strings, and type aliases for int8, uint8, int16,
-uint16, int32, uint32, int64, uint64, float32, float64 types in the
-schema. Support for base64(url) JSON encoded [ubyte] vectors has been
-added which will also be added to Googles flatc tool in a future
-release. In addition the following changes have been added: Runtime
-builder library support for `aligned_alloc/free`. Handling of unions is
-slightly incompatible with previous releases as covered in the
-documentation. v0.5.0 fixes a bug that could cause a JSON parser to
-reject some valid symbols for some schemas and also fixes a non-critical
-JSON scoping issue with symbolic union names and a bug verifying buffers
-with a struct as root. Low-level custom frame support has been improved
-in the builder library which is useful for complex parsing scenarios.
+Release 0.5.1 quickly followed 0.5.1 because of a buffer overrun was reported
+in the JSON printer just after the 0.5.0 release. JSON printing and parsing
+have also been made more consistent to help parse and print tables other than
+the schema root as seen in the test driver in [test_json.c]. The
+[monster_test.fbs] file has been reorganized to keep the Monster table more
+consistent with Googles flatc version and a minor schema namespace
+inconsistency has been resolved as a result.
+
+Release 0.5.0 aims to reach feature parity with C++ FlatBuffers as of
+end 2017. These new features are union vectors and mixed type unions
+that can include tables, structs and strings, and type aliases for int8,
+uint8, int16, uint16, int32, uint32, int64, uint64, float32, float64
+types in the schema. Support for base64(url) JSON encoded [ubyte]
+vectors has been added which will also be added to Googles flatc tool in
+a future release. In addition the following changes have been added:
+Runtime builder library support for `aligned_alloc/free`. Handling of
+unions is slightly incompatible with previous releases as covered in the
+documentation and the changelog. v0.5.0 fixes a bug that could cause a
+JSON parser to reject some valid symbols for some schemas and also fixes
+a non-critical JSON scoping issue with symbolic union names and a bug
+verifying buffers with a struct as root. Low-level custom frame support
+has been improved in the builder library which is useful for complex
+parsing scenarios.
 
 
 Main features supported as of 0.5.0
@@ -271,9 +275,9 @@ Main features supported as of 0.5.0
 - flexible configuration of malloc alternatives and runtime
   aligned_alloc/free support in builder library.
 - feature parity with C++ FlatBuffers schema features added in 2017
-  union vectors and mixed type unions of strings, structs, and tables.
-- base64(url) encoded binary data in JSON, soon to also be supported by
-  Googles flatc JSON parser.
+  adding support for union vectors and mixed type unions of strings,
+  structs, and tables, and type aliases for uint8, ..., float64.
+- base64(url) encoded binary data in JSON.
 
 
 Supported platforms (as covered by CI release tests on ci-more branch):
@@ -866,8 +870,9 @@ When reporting bugs, output from the above might also prove helpful.
 The JSON parser and printer can also be used to create and display
 buffers. The parser will use the builder API correctly or issue a syntax
 error or an error on required field missing. This can rule out some
-uncertainty about using the api correctly. The [test_json.c] file has a
-test function that can be adapted for custom tests.
+uncertainty about using the api correctly. The [test_json.c] file and
+[test_json_parser.c] have 
+test functions that can be adapted for custom tests.
 
 For advanced debugging the [hexdump.h] file can be used to dump the buffer
 contents. It is used in [test_json.c] and also in [monster_test.c].
@@ -1172,6 +1177,7 @@ vector field named `manyany` which is a vector of `Any` unions in the
         "manyany": [{"name": "Joe"}, null]
     }
 
+
 ### Base64 Encoding
 
 As of v0.5.0 it is possible to encode and decode a vector of type
@@ -1206,6 +1212,49 @@ base64 into memory aligned to more than 8 bits. This is not currently
 possible, but it is recognized that a `(force_align: n)` attribute on
 `[ubyte]` vectors could be useful, but it can also be handled via nested
 flatbuffers which also align data.
+
+
+### Generic Parsing and Printing.
+
+As of v0.5.1 [test_json.c] demonstrates how a single parser driver can used to parse
+different table types without changes to the driver or to the schema.
+
+For example, the following layout can be used to configure a generic parser or printer.
+
+	struct json_scope {
+		const char *identifier;
+		flatcc_json_parser_table_f *parser;
+		flatcc_json_printer_table_f *printer;
+		flatcc_table_verifier_f *verifier;
+	};
+
+	static const struct json_scope Monster = {
+		/* The is the schema global file identifier. */
+		ns(Monster_identifier),
+		ns(Monster_parse_json_table),
+		ns(Monster_print_json_table),
+		ns(Monster_verify_table)
+	};
+
+The `Monster` scope can now be used by a driver or replaced with a new scope as needed:
+
+	/* Abbreviated ... */
+	struct json_scope = Monster;
+    flatcc_json_parser_table_as_root(B, &parser_ctx, json, strlen(json), parse_flags,
+            scope->identifier, scope->parser);
+	/* Printing and verifying works roughly the same. */
+
+The generated table `MyGame_Example_Monster_parse_json_as_root` is a thin
+convenience wrapper roughly implementing the above.
+
+The generated `monster_test_parse_json` is a higher level convenience wrapper named
+of the schema file itself, not any specific table. It parses the `root_type` configured
+in the schema. This is how the `test_json.c` test driver operated prior to v0.5.1 but
+it made it hard to test parsing and printing distinct table types.
+
+Note that verification is not really needed for JSON parsing because a
+generated JSON parser is supposed to build buffers that always verify (except
+for binary encoded nested buffers), but it is useful for testing.
 
 
 ### Performance Notes
@@ -1461,6 +1510,39 @@ vector with a similar name.
 
 There is a test in [monster_test.c] covering union vectors and a
 separate test focusing on mixed type unions that also has union vectors.
+
+
+### Union Scope Resolution
+
+Googles `monster_test.fbs` schema has the union (details left out):
+    
+	namespace MyGame.Example2;
+	table Monster{}
+
+	namespace MyGame.Example2;
+	table Monster{}
+
+	union Any { Monster, MyGame.Example2.Monster }
+
+where the two Monster tables are defined in separate namespaces.
+
+`flatcc` rejects this schema due to a name conflict because it uses the
+basename of a union type, here `Monster` to generate the union member names
+which are also used in JSON parsing.  This can be resolved by adding an
+explicit name such as `Monster2` to resolve the conflict:
+
+	union Any { Monster, Monster2: MyGame.Example2.Monster }
+
+This syntax is accepted by both `flatc` and `flatcc`.
+
+Both versions will implement the same union with the same type codes in the
+binary format but generated code will differ in how the types are referred to.
+
+In JSON the monster type values are now identified by
+`MyGame.Example.Any.Monster`, or just `Monster`, when assigning the first
+monster type to an Any union field, and `MyGame.Example.Any.Monster2`, or just
+`Monster2` when assigning the second monster type. C uses the usual enum
+namespace prefixed symbols like `MyGame_Example_Any_Monster2`.
 
 
 ## Endianness
@@ -1964,7 +2046,8 @@ See [Benchmarks]
 [Benchmarks]: https://github.com/dvidelabs/flatcc/blob/master/doc/benchmarks.md
 [monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
 [monster_test.fbs]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.fbs
-[test_json.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json_parser.c
+[test_json.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json.c
+[test_json_parser.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json_parser.c
 [flatcc_builder.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_builder.h
 [flatcc_emitter.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_emitter.h
 [flatcc-help.md]: https://github.com/dvidelabs/flatcc/blob/master/doc/flatcc-help.md

@@ -4,6 +4,12 @@
 #include "semantics.h"
 #include "parser.h"
 #include "coerce.h"
+#include "stdio.h"
+
+/* -DFLATCC_PORTABLE may help if inttypes.h is missing. */
+#ifndef PRId64
+#include <inttypes.h>
+#endif
 
 /* Same order as enum! */
 static const char *fb_known_attribute_names[] = {
@@ -182,6 +188,39 @@ static inline int is_in_value_set(fb_value_set_t *vs, fb_value_t *value)
     return 0 != fb_value_set_find_item(vs, value);
 }
 
+/*
+ * An immediate parent scope does not necessarily exist and it might
+ * appear in a later search, so we return the nearest existing parent
+ * and do not cache the parent.
+ */
+static inline fb_scope_t *find_parent_scope(fb_parser_t *P, fb_scope_t *scope) 
+{
+    fb_ref_t *p;
+    int count;
+    fb_scope_t *parent;
+
+    parent = 0;
+    count = 0;
+    if (scope == 0) {
+        return 0;
+    }
+    p = scope->name;
+    while (p) {
+        ++count;
+        p = p->link;
+    }
+    if (count == 0) {
+        return 0;
+    }
+    while (count-- > 1) {
+        if ((parent = fb_find_scope_by_ref(&P->schema, scope->name, count))) {
+            return parent;
+        }
+    }
+    /* Root scope. */
+    return fb_find_scope_by_ref(&P->schema, 0, 0);
+}
+
 static inline fb_symbol_t *lookup_string_reference(fb_parser_t *P, fb_scope_t *local, const char *s, int len)
 {
     fb_symbol_t *sym;
@@ -201,9 +240,15 @@ static inline fb_symbol_t *lookup_string_reference(fb_parser_t *P, fb_scope_t *l
     }
     len -= k;
     if (local && k == 0) {
-        if ((sym = fb_symbol_table_find(&local->symbol_index, basename, len))) {
-            return sym;
-        }
+        do {
+            if ((sym = fb_symbol_table_find(&local->symbol_index, basename, len))) {
+                if (get_compound_if_visible(&P->schema, sym)) {
+                    return sym;
+                }
+            }
+            local = find_parent_scope(P, local);
+        } while (local);
+        return 0;
     }
     if (!(scope = fb_find_scope_by_string(&P->schema, name, k))) {
         return 0;
@@ -215,6 +260,19 @@ static inline fb_symbol_t *lookup_string_reference(fb_parser_t *P, fb_scope_t *l
  * First search the optional local scope, then the scope of the namespace prefix if any.
  * If `enumval` is non-zero, the last namepart is stored in that
  * pointer and the lookup stops before that part.
+ *
+ * If the reference is prefixed with a namespace then the scope is
+ * looked up relative to root then the basename is searched in that
+ * scope.
+ *
+ * If the refernce is not prefixed with a namespace then the name is
+ * search in the local symbol table (which may be the root if null) and
+ * if that fails, the nearest existing parent scope is used as the new
+ * local scope and the process is repeated until local is root.
+ *
+ * This means that namespace prefixes cannot be relative to a parent
+ * namespace or to the current scope, but simple names can be found in a
+ * parent namespace.
  */
 static inline fb_symbol_t *lookup_reference(fb_parser_t *P, fb_scope_t *local, fb_ref_t *name, fb_ref_t **enumval)
 {
@@ -244,11 +302,15 @@ static inline fb_symbol_t *lookup_reference(fb_parser_t *P, fb_scope_t *local, f
         return 0;
     }
     if (local && count == 1) {
-        if ((sym = find_fb_symbol_by_token(&local->symbol_index, basename->ident))) {
-            if (get_compound_if_visible(&P->schema, sym)) {
-                return sym;
+        do {
+            if ((sym = find_fb_symbol_by_token(&local->symbol_index, basename->ident))) {
+                if (get_compound_if_visible(&P->schema, sym)) {
+                    return sym;
+                }
             }
-        }
+            local = find_parent_scope(P, local);
+        } while (local);
+        return 0;
     }
     /* Null name is valid in scope lookup, indicating global scope. */
     if (count == 1) {
@@ -683,6 +745,7 @@ enum { unused_field = 0, normal_field, type_field };
 
 static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
 {
+    char msg_buf [100];
     fb_symbol_t *sym, *old, *type_sym;
     fb_member_t *member;
     fb_metadata_t *knowns[KNOWN_ATTR_COUNT], *m;
@@ -692,6 +755,8 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
     uint64_t max_id = 0;
     int key_ok, key_count = 0;
     int is_union_vector;
+    uint64_t i;
+    int max_id_errors = 10;
 
     /*
      * This just tracks the presence of a `normal_field` or a hidden
@@ -1019,7 +1084,16 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
     }
     if (!id_failed && need_id) {
         if (count && max_id >= count) {
-            error_sym(P, &ct->symbol, "id field attribute range exceeds field count");
+            for (i = 0; i < max_id; ++i) {
+                if (field_marker[i] == 0) {
+                    if (!max_id_errors--) {
+                        error_sym(P, &ct->symbol, "... more id's missing");
+                        break;
+                    }
+                    sprintf(msg_buf,  "id range not consequtive from 0, missing id: %"PRIu64"", i);
+                    error_sym(P, &ct->symbol, msg_buf);
+                }
+            }
             id_failed = 1;
         }
     }

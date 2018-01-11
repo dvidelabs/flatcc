@@ -1,6 +1,27 @@
 # Change Log
 
-## [0.5.0-pre]
+## [0.5.1-pre]
+
+- Fix parent namespace lookup in the schema parser when the namespace
+  prefix is omitted.
+- Fix garbage printing and reading memory out of bounds in json printing
+  when exhausting flush buffer (#70).
+- More consistent name generation across verifier and json parsers
+  allowing for namespace wrapped parse/verify/print table functions.
+- Fix unhelpful error on precision loss from float/double conversion
+  in schema and JSON parser.
+- Align `monster_test.fbs` Monster table more closely with Googles flatc
+  version after they diverged a bit. (Subtables may differ).
+- Some C++ compatiblity fixes.
+- Fix missing null ptr check in fall-back `aligned_free`.
+- Enable `posix_memalign` as a default build option on recent GNU
+  systems because -std=c11 blocks automatic detection. This avoids
+  using a less efficient fallback implementation.
+- Add portable/include wrappers so build systems can add include paths
+  to ensure that <stdint.h>, <stdbool.h> etc. is available. Flatcc does
+  not currently rely on these.
+
+## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,
   int64, uint64, float32, float64.
 - Low-level: access multiple user frames in builder via handles.
