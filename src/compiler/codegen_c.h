@@ -307,21 +307,18 @@ static inline const char *scalar_suffix(fb_scalar_type_t scalar_type)
 }
 
 /* See also: https://github.com/philsquared/Catch/issues/376 */
-static inline int gen_pragma_push(fb_output_t *out)
+static inline int gen_prologue(fb_output_t *out)
 {
     if (out->opts->cgen_pragmas) {
-        fprintf(out->fp,
-                "#define PDIAGNOSTIC_IGNORE_UNUSED\n"
-                "#include \"flatcc/portable/pdiagnostic_push.h\"\n");
+        fprintf(out->fp, "#include \"flatcc/flatcc_prologue.h\"\n");
     }
     return 0;
 }
 
-static inline int gen_pragma_pop(fb_output_t *out)
+static inline int gen_epilogue(fb_output_t *out)
 {
     if (out->opts->cgen_pragmas) {
-        fprintf(out->fp,
-                "#include \"flatcc/portable/pdiagnostic_pop.h\"\n");
+        fprintf(out->fp, "#include \"flatcc/flatcc_epilogue.h\"\n");
     }
     return 0;
 }

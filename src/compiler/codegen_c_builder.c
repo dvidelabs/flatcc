@@ -11,7 +11,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
     fprintf(out->fp, "#define %s_COMMON_BUILDER_H\n", nscup);
     fprintf(out->fp, "\n/* " FLATCC_GENERATED_BY " */\n\n");
     fprintf(out->fp, "/* Common FlatBuffers build functionality for C. */\n\n");
-    gen_pragma_push(out);
+    gen_prologue(out);
 
     fprintf(out->fp, "#ifndef FLATBUILDER_H\n");
     fprintf(out->fp, "#include \"flatcc/flatcc_builder.h\"\n");
@@ -706,7 +706,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
     fprintf(out->fp, "\n");
 
     fprintf(out->fp, "__%sbuild_buffer(%s)\n", nsc, nsc);
-    gen_pragma_pop(out);
+    gen_epilogue(out);
     fprintf(out->fp, "#endif /* %s_COMMON_BUILDER_H */\n", nscup);
     return 0;
 }
@@ -731,7 +731,7 @@ static int gen_builder_pretext(fb_output_t *out)
 
     fb_gen_c_includes(out, "_builder.h", "_BUILDER_H");
 
-    gen_pragma_push(out);
+    gen_prologue(out);
 
     /*
      * Even if defined in the reader header, we must redefine it here
@@ -1724,7 +1724,7 @@ static int gen_builder_tables(fb_output_t *out)
 
 static int gen_builder_footer(fb_output_t *out)
 {
-    gen_pragma_pop(out);
+    gen_epilogue(out);
     fprintf(out->fp,
         "#endif /* %s_BUILDER_H */\n",
         out->S->basenameup);

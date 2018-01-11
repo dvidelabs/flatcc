@@ -21,14 +21,14 @@ static int gen_verifier_pretext(fb_output_t *out)
     fprintf(out->fp, "#endif\n");
     fprintf(out->fp, "#include \"flatcc/flatcc_verifier.h\"\n");
     fb_gen_c_includes(out, "_verifier.h", "_VERIFIER_H");
-    gen_pragma_push(out);
+    gen_prologue(out);
     fprintf(out->fp, "\n");
     return 0;
 }
 
 static int gen_verifier_footer(fb_output_t *out)
 {
-    gen_pragma_pop(out);
+    gen_epilogue(out);
     fprintf(out->fp,
         "#endif /* %s_VERIFIER_H */\n",
         out->S->basenameup);
