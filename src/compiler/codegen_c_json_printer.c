@@ -16,14 +16,14 @@ static int gen_json_printer_pretext(fb_output_t *out)
     fprintf(out->fp, "\n/* " FLATCC_GENERATED_BY " */\n\n");
     fprintf(out->fp, "#include \"flatcc/flatcc_json_printer.h\"\n");
     fb_gen_c_includes(out, "_json_printer.h", "_JSON_PRINTER_H");
-    gen_pragma_push(out);
+    gen_prologue(out);
     fprintf(out->fp, "\n");
     return 0;
 }
 
 static int gen_json_printer_footer(fb_output_t *out)
 {
-    gen_pragma_pop(out);
+    gen_epilogue(out);
     fprintf(out->fp,
         "#endif /* %s_JSON_PRINTER_H */\n",
         out->S->basenameup);

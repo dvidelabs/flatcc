@@ -54,14 +54,14 @@ static int gen_json_parser_pretext(fb_output_t *out)
     println(out, "");
     println(out, "#include \"flatcc/flatcc_json_parser.h\"");
     fb_gen_c_includes(out, "_json_parser.h", "_JSON_PARSER_H");
-    gen_pragma_push(out);
+    gen_prologue(out);
     println(out, "");
     return 0;
 }
 
 static int gen_json_parser_footer(fb_output_t *out)
 {
-    gen_pragma_pop(out);
+    gen_epilogue(out);
     println(out, "#endif /* %s_JSON_PARSER_H */", out->S->basenameup);
     return 0;
 }

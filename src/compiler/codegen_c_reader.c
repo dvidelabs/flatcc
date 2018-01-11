@@ -758,9 +758,9 @@ int fb_gen_common_c_header(fb_output_t *out)
                 " * but find operations are supported on pre-sorted vectors.\n"
                 " */\n");
     }
-    gen_pragma_push(out);
+    gen_prologue(out);
     gen_helpers(out);
-    gen_pragma_pop(out);
+    gen_epilogue(out);
     fprintf(out->fp,
         "#endif /* %s_COMMON_H */\n",
         nscup);
@@ -816,7 +816,7 @@ static void gen_pretext(fb_output_t *out)
                 "#include <stdalign.h>\n"
                 "#endif\n");
     }
-    gen_pragma_push(out);
+    gen_prologue(out);
     if (out->S->file_identifier.type == vt_string) {
         fprintf(out->fp,
             "#undef %sidentifier\n"
@@ -849,7 +849,7 @@ static void gen_pretext(fb_output_t *out)
 
 static void gen_footer(fb_output_t *out)
 {
-    gen_pragma_pop(out);
+    gen_epilogue(out);
     fprintf(out->fp, "#endif /* %s_READER_H */\n", out->S->basenameup);
 }
 
