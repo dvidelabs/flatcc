@@ -5,7 +5,11 @@
 #include "parser.h"
 #include "coerce.h"
 #include "stdio.h"
-#include "inttypes.h"
+
+/* -DFLATCC_PORTABLE may help if inttypes.h is missing. */
+#ifndef PRId64
+#include <inttypes.h>
+#endif
 
 /* Same order as enum! */
 static const char *fb_known_attribute_names[] = {

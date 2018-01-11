@@ -1,6 +1,8 @@
 #ifndef PINTTYPES_H
 #define PINTTYPES_H
 
+#ifndef PRId16
+
 #if (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
 /* C99 or newer */
 #include <inttypes.h>
@@ -45,25 +47,6 @@
 
 # endif /* __STDC__ */
 
-#ifdef PORTABLE_USE_DEPRECATED_INTTYPES
-#ifndef PRIszu
-#ifdef _MSC_VER
-  #define PRIszd "Id"
-  #define PRIszu "Iu"
-  #define PRIszx "Ix"
-  #define PRIpdu "Iu"
-  #define PRIpdd "Id"
-  #define PRIpdx "Ix"
-#else
-  #define PRIszd "zd"
-  #define PRIszu "zu"
-  #define PRIszx "zx"
-  #define PRIpdd "td"
-  #define PRIpdu "tu"
-  #define PRIpdx "tx"
-#endif
-#endif
-#endif
-
+#endif /* PRId16 */
 
 #endif /* PINTTYPES */
