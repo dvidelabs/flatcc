@@ -17,6 +17,9 @@
 - Enable `posix_memalign` as a default build option on recent GNU
   systems because -std=c11 blocks automatic detection. This avoids
   using a less efficient fallback implementation.
+- Add portable/include wrappers so build systems can add include paths
+  to ensure that <stdint.h>, <stdbool.h> etc. is available. Flatcc does
+  not currently rely on these.
 
 ## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,
