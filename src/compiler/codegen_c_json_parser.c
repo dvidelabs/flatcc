@@ -1369,15 +1369,12 @@ static int gen_struct_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);");
     unindent(); println(out, "}");
     println(out, "");
-    /* TODO: */
-#if 0
     println(out, "static inline int %s_parse_json_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx, const char *buf, size_t bufsiz, int flags, const char *fid)", snt.text);
     println(out, "{"); indent();
     println(out, "return flatcc_json_parser_struct_as_root(B, ctx, buf, bufsiz, flags, fid, %s_parse_json_struct);",
             snt.text);
     unindent(); println(out, "}");
     println(out, "");
-#endif
     return 0;
 }
 
