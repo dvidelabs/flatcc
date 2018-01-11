@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.5.1-pre]
+## [0.5.1]
 
 - Fix parent namespace lookup in the schema parser when the namespace
   prefix is omitted.
@@ -20,6 +20,10 @@
 - Add portable/include wrappers so build systems can add include paths
   to ensure that <stdint.h>, <stdbool.h> etc. is available. Flatcc does
   not currently rely on these.
+- Replace `flatcc/portable/pdiagnostic_push/pop.h` includes in generated
+  code with `flatcc/flatcc_pro/epilogue.h` and add `__cplusplus extern
+  "C"` guards in those. This removes explicit references to the portable
+  headers in generated code and improves C++ compatibility.
 
 ## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,
