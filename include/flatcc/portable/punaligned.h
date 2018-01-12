@@ -22,6 +22,10 @@
 #ifndef PUNLIGNED_H
 #define PUNLIGNED_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef PORTABLE_UNALIGNED_ACCESS
 
 #if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64)
@@ -177,6 +181,10 @@
 
 #endif
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* PUNALIGNED_H */

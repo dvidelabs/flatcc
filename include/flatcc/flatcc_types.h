@@ -1,6 +1,10 @@
 #ifndef FLATCC_TYPES_H
 #define FLATCC_TYPES_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdlib.h>
 
 #ifndef UINT8_MAX
@@ -85,5 +89,9 @@ static const flatbuffers_bool_t flatbuffers_false = FLATBUFFERS_FALSE;
 typedef char flatbuffers_fid_t[FLATBUFFERS_IDENTIFIER_SIZE];
 
 #endif /* flatbuffers_types_defined */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FLATCC_TYPES_H */

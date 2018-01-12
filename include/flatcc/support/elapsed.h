@@ -1,6 +1,10 @@
 #ifndef ELAPSED_H
 #define ELAPSED_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 
 /* Based on http://stackoverflow.com/a/8583395 */
@@ -61,5 +65,9 @@ static int show_benchmark(const char *descr, double t1, double t2, size_t size, 
     }
     return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ELAPSED_H */

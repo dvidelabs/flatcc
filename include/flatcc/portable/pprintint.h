@@ -67,6 +67,10 @@
 #ifndef PPRINTINT_H
 #define PPRINTINT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef UINT8_MAX
 #include <stdint.h>
 #endif
@@ -621,5 +625,9 @@ int main()
 #endif /* PPRINTINT_TEST */
 
 #include "pdiagnostic_pop.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PPRINTINT_H */

@@ -55,6 +55,10 @@
 #ifndef GRISU3_MATH_H
 #define GRISU3_MATH_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Guarded to allow inclusion of pstdint.h first, if stdint.h is not supported. */
 #ifndef UINT8_MAX
 #include <stdint.h> /* uint64_t etc. */
@@ -308,5 +312,9 @@ static int grisu3_largest_pow10(uint32_t n, int n_bits, uint32_t *power)
     *power = grisu3_pow10_cache[guess];
     return guess;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GRISU3_MATH_H */
