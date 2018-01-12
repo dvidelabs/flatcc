@@ -1,6 +1,10 @@
 #ifndef FLATCC_JSON_PRINTER_H
 #define FLATCC_JSON_PRINTER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Definitions for default implementation, do not assume these are
  * always valid.
@@ -689,5 +693,9 @@ void flatcc_json_printer_union_struct(flatcc_json_printer_t *ctx,
 
 void flatcc_json_printer_union_string(flatcc_json_printer_t *ctx,
         flatcc_json_printer_union_descriptor_t *ud);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FLATCC_JSON_PRINTER_H */

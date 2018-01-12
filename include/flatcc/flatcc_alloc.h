@@ -1,6 +1,10 @@
 #ifndef FLATCC_ALLOC_H
 #define FLATCC_ALLOC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * These allocation abstractions are __only__ for runtime libraries.
  *
@@ -111,6 +115,10 @@ static inline void __flatcc_aligned_free(void *p)
 
 #ifndef FLATCC_ALIGNED_FREE
 #define FLATCC_ALIGNED_FREE(p) aligned_free(p)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* FLATCC_ALLOC_H */

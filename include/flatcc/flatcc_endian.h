@@ -1,6 +1,10 @@
 #ifndef FLATCC_ENDIAN_H
 #define FLATCC_ENDIAN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * This file provides helper macros to define type-specific macros and
  * inline functions that convert between stored data and native data
@@ -112,6 +116,10 @@
 
 #ifndef flatbuffers_is_native_be
 #define flatbuffers_is_native_be() (!flatbuffers_is_native_pe())
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* FLATCC_ENDIAN_H */

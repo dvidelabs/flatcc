@@ -1,6 +1,10 @@
 #ifndef FLATCC_IDENTIFIER_H
 #define FLATCC_IDENTIFIER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef FLATCC_FLATBUFFERS_H
 #error "include via flatcc/flatcc_flatbuffers.h"
 #endif
@@ -111,5 +115,9 @@ static inline uint32_t flatbuffers_disperse_type_hash(flatbuffers_thash_t type_h
 /* We have hardcoded assumptions about identifier size. */
 static_assert(sizeof(flatbuffers_fid_t) == 4, "unexpected file identifier size");
 static_assert(sizeof(flatbuffers_thash_t) == 4, "unexpected type hash size");
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FLATCC_IDENTIFIER_H */

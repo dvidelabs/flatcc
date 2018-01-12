@@ -9,6 +9,10 @@
 #ifndef FLATCC_FLATBUFFERS_H
 #define FLATCC_FLATBUFFERS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef flatcc_flatbuffers_defined
 #define flatcc_flatbuffers_defined
 
@@ -39,5 +43,9 @@
 #endif
 
 #endif /* flatcc_flatbuffers_defined */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FLATCC_FLATBUFFERS_H */

@@ -1,6 +1,10 @@
 #ifndef FLATCC_BUILDER_H
 #define FLATCC_BUILDER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Library for building untyped FlatBuffers. Intended as a support
  * library for generated C code to produce typed builders, but might
@@ -1754,5 +1758,9 @@ void flatcc_builder_aligned_free(void *p);
  * Other emitters have custom interfaces for reaching their content.
  */
 void *flatcc_builder_copy_buffer(flatcc_builder_t *B, void *buffer, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FLATCC_BUILDER_H */

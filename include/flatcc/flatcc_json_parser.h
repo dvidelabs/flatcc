@@ -1,6 +1,10 @@
 #ifndef FLATCC_JSON_PARSE_H
 #define FLATCC_JSON_PARSE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * JSON RFC:
  * http://www.ietf.org/rfc/rfc4627.txt?number=4627
@@ -868,4 +872,9 @@ int flatcc_json_parser_struct_as_root(flatcc_builder_t *B, flatcc_json_parser_t 
         flatcc_json_parser_struct_f *parser);
 
 #include "flatcc/portable/pdiagnostic_pop.h"
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* FLATCC_JSON_PARSE_H */
