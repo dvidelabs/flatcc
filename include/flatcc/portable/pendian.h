@@ -1,6 +1,10 @@
 #ifndef PENDIAN_H
 #define PENDIAN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Defines platform optimized (as per linux <endian.h>
  *
@@ -172,6 +176,10 @@ static const int __pendian_test = 1;
 #define htole8(n) (n)
 #define be8toh(n) (n)
 #define htobe8(n) (n)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* PENDIAN_H */

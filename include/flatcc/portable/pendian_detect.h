@@ -19,6 +19,10 @@
 #ifndef PENDIAN_DETECT
 #define PENDIAN_DETECT
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef __ORDER_LITTLE_ENDIAN__
 #define __ORDER_LITTLE_ENDIAN__ 1234
 #endif
@@ -105,6 +109,10 @@
 
 #if defined(__LITTLE_ENDIAN__) && defined(__BIG_ENDIAN__)
 #error conflicting definitions of __LITTLE_ENDIAN__ and __BIG_ENDIAN__
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* PENDIAN_DETECT */

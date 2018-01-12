@@ -1,6 +1,10 @@
 #ifndef PPRINTFP_H
 #define PPRINTFP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PDIAGNOSTIC_IGNORE_UNUSED_FUNCTION
 #include "pdiagnostic_push.h"
 
@@ -27,4 +31,9 @@
 #define print_hex_double(n, p) sprintf(p, "%a", (double)(n))
 
 #include "pdiagnostic_pop.h"
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* PPRINTFP_H */
