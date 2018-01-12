@@ -12,7 +12,8 @@
   in schema and JSON parser.
 - Align `monster_test.fbs` Monster table more closely with Googles flatc
   version after they diverged a bit. (Subtables may differ).
-- Some C++ compatiblity fixes.
+- Some C++ compatiblity fixes so `include/{support/flatcc}` headers can
+  be included into C++ without `extern "C"`.
 - Fix missing null ptr check in fall-back `aligned_free`.
 - Enable `posix_memalign` as a default build option on recent GNU
   systems because -std=c11 blocks automatic detection. This avoids
