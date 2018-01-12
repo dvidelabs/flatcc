@@ -1,6 +1,10 @@
 #ifndef FLATCC_ACCESSORS
 #define FLATCC_ACCESSORS
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef UINT8_MAX
 #include <stdint.h>
 #endif
@@ -85,5 +89,9 @@ __flatcc_define_basic_integer_accessors(NS, int32, int32_t, 32, E)          \
 __flatcc_define_basic_integer_accessors(NS, int64, int64_t, 64, E)          \
 __flatcc_define_basic_real_accessors(NS, float, float, 32, E)               \
 __flatcc_define_basic_real_accessors(NS, double, double, 64, E)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FLATCC_ACCESSORS */

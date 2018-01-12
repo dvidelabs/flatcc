@@ -1,6 +1,10 @@
 #ifndef FLATCC_EMITTER_H
 #define FLATCC_EMITTER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Default implementation of a flatbuilder emitter.
  *
@@ -203,5 +207,9 @@ void *flatcc_emitter_copy_buffer(flatcc_emitter_t *E, void *buf, size_t size);
 int flatcc_emitter(void *emit_context,
         const flatcc_iovec_t *iov, int iov_count,
         flatbuffers_soffset_t offset, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FLATCC_EMITTER_H */

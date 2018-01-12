@@ -1,6 +1,10 @@
 #ifndef READFILE_H
 #define READFILE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -51,5 +55,9 @@ fail:
     *size_out = size;
     return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* READFILE_H */

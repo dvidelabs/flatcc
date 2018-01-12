@@ -1,6 +1,10 @@
 #ifndef FLATCC_VERIFIER_H
 #define FLATCC_VERIFIER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Runtime support for verifying flatbuffers.
  *
@@ -227,5 +231,9 @@ int flatcc_verify_union_vector_field(flatcc_table_verifier_descriptor_t *td,
 int flatcc_verify_union_table(flatcc_union_verifier_descriptor_t *ud, flatcc_table_verifier_f *tvf);
 int flatcc_verify_union_struct(flatcc_union_verifier_descriptor_t *ud, size_t size, uint16_t align);
 int flatcc_verify_union_string(flatcc_union_verifier_descriptor_t *ud);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FLATCC_VERIFIER_H */

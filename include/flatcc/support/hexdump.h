@@ -1,6 +1,10 @@
 #ifndef HEXDUMP_H
 #define HEXDUMP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 
 /* Based on: http://stackoverflow.com/a/7776146 */
@@ -48,5 +52,9 @@ static void hexdump(char *desc, void *addr, size_t len, FILE *fp) {
     // And print the final ASCII bit.
     fprintf(fp, "  %s\n", buff);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* HEXDUMP_H */

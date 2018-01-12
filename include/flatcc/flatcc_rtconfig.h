@@ -1,6 +1,10 @@
 #ifndef FLATCC_RTCONFIG_H
 #define FLATCC_RTCONFIG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* Include portability layer here since all other files depend on it. */
 #ifdef FLATCC_PORTABLE
@@ -149,6 +153,10 @@
  */
 #ifndef FLATCC_JSON_PARSE_WIDE_SPACE
 #define FLATCC_JSON_PARSE_WIDE_SPACE 0
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* FLATCC_RTCONFIG_H */

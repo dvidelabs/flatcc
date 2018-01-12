@@ -1,6 +1,10 @@
 #ifndef FLATCC_IOV_H
 #define FLATCC_IOV_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdlib.h>
 
 /*
@@ -19,5 +23,9 @@ struct flatcc_iovec {
  * always be a relatively small number.
  */
 #define FLATCC_IOV_COUNT_MAX 8
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FLATCC_IOV_H */
