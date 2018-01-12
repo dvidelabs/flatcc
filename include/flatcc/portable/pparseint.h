@@ -1,6 +1,10 @@
 #ifndef PPARSEINT_H
 #define PPARSEINT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Type specific integer parsers:
  *
@@ -362,5 +366,9 @@ __portable_define_parse_hex_unsigned(uint, unsigned int, UINT_MAX)
 __portable_define_parse_hex_signed(int, int, INT_MAX)
 __portable_define_parse_hex_unsigned(ulong, unsigned long, ULONG_MAX)
 __portable_define_parse_hex_signed(long, unsigned long, LONG_MAX)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PPARSEINT_H */

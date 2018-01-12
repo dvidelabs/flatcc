@@ -1,6 +1,10 @@
 #ifndef PBASE64_H
 #define PBASE64_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdlib.h>
 
 /* Guarded to allow inclusion of pstdint.h first, if stdint.h is not supported. */
@@ -436,5 +440,9 @@ more:
     ret = BASE64_EMORE;
     goto done;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PBASE64_H */

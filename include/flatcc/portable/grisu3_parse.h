@@ -26,6 +26,10 @@
 #ifndef GRISU3_PARSE_H
 #define GRISU3_PARSE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef UINT8_MAX
 #include <stdint.h>
 #endif
@@ -571,5 +575,9 @@ static const char *grisu3_parse_double(const char *buf, int len, double *result)
     }
     return grisu3_encode_double(mark, buf, sign, fraction, exponent, fraction_exp, ulp_half_error, result);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GRISU3_PARSE_H */
