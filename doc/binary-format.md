@@ -1117,14 +1117,9 @@ The following example
         name: [char:4];
     }
     
-    table Info {
-        data: int;
-    }
-
     table MyTable {
         t: [ubyte:2];
         m: [MyStruct:2];
-        d: [Info:2];
     }
 
 
@@ -1157,10 +1152,12 @@ codegeneration):
         name24: ubyte;
         wname2_zterm: ubyte;
     }
+
     struct tEquivalent {
         t1: ubyte; 
         t2: ubyte; 
     }
+
     table MyTableEquivalent {
         t: tEquivalent;
         m: MyStructEquivalent;
