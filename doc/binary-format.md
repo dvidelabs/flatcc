@@ -1219,7 +1219,7 @@ Example:
     root_type Main;
         
 
-Here the table NPC will appear with read accessors is if it has the fields:
+Here the table NPC and Rock will appear with read accessors is if it has the fields:
 
     table NPC {
         npcid: int;
@@ -1266,7 +1266,7 @@ or in JSON:
             "sleep": 0
         },
         "rock1": {
-            "spawned": 0;
+            "spawned": false;
             "x": 0,
             "y": 0,
             "color": 0xa0a0a000
