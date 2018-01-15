@@ -1198,16 +1198,25 @@ Example:
         energy: int;
         sleep: int;
     }
+
     table NPC {
         npcid: int;
         motion: Motion(mixin);
         stat: Status(mixin);
         agent: Agent(mixin);
     }
+
     table Rock {
         here: Position(mixin);
         color: uint32 = 0xa0a0a000;
     }
+
+    table Main {
+        npc1: NPC;
+        rock1: Rock;
+    }
+
+    root_type Main;
         
 
 Here the table NPC will appear with read accessors is if it has the fields:
@@ -1234,6 +1243,13 @@ Here the table NPC will appear with read accessors is if it has the fields:
         here: Position(required);
         color: uint32 = 0xa0a0a000;
     }
+
+    table Main {
+        npc1: NPC;
+        rock1: Rock;
+    }
+
+    root_type Main;
 
 or in JSON:
     
