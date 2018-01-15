@@ -28,6 +28,10 @@
 * [StructBuffers](#structbuffers)
 * [StreamBuffers](#streambuffers)
 * [Bidirectional Buffers](#bidirectional-buffers)
+* [Possible Future Features](#possible-future-features)
+    * [Force Align](#force-align)
+    * [Fixed Length Vectors](#fixed-length-vectors)
+    * [Mixins](#mixins)
 
 <!-- vim-markdown-toc -->
 
@@ -253,13 +257,6 @@ to C structs).
 
 A schema cannot change the layout of a struct without breaking binary
 compatibility, unlike tables.
-
-Structs could in principle contain fixed size vectors of scalars or
-structs of same type, but this is not currently supported. Such a
-construct would be equivalent to simply repeating a field a fixed number
-of times and can be emulated by creating a struct that does exactly
-that. As such, this limitation is at the schema level and on not in the
-binary format.
 
 When used as a table field, a struct is embedded within the table block
 unless it is union value. A vector of structs are placed in a separate
@@ -646,10 +643,23 @@ Structs cannot change size nor content. They cannot evolve. FlatCC
 permits deprecating fields which means old fields will be zeroed.
 
 Names can be changed to the extend it make sense to the applications already
-written around the schema.
+written around the schema, but it may still break applications relying
+on some reflective information. For example, a reader may provide the
+string representation of a numeric enum value.
 
-New types can be added.
+New types can be added. For example adding a new table is always safe
+as long as it does not conflict with any existing schemas using the same
+namespace.
 
+Required fields cannot stop being required and they cannot be deprecated.
+
+Various attributes and other changes form a gray area that will not make
+the binary format unsafe but may still break due to changes in code
+generation, serialization to JSON, or similar. For example, a generated
+constructor that creates a table from a list of positional arguments
+might break if the field order changes or grows or have fields
+deprecated. JSON parsers could cease to work on old formats if base64
+serialization is added subsequently, and so on.
 
 ## Keys and Sorting
 
@@ -920,16 +930,15 @@ values.
 
 ## StructBuffers
 
-The FlatBuffers format does not permit structs to be stored as
-independent entities. They are always embedded in in a
-fixed memory block representing a table, in a vector, or embedded inline
-in other structs.
+Unlike tables, structs are are usually embedded in in a fixed memory
+block representing a table, in a vector, or embedded inline in other
+structs, but can also be independent when used in a union.
 
-The root object in FlatBuffers is expected to be a table, but it can
-also be struct. FlatCC supports StructBuffers. Since structs do not
-contain references, such buffers are truly flat. Most implementations
-are not likely to support structs are root but even so they are very
-useful:
+The root object in FlatBuffers is conventionally expected to be a table,
+but it can also be struct. FlatCC supports StructBuffers. Since structs
+do not contain references, such buffers are truly flat. Most
+implementations are not likely to support structs are root but even so
+they are very useful:
 
 It is possible to create very compact and very fast buffers this way.
 They can be used where one would otherwise consider using manual structs
@@ -1046,6 +1055,251 @@ We still need to make allowance for keeping the buffer headers root
 pointer implicit by context, at least as an option. Otherwise it is not,
 in general, possible to start streaming buffer content before the entire
 buffer is written.
+
+
+## Possible Future Features
+
+This is highly speculative, but documents some ideas that have been
+floating in order to avoid incompatible custom extensions on the same
+theme. Still these might never be implemented or end up being
+implemented differently. Be warned.
+
+### Force Align
+
+`force_align` attribute supported on fields of structs, scalars and
+and vectors of fixed size elements.
+
+### Fixed Length Vectors
+
+A fixed length vector is a vector of fixed length containing inline
+fixed size elements and no size prefix and they are stored inline
+in tables and structs. An element can be a struct or a scalar including
+enums.
+
+The binary format of a fixed size vector of length `n` and type `t` can
+be precisely emulated by created a struct that holds exactly `n` fields
+of type `t`, `n >= 0`. This means that a fixed length vector does not
+store any length information in a header and that it is stored inline in
+tables similar to structs. Alignment follows the rules of structs
+and also supports the `force_align` attribute.
+
+It is not valid to ever change the size of a fixed length vector when
+staying compliant with schema evolution.
+
+A fixed length vector cannot hold offsets because fixed length vectors
+are essentially structs with alternative accessors.
+
+Unions of fixed length vectors are not valid unless wrapped in a struct.
+
+Careful: subject to likely change: A new type `char` is used to
+create fixed length utf8 or ASCII strings that are always zero
+terminated and zeropadded. A [char:4] takes up 5 bytes including a zero
+termination byte and may hold any valid zero terminated ASCII or UTF-8
+string of that length. While `[char:1]` is a valid type, `char` is not.
+
+_Note: the syntax `[string:4]` has been proposed to mean a string of 4
+characters, but it actually means a fixed size vector of 4 offsets to
+variable length strings which is not supported._
+
+
+The following example
+
+    struct Basics {
+        int a;
+        int b;
+    }
+
+    struct MyStruct {
+        x: int;
+        z: [short:3];
+        y: float;
+        w: [Basics:2];
+        name: [char:4];
+    }
+    
+    table Info {
+        data: int;
+    }
+
+    table MyTable {
+        t: [ubyte:2];
+        m: [MyStruct:2];
+        d: [Info:2];
+    }
+
+
+can replace MyStruct with the binary equivalent (but different
+codegeneration):
+
+    struct MyStructEquivalent {
+        x: int;
+        z1: short;
+        z2: short;
+        z3: short;
+        y: float;
+        wa1: int;
+        wa2: int;
+        name1: ubyte;
+        name2: ubyte;
+        name3: ubyte;
+        name4: ubyte;
+        wname_zterm: ubyte;
+        x2: int;
+        z21: short;
+        z22: short;
+        z23: short;
+        y2: float;
+        wa21: int;
+        wa22: int;
+        name21: ubyte;
+        name22: ubyte;
+        name23: ubyte;
+        name24: ubyte;
+        wname2_zterm: ubyte;
+    }
+    struct tEquivalent {
+        t1: ubyte; 
+        t2: ubyte; 
+    }
+    table MyTableEquivalent {
+        t: tEquivalent;
+        m: MyStructEquivalent;
+    }
+
+
+### Mixins
+
+A mixin is a table or a struct that is apparently expanded into the table
+or struct that contains it.
+
+Mixins add new accessors to make it appear as if the fields of the mixed
+in type is copied into the containing type although physically this
+isn't the case. Mixins can include types that themselves have mixins
+and these mixed in fields are also expanded.
+
+A `mixin` is an attribute applied to table or a struct field when that
+field has a struct or a table type. The binary format is unchanged and
+the table or struct will continue to work as if it wasn't a mixin and
+is therefore fully backwards compatible.
+
+Example:
+
+    struct Position {
+        spawned: bool(required);
+        x: int;
+        y: int;
+    }
+
+    table Motion {
+        place: Pos(mixin);
+        vx: int = 0;
+        vy: int = 0;
+    }
+
+    table Status {
+        title: string;
+        energy: int;
+        sleep: int;
+    }
+    table NPC {
+        npcid: int;
+        motion: Motion(mixin);
+        stat: Status(mixin);
+        agent: Agent(mixin);
+    }
+    table Rock {
+        here: Position(mixin);
+        color: uint32 = 0xa0a0a000;
+    }
+        
+
+Here the table NPC will appear with read accessors is if it has the fields:
+
+    table NPC {
+        npcid: int;
+        spawned: bool(required);
+        x: int;
+        y: int;
+        vx: int = 0;
+        vy: int = 0;
+        title: string;
+        energy: int;
+        sleep: int;
+        place: Posion;
+        motion: Motion(required);
+        stat: Status;
+    }
+
+    table Rock {
+        spawned: bool(required);
+        x: int;
+        y: int;
+        here: Position(required);
+        color: uint32 = 0xa0a0a000;
+    }
+
+or in JSON:
+    
+    {
+        "npc1": {
+            "npcid": 1,
+            "spawned": true;
+            "x": 2,
+            "y": 3,
+            "vx": -4,
+            "vy": 5,
+            "title": "Monster",
+            "energy": 6,
+            "sleep": 0
+        },
+        "rock1": {
+            "spawned": 0;
+            "x": 0,
+            "y": 0,
+            "color": 0xa0a0a000
+        }
+    }
+
+
+
+Note that there is some redundancy here which makes it possible to
+access the mixed in fields in different ways and to perform type casts
+to a mixed in type.
+
+A cast can happen through a generated function along the lines of
+`npc.castToPosition()`, or via field a accessor `npc.getPlace()`.
+
+A JSON serializer excludes the intermediate container fields such as
+`place` and `motion` in the example.
+
+A builder may choose to only support the basic interface and required
+each mixed in table or struct be created separately. A more advanced
+builder would alternatively accept adding fields directly, but would
+error if a field is set twice by mixing up the approaches.
+
+If a mixed type has a required field, the required status propagates to
+the parent, but non-required siblings are not required as can be seen in
+the example above.
+
+Mixins also places some constraints on the involved types. It is not
+possible to mix in the same type twice because names would conflict and
+it would no longer be possible to do trivially cast a table or struct
+to one of its kinds. An empty table or struct could be mixed in to
+provide type information but such a type can also only be added once.
+
+Mixing in types introduces the risk of name conflicts. It is not valid
+to mix in a type directly or indirectly in a way that would lead to
+conflicting field names in a containing type.
+
+Note that in the example it is not possible to mix in the pos struct
+twice, otherwise we could have mixed in a Coord class twice to have
+position and velocity, but in that case it would be natural to
+have two fields of Coord type which are not mixed in.
+
+Schema evolution is fully supported because the vtable and field id's
+are kept separate. It is possible to add new fields to any type that
+is mixed in. However, adding fields could lead to name conficts
+which are then reported by the schema compiler.
 
 
 [eclectic.fbs]: https://github.com/dvidelabs/flatcc/blob/master/doc/eclectic.fbs
