@@ -1188,7 +1188,7 @@ Example:
     }
 
     table Motion {
-        place: Pos(mixin);
+        place: Position(mixin);
         vx: int = 0;
         vy: int = 0;
     }
