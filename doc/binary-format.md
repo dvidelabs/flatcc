@@ -1231,7 +1231,7 @@ Here the table NPC will appear with read accessors is if it has the fields:
         title: string;
         energy: int;
         sleep: int;
-        place: Posion;
+        place: Position;
         motion: Motion(required);
         stat: Status;
     }
