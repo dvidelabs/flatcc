@@ -1203,7 +1203,6 @@ Example:
         npcid: int;
         motion: Motion(mixin);
         stat: Status(mixin);
-        agent: Agent(mixin);
     }
 
     table Rock {
@@ -1219,7 +1218,7 @@ Example:
     root_type Main;
         
 
-Here the table NPC and Rock will appear with read accessors is if it has the fields:
+Here the table NPC and Rock will appear with read accessors is if they have the fields:
 
     table NPC {
         npcid: int;
