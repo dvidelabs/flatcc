@@ -1521,7 +1521,7 @@ Googles `monster_test.fbs` schema has the union (details left out):
 	namespace MyGame.Example2;
 	table Monster{}
 
-	namespace MyGame.Example2;
+	namespace MyGame.Example;
 	table Monster{}
 
 	union Any { Monster, MyGame.Example2.Monster }
