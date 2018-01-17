@@ -27,6 +27,8 @@
   headers in generated code and improves C++ compatibility (#72).
 - Change inconsistent `const void *` to `const char *` in JSON buffer
   argument to generated `_as_root` parsers (#73).
+- Simplify use of json printers by auto-flushing and terminating buffers
+  when a root object has been printed (#74).
 
 ## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,
