@@ -1,6 +1,17 @@
 OS-X & Ubuntu: [![Build Status](https://travis-ci.org/dvidelabs/flatcc.svg?branch=master)](https://travis-ci.org/dvidelabs/flatcc)
 Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/dvidelabs/flatcc?branch=master&svg=true)](https://ci.appveyor.com/project/dvidelabs/flatcc)
 
+_NOTE: upcoming changes: the union interface was changed in 0.5.0 and
+may still be changed slightly in an uncoming release. The generic union
+struct { type, member } in the builder interface may be renamed to {
+type, value } to have a more consistent terminology without changing the
+binary interface. This may also affect terminology in user facing
+generated code that has already adopted the 0.5.0 union changes, but is
+just a simple rename. JSON parsing of union vectors might see minor
+changes to the library interface which would also change generated
+code._
+
+
 # FlatCC FlatBuffers in C for C
 
 `flatcc` has no external dependencies except for build and compiler
