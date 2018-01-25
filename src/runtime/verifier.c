@@ -575,7 +575,7 @@ int flatcc_verify_union_field(flatcc_table_verifier_descriptor_t *td,
     /* Only now is it safe to read the type. */
     vte_table = read_vt_entry(td, id);
     type = (const uint8_t *)td->buf + td->table + vte_type;
-    verify(*type || vte_table == 0, flatcc_verify_error_union_type_NONE_cannot_have_a_member);
+    verify(*type || vte_table == 0, flatcc_verify_error_union_type_NONE_cannot_have_a_value);
 
     if (*type == 0) {
         return flatcc_verify_ok;

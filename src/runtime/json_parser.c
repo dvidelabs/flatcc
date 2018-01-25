@@ -925,7 +925,7 @@ const char *flatcc_json_parser_union(flatcc_json_parser_t *ctx,
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_union_none_present);
         }
         --f->union_count;
-        buf = union_parser(ctx, buf, end, e->type, &uref.member);
+        buf = union_parser(ctx, buf, end, e->type, &uref.value);
         if (buf != end) {
             if (flatcc_builder_table_add_union(ctx->ctx, id, uref)) {
                 return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_duplicate);
@@ -977,7 +977,7 @@ const char *flatcc_json_parser_union_type(flatcc_json_parser_t *ctx,
     ctx->line = e->line;
     ctx->line_start = e->line_start;
     uref.type = e->type;
-    if (end == union_parser(ctx, e->backtrace, end, e->type, &uref.member)) {
+    if (end == union_parser(ctx, e->backtrace, end, e->type, &uref.value)) {
         return end;
     }
     if (flatcc_builder_table_add_union(ctx->ctx, id, uref)) {

@@ -776,7 +776,7 @@ int verify_monster(void *buffer)
         printf("the monster test union type is not Any_Monster\n");
         return -1;
     }
-    if (test_union.member != ns(Monster_test(monster))) {
+    if (test_union.value != ns(Monster_test(monster))) {
         printf("the union monster has gone awol\n");
         return -1;
     }
@@ -784,12 +784,12 @@ int verify_monster(void *buffer)
     i = ns(Monster_vec_len(monsters));
     mon = ns(Monster_vec_at(monsters, i - 1));
     if (ns(Monster_test_type)(mon) != ns(Any_Monster)) {
-        printf("The monster variant added with member, type methods is not working\n");
+        printf("The monster variant added with value, type methods is not working\n");
         return -1;
     }
     mon = ns(Monster_test(mon));
     if (strcmp(ns(Monster_name(mon)), "TwoFace")) {
-        printf("The monster variant added with member method is incorrect\n");
+        printf("The monster variant added with value method is incorrect\n");
         return -1;
     }
     if (ns(Monster_testbool(monster))) {
@@ -962,7 +962,7 @@ int gen_monster(flatcc_builder_t *B, int with_size)
      *
      * We are not verifying the result as this is only to stress
      * the type system of the builder - except: the last array
-     * element is tested to ensure add_member is getting through.
+     * element is tested to ensure add_value is getting through.
      */
     ns(Monster_test_add)(B, ns(Any_as_Monster(mon)));
 
@@ -990,10 +990,10 @@ int gen_monster(flatcc_builder_t *B, int with_size)
     /*
      * This is mostly for internal use in create methods so the type
      * can be added last and pack better in the table.
-     * `add_member` still takes union_ref because it is a NOP if
+     * `add_value` still takes union_ref because it is a NOP if
      * the union type is NONE.
      */
-    ns(Monster_test_add_member(B, ns(Any_as_Monster(mon))));
+    ns(Monster_test_add_value(B, ns(Any_as_Monster(mon))));
     ns(Monster_name_create_str(B, "any name"));
     ns(Monster_test_add_type(B, ns(Any_Monster)));
     ns(Monster_testarrayoftables_push_end(B));
@@ -1849,7 +1849,7 @@ int test_union_vector(flatcc_builder_t *B)
         printf("Kermit is now different.\n");
         goto done;
     }
-    if (anyelem.member != kermit) {
+    if (anyelem.value != kermit) {
         printf("Kermit is incoherent.\n");
         goto done;
     }
@@ -1935,7 +1935,7 @@ int test_mixed_type_union(flatcc_builder_t *B)
      * Tables and structs can cast by void pointer assignment while
      * strings require an explicit cast.
      */
-    rapunzel = character.member;
+    rapunzel = character.value;
     if (!rapunzel) {
         printf("Rapunzel has gone AWOL\n");
     }
@@ -2013,7 +2013,7 @@ int test_mixed_type_union(flatcc_builder_t *B)
         printf("The second character is not MuLan.");
         goto done;
     };
-    attacker = character.member;
+    attacker = character.value;
     if (nsf(Attacker_sword_attack_damage(attacker) != 42)) {
         printf("The second character has unexpected sword damage.");
         goto done;
@@ -2023,7 +2023,7 @@ int test_mixed_type_union(flatcc_builder_t *B)
         printf("The third character is not MuLan.");
         goto done;
     };
-    attacker = character.member;
+    attacker = character.value;
     if (nsf(Attacker_sword_attack_damage(attacker) != 1)) {
         printf("The third character has unexpected sword damage.");
         goto done;

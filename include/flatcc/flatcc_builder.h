@@ -117,12 +117,12 @@ typedef flatbuffers_utype_t flatcc_builder_utype_t;
  */
 typedef struct flatcc_builder_union_ref {
     flatcc_builder_utype_t type;
-    flatcc_builder_ref_t member;
+    flatcc_builder_ref_t value;
 } flatcc_builder_union_ref_t;
 
 typedef struct flatcc_builder_union_vec_ref {
-    flatcc_builder_ref_t types;
-    flatcc_builder_ref_t members;
+    flatcc_builder_ref_t type;
+    flatcc_builder_ref_t value;
 } flatcc_builder_union_vec_ref_t;
 
 /**
@@ -677,7 +677,7 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
  * allocation. 
  *
  * The struct should be used as a root in the `end_buffer` call or as a
- * union member as there are no other ways to use struct while conforming
+ * union value as there are no other ways to use struct while conforming
  * to the FlatBuffer format - noting that tables embed structs in their
  * own data area except in union fields.
  *
@@ -696,7 +696,7 @@ flatcc_builder_ref_t flatcc_builder_create_struct(flatcc_builder_t *B,
  * Starts a struct and returns a pointer that should be used immediately
  * to fill in the struct in protocol endian format, and when done,
  * `end_struct` should be called. The returned reference should be used
- * as argument to `end_buffer` or as a union member. See also
+ * as argument to `end_buffer` or as a union value. See also
  * `create_struct`.
  */
 void *flatcc_builder_start_struct(flatcc_builder_t *B,
@@ -711,7 +711,7 @@ void *flatcc_builder_struct_edit(flatcc_builder_t *B);
 /**
  * Emits the struct started by `start_struct` and returns a reference to
  * be used as root in an enclosing `end_buffer` call or as a union
- * member.  As mentioned in `create_struct`, these can also be used more
+ * value.  As mentioned in `create_struct`, these can also be used more
  * freely, but not while being conformant FlatBuffers.
  */
 flatcc_builder_ref_t flatcc_builder_end_struct(flatcc_builder_t *B);
@@ -1273,11 +1273,11 @@ flatcc_builder_ref_t *flatcc_builder_table_add_offset(flatcc_builder_t *B, int i
 
 /*
  * Adds a union type and reference in a single operation and returns 0
- * on success. Stores the type field at `id - 1` and the member at
- * `id`. The `member` is a reference to a table, to a string, or to a
+ * on success. Stores the type field at `id - 1` and the value at
+ * `id`. The `value` is a reference to a table, to a string, or to a
  * standalone `struct` outside the table.
  *
- * If the type is 0, the member field must also be 0.
+ * If the type is 0, the value field must also be 0.
  *
  * Unions can also be added as separate calls to the type and the offset
  * separately which can lead to better packing when the type is placed
@@ -1432,13 +1432,13 @@ flatcc_builder_ref_t flatcc_builder_end_offset_vector(flatcc_builder_t *B);
 
 /**
  * Same as `flatcc_builder_end_offset_vector` except null references are
- * permitted when the corresponding `types` entry is 0 (the 'NONE' type).
+ * permitted when the corresponding `type` entry is 0 (the 'NONE' type).
  * This makes it possible to build union vectors with less overhead when
- * the `types` vector is already known. Use standand offset vector calls
+ * the `type` vector is already known. Use standand offset vector calls
  * prior to this call.
  */
 flatcc_builder_ref_t flatcc_builder_end_offset_vector_for_unions(flatcc_builder_t *B,
-        const flatcc_builder_utype_t *types);
+        const flatcc_builder_utype_t *type);
 
 /** Returns the number of elements currently on the stack. */
 size_t flatcc_builder_offset_vector_count(flatcc_builder_t *B);
