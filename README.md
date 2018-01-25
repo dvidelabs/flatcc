@@ -1,15 +1,12 @@
 OS-X & Ubuntu: [![Build Status](https://travis-ci.org/dvidelabs/flatcc.svg?branch=master)](https://travis-ci.org/dvidelabs/flatcc)
 Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/dvidelabs/flatcc?branch=master&svg=true)](https://ci.appveyor.com/project/dvidelabs/flatcc)
 
-_NOTE: upcoming changes: the union interface was changed in 0.5.0 and
-may still be changed slightly in an uncoming release. The generic union
-struct { type, member } in the builder interface may be renamed to {
-type, value } to have a more consistent terminology without changing the
-binary interface. This may also affect terminology in user facing
-generated code that has already adopted the 0.5.0 union changes, but is
-just a simple rename. JSON parsing of union vectors might see minor
-changes to the library interface which would also change generated
-code._
+_NOTE: 0.5.0 changed the union interface, and low-level union accessor names
+were cleaned up on 0.5.1.
+
+The JSON parser may change the interface for parsing union vectors in a
+future release which requires code generation to match library
+versions._
 
 
 # FlatCC FlatBuffers in C for C
@@ -249,7 +246,9 @@ the schema root as seen in the test driver in [test_json.c]. The
 consistent with Googles flatc version and a minor schema namespace
 inconsistency has been resolved as a result. Explicit references to
 portable headers have been moved out of generated source. extern "C" C++
-guards added around generated headers.
+guards added around generated headers. 0.5.1 also cleaned up the
+low-level union interface so the terms { type, value } are used
+consistently over { type, member } and { types, members }.
 
 Release 0.5.0 aims to reach feature parity with C++ FlatBuffers as of
 end 2017. These new features are union vectors and mixed type unions
@@ -1470,56 +1469,22 @@ accessors: `MyGame_Sample_Monster_equipped(t)` of type
 `flatbuffers_generic_t` and `MyGame_Sample_Monster_equipped_type(t)` of
 type `MyGame_Sample_Equipment_union_type_t`. A generic type is is just a
 const void pointer that can be assigned to the expected table type,
-struct type, or string type.  The enumeration has a member for each
-table in the union and also `MyGame_Sample_Equipment_NONE` which has the
-value 0.
+struct type, or string type. The enumeration has a type code for member
+of the union and also `MyGame_Sample_Equipment_NONE` which has the value
+0.
 
-It is possible to observe a union `_type` value that is not expected
-because forward schema evolution supports adding more members to a union
-in a future version. As of v0.5.0 `_is_known_type` can be used to check
-if the `_type` is know to the current version of the schema.
+The union interface were changed in 0.5.0 and 0.5.1 to use a consistent
+{ type, value } naming convention for both unions and union vectors
+in all interfaces and to support unions and union vectors of multiple
+types.
 
-Unions before v0.5.0 could only contain tables but can now also have
-struct and string type members. For this reason
-`flatbuffers_generic_table_t` has been renamed to
-`flatbuffers_generic_t` of type `const void *`. Such mixed unions are
-not widely supported but C++ also supports them. To see how to define
-such unions, see the `Character` union and `Movie` table in
-[monster_test.fbs] and the mixed type union test case in
-[monster_test.c]. Note that strings require a
-`flatbuffers_string_cast_from_generic` or
-`flatbuffers_string_cast_from_union` while structs and tables can be
-cast by void pointer assignment.
-
-As of v0.5.0 it is possible to retrieve a union as
-`MyGame_Sample_Monster_equipped_union(t)` of type
-`MyGame_Sample_Equipment_union_t` which returns a struct with a `type`
-and a `member` field of type. This is just a typedef to
-`flatbuffers_union_t` because structs cannot be cast in modern C.
-
-When building unions there as a separate, but similar `union_ref_t`
-struct for this purpose. Before v0.5.0 this struct was type specific and
-had member values with typed pointers, but now it only has the fields
-`type` and `member`. This change was necessary in order to handle
-union vectors uniformly. See also [Builder Interface Reference].
-
-Union vectors are supported as of v0.5.0 and can be access similar to
-single value union fields. The field with the the `_type` suffix returns
-a vector of types, for example of type `MyGame_Sample_Equiment_vec_t` -
-note that this is a scalar vector not a vector of union objects.
-v0.5.0 also introduces `flatbuffers_union_type_t` and
-`flatbuffers_union_type_vec_*` methods to navigate type arrays directly.
-The other field returns a vector of type `flatcc_generic_vec_t`.
-Both vectors have same length. Union vectors can also be access with with the
-`_union(t)` method which returns a struct with two two members named
-`type` and `member` as before but where the type and member are the
-vectors just discussed. The struct can have the type
-`MyGame_Sample_Equipment_union_vec_t` which is just a typedef to
-`flatbuffers_union_vec_t`. It is possible to access elements with
-`_union_vec_at`, and `_union_vec_len` as with other vector types. The
-element returned is a struct of type `MyGame_Sample_Equipment_union_t`.
-Be careful to not confuse the union vector type with the scalar type
-vector with a similar name.
+A union can be accessed by its field name, like Monster
+`MyGame_Sample_Monster_equipped(t)` and its type is given by
+`MyGame_Sample_Monster_type(t)`, or a `flatbuffers_union_t` struct
+can be returned with `MyGame_Sample_monster_union(t)` with the fields
+{ type, value }. A union vector is accessed in the same way but {
+type, value } represents a type vector and a vector of the given type,
+e.g. a vector Monster tables or a vector of strings.
 
 There is a test in [monster_test.c] covering union vectors and a
 separate test focusing on mixed type unions that also has union vectors.

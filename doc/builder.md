@@ -553,8 +553,8 @@ special problem since it is two fields treated as one and the type field
 will generally waste padding space if stored in order:
 
 To help pack unions better these can be added with the type
-seperate from the member reference using `add_type(B, test.type`,
-`add_member(B, test)` where the member is only added if the type is
+seperate from the value reference using `add_type(B, test.type`,
+`add_value(B, test)` where the value is only added if the type is
 not `NONE`. The `add_type` should be called last since it is the
 smallest type.
 
@@ -1192,7 +1192,7 @@ type field except via a small struct with a union of typed references
 and a type field. This struct is given to the create argument, and above
 it is zero initialized meaning default None.
 
-Unions can be created with member specific `start/end/create` calls. The add
+Unions can be created with value specific `start/end/create` calls. The add
 call is not specialized since it takes a union reference:
 
 
@@ -1229,7 +1229,7 @@ or
     Pickup_start(B);
     Pickup_location_create(B, 0, 0, 17);
     /* test.Pickup = Pickup_end(B); no longer possible as of v0.5.0 */
-    test.member = Pickup_end(B); /* As of v0.5.0, or test._member before. */
+    test.value = Pickup_end(B); /* As of v0.5.1. */
     test.type = Any_Pickup;
     Monster_test_add(B, test);
 
@@ -1238,17 +1238,13 @@ The following is valid and will not return an error, but also has no effect:
     Monster_test_add(B, Any_as_NONE());
 
 
-_Note: the union structure has been change for v0.5.0. Before each union
-had its own structure which a union of members with a field for each
-member type. These fields have been removed because of conflicts with
-strict aliasing rules when casting. Now each union type has a typedef to
-a generic union struct. This change makes it possible to handle union
-vectors in the low level builder API._
+_Note: the union structure has been changed for v0.5.0, and v0.5.1.
+Both unions and union vectors are now represented by a struct with the
+fields { type, value } in the low level interfaces. Before 0.5.0 only
+unions of tables were supported._
+
 
 ### Union Vectors
-
-Only as of flatcc v0.5.0 and currently not widely supported. C++ supports union
-vectors.
 
 The `monster_test.fbs` schema has a field named manyany in the Monster
 table. It is vector of unions of type Any.
@@ -1299,12 +1295,12 @@ _Note: as of v0.5.0 unions can also contain strings and structs in
 addition to tables. Support for these types in other languages may vary,
 but C++ does support them too._
 
-All union members are stored by reference. Structs that are not unions
+All union values are stored by reference. Structs that are not unions
 are stored inline in tables and cannot be shared but unions of struct
-type are stored by reference and can be shared. A union member value is
+type are stored by reference and can be shared. A union value is
 therefore always a reference. This is mostly transparent because the
 generated table field methods has `create/start/end` calls for each union
-member type and addition to `add`.
+value type and addition to `add`.
 
 To illustrate the use of these variation we use the Movie table from
 [monster_test.fbs]:
@@ -1398,7 +1394,7 @@ table field.
 On a server with reasonable amount of memory using the default
 allocator, and with an emitter that will not return errors, and when it
 can be expected that inputs will not exceed the size contraints of the
-flatbuffer datatypes, and if the api is being used correctly, then there
+flatbuffer data types, and if the api is being used correctly, then there
 are no reason for failure and error handling may be skipped. However,
 it is sometimes desireable for servers to restrict a single clients
 memory usage, and then errors are very likely unless the source data is

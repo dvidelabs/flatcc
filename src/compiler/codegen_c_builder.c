@@ -437,21 +437,21 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sbuild_union_field(ID, NS, N, TN)\\\n"
         "static inline int N ## _add(NS ## builder_t *B, TN ## _union_ref_t uref)\\\n"
-        "{ NS ## ref_t *_p; TN ## _union_type_t *_pt; if (uref.type == TN ## _NONE) return 0; if (uref.member == 0) return -1;\\\n"
+        "{ NS ## ref_t *_p; TN ## _union_type_t *_pt; if (uref.type == TN ## _NONE) return 0; if (uref.value == 0) return -1;\\\n"
         "  if (!(_pt = (TN ## _union_type_t *)flatcc_builder_table_add(B, ID - 1, sizeof(*_pt), sizeof(*_pt))) ||\\\n"
-        "  !(_p = flatcc_builder_table_add_offset(B, ID))) return -1; *_pt = uref.type; *_p = uref.member; return 0; }\\\n"
+        "  !(_p = flatcc_builder_table_add_offset(B, ID))) return -1; *_pt = uref.type; *_p = uref.value; return 0; }\\\n"
         "static inline int N ## _add_type(NS ## builder_t *B, TN ## _union_type_t type)\\\n"
         "{ TN ## _union_type_t *_pt; if (type == TN ## _NONE) return 0; return (_pt = (TN ## _union_type_t *)flatcc_builder_table_add(B, ID - 1,\\\n"
         "  sizeof(*_pt), sizeof(*_pt))) ? ((*_pt = type), 0) : -1; }\\\n"
-        "static inline int N ## _add_member(NS ## builder_t *B, TN ## _union_ref_t uref)\\\n"
+        "static inline int N ## _add_value(NS ## builder_t *B, TN ## _union_ref_t uref)\\\n"
         "{ NS ## ref_t *p; if (uref.type == TN ## _NONE) return 0; return (p = flatcc_builder_table_add_offset(B, ID)) ?\\\n"
-        "  ((*p = uref.member), 0) : -1; }\n"
+        "  ((*p = uref.value), 0) : -1; }\n"
         "\n",
         nsc);
 
     fprintf(out->fp,
-        "/* M is the union member name and T is its type, i.e. the qualified name. */\n"
-        "#define __%sbuild_union_table_member_field(NS, N, NU, M, T)\\\n"
+        "/* M is the union value name and T is its type, i.e. the qualified name. */\n"
+        "#define __%sbuild_union_table_value_field(NS, N, NU, M, T)\\\n"
         "static inline int N ## _ ## M ## _add(NS ## builder_t *B, T ## _ref_t ref)\\\n"
         "{ return N ## _add(B, NU ## _as_ ## M (ref)); }\\\n"
         "static inline int N ## _ ## M ## _start(NS ## builder_t *B)\\\n"
@@ -466,8 +466,8 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         nsc);
 
     fprintf(out->fp,
-        "/* M is the union member name and T is its type, i.e. the qualified name. */\n"
-        "#define __%sbuild_union_struct_member_field(NS, N, NU, M, T)\\\n"
+        "/* M is the union value name and T is its type, i.e. the qualified name. */\n"
+        "#define __%sbuild_union_struct_value_field(NS, N, NU, M, T)\\\n"
         "static inline int N ## _ ## M ## _add(NS ## builder_t *B, T ## _ref_t ref)\\\n"
         "{ return N ## _add(B, NU ## _as_ ## M (ref)); }\\\n"
         "static inline T ## _t *N ## _ ## M ## _start(NS ## builder_t *B)\\\n"
@@ -488,7 +488,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         nsc);
 
     fprintf(out->fp,
-        "#define __%sbuild_union_string_member_field(NS, N, NU, M)\\\n"
+        "#define __%sbuild_union_string_value_field(NS, N, NU, M)\\\n"
         "static inline int N ## _ ## M ## _add(NS ## builder_t *B, NS ## string_ref_t ref)\\\n"
         "{ return N ## _add(B, NU ## _as_ ## M (ref)); }\\\n"
         "__%sbuild_string_field_ops(NS, N ## _ ## M)\n"
@@ -600,9 +600,9 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sbuild_union_vector_field(ID, NS, N, TN)\\\n"
         "static inline int N ## _add(NS ## builder_t *B, TN ## _union_vec_ref_t uvref)\\\n"
-        "{ NS ## vec_ref_t *_p; if (!uvref.types || !uvref.members) return uvref.types == uvref.members ? 0 : -1;\\\n"
-        "  if (!(_p = flatcc_builder_table_add_offset(B, ID - 1))) return -1; *_p = uvref.types;\\\n"
-        "  if (!(_p = flatcc_builder_table_add_offset(B, ID))) return -1; *_p = uvref.members; return 0; }\\\n"
+        "{ NS ## vec_ref_t *_p; if (!uvref.type || !uvref.value) return uvref.type == uvref.value ? 0 : -1;\\\n"
+        "  if (!(_p = flatcc_builder_table_add_offset(B, ID - 1))) return -1; *_p = uvref.type;\\\n"
+        "  if (!(_p = flatcc_builder_table_add_offset(B, ID))) return -1; *_p = uvref.value; return 0; }\\\n"
         "static inline int N ## _start(NS ## builder_t *B)\\\n"
         "{ return flatcc_builder_start_union_vector(B); }\\\n"
         "static inline int N ## _end(NS ## builder_t *B)\\\n"
@@ -614,7 +614,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         nsc, nsc);
 
     fprintf(out->fp,
-        "#define __%sbuild_union_table_vector_member_field(NS, N, NU, M, T)\\\n"
+        "#define __%sbuild_union_table_vector_value_field(NS, N, NU, M, T)\\\n"
         "static inline int N ## _ ## M ## _push_start(NS ## builder_t *B)\\\n"
         "{ return T ## _start(B); }\\\n"
         "static inline NU ## _union_ref_t *N ## _ ## M ## _push_end(NS ## builder_t *B)\\\n"
@@ -627,7 +627,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         nsc);
 
     fprintf(out->fp,
-        "#define __%sbuild_union_struct_vector_member_field(NS, N, NU, M, T)\\\n"
+        "#define __%sbuild_union_struct_vector_value_field(NS, N, NU, M, T)\\\n"
         "static inline T ## _t *N ## _ ## M ## _push_start(NS ## builder_t *B)\\\n"
         "{ return T ## _start(B); }\\\n"
         "static inline NU ## _union_ref_t *N ## _ ## M ## _push_end(NS ## builder_t *B)\\\n"
@@ -640,7 +640,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         nsc);
 
     fprintf(out->fp,
-        "#define __%sbuild_union_string_vector_member_field(NS, N, NU, M)\\\n"
+        "#define __%sbuild_union_string_vector_value_field(NS, N, NU, M)\\\n"
         "static inline NU ## _union_ref_t *N ## _ ## M ## _push(NS ## builder_t *B, NS ## string_ref_t ref)\\\n"
         "{ return NU ## _vec_push(B, NU ## _as_ ## M (ref)); }\\\n"
         "static inline int N ## _ ## M ## _push_start(NS ## builder_t *B)\\\n"
@@ -1261,7 +1261,7 @@ static int gen_builder_create_table(fb_output_t *out, fb_compound_type_t *ct)
         if (member->type.type == vt_compound_type_ref && member->type.ct->symbol.kind == fb_is_union) {
             has_union = 1;
             if (patch_union) {
-                fprintf(out->fp, "\n        || %s_%.*s_add_member(B, v%llu)", snt.text, n, s, llu(member->id));
+                fprintf(out->fp, "\n        || %s_%.*s_add_value(B, v%llu)", snt.text, n, s, llu(member->id));
                 continue;
             }
         }
@@ -1330,7 +1330,7 @@ static int gen_union_fields(fb_output_t *out, const char *st, int n, const char 
     int nu;
     fb_scoped_name_t snref;
     fb_scoped_name_t snu;
-    const char *kind = is_vector ? "vector_member" : "member";
+    const char *kind = is_vector ? "vector_value" : "value";
 
     fb_clear(snref);
     fb_clear(snu);
@@ -1586,7 +1586,7 @@ static int gen_union(fb_output_t *out, fb_compound_type_t *ct)
             symbol_name(sym, &n, &s);
             fprintf(out->fp,
                 "static inline %s_union_ref_t %s_as_%.*s(%s_ref_t ref)\n"
-                "{ %s_union_ref_t uref; uref.type = %s_%.*s; uref.member = ref; return uref; }\n",
+                "{ %s_union_ref_t uref; uref.type = %s_%.*s; uref.value = ref; return uref; }\n",
                 snt.text, snt.text, n, s, snref.text,
                 snt.text, snt.text, n, s);
             break;
@@ -1594,18 +1594,18 @@ static int gen_union(fb_output_t *out, fb_compound_type_t *ct)
             symbol_name(sym, &n, &s);
             fprintf(out->fp,
                 "static inline %s_union_ref_t %s_as_%.*s(%sstring_ref_t ref)\n"
-                "{ %s_union_ref_t uref; uref.type = %s_%.*s; uref.member = ref; return uref; }\n",
+                "{ %s_union_ref_t uref; uref.type = %s_%.*s; uref.value = ref; return uref; }\n",
                 snt.text, snt.text, n, s, nsc,
                 snt.text, snt.text, n, s);
             break;
         case vt_missing:
             fprintf(out->fp,
                 "static inline %s_union_ref_t %s_as_NONE()\n"
-                "{ %s_union_ref_t uref; uref.type = %s_NONE; uref.member = 0; return uref; }\n",
+                "{ %s_union_ref_t uref; uref.type = %s_NONE; uref.value = 0; return uref; }\n",
                 snt.text, snt.text, snt.text, snt.text);
             break;
         default:
-            gen_panic(out, "internal error: unexpected union member type");
+            gen_panic(out, "internal error: unexpected union value type");
             break;
         }
     }

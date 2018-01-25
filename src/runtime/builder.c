@@ -1516,11 +1516,11 @@ int flatcc_builder_table_add_union(flatcc_builder_t *B, int id,
     flatcc_builder_utype_t *putype;
 
     check(frame(type) == flatcc_builder_table, "expected table frame");
-    check_error(uref.type != 0 || uref.member == 0, -1, "expected null member for type NONE");
-    if (uref.member != 0) {
+    check_error(uref.type != 0 || uref.value == 0, -1, "expected null value for type NONE");
+    if (uref.value != 0) {
         pref = flatcc_builder_table_add_offset(B, id);
-        check_error(pref != 0, -1, "unable to add union member");
-        *pref = uref.member;
+        check_error(pref != 0, -1, "unable to add union value");
+        *pref = uref.value;
     }
     putype = flatcc_builder_table_add(B, id - 1, utype_size, utype_size);
     check_error(putype != 0, -1, "unable to add union type");
@@ -1551,7 +1551,7 @@ flatcc_builder_union_vec_ref_t flatcc_builder_create_union_vector(flatcc_builder
 
     for (i = 0; i < count; ++i) {
         types[i] = urefs[i].type;
-        refs[i] = urefs[i].member;
+        refs[i] = urefs[i].value;
     }
     uvref = flatcc_builder_create_union_vector_direct(B,
             types, refs, count);
@@ -1565,10 +1565,10 @@ flatcc_builder_union_vec_ref_t flatcc_builder_create_union_vector_direct(flatcc_
 {
     flatcc_builder_union_vec_ref_t uvref = { 0, 0 };
 
-    if (0 == (uvref.members = _create_offset_vector_direct(B, data, count, types))) {
+    if (0 == (uvref.value = _create_offset_vector_direct(B, data, count, types))) {
         return uvref;
     }
-    if (0 == (uvref.types = flatcc_builder_create_vector(B, types, count,
+    if (0 == (uvref.type = flatcc_builder_create_vector(B, types, count,
                     utype_size, utype_size, max_utype_count))) {
         return uvref;
     }
@@ -1615,7 +1615,7 @@ flatcc_builder_union_vec_ref_t flatcc_builder_end_union_vector(flatcc_builder_t 
 
     for (i = 0; i < count; ++i) {
         types[i] = urefs[i].type;
-        refs[i] = urefs[i].member;
+        refs[i] = urefs[i].value;
     }
     uvref = flatcc_builder_create_union_vector_direct(B, types, refs, count);
     /* No need to clean up after out temporary types vector. */

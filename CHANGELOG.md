@@ -4,8 +4,7 @@
 
 - Fix parent namespace lookup in the schema parser when the namespace
   prefix is omitted.
-- Fix garbage printing and reading memory out of bounds in json printing
-  when exhausting flush buffer (#70).
+- Fix buffer overrun in JSON printer when exhausting flush buffer (#70).
 - More consistent name generation across verifier and json parsers
   allowing for namespace wrapped parse/verify/print table functions.
 - Fix unhelpful error on precision loss from float/double conversion
@@ -29,6 +28,11 @@
   argument to generated `_as_root` parsers (#73).
 - Simplify use of json printers by auto-flushing and terminating buffers
   when a root object has been printed (#74).
+- BREAKING: in extension of the changes in 0.5.0 for unions and union
+  vectors, the low-level methods and structs now consistently use the
+  terminology { type, value } for union types and values rather than {
+  type, member } or { types, members }. The binary builder interface
+  remains unchanged.
 
 ## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,

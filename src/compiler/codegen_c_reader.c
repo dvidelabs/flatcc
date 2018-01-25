@@ -171,11 +171,11 @@ static void gen_union(fb_output_t *out)
     fprintf(out->fp,
         "typedef struct %sunion {\n"
         "    %sunion_type_t type;\n"
-        "    %sgeneric_t member;\n"
+        "    %sgeneric_t value;\n"
         "} %sunion_t;\n"
         "typedef struct %sunion_vec {\n"
         "    const %sunion_type_t *type;\n"
-        "    const %suoffset_t *member;\n"
+        "    const %suoffset_t *value;\n"
         "} %sunion_vec_t;\n",
         nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
@@ -187,7 +187,7 @@ static void gen_union(fb_output_t *out)
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "static inline %sstring_t %sstring_cast_from_union(const %sunion_t u)\\\n"
-        "{ return %sstring_cast_from_generic(u.member); }\n",
+        "{ return %sstring_cast_from_generic(u.value); }\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_union_field(NS, ID, N, NK, T, r)\\\n"
@@ -199,7 +199,7 @@ static void gen_union(fb_output_t *out)
         "__## NS ## field_present(ID, t)\\\n"
         "static inline T ## _union_t N ## _ ## NK ## _union(N ## _table_t t)\\\n"
         "{ T ## _union_t u = { 0, 0 }; u.type = N ## _ ## NK ## _type(t);\\\n"
-        "  if (u.type == 0) return u; u.member = N ## _ ## NK (t); return u; }\\\n"
+        "  if (u.type == 0) return u; u.value = N ## _ ## NK (t); return u; }\\\n"
         "static inline NS ## string_t N ## _ ## NK ## _as_string(N ## _table_t t)\\\n"
         "{ return NS ## string_cast_from_generic(N ## _ ## NK(t)); }\\\n"
         "\n",
@@ -213,9 +213,9 @@ static void gen_union(fb_output_t *out)
         "  assert(n > (i) && \"index out of range\"); u.type = uv.type[i];\\\n"
         "  /* Unknown type is treated as NONE for schema evolution. */\\\n"
         "  if (u.type == 0) return u;\\\n"
-        "  u.member = NS ## generic_vec_at(uv.member, i); return u; }\\\n"
+        "  u.value = NS ## generic_vec_at(uv.value, i); return u; }\\\n"
         "static inline NS ## string_t T ## _union_vec_at_as_string(T ## _union_vec_t uv, size_t i)\\\n"
-        "{ return NS ## generic_vec_at_as_string(uv.member, i); }\\\n"
+        "{ return NS ## generic_vec_at_as_string(uv.value, i); }\\\n"
         "\n",
         nsc);
     fprintf(out->fp,
@@ -233,8 +233,8 @@ static void gen_union(fb_output_t *out)
         "__## NS ## define_vector_field(ID - 1, N, NK ## _type, T ## _vec_t, r)\\\n"
         "__## NS ## define_vector_field(ID, N, NK, flatbuffers_generic_vec_t, r)\\\n"
         "static inline T ## _union_vec_t N ## _ ## NK ## _union(N ## _table_t t)\\\n"
-        "{ T ## _union_vec_t uv; uv.type = N ## _ ## NK ## _type(t); uv.member = N ## _ ## NK(t);\\\n"
-        "  assert(NS ## vec_len(uv.type) == NS ## vec_len(uv.member)\\\n"
+        "{ T ## _union_vec_t uv; uv.type = N ## _ ## NK ## _type(t); uv.value = N ## _ ## NK(t);\\\n"
+        "  assert(NS ## vec_len(uv.type) == NS ## vec_len(uv.value)\\\n"
         "  && \"union vector type length mismatch\"); return uv; }\n",
         nsc);
 }
@@ -379,7 +379,7 @@ static void gen_helpers(fb_output_t *out)
 
     fprintf(out->fp,
         /*
-         * Include the basic primitives for accessing flatbuffer datatypes independent
+         * Include the basic primitives for accessing flatbuffer data types independent
          * of endianness.
          *
          * The included file must define the basic types and accessors

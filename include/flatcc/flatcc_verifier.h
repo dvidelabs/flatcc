@@ -78,7 +78,7 @@ extern "C" {
     XX(type_field_absent_from_required_union_field, "type field absent from required union field")\
     XX(type_field_absent_from_required_union_vector_field, "type field absent from required union vector field")\
     XX(union_cannot_have_a_table_without_a_type, "union cannot have a table without a type")\
-    XX(union_type_NONE_cannot_have_a_member, "union member field present with type NONE")\
+    XX(union_type_NONE_cannot_have_a_value, "union value field present with type NONE")\
     XX(vector_count_exceeds_representable_vector_size, "vector count exceeds representable vector size")\
     XX(vector_out_of_range, "vector out of range")\
     XX(vtable_header_out_of_range, "vtable header out of range")\
@@ -144,11 +144,11 @@ struct flatcc_union_verifier_descriptor {
     flatbuffers_uoffset_t end;
     /* Time to live: number nesting levels left before failure. */
     int ttl;
-    /* Type of union member to be verified */
+    /* Type of union value to be verified */
     flatbuffers_utype_t type;
-    /* Offset relative to buffer start to where union member offset is stored. */
+    /* Offset relative to buffer start to where union value offset is stored. */
     flatbuffers_uoffset_t base;
-    /* Offset of union member relative to base. */
+    /* Offset of union value relative to base. */
     flatbuffers_uoffset_t offset;
 };
 
@@ -218,7 +218,7 @@ int flatcc_verify_table_as_nested_root(flatcc_table_verifier_descriptor_t *td,
  * If the above checks out and the type is not NONE, the uvf callback
  * is executed. It must test each known table type and silently accept
  * any unknown table type for forward compatibility. A union table
- * member is verified without the required flag because an absent table
+ * value is verified without the required flag because an absent table
  * encodes a typed NULL value while an absent type field encodes a
  * missing union which fails if required.
  */
