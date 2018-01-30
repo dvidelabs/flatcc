@@ -33,6 +33,7 @@
   terminology { type, value } for union types and values rather than {
   type, member } or { types, members }. The binary builder interface
   remains unchanged.
+- Silence (unjustified) uninitialized gcc warnings (#75).
 
 ## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,

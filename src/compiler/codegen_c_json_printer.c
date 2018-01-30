@@ -37,9 +37,9 @@ static int gen_json_printer_enum(fb_output_t *out, fb_compound_type_t *ct)
     fb_scoped_name_t snt, snref;
     const char *tp, *tn, *ns;
     int bit_flags;
-    uint64_t mask;
-    char *suffix;
-    char *ut;
+    uint64_t mask = 0;
+    char *suffix = "";
+    char *ut = "";
 
     fb_clear(snt);
     fb_clear(snref);
