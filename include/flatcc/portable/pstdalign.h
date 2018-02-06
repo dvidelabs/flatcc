@@ -8,7 +8,19 @@
  *
  * NOTE: C++11 defines alignas as a keyword but then also defines
  * __alignas_is_defined.
+ *
+ * C++14 does not define alignas_is_defined, at least sometimes.
  */
+
+
+ /* https://lists.gnu.org/archive/html/bug-gnulib/2015-08/msg00003.html */
+#if defined(__cplusplus)
+#include <stdalign.h>
+#if __cplusplus > 201103
+#define __alignas_is_defined 1
+#define __alignof_is_defined 1
+#endif
+#endif
 
 #ifndef __alignas_is_defined
 
