@@ -2,9 +2,9 @@ OS-X & Ubuntu: [![Build Status](https://travis-ci.org/dvidelabs/flatcc.svg?branc
 Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/dvidelabs/flatcc?branch=master&svg=true)](https://ci.appveyor.com/project/dvidelabs/flatcc)
 
 _NOTE: 0.5.0 changed the union interface, and low-level union accessor names
-were cleaned up on 0.5.1.
+were cleaned up in 0.5.1._
 
-The JSON parser may change the interface for parsing union vectors in a
+_The JSON parser may change the interface for parsing union vectors in a
 future release which requires code generation to match library
 versions._
 
