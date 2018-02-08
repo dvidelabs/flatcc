@@ -9,9 +9,16 @@
  * NOTE: C++11 defines alignas as a keyword but then also defines
  * __alignas_is_defined.
  *
- * C++14 does not define alignas_is_defined, at least sometimes.
+ * C++14 does not define __alignas_is_defined, at least sometimes.
+ *
+ * newlib defines _Alignas and _Alignof in sys/cdefs but rely on
+ * gcc version for <stdaligh.h> which can leasd to conflicts if
+ * stdalign is not included.
+ *
+ * If stdalign.h is supported but heuristics in this file are
+ * insufficient to detect this, try including <stdaligh.h> manually
+ * or define HAVE_STDALIGN_H.
  */
-
 
  /* https://lists.gnu.org/archive/html/bug-gnulib/2015-08/msg00003.html */
 #if defined(__cplusplus)
@@ -20,6 +27,12 @@
 #define __alignas_is_defined 1
 #define __alignof_is_defined 1
 #endif
+#elif defined(__has_include) && __has_include(<stdalign.h>)
+#include <stdalign.h>
+#elif !defined(__clang__) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7))
+#include <stdalign.h>
+#elif defined(HAVE_STDALIGN_H)
+#include <stdaligh.h>
 #endif
 
 #ifndef __alignas_is_defined
@@ -45,20 +58,33 @@ extern "C" {
 #include <stdalign.h>
 #else
 #if defined(__GNUC__) || defined(__IBM_ALIGNOF__) || defined(__clang__)
+
+#ifndef _Alignas
 #define _Alignas(t) __attribute__((__aligned__(t)))
+#endif
+
+#ifndef _Alignof
 #define _Alignof(t) __alignof__(t)
+#endif
+
 #elif defined(_MSC_VER)
+
 #define _Alignas(t) __declspec (align(t))
 #define _Alignof(t) __alignof(t)
 
 #else
-#error please update pstdalign.h with support for current compiler
+#error please update pstdalign.h with support for current compiler and library
 #endif
 
 #endif /* __STDC__ */
 
+#ifndef alignas
 #define alignas _Alignas
+#endif
+
+#ifndef alignof
 #define alignof _Alignof
+#endif
 
 #define __alignas_is_defined 1
 #define __alignof_is_defined 1
