@@ -20,6 +20,16 @@
  * or define HAVE_STDALIGN_H.
  */
 
+#if !defined PORTABLE_HAS_INCLUDE_STDALIGN
+#if defined(__has_include)
+#if __has_include(<stdalign.h>)
+#define PORTABLE_HAS_INCLUDE_STDALIGN 1
+#else
+#define PORTABLE_HAS_INCLUDE_STDALIGN 0
+#endif
+#endif
+#endif
+
  /* https://lists.gnu.org/archive/html/bug-gnulib/2015-08/msg00003.html */
 #if defined(__cplusplus)
 #include <stdalign.h>
@@ -27,7 +37,7 @@
 #define __alignas_is_defined 1
 #define __alignof_is_defined 1
 #endif
-#elif defined(__has_include) && __has_include(<stdalign.h>)
+#elif PORTABLE_HAS_INCLUDE_STDALIGN
 #include <stdalign.h>
 #elif !defined(__clang__) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7))
 #include <stdalign.h>
