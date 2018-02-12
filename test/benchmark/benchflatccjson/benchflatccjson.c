@@ -129,7 +129,7 @@ int encode(flatcc_jsonbench_t *bench, void *buffer, size_t *size)
     flatcc_json_printer_flush(&bench->printer);
     *size = bench->printer.total;
 
-    return ret;
+    return ret < 0 ? ret : 0;
 }
 
 int64_t decode(flatcc_jsonbench_t *bench, void *buffer, size_t size, int64_t sum)
