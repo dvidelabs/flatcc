@@ -321,6 +321,12 @@ static inline void flatcc_json_printer_flush_partial(flatcc_json_printer_t *ctx)
     }
 }
 
+/* Returns the total printed size but flushed and in buffer. */
+static inline size_t flatcc_json_printer_total(flatcc_json_printer_t *ctx)
+{
+    return (size_t)(ctx->total + (ctx->p - ctx->buf));
+}
+
 /*
  * Flush the remaining data not flushed by partial flush. It is valid to
  * call at any point if it is acceptable to have unaligned flush units,
@@ -341,7 +347,7 @@ static inline void flatcc_json_printer_flush_partial(flatcc_json_printer_t *ctx)
 static inline size_t flatcc_json_printer_flush(flatcc_json_printer_t *ctx)
 {
     ctx->flush(ctx, 1);
-    return ctx->total;
+    return flatcc_json_printer_total(ctx);
 }
 
 /*

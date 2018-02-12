@@ -36,6 +36,7 @@
 - Silence (unjustified) uninitialized gcc warnings (#75).
 - Fix C++14 missing `__alignas_is_defined`.
 - Remove newlib stdalign conflict (#77).
+- Add `flatcc_json_printer_total`.
 
 ## [0.5.0]
 - New schema type aliases: int8, uint8, int16, uint16, int32, uint32,
