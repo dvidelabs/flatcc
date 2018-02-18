@@ -1528,6 +1528,25 @@ int flatcc_builder_table_add_union(flatcc_builder_t *B, int id,
     return 0;
 }
 
+int flatcc_builder_table_add_union_vector(flatcc_builder_t *B, int id,
+        flatcc_builder_union_vec_ref_t uvref)
+{
+    flatcc_builder_ref_t *pref;
+
+    check(frame(type) == flatcc_builder_table, "expected table frame");
+    check_error((uvref.type == 0) == (uvref.value == 0), -1, "expected both type and value vector, or neither");
+    if (uvref.type != 0) {
+        pref = flatcc_builder_table_add_offset(B, id - 1);
+        check_error(pref != 0, -1, "unable to add union member");
+        *pref = uvref.type;
+
+        pref = flatcc_builder_table_add_offset(B, id);
+        check_error(pref != 0, -1, "unable to add union member");
+        *pref = uvref.value;
+    }
+    return 0;
+}
+
 flatcc_builder_union_vec_ref_t flatcc_builder_create_union_vector(flatcc_builder_t *B,
         const flatcc_builder_union_ref_t *urefs, size_t count)
 {
