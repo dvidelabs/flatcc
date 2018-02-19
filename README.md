@@ -238,36 +238,21 @@ fi
 
 ## Status
 
-Release 0.5.1 quickly followed 0.5.1 because of a buffer overrun was reported
-in the JSON printer just after the 0.5.0 release. JSON printing and parsing
-have also been made more consistent to help parse and print tables other than
-the schema root as seen in the test driver in [test_json.c]. The
-[monster_test.fbs] file has been reorganized to keep the Monster table more
-consistent with Googles flatc version and a minor schema namespace
+Release 0.5.1 fixes a buffer overrun in the JSON printer and improves
+the portable libraries <stdalign.h> compatibility with C++ and the
+embedded `newlib` standard library. JSON printing and parsing has been
+made more consistent to help parse and print tables other than the
+schema root as seen in the test driver in [test_json.c]. The
+[monster_test.fbs] file has been reorganized to keep the Monster table
+more consistent with Googles flatc version and a minor schema namespace
 inconsistency has been resolved as a result. Explicit references to
 portable headers have been moved out of generated source. extern "C" C++
 guards added around generated headers. 0.5.1 also cleaned up the
 low-level union interface so the terms { type, value } are used
 consistently over { type, member } and { types, members }.
 
-Release 0.5.0 aims to reach feature parity with C++ FlatBuffers as of
-end 2017. These new features are union vectors and mixed type unions
-that can include tables, structs and strings, and type aliases for int8,
-uint8, int16, uint16, int32, uint32, int64, uint64, float32, float64
-types in the schema. Support for base64(url) JSON encoded [ubyte]
-vectors has been added which will also be added to Googles flatc tool in
-a future release. In addition the following changes have been added:
-Runtime builder library support for `aligned_alloc/free`. Handling of
-unions is slightly incompatible with previous releases as covered in the
-documentation and the changelog. v0.5.0 fixes a bug that could cause a
-JSON parser to reject some valid symbols for some schemas and also fixes
-a non-critical JSON scoping issue with symbolic union names and a bug
-verifying buffers with a struct as root. Low-level custom frame support
-has been improved in the builder library which is useful for complex
-parsing scenarios.
 
-
-Main features supported as of 0.5.0
+Main features supported as of 0.5.1
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -297,6 +282,10 @@ Supported platforms (as covered by CI release tests on ci-more branch):
 - Ubuntu Trusty gcc 4.4, 4.6-4.9, 5, 6, 7 and clang 3.6, 3.8 
 - OS-X current clang / gcc
 - Windows MSVC 2010, 2013, 2015, 2015 Win64, 2017, 2017 Win64
+- C++ 11/14 is reported to work with flatcc 0.5.1 but C++ support is not
+  systematically tested.
+- ESP32 SoC with FreeRTOS and newlib has been reported to compile cleanly
+  with C++ using flatcc generated JSON parsers, as of flatcc 0.5.1.
 - IBM XLC on AIX big endian Power PC has been tested for release 0.4.0
   but is not part of regular release tests.
 
