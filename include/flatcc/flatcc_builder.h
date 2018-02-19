@@ -1286,6 +1286,18 @@ flatcc_builder_ref_t *flatcc_builder_table_add_offset(flatcc_builder_t *B, int i
 int flatcc_builder_table_add_union(flatcc_builder_t *B, int id,
         flatcc_builder_union_ref_t uref);
 
+/* 
+ * Adds a union type vector and value vector in a single operations
+ * and returns 0 on success.
+ *
+ * If both the type and value vector is null, nothing is added.
+ * Otherwise both must be present and have the same length.
+ *
+ * Any 0 entry in the type vector must also have a 0 entry in
+ * the value vector.
+ */
+int flatcc_builder_table_add_union_vector(flatcc_builder_t *B, int id,
+        flatcc_builder_union_vec_ref_t uvref);
 /**
  * Creates a vector in a single operation using an externally supplied
  * buffer. This completely bypasses the stack, but the size must be
