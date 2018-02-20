@@ -28,7 +28,8 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Status](#status)
     * [Main features supported as of 0.5.1](#main-features-supported-as-of-051)
     * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
-    * [Platforms reported to work by users:](#platforms-reported-to-work-by-users)
+    * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
+    * [Portability](#portability)
 * [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
 * [Generated Files](#generated-files)
 * [Using flatcc](#using-flatcc)
@@ -279,6 +280,11 @@ consistently over { type, member } and { types, members }.
   structs, and tables, and type aliases for uint8, ..., float64.
 - base64(url) encoded binary data in JSON.
 
+There are no plans to make frequent updates once the project becomes
+stable, but input from the community will always be welcome and included
+in releases where relevant, especially with respect to testing on
+different target platforms.
+
 
 ### Supported platforms (CI tested)
 
@@ -291,7 +297,14 @@ The ci-more branch tests additional compilers:
 MSVC 2017 is not always tested because the CI environment then won't
 support MSVC 2010.
 
-### Platforms reported to work by users:
+Some previously testet compiler versions may have been retired as the
+CI environment gets updated. See `.travis.yml` and `appveyor.yml` in
+the `ci-more` branch for the current configuration.
+
+The monster sample does not work with MSVC 2010 because it intentionally
+uses C99 style code to better follow the C++ version.
+
+### Platforms reported to work by users
 
 - C++ 11/14 is reported to work with flatcc 0.5.1 but C++ compatibility
   is not systematically tested. Older C++ likely also works.
@@ -302,12 +315,7 @@ support MSVC 2010.
 - IBM XLC on AIX big endian Power PC has been tested for release 0.4.0
   but is not part of regular release tests.
 
-Some previously testet compiler versions may have been retired as the
-CI environment gets updated. See `.travis.yml` and `appveyor.yml` in
-the `ci-more` branch for the current configuration.
-
-The monster sample does not work with MSVC 2010 because it intentionally
-uses C99 style code to better follow the C++ version.
+### Portability
 
 There is no reason why other or older compilers cannot be supported, but
 it may require some work in the build configuration and possibly
@@ -327,11 +335,6 @@ generated from `reflection/reflection.fbs`, and removing
 `include/flatcc/support` which is only used for tests and samples. The
 exact set of required files may change from release to release, and it
 doesn't really matter with respect to the compiled code size.
-
-There are no plans to make frequent updates once the project becomes
-stable, but input from the community will always be welcome and included
-in releases where relevant, especially with respect to testing on
-different target platforms.
 
 
 ## Time / Space / Usability Tradeoff
