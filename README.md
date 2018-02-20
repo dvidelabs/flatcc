@@ -282,11 +282,11 @@ Supported platforms (as covered by CI release tests on ci-more branch):
 - Ubuntu Trusty gcc 4.4, 4.6-4.9, 5, 6, 7 and clang 3.6, 3.8 
 - OS-X current clang / gcc
 - Windows MSVC 2010, 2013, 2015, 2015 Win64, 2017, 2017 Win64
-- C++ 11/14 is reported to work with flatcc 0.5.1 but C++ support is not
-  systematically tested.
 
 Platforms reported to work by users:
 
+- C++ 11/14 is reported to work with flatcc 0.5.1 but C++ compatibility
+  is not systematically tested. Older C++ likely also works.
 - ESP32 SoC SDK with FreeRTOS and newlib has been reported to compile
   cleanly with C++ 14 using flatcc generated JSON parsers, as of flatcc
   0.5.1.
