@@ -284,17 +284,19 @@ Supported platforms (as covered by CI release tests on ci-more branch):
 - Windows MSVC 2010, 2013, 2015, 2015 Win64, 2017, 2017 Win64
 - C++ 11/14 is reported to work with flatcc 0.5.1 but C++ support is not
   systematically tested.
-- ESP32 SoC with FreeRTOS and newlib has been reported to compile cleanly
-  with C++ using flatcc generated JSON parsers, as of flatcc 0.5.1.
+
+Platforms reported to work by users:
+
+- ESP32 SoC SDK with FreeRTOS and newlib has been reported to compile
+  cleanly with C++ 14 using flatcc generated JSON parsers, as of flatcc
+  0.5.1.
+- FreeRTOS when using custom memory allocation methods.
 - IBM XLC on AIX big endian Power PC has been tested for release 0.4.0
   but is not part of regular release tests.
 
-Some previously testet compiler versions may have been outphased as the
+Some previously testet compiler versions may have been retired as the
 CI environment gets updated. See `.travis.yml` and `appveyor.yml` in
 the `ci-more` branch for the current configuration.
-
-Users have been testing on FreeRTOS as well which requires changing the
-runtime allocation method.
 
 The monster sample does not work with MSVC 2010 because it intentionally
 uses C99 style code to better follow the C++ version.
@@ -473,16 +475,10 @@ The (-a) or (-v) also generates a verifier file.
 Make sure `flatcc` under the `include` folder is visible in the C
 compilers include path when compiling flatbuffer builders.
 
-The `flatcc` (-I) include path will assume all files with same base name
-(case insentive) are identical and only include the first. All generated
-files use the input basename and land in working directory or the path
-set by (-o).
-
-Note that the binary schema output can be with or without namespace
-prefixes and the default differs from `flatc` which strips namespaces.
-The binary schema can also have a non-standard size field prefixed so
-multiple schema can be outfileenated in a single file if so desired (see
-also the bfbs2json example).
+The `flatcc` (-I) include path will assume all schema files with same
+base name (case insentive) are identical and will only include the
+first. All generated files use the input basename and will land in
+working directory or the path set by (-o).
 
 Files can be generated to stdout using (--stdout). C headers will be
 ordered and outfileenated, but otherwise identical to the separate file
