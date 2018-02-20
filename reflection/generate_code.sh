@@ -10,3 +10,4 @@ cd `dirname $0`
 RPATH=../include/flatcc/reflection
 mkdir -p ${RPATH}
 ../bin/flatcc -a -o ../include/flatcc/reflection reflection.fbs
+cp README.in ${RPATH}/README
