@@ -26,6 +26,9 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
+    * [Main features supported as of 0.5.1](#main-features-supported-as-of-051)
+    * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
+    * [Platforms reported to work by users:](#platforms-reported-to-work-by-users)
 * [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
 * [Generated Files](#generated-files)
 * [Using flatcc](#using-flatcc)
@@ -252,7 +255,7 @@ low-level union interface so the terms { type, value } are used
 consistently over { type, member } and { types, members }.
 
 
-Main features supported as of 0.5.1
+### Main features supported as of 0.5.1
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -277,13 +280,18 @@ Main features supported as of 0.5.1
 - base64(url) encoded binary data in JSON.
 
 
-Supported platforms (as covered by CI release tests on ci-more branch):
+### Supported platforms (CI tested)
+
+The ci-more branch tests additional compilers:
 
 - Ubuntu Trusty gcc 4.4, 4.6-4.9, 5, 6, 7 and clang 3.6, 3.8 
 - OS-X current clang / gcc
 - Windows MSVC 2010, 2013, 2015, 2015 Win64, 2017, 2017 Win64
 
-Platforms reported to work by users:
+MSVC 2017 is not always tested because the CI environment then won't
+support MSVC 2010.
+
+### Platforms reported to work by users:
 
 - C++ 11/14 is reported to work with flatcc 0.5.1 but C++ compatibility
   is not systematically tested. Older C++ likely also works.
