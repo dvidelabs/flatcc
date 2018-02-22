@@ -101,6 +101,18 @@ static reflection_Type_ref_t export_type(flatcc_builder_t *B, fb_value_t type)
     return reflection_Type_create(B, base_type, element, index);
 }
 
+static void export_attributes(flatcc_builder_t *B, fb_metadata_t *m)
+{
+    for (; m; m = m->link) {
+        reflection_KeyValue_vec_push_start(B);
+        reflection_KeyValue_key_create_strn(B, m->ident->text, m->ident->len);
+        if (m->value.type == vt_string) {
+            reflection_KeyValue_value_create_strn(B, m->value.s.s, m->value.s.len);
+        }
+        reflection_KeyValue_vec_push_end(B);
+    }
+}
+
 static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
 {
     fb_symbol_t *sym;
@@ -176,6 +188,11 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
         }
         /* Deprecated struct fields not supported by `flatc` but is here as an option. */
         reflection_Field_deprecated_add(B, deprecated);
+        if (member->metadata) {
+            reflection_Field_attributes_start(B);
+            export_attributes(B, member->metadata);
+            reflection_Field_attributes_end(B);
+        }
         reflection_Field_vec_push_end(B);
         key_processed |= has_key;
     }
@@ -205,6 +222,11 @@ static void export_objects(flatcc_builder_t *B, object_entry_t *objects, int nob
         }
         reflection_Object_is_struct_add(B, is_struct);
         reflection_Object_minalign_add(B, ct->align);
+        if (ct->metadata) {
+            reflection_Object_attributes_start(B);
+            export_attributes(B, ct->metadata);
+            reflection_Object_attributes_end(B);
+        }
         object_map[i] = reflection_Object_end(B);
     }
     reflection_Schema_objects_create(B, object_map, nobjects);
@@ -247,6 +269,11 @@ static void export_enums(flatcc_builder_t *B, enum_entry_t *enums, int nenums,
         reflection_Enum_values_end(B);
         reflection_Enum_is_union_add(B, is_union);
         reflection_Enum_underlying_type_add(B, export_type(B, ct->type));
+        if (ct->metadata) {
+            reflection_Enum_attributes_start(B);
+            export_attributes(B, ct->metadata);
+            reflection_Enum_attributes_end(B);
+        }
         reflection_Enum_vec_push_end(B);
     }
     reflection_Schema_enums_end(B);
@@ -313,8 +340,17 @@ static int export_schema(flatcc_builder_t *B, fb_options_t *opts, fb_schema_t *S
     return 0;
 }
 
-/* Field sorting is easier done on the finished buffer. */
-static void sort_fields(void *buffer)
+/*
+ * We do not not sort attributes because we would loose ordering
+ * information between different attributes, and between same named
+ * attributes because the sort is not stable.
+ *
+ * The C bindings has a scan interface that can find attributes
+ * in order of appearance.
+ *
+ * Field sorting is done on the finished buffer.
+ */
+static void sort_objects(void *buffer)
 {
     size_t i;
     reflection_Schema_table_t schema;
@@ -328,8 +364,10 @@ static void sort_fields(void *buffer)
     for (i = 0; i < reflection_Object_vec_len(objects); ++i) {
         object = reflection_Object_vec_at(objects, i);
         fields = reflection_Object_fields(object);
-        mfields = (reflection_Field_mutable_vec_t)fields;
-        reflection_Field_vec_sort(mfields);
+        if (fields) {
+            mfields = (reflection_Field_mutable_vec_t)fields;
+            reflection_Field_vec_sort(mfields);
+        }
     }
 }
 
@@ -373,7 +411,7 @@ static void close_file(FILE *fp)
  * the order defined anyway becuase there is no well-defined ordering
  * and blindly sorting the content would just loose more information.
  *
- * In conclusion: find by enum value is only support when enums are
+ * In conclusion: find by enum value is only supported when enums are
  * defined in consequtive order.
  *
  * refers to: `opts->ascending_enum`
@@ -391,7 +429,7 @@ void *fb_codegen_bfbs_to_buffer(fb_options_t *opts, fb_schema_t *S, void *buffer
     if (!flatcc_builder_copy_buffer(B, buffer, *size)) {
         goto done;
     }
-    sort_fields(buffer);
+    sort_objects(buffer);
 done:
     *size = flatcc_builder_get_buffer_size(B);
     flatcc_builder_clear(B);
@@ -417,7 +455,7 @@ void *fb_codegen_bfbs_alloc_buffer(fb_options_t *opts, fb_schema_t *S, size_t *s
     if (!(buffer = flatcc_builder_finalize_buffer(B, size))) {
         goto done;
     }
-    sort_fields(buffer);
+    sort_objects(buffer);
 done:
     flatcc_builder_clear(B);
     return buffer;
@@ -436,7 +474,7 @@ int fb_codegen_bfbs_to_file(fb_options_t *opts, fb_schema_t *S)
     }
     buffer = fb_codegen_bfbs_alloc_buffer(opts, S, &size);
     if (!buffer) {
-        printf("failed to generate binary schema\n");
+        fprintf(stderr, "failed to generate binary schema\n");
         goto done;
     }
     if (size != fwrite(buffer, 1, size, fp)) {

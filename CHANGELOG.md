@@ -6,6 +6,7 @@
 - Handle mixed union types in binary schema (.bfbs).
 - Fix .bfbs bug failing to export fields of string type correctly.
 - Fix how vectors are printed in samples/reflection project.
+- Add support for KeyValue attributes in binary schema (.bfbs).
 
 ## [0.5.1]
 

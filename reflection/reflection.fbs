@@ -34,6 +34,11 @@ table Type {
                      // from an enum, index into "enums" below.
 }
 
+table KeyValue {
+    key:string (required, key);
+    value:string;
+}
+
 table EnumVal {
     name:string (required);
     value:long (key);
@@ -46,6 +51,7 @@ table Enum {
     values:[EnumVal] (required);  // In order of their values.
     is_union:bool = false;
     underlying_type:Type (required);
+    attributes:[KeyValue];
 }
 
 table Field {
@@ -58,6 +64,7 @@ table Field {
     deprecated:bool = false;
     required:bool = false;
     key:bool = false;
+    attributes:[KeyValue];
 }
 
 table Object {  // Used for both tables and structs.
@@ -66,6 +73,7 @@ table Object {  // Used for both tables and structs.
     is_struct:bool = false;
     minalign:int;
     bytesize:int;  // For structs.
+    attributes:[KeyValue];
 }
 
 table Schema {

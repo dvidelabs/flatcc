@@ -20,6 +20,9 @@
 typedef const struct reflection_Type_table *reflection_Type_table_t;
 typedef const flatbuffers_uoffset_t *reflection_Type_vec_t;
 typedef flatbuffers_uoffset_t *reflection_Type_mutable_vec_t;
+typedef const struct reflection_KeyValue_table *reflection_KeyValue_table_t;
+typedef const flatbuffers_uoffset_t *reflection_KeyValue_vec_t;
+typedef flatbuffers_uoffset_t *reflection_KeyValue_mutable_vec_t;
 typedef const struct reflection_EnumVal_table *reflection_EnumVal_table_t;
 typedef const flatbuffers_uoffset_t *reflection_EnumVal_vec_t;
 typedef flatbuffers_uoffset_t *reflection_EnumVal_mutable_vec_t;
@@ -40,6 +43,11 @@ typedef flatbuffers_uoffset_t *reflection_Schema_mutable_vec_t;
 #endif
 #define reflection_Type_type_hash ((flatbuffers_thash_t)0x44c8fe5e)
 #define reflection_Type_type_identifier "\x5e\xfe\xc8\x44"
+#ifndef reflection_KeyValue_identifier
+#define reflection_KeyValue_identifier flatbuffers_identifier
+#endif
+#define reflection_KeyValue_type_hash ((flatbuffers_thash_t)0x8c761eaa)
+#define reflection_KeyValue_type_identifier "\xaa\x1e\x76\x8c"
 #ifndef reflection_EnumVal_identifier
 #define reflection_EnumVal_identifier flatbuffers_identifier
 #endif
@@ -148,6 +156,22 @@ __flatbuffers_define_scalar_field(0, reflection_Type, base_type, reflection_Base
 __flatbuffers_define_scalar_field(1, reflection_Type, element, reflection_BaseType, reflection_BaseType_enum_t, INT8_C(0))
 __flatbuffers_define_scalar_field(2, reflection_Type, index, flatbuffers_int32, int32_t, INT32_C(-1))
 
+struct reflection_KeyValue_table { uint8_t unused__; };
+
+static inline size_t reflection_KeyValue_vec_len(reflection_KeyValue_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline reflection_KeyValue_table_t reflection_KeyValue_vec_at(reflection_KeyValue_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(reflection_KeyValue_table_t, vec, i, 0)
+__flatbuffers_table_as_root(reflection_KeyValue)
+
+__flatbuffers_define_string_field(0, reflection_KeyValue, key, 1)
+__flatbuffers_define_find_by_string_field(reflection_KeyValue, key)
+__flatbuffers_define_sort_by_string_field(reflection_KeyValue, key)
+__flatbuffers_define_default_find_by_string_field(reflection_KeyValue, key)
+__flatbuffers_define_default_scan_by_string_field(reflection_KeyValue, key)
+#define reflection_KeyValue_vec_sort reflection_KeyValue_vec_sort_by_key
+__flatbuffers_define_string_field(1, reflection_KeyValue, value, 0)
+
 struct reflection_EnumVal_table { uint8_t unused__; };
 
 static inline size_t reflection_EnumVal_vec_len(reflection_EnumVal_vec_t vec)
@@ -184,6 +208,7 @@ __flatbuffers_define_default_scan_by_string_field(reflection_Enum, name)
 __flatbuffers_define_vector_field(1, reflection_Enum, values, reflection_EnumVal_vec_t, 1)
 __flatbuffers_define_scalar_field(2, reflection_Enum, is_union, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 __flatbuffers_define_table_field(3, reflection_Enum, underlying_type, reflection_Type_table_t, 1)
+__flatbuffers_define_vector_field(4, reflection_Enum, attributes, reflection_KeyValue_vec_t, 0)
 
 struct reflection_Field_table { uint8_t unused__; };
 
@@ -207,6 +232,7 @@ __flatbuffers_define_scalar_field(5, reflection_Field, default_real, flatbuffers
 __flatbuffers_define_scalar_field(6, reflection_Field, deprecated, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 __flatbuffers_define_scalar_field(7, reflection_Field, required, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 __flatbuffers_define_scalar_field(8, reflection_Field, key, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+__flatbuffers_define_vector_field(9, reflection_Field, attributes, reflection_KeyValue_vec_t, 0)
 
 struct reflection_Object_table { uint8_t unused__; };
 
@@ -226,6 +252,7 @@ __flatbuffers_define_vector_field(1, reflection_Object, fields, reflection_Field
 __flatbuffers_define_scalar_field(2, reflection_Object, is_struct, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 __flatbuffers_define_scalar_field(3, reflection_Object, minalign, flatbuffers_int32, int32_t, INT32_C(0))
 __flatbuffers_define_scalar_field(4, reflection_Object, bytesize, flatbuffers_int32, int32_t, INT32_C(0))
+__flatbuffers_define_vector_field(5, reflection_Object, attributes, reflection_KeyValue_vec_t, 0)
 
 struct reflection_Schema_table { uint8_t unused__; };
 
