@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.5.2-pre]
+
+- Handle union vectors in binary schema generation (.bfbs).
+
 ## [0.5.1]
 
 - Fix parent namespace lookup in the schema parser when the namespace

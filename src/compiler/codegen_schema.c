@@ -42,6 +42,10 @@ static reflection_Type_ref_t export_type(flatcc_builder_t *B, fb_value_t type)
             base_type = BaseType(Vector);
             element = BaseType(Obj);
             break;
+        case fb_is_union:
+            base_type = BaseType(Vector);
+            element = BaseType(Union);
+            break;
         default:
             break;
         }
