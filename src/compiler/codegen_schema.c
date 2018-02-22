@@ -123,13 +123,21 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
         default_real = 0.0;
         deprecated = (member->metadata_flags & fb_f_deprecated) != 0;
 
-        if (member->type.type == vt_compound_type_ref && member->type.ct->symbol.kind == fb_is_union) {
+        if ((member->type.type == vt_compound_type_ref || member->type.type == vt_vector_compound_type_ref)
+                && member->type.ct->symbol.kind == fb_is_union) {
             reflection_Field_vec_push_start(B);
             reflection_Field_name_start(B);
             reflection_Field_name_append(B, member->symbol.ident->text, member->symbol.ident->len);
             reflection_Field_name_append(B, "_type", 5);
             reflection_Field_name_end(B);
-            reflection_Field_type_create(B, BaseType(UType), BaseType(None), -1);
+            switch(member->type.type) {
+            case vt_compound_type_ref:
+                reflection_Field_type_create(B, BaseType(UType), BaseType(None), -1);
+                break;
+            case vt_vector_compound_type_ref:
+                reflection_Field_type_create(B, BaseType(Vector), BaseType(UType), -1);
+                break;
+            }
             reflection_Field_offset_add(B, (uint16_t)(member->id - 1 + 2) * sizeof(flatbuffers_voffset_t));
             reflection_Field_id_add(B, (uint16_t)(member->id - 1));
             reflection_Field_deprecated_add(B, deprecated);
