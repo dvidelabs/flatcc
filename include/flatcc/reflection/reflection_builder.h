@@ -22,7 +22,7 @@ __flatbuffers_build_scalar(flatbuffers_, reflection_BaseType, reflection_BaseTyp
 static const flatbuffers_voffset_t __reflection_Type_required[] = { 0 };
 __flatbuffers_build_table(flatbuffers_, reflection_Type, 3)
 static const flatbuffers_voffset_t __reflection_EnumVal_required[] = { 0, 0 };
-__flatbuffers_build_table(flatbuffers_, reflection_EnumVal, 3)
+__flatbuffers_build_table(flatbuffers_, reflection_EnumVal, 4)
 static const flatbuffers_voffset_t __reflection_Enum_required[] = { 0, 1, 3, 0 };
 __flatbuffers_build_table(flatbuffers_, reflection_Enum, 4)
 static const flatbuffers_voffset_t __reflection_Field_required[] = { 0, 1, 0 };
@@ -34,8 +34,8 @@ __flatbuffers_build_table(flatbuffers_, reflection_Schema, 5)
 #define __reflection_Type_formal_args , reflection_BaseType_enum_t v0, reflection_BaseType_enum_t v1, int32_t v2
 #define __reflection_Type_call_args , v0, v1, v2
 static inline reflection_Type_ref_t reflection_Type_create(flatbuffers_builder_t *B __reflection_Type_formal_args);
-#define __reflection_EnumVal_formal_args , flatbuffers_string_ref_t v0, int64_t v1, reflection_Object_ref_t v2
-#define __reflection_EnumVal_call_args , v0, v1, v2
+#define __reflection_EnumVal_formal_args , flatbuffers_string_ref_t v0, int64_t v1, reflection_Object_ref_t v2, reflection_Type_ref_t v3
+#define __reflection_EnumVal_call_args , v0, v1, v2, v3
 static inline reflection_EnumVal_ref_t reflection_EnumVal_create(flatbuffers_builder_t *B __reflection_EnumVal_formal_args);
 #define __reflection_Enum_formal_args , flatbuffers_string_ref_t v0, reflection_EnumVal_vec_ref_t v1, flatbuffers_bool_t v2, reflection_Type_ref_t v3
 #define __reflection_Enum_call_args , v0, v1, v2, v3
@@ -77,13 +77,15 @@ __flatbuffers_build_table_prolog(flatbuffers_, reflection_Type, reflection_Type_
 __flatbuffers_build_string_field(0, flatbuffers_, reflection_EnumVal_name)
 __flatbuffers_build_scalar_field(1, flatbuffers_, reflection_EnumVal_value, flatbuffers_int64, int64_t, 8, 8, INT64_C(0))
 __flatbuffers_build_table_field(2, flatbuffers_, reflection_EnumVal_object, reflection_Object)
+__flatbuffers_build_table_field(3, flatbuffers_, reflection_EnumVal_union_type, reflection_Type)
 
 static inline reflection_EnumVal_ref_t reflection_EnumVal_create(flatbuffers_builder_t *B __reflection_EnumVal_formal_args)
 {
     if (reflection_EnumVal_start(B)
         || reflection_EnumVal_value_add(B, v1)
         || reflection_EnumVal_name_add(B, v0)
-        || reflection_EnumVal_object_add(B, v2)) {
+        || reflection_EnumVal_object_add(B, v2)
+        || reflection_EnumVal_union_type_add(B, v3)) {
         return 0;
     }
     return reflection_EnumVal_end(B);

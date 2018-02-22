@@ -165,6 +165,7 @@ __flatbuffers_define_default_find_by_scalar_field(reflection_EnumVal, value, int
 __flatbuffers_define_default_scan_by_scalar_field(reflection_EnumVal, value, int64_t)
 #define reflection_EnumVal_vec_sort reflection_EnumVal_vec_sort_by_value
 __flatbuffers_define_table_field(2, reflection_EnumVal, object, reflection_Object_table_t, 0)
+__flatbuffers_define_table_field(3, reflection_EnumVal, union_type, reflection_Type_table_t, 0)
 
 struct reflection_Enum_table { uint8_t unused__; };
 

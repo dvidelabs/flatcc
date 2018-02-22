@@ -51,6 +51,7 @@ static int reflection_EnumVal_verify_table(flatcc_table_verifier_descriptor_t *t
     if ((ret = flatcc_verify_string_field(td, 0, 1) /* name */)) return ret;
     if ((ret = flatcc_verify_field(td, 1, 8, 8) /* value */)) return ret;
     if ((ret = flatcc_verify_table_field(td, 2, 0, &reflection_Object_verify_table) /* object */)) return ret;
+    if ((ret = flatcc_verify_table_field(td, 3, 0, &reflection_Type_verify_table) /* union_type */)) return ret;
     return flatcc_verify_ok;
 }
 

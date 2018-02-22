@@ -3,6 +3,9 @@
 ## [0.5.2-pre]
 
 - Handle union vectors in binary schema generation (.bfbs).
+- Handle mixed union types in binary schema (.bfbs).
+- Fix .bfbs bug failing to export fields of string type correctly.
+- Fix how vectors are printed in samples/reflection project.
 
 ## [0.5.1]
 

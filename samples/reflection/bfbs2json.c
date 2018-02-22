@@ -33,7 +33,7 @@ void print_type(reflection_Type_table_t T)
         if (!first) {
             printf(",");
         }
-        printf("\"element\":\"%s\"", reflection_BaseType_name(reflection_Type_base_type(T)));
+        printf("\"element\":\"%s\"", reflection_BaseType_name(reflection_Type_element(T)));
         first = 0;
     }
     if (reflection_Type_index_is_present(T)) {
@@ -113,6 +113,11 @@ void print_enum(reflection_Enum_table_t E)
         if (reflection_EnumVal_object_is_present(EV)) {
             printf(",\"object\":");
             print_object(reflection_EnumVal_object(EV));
+        }
+        if (reflection_EnumVal_union_type_is_present(EV)) {
+            printf(",\"union_type\":");
+            print_type(reflection_EnumVal_union_type(EV));
+        } else {
         }
         printf("}");
     }

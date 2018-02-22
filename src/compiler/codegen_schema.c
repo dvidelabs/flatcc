@@ -50,7 +50,7 @@ static reflection_Type_ref_t export_type(flatcc_builder_t *B, fb_value_t type)
             break;
         }
         break;
-    case vt_string:
+    case vt_string_type:
         base_type = BaseType(String);
         break;
     case vt_compound_type_ref:
@@ -212,10 +212,16 @@ static void export_objects(flatcc_builder_t *B, object_entry_t *objects, int nob
 
 static void export_enumval(flatcc_builder_t *B, fb_member_t *member, reflection_Object_ref_t *object_map)
 {
+    int is_union = object_map != 0;
+
     reflection_EnumVal_vec_push_start(B);
     reflection_EnumVal_name_create(B, member->symbol.ident->text, member->symbol.ident->len);
-    if (object_map && member->type.type == vt_compound_type_ref) {
-        reflection_EnumVal_object_add(B, object_map[member->type.ct->export_index]);
+    if (is_union) {
+        if (member->type.type == vt_compound_type_ref) {
+            /* object is deprecated in favor of union_type to support mixed union types. */
+            reflection_EnumVal_object_add(B, object_map[member->type.ct->export_index]);
+        }
+        reflection_EnumVal_union_type_add(B, export_type(B, member->type));
     }
     reflection_EnumVal_value_add(B, member->value.u);
     reflection_EnumVal_vec_push_end(B);
