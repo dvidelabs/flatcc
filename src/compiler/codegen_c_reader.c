@@ -215,7 +215,7 @@ static void gen_union(fb_output_t *out)
         "  if (u.type == 0) return u;\\\n"
         "  u.value = NS ## generic_vec_at(uv.value, i); return u; }\\\n"
         "static inline NS ## string_t T ## _union_vec_at_as_string(T ## _union_vec_t uv, size_t i)\\\n"
-        "{ return NS ## generic_vec_at_as_string(uv.value, i); }\\\n"
+        "{ return (NS ## string_t) NS ## generic_vec_at_as_string(uv.value, i); }\\\n"
         "\n",
         nsc);
     fprintf(out->fp,
