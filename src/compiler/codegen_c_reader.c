@@ -441,13 +441,13 @@ static void gen_helpers(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sread_vt(ID, offset, t)\\\n"
         "%svoffset_t offset = 0;\\\n"
-        "{   %svoffset_t id, *vt;\\\n"
+        "{   %svoffset_t id__tmp__, *vt__tmp__;\\\n"
         "    assert(t != 0 && \"null pointer table access\");\\\n"
-        "    id = ID;\\\n"
-        "    vt = (%svoffset_t *)((uint8_t *)(t) -\\\n"
+        "    id__tmp__ = ID;\\\n"
+        "    vt__tmp__ = (%svoffset_t *)((uint8_t *)(t) -\\\n"
         "        __%ssoffset_read_from_pe(t));\\\n"
-        "    if (__%svoffset_read_from_pe(vt) >= sizeof(vt[0]) * (id + 3)) {\\\n"
-        "        offset = __%svoffset_read_from_pe(vt + id + 2);\\\n"
+        "    if (__%svoffset_read_from_pe(vt__tmp__) >= sizeof(vt__tmp__[0]) * (id__tmp__ + 3)) {\\\n"
+        "        offset = __%svoffset_read_from_pe(vt__tmp__ + id__tmp__ + 2);\\\n"
         "    }\\\n"
         "}\n",
         nsc, nsc, nsc, nsc, nsc, nsc, nsc);
@@ -456,12 +456,12 @@ static void gen_helpers(fb_output_t *out)
             nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_scalar_field(ID, N, NK, TK, T, V)\\\n"
-        "static inline T N ## _ ## NK (N ## _table_t t)\\\n"
-        "{ __%sread_vt(ID, offset, t)\\\n"
-        "  return offset ? __%sread_scalar_at_byteoffset(TK, t, offset) : V;\\\n"
+        "static inline T N ## _ ## NK (N ## _table_t t__tmp__)\\\n"
+        "{ __%sread_vt(ID, offset__tmp__, t__tmp__)\\\n"
+        "  return offset__tmp__ ? __%sread_scalar_at_byteoffset(TK, t__tmp__, offset__tmp__) : V;\\\n"
         "}\\\n"
-        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
-        "__%sfield_present(ID, t)",
+        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp__)\\\n"
+        "__%sfield_present(ID, t__tmp__)",
         nsc, nsc, nsc, nsc);
         if (out->opts->allow_scan_for_all_fields) {
             fprintf(out->fp, "\\\n__%sdefine_scan_by_scalar_field(N, NK, T)\n", nsc);
@@ -482,13 +482,13 @@ static void gen_helpers(fb_output_t *out)
     fprintf(out->fp,
         "#define __%soffset_field(T, ID, t, r, adjust)\\\n"
         "{\\\n"
-        "    %suoffset_t *elem;\\\n"
+        "    %suoffset_t *elem__tmp__;\\\n"
         "    __%sread_vt(ID, offset, t)\\\n"
         "    if (offset) {\\\n"
-        "        elem = (%suoffset_t *)((uint8_t *)(t) + offset);\\\n"
+        "        elem__tmp__ = (%suoffset_t *)((uint8_t *)(t) + offset);\\\n"
         "        /* Add sizeof so C api can have raw access past header field. */\\\n"
-        "        return (T)((uint8_t *)(elem) + adjust +\\\n"
-        "              __%suoffset_read_from_pe(elem));\\\n"
+        "        return (T)((uint8_t *)(elem__tmp__) + adjust +\\\n"
+        "              __%suoffset_read_from_pe(elem__tmp__));\\\n"
         "    }\\\n"
         "    assert(!(r) && \"required field missing\");\\\n"
         "    return 0;\\\n"
@@ -500,31 +500,31 @@ static void gen_helpers(fb_output_t *out)
         nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_struct_field(ID, N, NK, T, r)\\\n"
-        "static inline T N ## _ ## NK(N ## _table_t t)\\\n"
-        "__%sstruct_field(T, ID, t, r)\\\n"
-        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
-        "__%sfield_present(ID, t)\n",
+        "static inline T N ## _ ## NK(N ## _table_t t__tmp__)\\\n"
+        "__%sstruct_field(T, ID, t__tmp__, r)\\\n"
+        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp__)\\\n"
+        "__%sfield_present(ID, t__tmp__)\n",
         nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_vector_field(ID, N, NK, T, r)\\\n"
-        "static inline T N ## _ ## NK(N ## _table_t t)\\\n"
-        "__%svector_field(T, ID, t, r)\\\n"
-        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
-        "__%sfield_present(ID, t)\n",
+        "static inline T N ## _ ## NK(N ## _table_t t__tmp__)\\\n"
+        "__%svector_field(T, ID, t__tmp__, r)\\\n"
+        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp__)\\\n"
+        "__%sfield_present(ID, t__tmp__)\n",
         nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_table_field(ID, N, NK, T, r)\\\n"
-        "static inline T N ## _ ## NK(N ## _table_t t)\\\n"
-        "__%stable_field(T, ID, t, r)\\\n"
-        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
-        "__%sfield_present(ID, t)\n",
+        "static inline T N ## _ ## NK(N ## _table_t t__tmp__)\\\n"
+        "__%stable_field(T, ID, t__tmp__, r)\\\n"
+        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp__)\\\n"
+        "__%sfield_present(ID, t__tmp__)\n",
         nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_string_field(ID, N, NK, r)\\\n"
-        "static inline %sstring_t N ## _ ## NK(N ## _table_t t)\\\n"
-        "__%svector_field(%sstring_t, ID, t, r)\\\n"
-        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
-        "__%sfield_present(ID, t)",
+        "static inline %sstring_t N ## _ ## NK(N ## _table_t t__tmp__)\\\n"
+        "__%svector_field(%sstring_t, ID, t__tmp__, r)\\\n"
+        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp__)\\\n"
+        "__%sfield_present(ID, t__tmp__)",
         nsc, nsc, nsc, nsc, nsc);
         if (out->opts->allow_scan_for_all_fields) {
             fprintf(out->fp, "\\\n__%sdefine_scan_by_string_field(N, NK)\n", nsc);
@@ -553,19 +553,19 @@ static void gen_helpers(fb_output_t *out)
     fprintf(out->fp,
         "/* `adjust` skips past the header for string vectors. */\n"
         "#define __%soffset_vec_at(T, vec, i, adjust)\\\n"
-        "{ const %suoffset_t *elem = (vec) + (i);\\\n"
+        "{ const %suoffset_t *elem__tmp__ = (vec) + (i);\\\n"
         "  assert(%svec_len(vec) > (i) && \"index out of range\");\\\n"
-        "  return (T)((uint8_t *)(elem) + (size_t)__%suoffset_read_from_pe(elem) + adjust); }\n",
+        "  return (T)((uint8_t *)(elem__tmp__) + (size_t)__%suoffset_read_from_pe(elem__tmp__) + (adjust)); }\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
-            "#define __%sdefine_scalar_vec_len(N) \\\n"
-            "static inline size_t N ## _vec_len(N ##_vec_t vec)\\\n"
-            "{ return %svec_len(vec); }\n",
+            "#define __%sdefine_scalar_vec_len(N)\\\n"
+            "static inline size_t N ## _vec_len(N ##_vec_t vec__tmp__)\\\n"
+            "{ return %svec_len(vec__tmp__); }\n",
             nsc, nsc);
     fprintf(out->fp,
             "#define __%sdefine_scalar_vec_at(N, T) \\\n"
-            "static inline T N ## _vec_at(N ## _vec_t vec, size_t i)\\\n"
-            "__%sscalar_vec_at(N, vec, i)\n",
+            "static inline T N ## _vec_at(N ## _vec_t vec__tmp__, size_t i__tmp__)\\\n"
+            "__%sscalar_vec_at(N, vec__tmp__, i__tmp__)\n",
             nsc, nsc);
     fprintf(out->fp,
             "typedef const char *%sstring_t;\n"
@@ -582,7 +582,7 @@ static void gen_helpers(fb_output_t *out)
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp, "typedef const void *%sgeneric_t;\n", nsc);
     fprintf(out->fp,
-        "static inline %sstring_t %sstring_cast_from_generic(const %sgeneric_t p)\\\n"
+        "static inline %sstring_t %sstring_cast_from_generic(const %sgeneric_t p)\n"
         "{ return p ? ((const char *)p) + __%suoffset__size() : 0; }\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
@@ -591,9 +591,9 @@ static void gen_helpers(fb_output_t *out)
             "static inline size_t %sgeneric_vec_len(%sgeneric_vec_t vec)\n"
             "__%svec_len(vec)\n"
             "static inline %sgeneric_t %sgeneric_vec_at(%sgeneric_vec_t vec, size_t i)\n"
-            "__%soffset_vec_at(%sgeneric_t, vec, i, 0)\\\n"
+            "__%soffset_vec_at(%sgeneric_t, vec, i, 0)\n"
             "static inline %sgeneric_t %sgeneric_vec_at_as_string(%sgeneric_vec_t vec, size_t i)\n"
-            "__%soffset_vec_at(%sgeneric_t, vec, i, sizeof(vec[0]))\\\n",
+            "__%soffset_vec_at(%sgeneric_t, vec, i, sizeof(vec[0]))\n",
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     gen_union(out);
     gen_find(out);
@@ -672,8 +672,8 @@ static void gen_helpers(fb_output_t *out)
     }
     fprintf(out->fp,
         "#define __%sdefine_struct_scalar_field(N, NK, TK, T)\\\n"
-        "static inline T N ## _ ## NK (N ## _struct_t t)\\\n"
-        "{ return t ? __%sread_scalar(TK, &(t->NK)) : 0; }",
+        "static inline T N ## _ ## NK (N ## _struct_t t__tmp__)\\\n"
+        "{ return t__tmp__ ? __%sread_scalar(TK, &(t__tmp__->NK)) : 0; }",
         nsc, nsc);
     if (out->opts->allow_scan_for_all_fields) {
         fprintf(out->fp, "\\\n__%sdefine_scan_by_scalar_field(N, NK, T)\n", nsc);
@@ -682,7 +682,7 @@ static void gen_helpers(fb_output_t *out)
     }
     fprintf(out->fp,
             "#define __%sdefine_struct_struct_field(N, NK, T)\\\n"
-            "static inline T N ## _ ## NK(N ## _struct_t t) { return t ? &(t->NK) : 0; }\n",
+            "static inline T N ## _ ## NK(N ## _struct_t t__tmp__) { return t__tmp__ ? &(t__tmp__->NK) : 0; }\n",
             nsc);
     fprintf(out->fp,
             "/* If fid is null, the function returns true without testing as buffer is not expected to have any id. */\n"
@@ -716,25 +716,25 @@ static void gen_helpers(fb_output_t *out)
             nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "#define __%snested_buffer_as_root(C, N, T, K)\\\n"
-            "static inline T ## _ ## K ## t C ## _ ## N ## _as_root_with_identifier(C ## _ ## table_t t, const char *fid)\\\n"
-            "{ const uint8_t *buffer = C ## _ ## N(t); return __%sread_root(T, K, buffer, fid); }\\\n"
-            "static inline T ## _ ## K ## t C ## _ ## N ## _as_typed_root(C ## _ ## table_t t)\\\n"
-            "{ const uint8_t *buffer = C ## _ ## N(t); return __%sread_root(T, K, buffer, C ## _ ## type_identifier); }\\\n"
-            "static inline T ## _ ## K ## t C ## _ ## N ## _as_root(C ## _ ## table_t t)\\\n"
-            "{ const char *fid = T ## _identifier;\\\n"
-            "  const uint8_t *buffer = C ## _ ## N(t); return __%sread_root(T, K, buffer, fid); }\n",
+            "static inline T ## _ ## K ## t C ## _ ## N ## _as_root_with_identifier(C ## _ ## table_t t__tmp__, const char *fid__tmp__)\\\n"
+            "{ const uint8_t *buffer__tmp__ = C ## _ ## N(t__tmp__); return __%sread_root(T, K, buffer__tmp__, fid__tmp__); }\\\n"
+            "static inline T ## _ ## K ## t C ## _ ## N ## _as_typed_root(C ## _ ## table_t t__tmp__)\\\n"
+            "{ const uint8_t *buffer__tmp__ = C ## _ ## N(t__tmp__); return __%sread_root(T, K, buffer__tmp__, C ## _ ## type_identifier); }\\\n"
+            "static inline T ## _ ## K ## t C ## _ ## N ## _as_root(C ## _ ## table_t t__tmp__)\\\n"
+            "{ const char *fid__tmp__ = T ## _identifier;\\\n"
+            "  const uint8_t *buffer__tmp__ = C ## _ ## N(t__tmp__); return __%sread_root(T, K, buffer__tmp__, fid__tmp__); }\n",
             nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "#define __%sbuffer_as_root(N, K)\\\n"
-            "static inline N ## _ ## K ## t N ## _as_root_with_identifier(const void *buffer, const char *fid)\\\n"
-            "{ return __%sread_root(N, K, buffer, fid); }\\\n"
-            "static inline N ## _ ## K ## t N ## _as_root_with_type_hash(const void *buffer, %sthash_t thash)\\\n"
-            "{ return __%sread_typed_root(N, K, buffer, thash); }\\\n"
-            "static inline N ## _ ## K ## t N ## _as_root(const void *buffer)\\\n"
-            "{ const char *fid = N ## _identifier;\\\n"
-            "  return __%sread_root(N, K, buffer, fid); }\\\n"
-            "static inline N ## _ ## K ## t N ## _as_typed_root(const void *buffer)\\\n"
-            "{ return __%sread_typed_root(N, K, buffer, N ## _type_hash); }\n"
+            "static inline N ## _ ## K ## t N ## _as_root_with_identifier(const void *buffer__tmp__, const char *fid__tmp__)\\\n"
+            "{ return __%sread_root(N, K, buffer__tmp__, fid__tmp__); }\\\n"
+            "static inline N ## _ ## K ## t N ## _as_root_with_type_hash(const void *buffer__tmp__, %sthash_t thash__tmp__)\\\n"
+            "{ return __%sread_typed_root(N, K, buffer__tmp__, thash__tmp__); }\\\n"
+            "static inline N ## _ ## K ## t N ## _as_root(const void *buffer__tmp__)\\\n"
+            "{ const char *fid__tmp__ = N ## _identifier;\\\n"
+            "  return __%sread_root(N, K, buffer__tmp__, fid__tmp__); }\\\n"
+            "static inline N ## _ ## K ## t N ## _as_typed_root(const void *buffer__tmp__)\\\n"
+            "{ return __%sread_typed_root(N, K, buffer__tmp__, N ## _type_hash); }\n"
             "#define __%sstruct_as_root(N) __%sbuffer_as_root(N, struct_)\n"
             "#define __%stable_as_root(N) __%sbuffer_as_root(N, table_)\n",
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
