@@ -231,7 +231,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "static inline int V ## _truncate(NS ## builder_t *B, size_t len)\\\n"
         "{ return flatcc_builder_truncate_union_vector(B, len); }\\\n"
         "static inline TN ## _union_ref_t *V ## _edit(NS ## builder_t *B)\\\n"
-        "{ return flatcc_builder_union_vector_edit(B); }\\\n"
+        "{ return (TN ## _union_ref_t *) flatcc_builder_union_vector_edit(B); }\\\n"
         "static inline size_t V ## _reserved_len(NS ## builder_t *B)\\\n"
         "{ return flatcc_builder_union_vector_count(B); }\\\n"
         "static inline TN ## _union_ref_t *V ## _push(NS ## builder_t *B, const TN ## _union_ref_t ref)\\\n"

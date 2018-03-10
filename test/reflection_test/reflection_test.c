@@ -17,7 +17,7 @@ int test_schema(const char *monster_bfbs)
     reflection_Type_table_t T;
     size_t k, monster_index;
 
-    buffer = readfile(monster_bfbs, 10000, &size);
+    buffer = readfile(monster_bfbs, 100000, &size);
     if (!buffer) {
         printf("failed to load binary schema\n");
         goto done;

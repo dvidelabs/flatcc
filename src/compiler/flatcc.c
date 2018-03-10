@@ -47,6 +47,8 @@ void flatcc_init_options(flatcc_options_t *opts)
     opts->default_bin_schema_ext = FLATCC_DEFAULT_BIN_SCHEMA_EXT;
     opts->default_bin_ext = FLATCC_DEFAULT_BIN_EXT;
 
+    opts->cgen_no_conflicts = FLATCC_CGEN_NO_CONFLICTS;
+
     opts->cgen_pad = FLATCC_CGEN_PAD;
     opts->cgen_sort = FLATCC_CGEN_SORT;
     opts->cgen_pragmas = FLATCC_CGEN_PRAGMAS;

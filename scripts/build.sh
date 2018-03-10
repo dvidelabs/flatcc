@@ -28,5 +28,7 @@ fi
 echo "building Debug" 1>&2
 cd ${ROOT}/build/Debug && $FLATCC_BUILD_CMD
 
-echo "building Release" 1>&2
-cd ${ROOT}/build/Release && $FLATCC_BUILD_CMD
+if [ "$1" != "--debug" ]; then
+    echo "building Release" 1>&2
+    cd ${ROOT}/build/Release && $FLATCC_BUILD_CMD
+fi
