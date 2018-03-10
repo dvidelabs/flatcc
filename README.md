@@ -860,7 +860,7 @@ use different versions of this file if they are not mixed.
 If an external code generator depends on flatcc output, it should use
 the `_get` suffix because it will work with and without the -g option,
 but only as of version 0.5.2 or later. For human readable code it is
-probaly simpler to stick the origal naming convention without the
+probaly simpler to stick to the orignal naming convention without the
 `_get` suffix.
 
 Even with the above, it is still possible to have a conflict with the
