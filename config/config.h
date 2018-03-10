@@ -373,6 +373,20 @@
 #define FLATCC_CGEN_SPACING 4
 #endif
 
+/*
+ * Field names risk conflict with other names when
+ * generated symbols do not all have a suffix.
+ * This can avoid by only generating accessors
+ * with the `_get` suffix, rather than both with
+ * and without like:
+ * `Monster_name(monster)`
+ * `Monster_name_get(monster)`.
+ *
+ * Note: test code might break if enabled.
+ */
+#ifndef FLATCC_CGEN_NO_CONFLICTS
+#define FLATCC_CGEN_NO_CONFLICTS 0
+#endif
 
 /* ---- BGEN are flags specific to the binary schema generator. ---- */
 

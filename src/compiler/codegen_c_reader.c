@@ -190,10 +190,18 @@ static void gen_union(fb_output_t *out)
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_union_field(NS, ID, N, NK, T, r)\\\n"
-        "static inline T ## _union_type_t N ## _ ## NK ## _type(N ## _table_t t__tmp)\\\n"
+        "static inline T ## _union_type_t N ## _ ## NK ## _type_get(N ## _table_t t__tmp)\\\n"
         "__## NS ## union_type_field(((ID) - 1), t__tmp)\\\n"
-        "static inline NS ## generic_t N ## _ ## NK(N ## _table_t t__tmp)\\\n"
-        "__## NS ## table_field(NS ## generic_t, ID, t__tmp, r)\\\n"
+        "static inline NS ## generic_t N ## _ ## NK ## _get(N ## _table_t t__tmp)\\\n"
+        "__## NS ## table_field(NS ## generic_t, ID, t__tmp, r)\\\n", nsc);
+    if (!out->opts->cgen_no_conflicts) {
+        fprintf(out->fp,
+            "static inline T ## _union_type_t N ## _ ## NK ## _type(N ## _table_t t__tmp)\\\n"
+            "__## NS ## union_type_field(((ID) - 1), t__tmp)\\\n"
+            "static inline NS ## generic_t N ## _ ## NK(N ## _table_t t__tmp)\\\n"
+            "__## NS ## table_field(NS ## generic_t, ID, t__tmp, r)\\\n");
+    }
+    fprintf(out->fp,
         "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\\\n"
         "__## NS ## field_present(ID, t__tmp)\\\n"
         "static inline T ## _union_t N ## _ ## NK ## _union(N ## _table_t t__tmp)\\\n"
@@ -201,8 +209,7 @@ static void gen_union(fb_output_t *out)
         "  if (u__tmp.type == 0) return u__tmp; u__tmp.value = N ## _ ## NK (t__tmp); return u__tmp; }\\\n"
         "static inline NS ## string_t N ## _ ## NK ## _as_string(N ## _table_t t__tmp)\\\n"
         "{ return NS ## string_cast_from_generic(N ## _ ## NK(t__tmp)); }\\\n"
-        "\n",
-        nsc);
+        "\n");
     fprintf(out->fp,
         "#define __%sdefine_union_vector_ops(NS, T)\\\n"
         "static inline size_t T ## _union_vec_len(T ## _union_vec_t uv__tmp)\\\n"
@@ -302,13 +309,13 @@ static void gen_scan(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sdefine_scan_by_scalar_field(N, NK, T)\\\n"
         "static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec__tmp, T key__tmp)\\\n"
-        "__%sscan_by_scalar_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\\\n"
+        "__%sscan_by_scalar_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\\\n"
         "static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, T key__tmp)\\\n"
-        "__%sscan_by_scalar_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\\\n"
+        "__%sscan_by_scalar_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\\\n"
         "static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec__tmp, T key__tmp)\\\n"
-        "__%srscan_by_scalar_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\\\n"
+        "__%srscan_by_scalar_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\\\n"
         "static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, T key__tmp)\\\n"
-        "__%srscan_by_scalar_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\n",
+        "__%srscan_by_scalar_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\n",
         nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_scalar_scan(N, T)\\\n"
@@ -324,21 +331,21 @@ static void gen_scan(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sdefine_scan_by_string_field(N, NK) \\\n"
         "static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
-        "__%sscan_by_string_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
+        "__%sscan_by_string_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
         "static inline size_t N ## _vec_scan_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
-        "__%sscan_by_string_n_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\\\n"
+        "__%sscan_by_string_n_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\\\n"
         "static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\\\n"
-        "__%sscan_by_string_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
+        "__%sscan_by_string_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
         "static inline size_t N ## _vec_scan_ex_n_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\\\n"
-        "__%sscan_by_string_n_field(begin__tmp, __%smin( end__tmp, N ## _vec_len(vec__tmp) ), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\\\n"
+        "__%sscan_by_string_n_field(begin__tmp, __%smin( end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\\\n"
         "static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
-        "__%srscan_by_string_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
+        "__%srscan_by_string_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
         "static inline size_t N ## _vec_rscan_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
-        "__%srscan_by_string_n_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\\\n"
+        "__%srscan_by_string_n_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\\\n"
         "static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\\\n"
-        "__%srscan_by_string_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
+        "__%srscan_by_string_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
         "static inline size_t N ## _vec_rscan_ex_n_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\\\n"
-        "__%srscan_by_string_n_field(begin__tmp, __%smin( end__tmp, N ## _vec_len(vec__tmp) ), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\n",
+        "__%srscan_by_string_n_field(begin__tmp, __%smin( end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\n",
         nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_default_scan_by_scalar_field(N, NK, TK)\\\n"
@@ -455,18 +462,25 @@ static void gen_helpers(fb_output_t *out)
             nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_scalar_field(ID, N, NK, TK, T, V)\\\n"
-        "static inline T N ## _ ## NK (N ## _table_t t__tmp)\\\n"
+        "static inline T N ## _ ## NK ## _get(N ## _table_t t__tmp)\\\n"
         "{ __%sread_vt(ID, offset__tmp, t__tmp)\\\n"
         "  return offset__tmp ? __%sread_scalar_at_byteoffset(TK, t__tmp, offset__tmp) : V;\\\n"
-        "}\\\n"
+        "}\\\n", nsc, nsc, nsc);
+    if (!out->opts->cgen_no_conflicts) {
+        fprintf(out->fp,
+            "static inline T N ## _ ## NK(N ## _table_t t__tmp)\\\n"
+            "{ __%sread_vt(ID, offset__tmp, t__tmp)\\\n"
+            "  return offset__tmp ? __%sread_scalar_at_byteoffset(TK, t__tmp, offset__tmp) : V;\\\n"
+            "}\\\n", nsc, nsc);
+    }
+    fprintf(out->fp,
         "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\\\n"
-        "__%sfield_present(ID, t__tmp)",
-        nsc, nsc, nsc, nsc);
-        if (out->opts->allow_scan_for_all_fields) {
-            fprintf(out->fp, "\\\n__%sdefine_scan_by_scalar_field(N, NK, T)\n", nsc);
-        } else {
-            fprintf(out->fp, "\n");
-        }
+        "__%sfield_present(ID, t__tmp)",nsc);
+    if (out->opts->allow_scan_for_all_fields) {
+        fprintf(out->fp, "\\\n__%sdefine_scan_by_scalar_field(N, NK, T)\n", nsc);
+    } else {
+        fprintf(out->fp, "\n");
+    }
     fprintf(out->fp,
         "#define __%sstruct_field(T, ID, t, r)\\\n"
         "{\\\n"
@@ -499,32 +513,52 @@ static void gen_helpers(fb_output_t *out)
         nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_struct_field(ID, N, NK, T, r)\\\n"
-        "static inline T N ## _ ## NK(N ## _table_t t__tmp)\\\n"
-        "__%sstruct_field(T, ID, t__tmp, r)\\\n"
-        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\\\n"
-        "__%sfield_present(ID, t__tmp)\n",
-        nsc, nsc, nsc);
+        "static inline T N ## _ ## NK ## _get(N ## _table_t t__tmp)\\\n"
+        "__%sstruct_field(T, ID, t__tmp, r)", nsc, nsc);
+    if (!out->opts->cgen_no_conflicts) {
+        fprintf(out->fp,
+            "\\\nstatic inline T N ## _ ## NK(N ## _table_t t__tmp)\\\n"
+            "__%sstruct_field(T, ID, t__tmp, r)", nsc);
+    }
+    fprintf(out->fp,
+        "\\\nstatic inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\\\n"
+        "__%sfield_present(ID, t__tmp)\n", nsc);
     fprintf(out->fp,
         "#define __%sdefine_vector_field(ID, N, NK, T, r)\\\n"
-        "static inline T N ## _ ## NK(N ## _table_t t__tmp)\\\n"
-        "__%svector_field(T, ID, t__tmp, r)\\\n"
-        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\\\n"
-        "__%sfield_present(ID, t__tmp)\n",
-        nsc, nsc, nsc);
+        "static inline T N ## _ ## NK ## _get(N ## _table_t t__tmp)\\\n"
+        "__%svector_field(T, ID, t__tmp, r)", nsc, nsc);
+    if (!out->opts->cgen_no_conflicts) {
+        fprintf(out->fp,
+            "\\\nstatic inline T N ## _ ## NK(N ## _table_t t__tmp)\\\n"
+            "__%svector_field(T, ID, t__tmp, r)", nsc);
+    }
+    fprintf(out->fp,
+        "\\\nstatic inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\\\n"
+        "__%sfield_present(ID, t__tmp)\n", nsc);
     fprintf(out->fp,
         "#define __%sdefine_table_field(ID, N, NK, T, r)\\\n"
-        "static inline T N ## _ ## NK(N ## _table_t t__tmp)\\\n"
-        "__%stable_field(T, ID, t__tmp, r)\\\n"
-        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\\\n"
-        "__%sfield_present(ID, t__tmp)\n",
-        nsc, nsc, nsc);
+        "static inline T N ## _ ## NK ## _get(N ## _table_t t__tmp)\\\n"
+        "__%stable_field(T, ID, t__tmp, r)", nsc, nsc);
+    if (!out->opts->cgen_no_conflicts) {
+        fprintf(out->fp,
+            "\\\nstatic inline T N ## _ ## NK(N ## _table_t t__tmp)\\\n"
+            "__%stable_field(T, ID, t__tmp, r)", nsc);
+    }
+    fprintf(out->fp,
+        "\\\nstatic inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\\\n"
+        "__%sfield_present(ID, t__tmp)\n", nsc);
     fprintf(out->fp,
         "#define __%sdefine_string_field(ID, N, NK, r)\\\n"
-        "static inline %sstring_t N ## _ ## NK(N ## _table_t t__tmp)\\\n"
-        "__%svector_field(%sstring_t, ID, t__tmp, r)\\\n"
-        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\\\n"
-        "__%sfield_present(ID, t__tmp)",
-        nsc, nsc, nsc, nsc, nsc);
+        "static inline %sstring_t N ## _ ## NK ## _get(N ## _table_t t__tmp)\\\n"
+        "__%svector_field(%sstring_t, ID, t__tmp, r)", nsc, nsc, nsc, nsc);
+    if (!out->opts->cgen_no_conflicts) {
+        fprintf(out->fp,
+        "\\\nstatic inline %sstring_t N ## _ ## NK(N ## _table_t t__tmp)\\\n"
+        "__%svector_field(%sstring_t, ID, t__tmp, r)", nsc, nsc, nsc);
+    }
+    fprintf(out->fp,
+        "\\\nstatic inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\\\n"
+        "__%sfield_present(ID, t__tmp)", nsc);
         if (out->opts->allow_scan_for_all_fields) {
             fprintf(out->fp, "\\\n__%sdefine_scan_by_string_field(N, NK)\n", nsc);
         } else {
@@ -671,9 +705,15 @@ static void gen_helpers(fb_output_t *out)
     }
     fprintf(out->fp,
         "#define __%sdefine_struct_scalar_field(N, NK, TK, T)\\\n"
-        "static inline T N ## _ ## NK (N ## _struct_t t__tmp)\\\n"
+        "static inline T N ## _ ## NK ## _get(N ## _struct_t t__tmp)\\\n"
         "{ return t__tmp ? __%sread_scalar(TK, &(t__tmp->NK)) : 0; }",
         nsc, nsc);
+    if (!out->opts->cgen_no_conflicts) {
+        fprintf(out->fp,
+            "\\\nstatic inline T N ## _ ## NK (N ## _struct_t t__tmp)\\\n"
+            "{ return t__tmp ? __%sread_scalar(TK, &(t__tmp->NK)) : 0; }",
+            nsc);
+    }
     if (out->opts->allow_scan_for_all_fields) {
         fprintf(out->fp, "\\\n__%sdefine_scan_by_scalar_field(N, NK, T)\n", nsc);
     } else {
@@ -681,8 +721,14 @@ static void gen_helpers(fb_output_t *out)
     }
     fprintf(out->fp,
             "#define __%sdefine_struct_struct_field(N, NK, T)\\\n"
-            "static inline T N ## _ ## NK(N ## _struct_t t__tmp) { return t__tmp ? &(t__tmp->NK) : 0; }\n",
+            "static inline T N ## _ ## NK ## _get(N ## _struct_t t__tmp) { return t__tmp ? &(t__tmp->NK) : 0; }",
             nsc);
+    if (!out->opts->cgen_no_conflicts) {
+    fprintf(out->fp,
+            "\\\nstatic inline T N ## _ ## NK (N ## _struct_t t__tmp) { return t__tmp ? &(t__tmp->NK) : 0; }\n");
+    } else {
+        fprintf(out->fp, "\n");
+    }
     fprintf(out->fp,
             "/* If fid is null, the function returns true without testing as buffer is not expected to have any id. */\n"
             "static inline int %shas_identifier(const void *buffer, const char *fid)\n"

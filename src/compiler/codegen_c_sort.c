@@ -62,7 +62,7 @@ int gen_sort(fb_output_t *out)
         out->nsc);
     fprintf(out->fp,
         "#define __%sdefine_sort_by_field(N, NK, TK, TE, D, S)\\\n"
-        "  __%sheap_sort(N, _sort_by_ ## NK, N ## _ ## NK, N ## _vec_at, N ## _vec_len, TK, TE, D, S)\\\n"
+        "  __%sheap_sort(N, _sort_by_ ## NK, N ## _ ## NK ## _get, N ## _vec_at, N ## _vec_len, TK, TE, D, S)\\\n"
         "static inline void N ## _vec_sort_by_ ## NK(N ## _mutable_vec_t vec__tmp)\\\n"
         "{ __ ## N ## _sort_by_ ## NK ## __heap_sort(vec__tmp); }\n",
         out->nsc, out->nsc);
