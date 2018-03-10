@@ -7,6 +7,13 @@
 - Fix .bfbs bug failing to export fields of string type correctly.
 - Fix how vectors are printed in samples/reflection project.
 - Add support for KeyValue attributes in binary schema (.bfbs).
+- Added `__tmp` suffix to macro variables in `flatbuffers_common_reader.h`
+  to avoid potential name conflicts (#82).
+- Added `_get` suffix to all table and struc read accessors in
+  addition to existing accesors (`Monster_name_get()` vs `Monster_name_get()`
+  (#82).
+- Added `-g` option flatcc commandline to only generate read accessors
+  with `_get` suffix in order to avoid potential name conficts (#82).
 
 ## [0.5.1]
 

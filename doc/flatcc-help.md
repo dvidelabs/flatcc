@@ -1,6 +1,6 @@
 ```
 flatcc FlatBuffers schema compiler for C by dvide.com
-version: 0.4.2
+version: 0.5.2-pre
 usage: flatcc [options] file [...]
 options:
                              No option generates reader only
@@ -8,6 +8,7 @@ options:
   -w                         Generate builders (writable buffers)
   -r                         Recursively generate included schema files
   -a                         Generate all (like -cwvr)
+  -g                         Use _get suffix only to avoid conflicts
   -d                         Dependency file like gcc -MMD
   -I<inpath>                 Search path for include files (multiple allowed)
   -o<outpath>                Write files relative to this path (dir must exist)
@@ -48,6 +49,11 @@ verifiers.
 All C output can be concated to a single file using --stdout or
 --outfile with content produced in dependency order. The outfile is
 relative to cwd.
+
+-g Only add '_get' suffix to read accessors such that, for example,
+only 'Monster_name_get(monster)` will be generated and not also
+'Monster_name(monster)'. This avoids potential conflicts with
+other generated symbols when a schema change is impractical.
 
 -d generates a dependency file, e.g. 'monster.fbs.d' in the output dir.
 

@@ -38,6 +38,7 @@ or printing in less than 2 us for a 10 field mixed type message.
     * [Compiling for Read-Only](#compiling-for-read-only)
     * [Building a Buffer](#building-a-buffer)
     * [Verifying a Buffer](#verifying-a-buffer)
+    * [Potential Name Conflicts](#potential-name-conflicts)
     * [Debugging a Buffer](#debugging-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
     * [File Identifiers](#file-identifiers)
@@ -834,6 +835,46 @@ done. For the majority of use cases, standard allocation would be
 sufficient, but for example standard 32-bit Windows only allocates on an
 8-byte boundary and can break the monster schema because it has 16-byte
 aligned fields.
+
+
+### Potential Name Conflicts
+
+If unfortunate, it is possible to have a read accessor method conflict
+with other generated methods and typenames. Usually a small change in
+the schema will resolve this issue.
+
+As of flatcc 0.5.2 read accors are generated with and without a `_get`
+suffix so it is also possible to use `Monster_pos_get(monster)` instead
+of `Monster_pos(monster)`. When calling flatcc with option `-g` the
+read accesors will only be generated with `_get` suffix. This avoids
+potential name conflicts. An example of a conflict is a field name
+like `pos_add` when there is also a `pos` field because the builder
+interface generates the `add` suffix. Using the -g option avoids this
+problem, but it is preferable to choose another name such as `added_pos`
+when the schema can be modified.
+
+The `-g` option only changes the content of the
+`flatbuffers_common_reader.h` file, so it is technically  possible to
+use different versions of this file if they are not mixed.
+
+If an external code generator depends on flatcc output, it should use
+the `_get` suffix because it will work with and without the -g option,
+but only as of version 0.5.2 or later. For human readable code it is
+probaly simpler to stick the origal naming convention without the
+`_get` suffix.
+
+Even with the above, it is still possible to have a conflict with the
+union type field. If a union field is named `foo`, an additional field
+is automatically - this field is named `foo_type` and holds,
+unsurprisingly, the type of the union.
+
+Namespaces can also cause conflicts. If a schema has the namespace
+Foo.Bar and table named MyTable with a field name hello, then a
+read accessor will be named: `Foo_Bar_MyTable_hello_get`. It
+is also possible to have a table named `Bar_MyTable` because `_` are
+allowed in FlatBuffers schema names, but in this case we have name
+conflict in the generated the C code. FlatCC does not attempt to avoid
+such conflicts so such schema are considered invalid.
 
 
 ### Debugging a Buffer
