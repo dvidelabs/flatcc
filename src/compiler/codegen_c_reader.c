@@ -102,21 +102,21 @@ static void gen_find(fb_output_t *out)
         "/* A = identity if searching scalar vectors rather than key fields. */\n"
         "/* Returns lowest matching index or not_found. */\n"
         "#define __%sfind_by_field(A, V, E, L, K, Kn, T, D)\\\n"
-        "{ T v; size_t a = 0, b, m; if (!(b = L(V))) { return %snot_found; }\\\n"
-        "  --b;\\\n"
-        "  while (a < b) {\\\n"
-        "    m = a + ((b - a) >> 1);\\\n"
-        "    v = A(E(V, m));\\\n"
-        "    if ((D(v, (K), (Kn))) < 0) {\\\n"
-        "      a = m + 1;\\\n"
+        "{ T v__tmp; size_t a__tmp = 0, b__tmp, m__tmp; if (!(b__tmp = L(V))) { return %snot_found; }\\\n"
+        "  --b__tmp;\\\n"
+        "  while (a__tmp < b__tmp) {\\\n"
+        "    m__tmp = a__tmp + ((b__tmp - a__tmp) >> 1);\\\n"
+        "    v__tmp = A(E(V, m__tmp));\\\n"
+        "    if ((D(v__tmp, (K), (Kn))) < 0) {\\\n"
+        "      a__tmp = m__tmp + 1;\\\n"
         "    } else {\\\n"
-        "      b = m;\\\n"
+        "      b__tmp = m__tmp;\\\n"
         "    }\\\n"
         "  }\\\n"
-        "  if (a == b) {\\\n"
-        "    v = A(E(V, a));\\\n"
-        "    if (D(v, (K), (Kn)) == 0) {\\\n"
-        "       return a;\\\n"
+        "  if (a__tmp == b__tmp) {\\\n"
+        "    v__tmp = A(E(V, a__tmp));\\\n"
+        "    if (D(v__tmp, (K), (Kn)) == 0) {\\\n"
+        "       return a__tmp;\\\n"
         "    }\\\n"
         "  }\\\n"
         "  return %snot_found;\\\n"
@@ -133,35 +133,34 @@ static void gen_find(fb_output_t *out)
         nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_find_by_scalar_field(N, NK, TK)\\\n"
-        "static inline size_t N ## _vec_find_by_ ## NK(N ## _vec_t vec, TK key)\\\n"
-        "__%sfind_by_scalar_field(N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)\n",
+        "static inline size_t N ## _vec_find_by_ ## NK(N ## _vec_t vec__tmp, TK key__tmp)\\\n"
+        "__%sfind_by_scalar_field(N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, TK)\n",
         nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_scalar_find(N, T)\\\n"
-        "static inline size_t N ## _vec_find(N ## _vec_t vec, T key)\\\n"
-        "__%sfind_by_scalar_field(__%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\n",
+        "static inline size_t N ## _vec_find(N ## _vec_t vec__tmp, T key__tmp)\\\n"
+        "__%sfind_by_scalar_field(__%sidentity, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\n",
         nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_find_by_string_field(N, NK) \\\n"
         "/* Note: find only works on vectors sorted by this field. */\\\n"
-        "static inline size_t N ## _vec_find_by_ ## NK(N ## _vec_t vec, const char *s)\\\n"
-        "__%sfind_by_string_field(N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\\\n"
-        "static inline size_t N ## _vec_find_n_by_ ## NK(N ## _vec_t vec, const char *s, int n)\\\n"
-        "__%sfind_by_string_n_field(N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\n",
+        "static inline size_t N ## _vec_find_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
+        "__%sfind_by_string_field(N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
+        "static inline size_t N ## _vec_find_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "__%sfind_by_string_n_field(N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\n",
         nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_default_find_by_scalar_field(N, NK, TK)\\\n"
-        "static inline size_t N ## _vec_find(N ## _vec_t vec, TK key)\\\n"
-        "{ return N ## _vec_find_by_ ## NK(vec, key); }\n",
+        "static inline size_t N ## _vec_find(N ## _vec_t vec__tmp, TK key__tmp)\\\n"
+        "{ return N ## _vec_find_by_ ## NK(vec__tmp, key__tmp); }\n",
         nsc);
     fprintf(out->fp,
         "#define __%sdefine_default_find_by_string_field(N, NK) \\\n"
-        "static inline size_t N ## _vec_find(N ## _vec_t vec, const char *s)\\\n"
-        "{ return N ## _vec_find_by_ ## NK(vec, s); }\\\n"
-        "static inline size_t N ## _vec_find_n(N ## _vec_t vec, const char *s, int n)\\\n"
-        "{ return N ## _vec_find_n_by_ ## NK(vec, s, n); }\n",
+        "static inline size_t N ## _vec_find(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
+        "{ return N ## _vec_find_by_ ## NK(vec__tmp, s__tmp); }\\\n"
+        "static inline size_t N ## _vec_find_n(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "{ return N ## _vec_find_n_by_ ## NK(vec__tmp, s__tmp, n__tmp); }\n",
         nsc);
-
 }
 
 static void gen_union(fb_output_t *out)
@@ -186,36 +185,36 @@ static void gen_union(fb_output_t *out)
         "}\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
-        "static inline %sstring_t %sstring_cast_from_union(const %sunion_t u)\\\n"
-        "{ return %sstring_cast_from_generic(u.value); }\n",
+        "static inline %sstring_t %sstring_cast_from_union(const %sunion_t u__tmp)\\\n"
+        "{ return %sstring_cast_from_generic(u__tmp.value); }\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_union_field(NS, ID, N, NK, T, r)\\\n"
-        "static inline T ## _union_type_t N ## _ ## NK ## _type(N ## _table_t t)\\\n"
-        "__## NS ## union_type_field(((ID) - 1), t)\\\n"
-        "static inline NS ## generic_t N ## _ ## NK(N ## _table_t t)\\\n"
-        "__## NS ## table_field(NS ## generic_t, ID, t, r)\\\n"
-        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\\\n"
-        "__## NS ## field_present(ID, t)\\\n"
-        "static inline T ## _union_t N ## _ ## NK ## _union(N ## _table_t t)\\\n"
-        "{ T ## _union_t u = { 0, 0 }; u.type = N ## _ ## NK ## _type(t);\\\n"
-        "  if (u.type == 0) return u; u.value = N ## _ ## NK (t); return u; }\\\n"
-        "static inline NS ## string_t N ## _ ## NK ## _as_string(N ## _table_t t)\\\n"
-        "{ return NS ## string_cast_from_generic(N ## _ ## NK(t)); }\\\n"
+        "static inline T ## _union_type_t N ## _ ## NK ## _type(N ## _table_t t__tmp)\\\n"
+        "__## NS ## union_type_field(((ID) - 1), t__tmp)\\\n"
+        "static inline NS ## generic_t N ## _ ## NK(N ## _table_t t__tmp)\\\n"
+        "__## NS ## table_field(NS ## generic_t, ID, t__tmp, r)\\\n"
+        "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\\\n"
+        "__## NS ## field_present(ID, t__tmp)\\\n"
+        "static inline T ## _union_t N ## _ ## NK ## _union(N ## _table_t t__tmp)\\\n"
+        "{ T ## _union_t u__tmp = { 0, 0 }; u__tmp.type = N ## _ ## NK ## _type(t__tmp);\\\n"
+        "  if (u__tmp.type == 0) return u__tmp; u__tmp.value = N ## _ ## NK (t__tmp); return u__tmp; }\\\n"
+        "static inline NS ## string_t N ## _ ## NK ## _as_string(N ## _table_t t__tmp)\\\n"
+        "{ return NS ## string_cast_from_generic(N ## _ ## NK(t__tmp)); }\\\n"
         "\n",
         nsc);
     fprintf(out->fp,
         "#define __%sdefine_union_vector_ops(NS, T)\\\n"
-        "static inline size_t T ## _union_vec_len(T ## _union_vec_t uv)\\\n"
-        "{ return NS ## vec_len(uv.type); }\\\n"
-        "static inline T ## _union_t T ## _union_vec_at(T ## _union_vec_t uv, size_t i)\\\n"
-        "{ T ## _union_t u = { 0, 0 }; size_t n = NS ## vec_len(uv.type);\\\n"
-        "  assert(n > (i) && \"index out of range\"); u.type = uv.type[i];\\\n"
+        "static inline size_t T ## _union_vec_len(T ## _union_vec_t uv__tmp)\\\n"
+        "{ return NS ## vec_len(uv__tmp.type); }\\\n"
+        "static inline T ## _union_t T ## _union_vec_at(T ## _union_vec_t uv__tmp, size_t i__tmp)\\\n"
+        "{ T ## _union_t u__tmp = { 0, 0 }; size_t n__tmp = NS ## vec_len(uv__tmp.type);\\\n"
+        "  assert(n__tmp > (i__tmp) && \"index out of range\"); u__tmp.type = uv__tmp.type[i__tmp];\\\n"
         "  /* Unknown type is treated as NONE for schema evolution. */\\\n"
-        "  if (u.type == 0) return u;\\\n"
-        "  u.value = NS ## generic_vec_at(uv.value, i); return u; }\\\n"
-        "static inline NS ## string_t T ## _union_vec_at_as_string(T ## _union_vec_t uv, size_t i)\\\n"
-        "{ return (NS ## string_t) NS ## generic_vec_at_as_string(uv.value, i); }\\\n"
+        "  if (u__tmp.type == 0) return u__tmp;\\\n"
+        "  u__tmp.value = NS ## generic_vec_at(uv__tmp.value, i__tmp); return u__tmp; }\\\n"
+        "static inline NS ## string_t T ## _union_vec_at_as_string(T ## _union_vec_t uv__tmp, size_t i__tmp)\\\n"
+        "{ return (NS ## string_t) NS ## generic_vec_at_as_string(uv__tmp.value, i__tmp); }\\\n"
         "\n",
         nsc);
     fprintf(out->fp,
@@ -232,10 +231,10 @@ static void gen_union(fb_output_t *out)
         "#define __%sdefine_union_vector_field(NS, ID, N, NK, T, r)\\\n"
         "__## NS ## define_vector_field(ID - 1, N, NK ## _type, T ## _vec_t, r)\\\n"
         "__## NS ## define_vector_field(ID, N, NK, flatbuffers_generic_vec_t, r)\\\n"
-        "static inline T ## _union_vec_t N ## _ ## NK ## _union(N ## _table_t t)\\\n"
-        "{ T ## _union_vec_t uv; uv.type = N ## _ ## NK ## _type(t); uv.value = N ## _ ## NK(t);\\\n"
-        "  assert(NS ## vec_len(uv.type) == NS ## vec_len(uv.value)\\\n"
-        "  && \"union vector type length mismatch\"); return uv; }\n",
+        "static inline T ## _union_vec_t N ## _ ## NK ## _union(N ## _table_t t__tmp)\\\n"
+        "{ T ## _union_vec_t uv__tmp; uv__tmp.type = N ## _ ## NK ## _type(t__tmp); uv__tmp.value = N ## _ ## NK(t__tmp);\\\n"
+        "  assert(NS ## vec_len(uv__tmp.type) == NS ## vec_len(uv__tmp.value)\\\n"
+        "  && \"union vector type length mismatch\"); return uv__tmp; }\n",
         nsc);
 }
 
@@ -260,11 +259,11 @@ static void gen_scan(fb_output_t *out)
         "/* A = identity if searching scalar vectors rather than key fields. */\n"
         "/* Returns lowest matching index or not_found. */\n"
         "#define __%sscan_by_field(b, e, A, V, E, L, K, Kn, T, D)\\\n"
-        "{ T v; size_t i;\\\n"
-        "  for (i = b; i < e; ++i) {\\\n"
-        "    v = A(E(V, i));\\\n"
-        "    if (D(v, (K), (Kn)) == 0) {\\\n"
-        "       return i;\\\n"
+        "{ T v__tmp; size_t i__tmp;\\\n"
+        "  for (i__tmp = b; i__tmp < e; ++i__tmp) {\\\n"
+        "    v__tmp = A(E(V, i__tmp));\\\n"
+        "    if (D(v__tmp, (K), (Kn)) == 0) {\\\n"
+        "       return i__tmp;\\\n"
         "    }\\\n"
         "  }\\\n"
         "  return %snot_found;\\\n"
@@ -272,11 +271,11 @@ static void gen_scan(fb_output_t *out)
         nsc, nsc);
     fprintf(out->fp,
         "#define __%srscan_by_field(b, e, A, V, E, L, K, Kn, T, D)\\\n"
-        "{ T v; size_t i = e;\\\n"
-        "  while (i-- > b) {\\\n"
-        "    v = A(E(V, i));\\\n"
-        "    if (D(v, (K), (Kn)) == 0) {\\\n"
-        "       return i;\\\n"
+        "{ T v__tmp; size_t i__tmp = e;\\\n"
+        "  while (i__tmp-- > b) {\\\n"
+        "    v__tmp = A(E(V, i__tmp));\\\n"
+        "    if (D(v__tmp, (K), (Kn)) == 0) {\\\n"
+        "       return i__tmp;\\\n"
         "    }\\\n"
         "  }\\\n"
         "  return %snot_found;\\\n"
@@ -302,74 +301,74 @@ static void gen_scan(fb_output_t *out)
         nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_scan_by_scalar_field(N, NK, T)\\\n"
-        "static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec, T key)\\\n"
-        "__%sscan_by_scalar_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
-        "static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, T key)\\\n"
-        "__%sscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
-        "static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec, T key)\\\n"
-        "__%srscan_by_scalar_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
-        "static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, T key)\\\n"
-        "__%srscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, T)\n",
+        "static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec__tmp, T key__tmp)\\\n"
+        "__%sscan_by_scalar_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\\\n"
+        "static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, T key__tmp)\\\n"
+        "__%sscan_by_scalar_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\\\n"
+        "static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec__tmp, T key__tmp)\\\n"
+        "__%srscan_by_scalar_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\\\n"
+        "static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, T key__tmp)\\\n"
+        "__%srscan_by_scalar_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\n",
         nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_scalar_scan(N, T)\\\n"
-        "static inline size_t N ## _vec_scan(N ## _vec_t vec, T key)\\\n"
-        "__%sscan_by_scalar_field(0, N ## _vec_len(vec), __%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
-        "static inline size_t N ## _vec_scan_ex(N ## _vec_t vec, size_t begin, size_t end, T key)\\\n"
-        "__%sscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), __%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
-        "static inline size_t N ## _vec_rscan(N ## _vec_t vec, T key)\\\n"
-        "__%srscan_by_scalar_field(0, N ## _vec_len(vec), __%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\\\n"
-        "static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec, size_t begin, size_t end, T key)\\\n"
-        "__%srscan_by_scalar_field(begin, __%smin(end, N ## _vec_len(vec)), __%sidentity, vec, N ## _vec_at, N ## _vec_len, key, T)\n",
+        "static inline size_t N ## _vec_scan(N ## _vec_t vec__tmp, T key__tmp)\\\n"
+        "__%sscan_by_scalar_field(0, N ## _vec_len(vec__tmp), __%sidentity, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\\\n"
+        "static inline size_t N ## _vec_scan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, T key__tmp)\\\n"
+        "__%sscan_by_scalar_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), __%sidentity, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\\\n"
+        "static inline size_t N ## _vec_rscan(N ## _vec_t vec__tmp, T key__tmp)\\\n"
+        "__%srscan_by_scalar_field(0, N ## _vec_len(vec__tmp), __%sidentity, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\\\n"
+        "static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, T key__tmp)\\\n"
+        "__%srscan_by_scalar_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), __%sidentity, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\n",
         nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_scan_by_string_field(N, NK) \\\n"
-        "static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec, const char *s)\\\n"
-        "__%sscan_by_string_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\\\n"
-        "static inline size_t N ## _vec_scan_n_by_ ## NK(N ## _vec_t vec, const char *s, int n)\\\n"
-        "__%sscan_by_string_n_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\\\n"
-        "static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s)\\\n"
-        "__%sscan_by_string_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\\\n"
-        "static inline size_t N ## _vec_scan_ex_n_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\\\n"
-        "__%sscan_by_string_n_field(begin, __%smin( end, N ## _vec_len(vec) ), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\\\n"
-        "static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec, const char *s)\\\n"
-        "__%srscan_by_string_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\\\n"
-        "static inline size_t N ## _vec_rscan_n_by_ ## NK(N ## _vec_t vec, const char *s, int n)\\\n"
-        "__%srscan_by_string_n_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\\\n"
-        "static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s)\\\n"
-        "__%srscan_by_string_field(begin, __%smin(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\\\n"
-        "static inline size_t N ## _vec_rscan_ex_n_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\\\n"
-        "__%srscan_by_string_n_field(begin, __%smin( end, N ## _vec_len(vec) ), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\n",
+        "static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
+        "__%sscan_by_string_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
+        "static inline size_t N ## _vec_scan_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "__%sscan_by_string_n_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\\\n"
+        "static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\\\n"
+        "__%sscan_by_string_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
+        "static inline size_t N ## _vec_scan_ex_n_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "__%sscan_by_string_n_field(begin__tmp, __%smin( end__tmp, N ## _vec_len(vec__tmp) ), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\\\n"
+        "static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
+        "__%srscan_by_string_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
+        "static inline size_t N ## _vec_rscan_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "__%srscan_by_string_n_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\\\n"
+        "static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\\\n"
+        "__%srscan_by_string_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
+        "static inline size_t N ## _vec_rscan_ex_n_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "__%srscan_by_string_n_field(begin__tmp, __%smin( end__tmp, N ## _vec_len(vec__tmp) ), N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\n",
         nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_default_scan_by_scalar_field(N, NK, TK)\\\n"
-        "static inline size_t N ## _vec_scan(N ## _vec_t vec, TK key)\\\n"
-        "{ return N ## _vec_scan_by_ ## NK(vec, key); }\\\n"
-        "static inline size_t N ## _vec_scan_ex(N ## _vec_t vec, size_t begin, size_t end, TK key)\\\n"
-        "{ return N ## _vec_scan_ex_by_ ## NK(vec, begin, end, key); }\\\n"
-        "static inline size_t N ## _vec_rscan(N ## _vec_t vec, TK key)\\\n"
-        "{ return N ## _vec_rscan_by_ ## NK(vec, key); }\\\n"
-        "static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec, size_t begin, size_t end, TK key)\\\n"
-        "{ return N ## _vec_rscan_ex_by_ ## NK(vec, begin, end, key); }\n",
+        "static inline size_t N ## _vec_scan(N ## _vec_t vec__tmp, TK key__tmp)\\\n"
+        "{ return N ## _vec_scan_by_ ## NK(vec__tmp, key__tmp); }\\\n"
+        "static inline size_t N ## _vec_scan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, TK key__tmp)\\\n"
+        "{ return N ## _vec_scan_ex_by_ ## NK(vec__tmp, begin__tmp, end__tmp, key__tmp); }\\\n"
+        "static inline size_t N ## _vec_rscan(N ## _vec_t vec__tmp, TK key__tmp)\\\n"
+        "{ return N ## _vec_rscan_by_ ## NK(vec__tmp, key__tmp); }\\\n"
+        "static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, TK key__tmp)\\\n"
+        "{ return N ## _vec_rscan_ex_by_ ## NK(vec__tmp, begin__tmp, end__tmp, key__tmp); }\n",
         nsc);
     fprintf(out->fp,
         "#define __%sdefine_default_scan_by_string_field(N, NK) \\\n"
-        "static inline size_t N ## _vec_scan(N ## _vec_t vec, const char *s)\\\n"
-        "{ return N ## _vec_scan_by_ ## NK(vec, s); }\\\n"
-        "static inline size_t N ## _vec_scan_n(N ## _vec_t vec, const char *s, int n)\\\n"
-        "{ return N ## _vec_scan_n_by_ ## NK(vec, s, n); }\\\n"
-        "static inline size_t N ## _vec_scan_ex(N ## _vec_t vec, size_t begin, size_t end, const char *s)\\\n"
-        "{ return N ## _vec_scan_ex_by_ ## NK(vec, begin, end, s); }\\\n"
-        "static inline size_t N ## _vec_scan_ex_n(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\\\n"
-        "{ return N ## _vec_scan_ex_n_by_ ## NK(vec, begin, end, s, n); }\\\n"
-        "static inline size_t N ## _vec_rscan(N ## _vec_t vec, const char *s)\\\n"
-        "{ return N ## _vec_rscan_by_ ## NK(vec, s); }\\\n"
-        "static inline size_t N ## _vec_rscan_n(N ## _vec_t vec, const char *s, int n)\\\n"
-        "{ return N ## _vec_rscan_n_by_ ## NK(vec, s, n); }\\\n"
-        "static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec, size_t begin, size_t end, const char *s)\\\n"
-        "{ return N ## _vec_rscan_ex_by_ ## NK(vec, begin, end, s); }\\\n"
-        "static inline size_t N ## _vec_rscan_ex_n(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\\\n"
-        "{ return N ## _vec_rscan_ex_n_by_ ## NK(vec, begin, end, s, n); }\n",
+        "static inline size_t N ## _vec_scan(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
+        "{ return N ## _vec_scan_by_ ## NK(vec__tmp, s__tmp); }\\\n"
+        "static inline size_t N ## _vec_scan_n(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "{ return N ## _vec_scan_n_by_ ## NK(vec__tmp, s__tmp, n__tmp); }\\\n"
+        "static inline size_t N ## _vec_scan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\\\n"
+        "{ return N ## _vec_scan_ex_by_ ## NK(vec__tmp, begin__tmp, end__tmp, s__tmp); }\\\n"
+        "static inline size_t N ## _vec_scan_ex_n(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "{ return N ## _vec_scan_ex_n_by_ ## NK(vec__tmp, begin__tmp, end__tmp, s__tmp, n__tmp); }\\\n"
+        "static inline size_t N ## _vec_rscan(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
+        "{ return N ## _vec_rscan_by_ ## NK(vec__tmp, s__tmp); }\\\n"
+        "static inline size_t N ## _vec_rscan_n(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "{ return N ## _vec_rscan_n_by_ ## NK(vec__tmp, s__tmp, n__tmp); }\\\n"
+        "static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\\\n"
+        "{ return N ## _vec_rscan_ex_by_ ## NK(vec__tmp, begin__tmp, end__tmp, s__tmp); }\\\n"
+        "static inline size_t N ## _vec_rscan_ex_n(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "{ return N ## _vec_rscan_ex_n_by_ ## NK(vec__tmp, begin__tmp, end__tmp, s__tmp, n__tmp); }\n",
         nsc);
 }
 

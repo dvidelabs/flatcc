@@ -30,46 +30,46 @@ int gen_sort(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sheap_sort(N, X, A, E, L, TK, TE, D, S)\\\n"
         "static inline void __ ## N ## X ## __heap_sift_down(\\\n"
-        "        N ## _mutable_vec_t vec, size_t start, size_t end)\\\n"
-        "{ size_t child, root; TK v1, v2, vroot;\\\n"
-        "  root = start;\\\n"
-        "  while ((root << 1) <= end) {\\\n"
-        "    child = root << 1;\\\n"
-        "    if (child < end) {\\\n"
-        "      v1 = A(E(vec, child));\\\n"
-        "      v2 = A(E(vec, child + 1));\\\n"
-        "      if (D(v1, v2) < 0) {\\\n"
-        "        child++;\\\n"
+        "        N ## _mutable_vec_t vec__tmp, size_t start__tmp, size_t end__tmp)\\\n"
+        "{ size_t child__tmp, root__tmp; TK v1__tmp, v2__tmp, vroot__tmp;\\\n"
+        "  root__tmp = start__tmp;\\\n"
+        "  while ((root__tmp << 1) <= end__tmp) {\\\n"
+        "    child__tmp = root__tmp << 1;\\\n"
+        "    if (child__tmp < end__tmp) {\\\n"
+        "      v1__tmp = A(E(vec__tmp, child__tmp));\\\n"
+        "      v2__tmp = A(E(vec__tmp, child__tmp + 1));\\\n"
+        "      if (D(v1__tmp, v2__tmp) < 0) {\\\n"
+        "        child__tmp++;\\\n"
         "      }\\\n"
         "    }\\\n"
-        "    vroot = A(E(vec, root));\\\n"
-        "    v1 = A(E(vec, child));\\\n"
-        "    if (D(vroot, v1) < 0) {\\\n"
-        "      S(vec, root, child, TE);\\\n"
-        "      root = child;\\\n"
+        "    vroot__tmp = A(E(vec__tmp, root__tmp));\\\n"
+        "    v1__tmp = A(E(vec__tmp, child__tmp));\\\n"
+        "    if (D(vroot__tmp, v1__tmp) < 0) {\\\n"
+        "      S(vec__tmp, root__tmp, child__tmp, TE);\\\n"
+        "      root__tmp = child__tmp;\\\n"
         "    } else {\\\n"
         "      return;\\\n"
         "    }\\\n"
         "  }\\\n"
         "}\\\n"
-        "static inline void __ ## N ## X ## __heap_sort(N ## _mutable_vec_t vec)\\\n"
-        "{ size_t start, end, size;\\\n"
-        "  size = L(vec); if (size == 0) return; end = size - 1; start = size >> 1;\\\n"
-        "  do { __ ## N ## X ## __heap_sift_down(vec, start, end); } while (start--);\\\n"
-        "  while (end > 0) { \\\n"
-        "    S(vec, 0, end, TE);\\\n"
-        "    __ ## N ## X ## __heap_sift_down(vec, 0, --end); } }\n",
+        "static inline void __ ## N ## X ## __heap_sort(N ## _mutable_vec_t vec__tmp)\\\n"
+        "{ size_t start__tmp, end__tmp, size__tmp;\\\n"
+        "  size__tmp = L(vec__tmp); if (size__tmp == 0) return; end__tmp = size__tmp - 1; start__tmp = size__tmp >> 1;\\\n"
+        "  do { __ ## N ## X ## __heap_sift_down(vec__tmp, start__tmp, end__tmp); } while (start__tmp--);\\\n"
+        "  while (end__tmp > 0) { \\\n"
+        "    S(vec__tmp, 0, end__tmp, TE);\\\n"
+        "    __ ## N ## X ## __heap_sift_down(vec__tmp, 0, --end__tmp); } }\n",
         out->nsc);
     fprintf(out->fp,
         "#define __%sdefine_sort_by_field(N, NK, TK, TE, D, S)\\\n"
         "  __%sheap_sort(N, _sort_by_ ## NK, N ## _ ## NK, N ## _vec_at, N ## _vec_len, TK, TE, D, S)\\\n"
-        "static inline void N ## _vec_sort_by_ ## NK(N ## _mutable_vec_t vec)\\\n"
-        "{ __ ## N ## _sort_by_ ## NK ## __heap_sort(vec); }\n",
+        "static inline void N ## _vec_sort_by_ ## NK(N ## _mutable_vec_t vec__tmp)\\\n"
+        "{ __ ## N ## _sort_by_ ## NK ## __heap_sort(vec__tmp); }\n",
         out->nsc, out->nsc);
     fprintf(out->fp,
         "#define __%sdefine_sort(N, TK, TE, D, S)\\\n"
         "__%sheap_sort(N, , __%sidentity, N ## _vec_at, N ## _vec_len, TK, TE, D, S)\\\n"
-        "static inline void N ## _vec_sort(N ## _mutable_vec_t vec) { __ ## N ## __heap_sort(vec); }\n",
+        "static inline void N ## _vec_sort(N ## _mutable_vec_t vec__tmp) { __ ## N ## __heap_sort(vec__tmp); }\n",
         out->nsc, out->nsc, out->nsc);
     fprintf(out->fp,
         /* Subtractions doesn't work for unsigned types. */
@@ -77,14 +77,14 @@ int gen_sort(fb_output_t *out)
         "#define __%sstring_diff(x, y) __%sstring_n_cmp((x), (const char *)(y), %sstring_len(y))\n",
         out->nsc, out->nsc, out->nsc, out->nsc);
     fprintf(out->fp,
-        "#define __%sscalar_swap(vec, a, b, TE) { TE tmp = vec[b]; vec[b] = vec[a]; vec[a] = tmp; }\n"
+        "#define __%sscalar_swap(vec, a, b, TE) { TE x__tmp = vec[b]; vec[b] = vec[a]; vec[a] = x__tmp; }\n"
         "#define __%sstring_swap(vec, a, b, TE)\\\n"
-        "{ TE ta, tb, d;\\\n"
-        "  d = (TE)((a - b) * sizeof(vec[0]));\\\n"
-        "  ta =  __flatbuffers_uoffset_read_from_pe(vec + b) - d;\\\n"
-        "  tb =  __flatbuffers_uoffset_read_from_pe(vec + a) + d;\\\n"
-        "  __flatbuffers_uoffset_write_to_pe(vec + a, ta);\\\n"
-        "  __flatbuffers_uoffset_write_to_pe(vec + b, tb); }\n",
+        "{ TE ta__tmp, tb__tmp, d__tmp;\\\n"
+        "  d__tmp = (TE)((a - b) * sizeof(vec[0]));\\\n"
+        "  ta__tmp =  __flatbuffers_uoffset_read_from_pe(vec + b) - d__tmp;\\\n"
+        "  tb__tmp =  __flatbuffers_uoffset_read_from_pe(vec + a) + d__tmp;\\\n"
+        "  __flatbuffers_uoffset_write_to_pe(vec + a, ta__tmp);\\\n"
+        "  __flatbuffers_uoffset_write_to_pe(vec + b, tb__tmp); }\n",
         out->nsc, out->nsc);
     fprintf(out->fp,
         "#define __%sdefine_sort_by_scalar_field(N, NK, TK, TE)\\\n"
