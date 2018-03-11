@@ -14,6 +14,7 @@
   (#82).
 - Added `-g` option flatcc commandline to only generate read accessors
   with `_get` suffix in order to avoid potential name conficts (#82).
+- Fix stdalign.h not available in MSVC C++ in any known version.
 
 ## [0.5.1]
 
