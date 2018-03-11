@@ -154,6 +154,10 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     # Clang or AppleClang
     message(STATUS "Setting Clang compiler options")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -Wextra")
+    # Fix broken C++ alignas - either will do
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPORTABLE_PATCH_CPLUSPLUS_STDALIGN") 
     if (FLATCC_ALLOW_WERROR)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
     endif()

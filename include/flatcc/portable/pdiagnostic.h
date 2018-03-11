@@ -59,3 +59,14 @@
 
 #undef PDIAGNOSTIC_IGNORE_UNUSED
 
+#if defined (__cplusplus) && __cplusplus < 201103L
+#if PDIAGNOSTIC_AWARE_CLANG
+/* Needed for < C++11 clang C++ static_assert */
+#pragma clang diagnostic ignored "-Wc11-extensions"
+/* Needed for empty macro arguments. */
+#pragma clang diagnostic ignored "-Wc99-extensions"
+/* Needed for trailing commas. */
+#pragma clang diagnostic ignored "-Wc++11-extensions"
+#endif
+#endif
+
