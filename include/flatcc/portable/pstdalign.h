@@ -32,7 +32,9 @@
 
  /* https://lists.gnu.org/archive/html/bug-gnulib/2015-08/msg00003.html */
 #if defined(__cplusplus)
+#if !defined(_MSC_VER)
 #include <stdalign.h>
+#endif
 #if __cplusplus > 201103
 #define __alignas_is_defined 1
 #define __alignof_is_defined 1
