@@ -154,6 +154,10 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     # Clang or AppleClang
     message(STATUS "Setting Clang compiler options")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -Wextra")
+    # Fix broken C++ alignas - either will do
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPORTABLE_PATCH_CPLUSPLUS_STDALIGN") 
     if (FLATCC_ALLOW_WERROR)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
     endif()
@@ -201,6 +205,7 @@ elseif (MSVC) # using STREQUAL here conflicts with string interpretation changes
     # -W3 is the highest warning level that is reasonable.
     # See include/flatcc/portable/pwarnings.h for disabled warnings.
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W3 -D_CRT_SECURE_NO_WARNINGS")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W3 -D_CRT_SECURE_NO_WARNINGS")
     # MSVC 2013 (1800) supports inline variable declations
     # while MSVC 2010 (1600) does not.
     if (MSVC_VERSION STRLESS "1800")

@@ -11,14 +11,39 @@
  *
  * C++14 does not define __alignas_is_defined, at least sometimes.
  *
+ * Clang C++ without std=c++11 or std=c++14 does define alignas
+ * but does so incorrectly wrt. C11 and C++11 semantics because
+ * `alignas(4) float x;` is not recognized.
+ * To fix such issues, either move to a std version, or
+ * include a working stdalign.h for the given compiler before
+ * this file.
+ *
  * newlib defines _Alignas and _Alignof in sys/cdefs but rely on
- * gcc version for <stdaligh.h> which can leasd to conflicts if
+ * gcc version for <stdaligh.h> which can lead to conflicts if
  * stdalign is not included.
+ *
+ * newlibs need for <stdalign.h> conflicts with broken C++ stdalign
+ * but this can be fixed be using std=C++11 or newer.
+ *
+ * MSVC does not support <stdalign.h> at least up to MSVC 2015,
+ * but does appear to support alignas and alignof keywords in
+ * recent standard C++. 
  *
  * If stdalign.h is supported but heuristics in this file are
  * insufficient to detect this, try including <stdaligh.h> manually
  * or define HAVE_STDALIGN_H.
  */
+
+/* Allow for alternative solution to be included first. */
+#ifndef __alignas_is_defined
+
+#ifdef __cplusplus
+#if defined(PORTABLE_PATCH_CPLUSPLUS_STDALIGN)
+#include <stdalign.h>
+#undef alignas
+#define alignas(t) __attribute__((__aligned__(t)))
+#endif
+#endif
 
 #if !defined PORTABLE_HAS_INCLUDE_STDALIGN
 #if defined(__has_include)
@@ -46,6 +71,8 @@
 #elif defined(HAVE_STDALIGN_H)
 #include <stdaligh.h>
 #endif
+
+#endif /* __alignas_is_defined */
 
 #ifndef __alignas_is_defined
 
@@ -108,6 +135,5 @@ extern "C" {
 #endif /* __alignas__is_defined */
 
 #include "paligned_alloc.h"
-
 
 #endif /* PSTDALIGN_H */

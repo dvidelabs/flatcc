@@ -198,7 +198,7 @@ int create_monster_top_down(flatcc_builder_t *B)
 #undef ns
 #define ns(x) FLATBUFFERS_WRAP_NAMESPACE(MyGame_Sample, x) // Specified in the schema.
 
-int access_monster_buffer(const uint8_t *buffer)
+int access_monster_buffer(const void *buffer)
 {
     // Note that we use the `table_t` suffix when reading a table object
     // as opposed to the `ref_t` suffix used during the construction of
@@ -278,8 +278,8 @@ int access_monster_buffer(const uint8_t *buffer)
     // Access union type field.
     if (ns(Monster_equipped_type(monster)) == ns(Equipment_Weapon)) {
         // Cast to appropriate type:
-        // C allows for silent void pointer assignment, so we need no explicit cast.
-        ns(Weapon_table_t) weapon = ns(Monster_equipped(monster));
+        // C does not require the cast to Weapon_table_t, but C++ does.
+        ns(Weapon_table_t) weapon = (ns(Weapon_table_t)) ns(Monster_equipped(monster));
         const char *weapon_name = ns(Weapon_name(weapon));
         uint16_t weapon_damage = ns(Weapon_damage(weapon));
 
@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
     // Create a `FlatBufferBuilder`, which will be used to create our
     // monsters' FlatBuffers.
     flatcc_builder_t builder;
-    uint8_t *buf;
+    void  *buf;
     size_t size;
 
     // Silence warnings.

@@ -17,11 +17,19 @@
 /* Handle static_assert as a keyword in C++ and compiler specifics. */
 #if !defined(__static_assert_is_defined)
 
-#if defined(__cplusplus) && (__cplusplus >= 201103L)
+#if defined(__cplusplus)
+
+#if __cplusplus >= 201103L
 #define __static_assert_is_defined 1
-#elif defined(__cplusplus) && __has_feature(cxx_static_assert)
+#elif __has_feature(cxx_static_assert)
 #define __static_assert_is_defined 1
 #elif defined(_MSC_VER) && (_MSC_VER >= 1600)
+#define __static_assert_is_defined 1
+#endif
+
+#else
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1600)
 #define __static_assert_is_defined 1
 #elif __has_feature(c_static_assert)
 #define static_assert(pred, msg) _Static_assert(pred, msg)
@@ -32,6 +40,7 @@
 #define __static_assert_is_defined 1
 #endif
 
+#endif /* __cplusplus */
 #endif /* __static_assert_is_defined */
 
 
@@ -43,7 +52,7 @@
 #define static_assert(e, msg) enum { __PSTATIC_ASSERT_CONCAT(__COUNTER__, __LINE__) = 1/(!!(e)) }
 #else
 #include "pstatic_assert_scope.h"
-#define static_assert(e, msg) enum { __PSTATIC_ASSERT_CONCAT(__PSTATIC_ASSERT_COUNTER, __LINE__) = 1/(!!(e)) }
+#define static_assert(e, msg) enum { __PSTATIC_ASSERT_CONCAT(__PSTATIC_ASSERT_COUNTER, __LINE__) = 1/(int)(!!(e)) }
 #endif
 
 #define __static_assert_is_defined 1
