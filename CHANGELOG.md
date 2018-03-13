@@ -9,11 +9,11 @@
 - Add support for KeyValue attributes in binary schema (.bfbs).
 - Added `__tmp` suffix to macro variables in `flatbuffers_common_reader.h`
   to avoid potential name conflicts (#82).
-- Added `_get` suffix to all table and struc read accessors in
-  addition to existing accesors (`Monster_name_get()` vs `Monster_name_get()`
+- Added `_get` suffix to all table and struct read accessors in
+  addition to existing accesors (`Monster_name()` vs `Monster_name_get()`
   (#82).
 - Added `-g` option flatcc commandline to only generate read accessors
-  with `_get` suffix in order to avoid potential name conficts (#82).
+  with the `_get` suffix in order to avoid potential name conficts (#82).
 - Fix stdalign.h not available in MSVC C++ in any known version.
 - Added test case for building flatcc project with C++ compiler (#79, #80).
 
