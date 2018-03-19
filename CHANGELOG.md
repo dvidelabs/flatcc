@@ -16,6 +16,7 @@
   with the `_get` suffix in order to avoid potential name conficts (#82).
 - Fix stdalign.h not available in MSVC C++ in any known version.
 - Added test case for building flatcc project with C++ compiler (#79, #80).
+- Fix `flatbuffers_int8_vec_t` type which was incorrrectly unsigned.
 
 ## [0.5.1]
 

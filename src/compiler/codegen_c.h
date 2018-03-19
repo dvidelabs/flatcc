@@ -174,7 +174,7 @@ static inline const char *scalar_vector_type_name(fb_scalar_type_t scalar_type)
         tname = "int16_vec_t";
         break;
     case fb_byte:
-        tname = "bool_vec_t";
+        tname = "int8_vec_t";
         break;
     case fb_float:
         tname = "float_vec_t";
