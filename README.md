@@ -61,6 +61,7 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Building](#building)
     * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
     * [Windows Build (MSVC)](#windows-build-msvc)
+    * [Docker](#docker)
     * [Cross-compilation](#cross-compilation)
     * [Custom Allocation](#custom-allocation)
     * [Shared Libraries](#shared-libraries)
@@ -1832,6 +1833,12 @@ In Visual Studio:
 *Note that `flatcc\CMakeList.txt` sets the `-DFLATCC_PORTABLE` flag and
 that `include\flatcc\portable\pwarnings.h` disable certain warnings for
 warning level -W3.*
+
+### Docker
+
+Docker image:
+
+- <https://github.com/neomantra/docker-flatbuffers>
 
 
 ### Cross-compilation
