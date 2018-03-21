@@ -92,7 +92,7 @@ table TestInclude {
   incval4:MyGame.OtherNameSpace.FromInclude = MyGame.OtherNameSpace.FromInclude.IncludeVal;
   incval5: long = MyGame.OtherNameSpace.FromInclude.IncludeVal;
 
-  // C++ flatc 1.8 dislikes scope prefix
+  // C++ flatc 1.8 dislikes namespace prefix
   // incval4:MyGame.OtherNameSpace.FromInclude = IncludeVal;
   // C++ flatc 1.8 dislikes enum values on non-enums, and namespace prefix
   // incval5: long = 0;
