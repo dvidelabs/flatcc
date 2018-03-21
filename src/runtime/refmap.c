@@ -30,7 +30,7 @@
 static inline size_t _flatcc_refmap_above_load_factor(size_t count, size_t buckets)
 {
     static const size_t d = 256;
-    static const size_t n = (size_t)(_flatcc_refmap_load_factor * d);
+    static const size_t n = (size_t)((FLATCC_REFMAP_LOAD_FACTOR) * 256.0f);
 
     return count >= buckets * n / d;
 }

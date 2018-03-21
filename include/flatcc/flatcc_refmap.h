@@ -57,7 +57,7 @@ extern "C" {
 #define FLATCC_REFMAP_MIN_BUCKETS 8
 #endif
 
-static const float _flatcc_refmap_load_factor = 0.7f;
+#define FLATCC_REFMAP_LOAD_FACTOR 0.7f
 
 typedef struct flatcc_refmap flatcc_refmap_t;
 typedef flatbuffers_soffset_t flatcc_refmap_ref_t;
