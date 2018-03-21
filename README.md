@@ -61,6 +61,7 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Building](#building)
     * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
     * [Windows Build (MSVC)](#windows-build-msvc)
+    * [Docker](#docker)
     * [Cross-compilation](#cross-compilation)
     * [Custom Allocation](#custom-allocation)
     * [Shared Libraries](#shared-libraries)
@@ -243,6 +244,14 @@ fi
 
 ## Status
 
+Release 0.5.2 (ongoing) introduces optional `_get` suffix to
+reader methods. By using `flatcc -g` only `_get` methods are
+valid. This removes potential name conficts for some field
+names. 0.5.2 also introduces the long awaited clone operation
+for tables and vectors. A C++ smoketest was added to reduce the
+number void pointer assignment errors that kept sneaking in.
+The runtime library now needs an extra file `refmap.c`.
+
 Release 0.5.1 fixes a buffer overrun in the JSON printer and improves
 the portable libraries <stdalign.h> compatibility with C++ and the
 embedded `newlib` standard library. JSON printing and parsing has been
@@ -294,9 +303,18 @@ The ci-more branch tests additional compilers:
 - Ubuntu Trusty gcc 4.4, 4.6-4.9, 5, 6, 7 and clang 3.6, 3.8 
 - OS-X current clang / gcc
 - Windows MSVC 2010, 2013, 2015, 2015 Win64, 2017, 2017 Win64
+- C++11/C++14 user code on the above platforms.
+
+C11/C++11 is the reference that is expected to always work.
 
 MSVC 2017 is not always tested because the CI environment then won't
 support MSVC 2010.
+
+Older/non-standard versions of C++ compilers cause problems because
+`static_assert` and `alignas` behave in strange ways where they are
+neither absent nor fully working as expected. There are often
+workarounds, but it is more reliable to use `-std=c++11` or
+`-std=c++14`.
 
 Some previously testet compiler versions may have been retired as the
 CI environment gets updated. See `.travis.yml` and `appveyor.yml` in
@@ -307,8 +325,6 @@ uses C99 style code to better follow the C++ version.
 
 ### Platforms reported to work by users
 
-- C++ 11/14 is reported to work with flatcc 0.5.1 but C++ compatibility
-  is not systematically tested. Older C++ likely also works.
 - ESP32 SoC SDK with FreeRTOS and newlib has been reported to compile
   cleanly with C++ 14 using flatcc generated JSON parsers, as of flatcc
   0.5.1.
@@ -1825,6 +1841,12 @@ In Visual Studio:
 *Note that `flatcc\CMakeList.txt` sets the `-DFLATCC_PORTABLE` flag and
 that `include\flatcc\portable\pwarnings.h` disable certain warnings for
 warning level -W3.*
+
+### Docker
+
+Docker image:
+
+- <https://github.com/neomantra/docker-flatbuffers>
 
 
 ### Cross-compilation

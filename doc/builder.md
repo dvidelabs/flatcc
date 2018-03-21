@@ -21,7 +21,9 @@
     * [Union Vectors](#union-vectors)
     * [Unions of Strings and Structs](#unions-of-strings-and-structs)
 * [Error Handling](#error-handling)
-* [Limitations](#limitations)
+* [Type System Overfiew](#type-system-overfiew)
+* [Cloning](#cloning)
+* [Piciking](#piciking)
 * [Sorting Vectors](#sorting-vectors)
     * [Dangers of Sorting](#dangers-of-sorting)
     * [Scanning](#scanning)
@@ -1021,12 +1023,10 @@ Vector operations that are allowed between `vec_start` and
 `push_copy` ensures only valid fields are copied, not zero padding (or
 the unofficial deprecated fields).
 
-Note that there is no `push_clone` for structs like there is for
-strings. This is because a vector being pushed is normally in native
-endian format so a push would require a conversion before being
-converted back when the vector ends. However, it is trivial to push a
-source struct in pe format and use `end_pe` on the vector to achieve the
-same.
+A struct `push_clone` is the same as a `push_copy` operation
+because structs are stored inline in vectors - with the
+exception of union vectors which have `push_clone` that does the
+right thing.
 
 The `add` call adds a vector created independently from the table field,
 and this is what is going on under the surface in the other calls:
@@ -1160,6 +1160,9 @@ it is possible:
 
 We can also push a reference to an independently create monster table,
 all as seen before with strings.
+
+As of flatcc version 0.5.2 it is also possible to clone tables.
+Therefore we also have `push_clone` on vectors of tables.
 
 While the use of `extend` and `truncate` is possible with vectors of
 strings and tables, they should be used with care because the elements
@@ -1403,11 +1406,123 @@ small network packages using a fixed but large enough allocation pool,
 would be in total control and need not be concerned with any errors.
 
 
-## Limitations
 
-A table cannot be cloned, meaning a table cannot be created by copying a
-table from an existing buffer. As a consequence vectors of tables do not
-support clone and and slice.
+## Type System Overfiew
+
+The generated methods for building buffers may look the same but
+have different semantics. For example `_clone` on a table field
+such as `Monster_enemy_clone` will actually create a table based
+on the content of a table in a another buffer, then add that
+table to the currently open table. But `Monster_clone` will
+create clone and just return a reference without adding the
+reference to any table. There is also `push_clone` which adds
+an element to an open vector. The same applies to many other
+operations.
+
+Basically there are
+the following different types of methods:
+
+- Methods on native flatbuffer types, such as
+  `flatbuffer_string_start`.
+- Methods on generated types types such as `Monster_start`
+- Methods on field members such as as `Monster_emeny_start`
+- Methods on vectors on vectors of the above such as
+  `flatbuffers_string_vec_start`, `Monster_vec_start`.
+  `Monster_inventory_vec_start`.
+- Slight adaptions for buffer roots and nested buffer roots.
+
+For unions and union vectors the story is more complex - and the
+api might need to be cleaned up further, but generally there are
+both union type fields, union value fields, and union fields
+representing both, and vectors of the same. In additional there
+are pseudo fields for each union member because `create` on a
+union does not make sense, but
+`Monster_myvariant_MyTable_create` does create and `MyTable`
+table and assigns it with the correct type to the field
+`Monster_myvariant_type` and `Monster_myvariant.
+
+
+## Cloning 
+
+As of flatcc v0.5.2 it is also possible to clone tables, unions,
+vectors of tables, vectors of strings, and vectors of unions.
+Previously many operations did have a clone or a `push_clone`
+operator, but these were all raw byte copies. Table cloning and
+union cloning is signficantly more involved as it a simple copy
+will not work due to stored references, possible sharing of
+references and because the required alignment of table is hard
+to reason about without building a new table. Unions and union
+vectors are even more difficult.
+
+That said, cloning is now implemented for all relevant data
+types.
+
+All clone operations expect the content to originate from
+another finalized buffer. For scalars and structs there are
+copy operations that are almost the same as clone - they both
+avoid endian conversion.
+
+Structs have a special case with clone and copy: Whenever a
+struct is stored inline in the desitination buffer, it behaves
+like copy. Whenever the destination is a buffer root, or a union
+member, the result is a reference to an independent memory
+block. When calling clone on a struct type the destination is
+unknown and a indendpendent reference is created. If this is not
+the intention a `copy` operation can be used. When used field
+methods the destination type is known at the right thing will
+happen.
+
+Cloning a table will, by default, expand any shared references
+in the source into separate copies. This is also true when
+cloning string vectors, or any other data that holds references.
+Worst case this can blow up memory (which is also true when
+printing JSON from a buffer).
+
+It is possible to preserve the exact DAG structure when cloning.
+It may not worthwhile for simple use cases but it goes as
+follows:
+
+The builder has a pointer to a `flatcc_refmap_t` object. This is
+a fairly small stack allocated object that implements a
+hashtable. By default this pointer is null, and we have the
+above mentioned expansion. If it is not null, each newly cloned
+object will have its reference stored in the refmap. The next
+time the same object is cloned, the existing reference will be
+taken from the refmap instead. See source comments in
+`flatcc_refmap.h` and `flatcc_builder.h`, and `monster_test.c`
+clone tests.
+
+Note that, for example, it might be relevant to preserve DAG
+structure when cloning one object with all its sub-objects, but
+if it is cloned a second time, a new copy is desired still while
+preseving the inner DAG structure. This can be done by working
+with multiple refmaps and simple swapping them out via
+`flatcc_builder_set_refmap`. It is also possible to add
+references manually to a refmap before cloning.
+
+Warning: the refmap MUST not hold any foreign references when
+starting a nested root clone or when cloning inside a nested
+buffer that has been started but not ended because it is
+invalid to share references between buffers and there are no
+safety checks for this.
+
+
+## Piciking
+
+Picking is a method that is related to clone and also introduced
+with flatcc 0.5.2. A pick method is only defined on a table
+field or a struct field. Instead of taking an a read reference
+of same type as the field, it takes a reference to to the same
+container type (table or struct). Essentially pick means: find
+myself in the other table, clone me, and and me to the new table
+which is currently open. So clone takes an entire table where
+pick takes a single field. Table cloning is implemented as a
+sequence of pick method, one for each field as can be seen in
+the generated builder source. A pick operation does nothting if
+the field is not set. Pick also works with refmaps because it
+does an internal clone operation.  In the generated code, only
+clone on types will use the refmap but other clone and pick
+operations do depend on these type clone methods.
 
 
 ## Sorting Vectors

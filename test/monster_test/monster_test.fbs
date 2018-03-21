@@ -13,6 +13,8 @@ namespace MyGame.Example2;
 
 table Monster {}  // Test having same name as below, but in different namespace.
 
+table Strange {}
+
 namespace MyGame.Example;
 
 // Note: parent namespace resolution only works without namespace prefix
@@ -20,6 +22,27 @@ namespace MyGame.Example;
 // Won't work:
 //    union Foo { Example2.InParentNamespace }
 union Foo { InParentNamespace }
+
+
+namespace MyGame.Example2.SubSystem;
+
+// Note:
+//
+// parent namespace resolution only works without namespace prefix
+// or with a global namespace prefix (a fully qualified name), not
+// something in between.
+// (There is no really good reason for this, it just isn't implemented,
+//  and flatc JSON enum parsing works the same way.)
+// The more local name wins any conflict.
+//
+union SubSystemA { Strange }
+union SubSystemB { MyGame.Example2.Strange }
+
+// Works in C++ flatc 1.8 but won't work with flatcc:
+// union SubSystemC { Example2.Strange }
+
+
+namespace MyGame.Example;
 
 // test case for negative enum values
 enum neg_enum:int {
@@ -46,10 +69,16 @@ attribute "priority";
 
 enum Color:byte (bit_flags) { Red = 0, Green, Blue = 3, }
 
-// Note: flatcc does permit conflicting base names from different
-// namespaces without explicitly resolving the conflict.
+// Note:
+// For historic reasons C++ flatc 1.8 does permit conflicting base names
+// from different namespaces without explicitly resolving the conflict.
 //
-// Wont' work:
+// flatcc does not, and cannot, support this because it needs a unique
+// base name to assign to the enumaration of union members - otherwise
+// these enumerations could not have a namespace prefix - which is used
+// in JSON and in default value assignment in the schema.
+//
+// Wont' work in flatc:
 //    union Any { Monster, TestSimpleTableWithEnum, MyGame.Example2.Monster }
 
 union Any {
@@ -71,6 +100,13 @@ table TestSimpleTableWithEnum (csharp_partial) {
   color2: Color = Color.Green;
   uc : ubyte = MyGame.Example.Color.Green;
   uc2 : ubyte = Color.Green;
+
+  // C++ flatc 1.8 dislikes enum values on non-enums
+  // color2: Color = Green;
+  // C++ flatc 1.8 dislikes enum values on non-enums
+  // uc : ubyte = 1;
+  // C++ flatc 1.8 dislikes enum values on non-enums, and namespace prefix
+  // uc2 : ubyte = 1;
 }
 
 table TestInclude {
@@ -80,6 +116,11 @@ table TestInclude {
   incval3 : int (included_attribute);
   incval4:MyGame.OtherNameSpace.FromInclude = MyGame.OtherNameSpace.FromInclude.IncludeVal;
   incval5: long = MyGame.OtherNameSpace.FromInclude.IncludeVal;
+
+  // C++ flatc 1.8 dislikes namespace prefix
+  // incval4:MyGame.OtherNameSpace.FromInclude = IncludeVal;
+  // C++ flatc 1.8 dislikes enum values on non-enums, and namespace prefix
+  // incval5: long = 0;
 }
 
 struct Vec3 (force_align: 16) {
@@ -143,6 +184,10 @@ table TestJSONPrefixParsing3
     aaaa_bbbb_steps: long;
     aaaa_bbbb_start_steps: uint;
 }
+
+// C++ flatc 1.8 does not yet support base64 as a built-in
+// attribute "base64";
+// attribute "base64url";
 
 table TestBase64
 {

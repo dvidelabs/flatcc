@@ -9,12 +9,33 @@
 - Add support for KeyValue attributes in binary schema (.bfbs).
 - Added `__tmp` suffix to macro variables in `flatbuffers_common_reader.h`
   to avoid potential name conflicts (#82).
-- Added `_get` suffix to all table and struc read accessors in
-  addition to existing accesors (`Monster_name_get()` vs `Monster_name_get()`
+- Added `_get` suffix to all table and struct read accessors in
+  addition to existing accesors (`Monster_name()` vs `Monster_name_get()`
   (#82).
 - Added `-g` option flatcc commandline to only generate read accessors
-  with `_get` suffix in order to avoid potential name conficts (#82).
+  with the `_get` suffix in order to avoid potential name conficts (#82).
 - Fix stdalign.h not available in MSVC C++ in any known version.
+- Added test case for building flatcc project with C++ compiler (#79, #80).
+- Fix `flatbuffers_int8_vec_t` type which was incorrrectly unsigned.
+- Added table, union, vector clone, and union vector operations. Table
+  fields now also have a `_pick` method taking a source table of same
+  type as argument which is roughly a combined get, clone and add
+  operation for a single field. `_pick` will pick a field even if it is
+  a default value and it will succedd as a no-operation if the source is
+  absent. `_clone` discards deprecated fields. Unknown union types are
+  also discarded along with unions of type NONE, even if present in
+  source.  Warning: `_clone` will expand DAGs.
+- Added `_get_ptr` reader method on scalar struct and table member
+  fields which returns the equivalent of a single field struct `_get`
+  method. This is used to clone scalar values without endian
+  conversion. NOTE: scalars do not have assertions on `required`
+  attribute, so be careful with null return values. For structs it
+  is valid to apply `_get_ptr` to a null container struct such that
+  navigation can be done without additional checks.
+- Added `_push_clone` synonym for scalar and struct vector `_push_copy`.
+- Add `include/flatcc/flatcc_refmap_h` and `src/runtime/refmap.c` to
+  runtime library. The runtime library now depends of refmap.c but has
+  very low overhead when not expeclity enabled for use with cloning.
 
 ## [0.5.1]
 

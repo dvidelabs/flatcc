@@ -136,7 +136,7 @@ static int grisu3_diy_fp_cached_dec_pow(int d_exp, grisu3_diy_fp_t *p)
  *
  * but `strtod` seems to return +/-HUGE_VAL on overflow?
  */
-int grisu3_diy_fp_encode_double(uint64_t fraction, int exponent, int fraction_exp, int ulp_half_error, double *result)
+static int grisu3_diy_fp_encode_double(uint64_t fraction, int exponent, int fraction_exp, int ulp_half_error, double *result)
 {
     /*
      * Error is measures in fractions of integers, so we scale up to get
