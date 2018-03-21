@@ -71,6 +71,13 @@ table TestSimpleTableWithEnum (csharp_partial) {
   color2: Color = Color.Green;
   uc : ubyte = MyGame.Example.Color.Green;
   uc2 : ubyte = Color.Green;
+
+  // C++ flatc 1.8 dislikes enum values on non-enums
+  // color2: Color = Green;
+  // C++ flatc 1.8 dislikes enum values on non-enums
+  // uc : ubyte = 1;
+  // C++ flatc 1.8 dislikes enum values on non-enums, and scope prefix
+  // uc2 : ubyte = 1;
 }
 
 table TestInclude {
@@ -80,6 +87,11 @@ table TestInclude {
   incval3 : int (included_attribute);
   incval4:MyGame.OtherNameSpace.FromInclude = MyGame.OtherNameSpace.FromInclude.IncludeVal;
   incval5: long = MyGame.OtherNameSpace.FromInclude.IncludeVal;
+
+  // C++ flatc 1.8 dislikes scope prefix
+  // incval4:MyGame.OtherNameSpace.FromInclude = IncludeVal;
+  // C++ flatc 1.8 dislikes enum values on non-enums, and scope prefix
+  // incval5: long = 0;
 }
 
 struct Vec3 (force_align: 16) {
@@ -143,6 +155,10 @@ table TestJSONPrefixParsing3
     aaaa_bbbb_steps: long;
     aaaa_bbbb_start_steps: uint;
 }
+
+// C++ flatc 1.8 does not yet support base64 as a built-in
+// attribute "base64";
+// attribute "base64url";
 
 table TestBase64
 {
