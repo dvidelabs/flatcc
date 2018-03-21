@@ -44,6 +44,7 @@ set(RTPATH "${PROJECT_SOURCE_DIR}/src/runtime")
 set(RTSRC
     "${RTPATH}/builder.c"
     "${RTPATH}/emitter.c"
+    "${RTPATH}/refmap.c"
     "${RTPATH}/verifier.c"
     "${RTPATH}/json_parser.c"
     "${RTPATH}/json_printer.c"

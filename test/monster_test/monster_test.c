@@ -1063,6 +1063,62 @@ int test_monster_with_size(flatcc_builder_t *B)
     return ret;
 }
 
+int test_cloned_monster(flatcc_builder_t *B)
+{
+    void *buffer;
+    void *cloned_buffer;
+    size_t size;
+    int ret;
+    flatcc_refmap_t refmap, *refmap_old;
+
+    flatcc_refmap_init(&refmap);
+    gen_monster(B, 0);
+
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+    hexdump("monster table", buffer, size, stderr);
+    if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
+        printf("Monster buffer failed to verify, got: %s\n", flatcc_verify_error_string(ret));
+        return -1;
+    }
+    if (verify_monster(buffer)) {
+        return -1;
+    }
+    flatcc_builder_reset(B);
+
+    /*
+     * Clone works without setting a refmap - but then shared references
+     * get expanded - and then the verify monster check fails on a DAG
+     * test.
+     */
+    refmap_old = flatcc_builder_set_refmap(B, &refmap);
+    if (!ns(Monster_clone_as_root(B, ns(Monster_as_root(buffer))))) {
+        printf("Cloned Monster didn't actually clone.");
+        return -1;
+    };
+    /*
+     * Restoring old refmap (or zeroing) is optional if we cleared the
+     * buffer in this scope, but we don't so we must detach and clean up
+     * the refmap manually. refmap_old is likely just null, but this
+     * way we do not interfere with caller.
+     */
+    flatcc_builder_set_refmap(B, refmap_old);
+    cloned_buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+    hexdump("cloned monster table", cloned_buffer, size, stderr);
+    if ((ret = ns(Monster_verify_as_root(cloned_buffer, size)))) {
+        printf("Cloned Monster buffer failed to verify, got: %s\n", flatcc_verify_error_string(ret));
+        return -1;
+    }
+    if (verify_monster(cloned_buffer)) {
+        printf("Cloned Monster did not have the expected content.");
+        return -1;
+    }
+
+    flatcc_refmap_clear(&refmap);
+    flatcc_builder_aligned_free(buffer);
+    flatcc_builder_aligned_free(cloned_buffer);
+    return ret;
+}
+
 int test_string(flatcc_builder_t *B)
 {
     ns(Monster_table_t) mon;
@@ -1765,43 +1821,20 @@ done:
     return ret;
 }
 
-int test_union_vector(flatcc_builder_t *B)
+int verify_union_vector(void *buffer, size_t size)
 {
-    void *buffer;
-    size_t size;
+    int ret = -1;
     size_t n;
     int color;
-    int ret = -1;
+
     ns(Monster_table_t) mon;
     ns(Stat_table_t) stat;
-    ns(Any_union_vec_ref_t) anyvec_ref;
-    ns(TestSimpleTableWithEnum_ref_t) kermit_ref;
     ns(TestSimpleTableWithEnum_table_t) kermit;
     flatbuffers_generic_vec_t anyvec;
     ns(Any_vec_t) anyvec_type;
     ns(Any_union_vec_t) anyvec_union;
     ns(Any_union_t) anyelem;
     ns(Alt_table_t) alt;
-
-
-    flatcc_builder_reset(B);
-
-    ns(Monster_start_as_root(B));
-    ns(Monster_name_create_str(B, "Kermit"));
-
-    kermit_ref = ns(TestSimpleTableWithEnum_create(B,
-                ns(Color_Green), ns(Color_Green),
-                ns(Color_Green), ns(Color_Green)));
-    ns(Any_vec_start(B));
-    ns(Any_vec_push(B, ns(Any_as_TestSimpleTableWithEnum(kermit_ref))));
-    anyvec_ref = ns(Any_vec_end(B));
-    ns(Monster_test_Alt_start(B));
-    ns(Alt_manyany_add(B, anyvec_ref));
-    ns(Monster_test_Alt_end(B));
-
-    ns(Monster_end_as_root(B));
-
-    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
 
     if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
         printf("Monster buffer with union vector failed to verify, got: %s\n", flatcc_verify_error_string(ret));
@@ -1853,10 +1886,67 @@ int test_union_vector(flatcc_builder_t *B)
         printf("Kermit is incoherent.\n");
         goto done;
     }
+    ret = 0;
+
+done:
+    return ret;
+}
+
+int test_union_vector(flatcc_builder_t *B)
+{
+    void *buffer = 0, *cloned_buffer = 0;
+    size_t size;
+    int ret = -1;
+    flatcc_refmap_t refmap, *refmap_old;
+
+    ns(TestSimpleTableWithEnum_ref_t) kermit_ref;
+    ns(Any_union_vec_ref_t) anyvec_ref;
+
+
+    flatcc_refmap_init(&refmap);
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+    ns(Monster_name_create_str(B, "Kermit"));
+
+    kermit_ref = ns(TestSimpleTableWithEnum_create(B,
+                ns(Color_Green), ns(Color_Green),
+                ns(Color_Green), ns(Color_Green)));
+    ns(Any_vec_start(B));
+    ns(Any_vec_push(B, ns(Any_as_TestSimpleTableWithEnum(kermit_ref))));
+    anyvec_ref = ns(Any_vec_end(B));
+    ns(Monster_test_Alt_start(B));
+    ns(Alt_manyany_add(B, anyvec_ref));
+    ns(Monster_test_Alt_end(B));
+
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+
+    if (verify_union_vector(buffer, size)) {
+        printf("Union vector Monster didn't verify.\n");
+        goto done;
+    }
+    flatcc_builder_reset(B);
+    refmap_old = flatcc_builder_set_refmap(B, &refmap);
+    if (!ns(Monster_clone_as_root(B, ns(Monster_as_root(buffer))))) {
+        printf("Cloned union vector Monster didn't actually clone.\n");
+        goto done;
+    };
+    flatcc_builder_set_refmap(B, refmap_old);
+    cloned_buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+
+    if (verify_union_vector(buffer, size)) {
+        printf("Cloned union vector Monster didn't verify.\n");
+        goto done;
+    }
 
     ret = 0;
+
 done:
+    flatcc_refmap_clear(&refmap);
     flatcc_builder_aligned_free(buffer);
+    flatcc_builder_aligned_free(cloned_buffer);
     return ret;
 }
 
@@ -2673,6 +2763,12 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_nested_buffer_using_nest(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_cloned_monster(B)) {
         printf("TEST FAILED\n");
         return -1;
     }

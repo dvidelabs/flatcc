@@ -461,6 +461,16 @@ static void gen_helpers(fb_output_t *out)
             "#define __%sfield_present(ID, t) { __%sread_vt(ID, offset__tmp, t) return offset__tmp != 0; }\n",
             nsc, nsc);
     fprintf(out->fp,
+        "#define __%sscalar_field(T, ID, t)\\\n"
+        "{\\\n"
+        "    __%sread_vt(ID, offset__tmp, t)\\\n"
+        "    if (offset__tmp) {\\\n"
+        "        return (const T *)((uint8_t *)(t) + offset__tmp);\\\n"
+        "    }\\\n"
+        "    return 0;\\\n"
+        "}\n",
+        nsc, nsc);
+    fprintf(out->fp,
         "#define __%sdefine_scalar_field(ID, N, NK, TK, T, V)\\\n"
         "static inline T N ## _ ## NK ## _get(N ## _table_t t__tmp)\\\n"
         "{ __%sread_vt(ID, offset__tmp, t__tmp)\\\n"
@@ -473,6 +483,9 @@ static void gen_helpers(fb_output_t *out)
             "  return offset__tmp ? __%sread_scalar_at_byteoffset(TK, t__tmp, offset__tmp) : V;\\\n"
             "}\\\n", nsc, nsc);
     }
+    fprintf(out->fp,
+        "static inline const T *N ## _ ## NK ## _get_ptr(N ## _table_t t__tmp)\\\n"
+        "__%sscalar_field(T, ID, t__tmp)\\\n", nsc);
     fprintf(out->fp,
         "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\\\n"
         "__%sfield_present(ID, t__tmp)",nsc);
@@ -706,7 +719,9 @@ static void gen_helpers(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sdefine_struct_scalar_field(N, NK, TK, T)\\\n"
         "static inline T N ## _ ## NK ## _get(N ## _struct_t t__tmp)\\\n"
-        "{ return t__tmp ? __%sread_scalar(TK, &(t__tmp->NK)) : 0; }",
+        "{ return t__tmp ? __%sread_scalar(TK, &(t__tmp->NK)) : 0; }\\\n"
+        "static inline const T *N ## _ ## NK ## _get_ptr(N ## _struct_t t__tmp)\\\n"
+        "{ return t__tmp ? &(t__tmp->NK) : 0; }",
         nsc, nsc);
     if (!out->opts->cgen_no_conflicts) {
         fprintf(out->fp,

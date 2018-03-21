@@ -461,6 +461,9 @@ int flatcc_builder_custom_reset(flatcc_builder_t *B, int set_defaults, int reduc
     if (B->is_default_emitter) {
         flatcc_emitter_reset(&B->default_emit_context);
     }
+    if (B->refmap) {
+        flatcc_refmap_reset(B->refmap);
+    }
     return 0;
 }
 
@@ -480,6 +483,9 @@ void flatcc_builder_clear(flatcc_builder_t *B)
     }
     if (B->is_default_emitter) {
         flatcc_emitter_clear(&B->default_emit_context);
+    }
+    if (B->refmap) {
+        flatcc_refmap_clear(B->refmap);
     }
     memset(B, 0, sizeof(*B));
 }
@@ -1587,11 +1593,17 @@ flatcc_builder_union_vec_ref_t flatcc_builder_create_union_vector_direct(flatcc_
     if (0 == (uvref.value = _create_offset_vector_direct(B, data, count, types))) {
         return uvref;
     }
-    if (0 == (uvref.type = flatcc_builder_create_vector(B, types, count,
-                    utype_size, utype_size, max_utype_count))) {
+    if (0 == (uvref.type = flatcc_builder_create_type_vector(B, types, count))) {
         return uvref;
     }
     return uvref;
+}
+
+flatcc_builder_ref_t flatcc_builder_create_type_vector(flatcc_builder_t *B,
+        const flatcc_builder_utype_t *types, size_t count)
+{
+    return flatcc_builder_create_vector(B, types, count,
+                    utype_size, utype_size, max_utype_count);
 }
 
 int flatcc_builder_start_union_vector(flatcc_builder_t *B)

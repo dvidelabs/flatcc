@@ -244,6 +244,14 @@ fi
 
 ## Status
 
+Release 0.5.2 (ongoing) introduces optional `_get` suffix to
+reader methods. By using `flatcc -g` only `_get` methods are
+valid. This removes potential name conficts for some field
+names. 0.5.2 also introduces the long awaited clone operation
+for tables and vectors. A C++ smoketest was added to reduce the
+number void pointer assignment errors that kept sneaking in.
+The runtime library now needs an extra file `refmap.c`.
+
 Release 0.5.1 fixes a buffer overrun in the JSON printer and improves
 the portable libraries <stdalign.h> compatibility with C++ and the
 embedded `newlib` standard library. JSON printing and parsing has been
