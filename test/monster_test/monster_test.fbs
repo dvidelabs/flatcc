@@ -74,7 +74,9 @@ enum Color:byte (bit_flags) { Red = 0, Green, Blue = 3, }
 // from different namespaces without explicitly resolving the conflict.
 //
 // flatcc does not, and cannot, support this because it needs a unique
-// base name for field names in JSON.
+// base name to assign to the enumaration of union members - otherwise
+// these enumerations could not have a namespace prefix - which is used
+// in JSON and in default value assignment in the schema.
 //
 // Wont' work in flatc:
 //    union Any { Monster, TestSimpleTableWithEnum, MyGame.Example2.Monster }
