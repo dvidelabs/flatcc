@@ -14,6 +14,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include "flatcc/flatcc_rtconfig.h"
 #include "flatcc/flatcc_refmap.h"
 #include "flatcc/flatcc_alloc.h"
 
