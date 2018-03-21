@@ -46,10 +46,14 @@ attribute "priority";
 
 enum Color:byte (bit_flags) { Red = 0, Green, Blue = 3, }
 
-// Note: flatcc does permit conflicting base names from different
-// namespaces without explicitly resolving the conflict.
+// Note:
+// For historic reasons C++ flatc 1.8 does permit conflicting base names
+// from different namespaces without explicitly resolving the conflict.
 //
-// Wont' work:
+// flatcc does not, and cannot, support this because it needs a unique
+// base name for field names in JSON.
+//
+// Wont' work in flatc:
 //    union Any { Monster, TestSimpleTableWithEnum, MyGame.Example2.Monster }
 
 union Any {
@@ -76,7 +80,7 @@ table TestSimpleTableWithEnum (csharp_partial) {
   // color2: Color = Green;
   // C++ flatc 1.8 dislikes enum values on non-enums
   // uc : ubyte = 1;
-  // C++ flatc 1.8 dislikes enum values on non-enums, and scope prefix
+  // C++ flatc 1.8 dislikes enum values on non-enums, and namespace prefix
   // uc2 : ubyte = 1;
 }
 
@@ -90,7 +94,7 @@ table TestInclude {
 
   // C++ flatc 1.8 dislikes scope prefix
   // incval4:MyGame.OtherNameSpace.FromInclude = IncludeVal;
-  // C++ flatc 1.8 dislikes enum values on non-enums, and scope prefix
+  // C++ flatc 1.8 dislikes enum values on non-enums, and namespace prefix
   // incval5: long = 0;
 }
 
