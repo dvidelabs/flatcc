@@ -13,6 +13,8 @@ namespace MyGame.Example2;
 
 table Monster {}  // Test having same name as below, but in different namespace.
 
+table Strange {}
+
 namespace MyGame.Example;
 
 // Note: parent namespace resolution only works without namespace prefix
@@ -20,6 +22,27 @@ namespace MyGame.Example;
 // Won't work:
 //    union Foo { Example2.InParentNamespace }
 union Foo { InParentNamespace }
+
+
+namespace MyGame.Example2.SubSystem;
+
+// Note:
+//
+// parent namespace resolution only works without namespace prefix
+// or with a global namespace prefix (a fully qualified name), not
+// something in between.
+// (There is no really good reason for this, it just isn't implemented,
+//  and flatc JSON enum parsing works the same way.)
+// The more local name wins any conflict.
+//
+union SubSystemA { Strange }
+union SubSystemB { MyGame.Example2.Strange }
+
+// Works in C++ flatc 1.8 but won't work with flatcc:
+// union SubSystemC { Example2.Strange }
+
+
+namespace MyGame.Example;
 
 // test case for negative enum values
 enum neg_enum:int {
