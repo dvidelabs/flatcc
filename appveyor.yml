@@ -83,9 +83,9 @@ before_build:
   - if "%frontend%-%arch%-%compiler%"=="cmake-x64-msvc2013" cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
   - if "%frontend%-%arch%-%compiler%"=="cmake-x86-msvc2015" cmake -G "Visual Studio 12 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
   - if "%frontend%-%arch%-%compiler%"=="cmake-x64-msvc2015" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%compiler%-%arch%-%compiler%"=="cmake-x86-msvc2017" cmake -G "Visual Studio 15 2017" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%compiler%-%arch%-%compiler%"=="cmake-x64-msvc2017" cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%"=="meson" if "%arch%"=="x64" meson --backend=%backend% --buildtype=%MESON_BUILDTYPE% ..
+  - if "%frontend%-%arch%-%compiler%"=="cmake-x86-msvc2017" cmake -G "Visual Studio 15 2017" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%-%arch%-%compiler%"=="cmake-x64-msvc2017" cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%"=="meson" meson --backend=%backend% --buildtype=%MESON_BUILDTYPE% ..
 
 build_script:
   - echo running build
