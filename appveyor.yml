@@ -65,16 +65,12 @@ before_build:
   - cd build
   - if "%tool%"=="cmake" if "%arch%"=="x86" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
   - if "%tool%"=="cmake" if "%arch%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%tool%"=="cmake" if "%arch%"=="x64" meson .. --backend=%backend% --buildtype=%configuration%
+  - if "%tool%"=="meson" if "%arch%"=="x64" meson .. --backend=%backend% --buildtype=%configuration%
 
 build_script:
-  #- if "%backend%"=="ninja" ninja else msbuild
-  - echo %cd% # pwd
   - if "%tool%"=="cmake" cmake --build .
   - if "%tool%"=="meson" ninja
 
-
 test_script:
   - if "%tool%"=="cmake" ctest -C "%configuration%" -VV
-  - if "%tool%"=="meson" ninja test
-
+  - if "%tool%"=="meson" (if "%backend%"=="ninja" (ninja test) else (msbuild test))
