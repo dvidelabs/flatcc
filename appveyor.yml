@@ -1,6 +1,6 @@
 version: "win#{build}"
 
-os: Visual Studio 2015
+image: Visual Studio 2015
 
 environment:
   matrix:
@@ -12,7 +12,7 @@ environment:
    #  compiler: msvc2015
    #  backend: ninja
 
-    - arch: x64
+    - arch: x86
       compiler: msvc2015
       backend: vs2015
 
@@ -41,10 +41,13 @@ install:
   - cmd: if %compiler%==msvc2010 ( call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %arch% )
   - cmd: if %compiler%==msvc2015 ( call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %arch% )
   - cmd: if %compiler%==msvc2017 ( call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat" -arch=%arch% )
+  - cmd echo installing meson
   - cmd pip3 install meson
+  - cmd echo "checking tool presence"
   - cmd meson --version
   - cmd ninja.exe --version
   - cmd MSBuild.exe /v
+  - cmd echo "tool check done"
 
 skip_tags: true
 
