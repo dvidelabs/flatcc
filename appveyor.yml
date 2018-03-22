@@ -26,16 +26,25 @@ configuration:
  #- Release
 
 install:
-  - cmd: set PATH=C:\Python35\scripts;%PATH%
-  - cmd: echo installing meson
-  - cmd: pip3 install meson
-  - cmd: if %compiler%==msvc2010 ( call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %arch% )
-  - cmd: if %compiler%==msvc2015 ( call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %arch% )
-  - cmd: if %compiler%==msvc2017 ( call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat" -arch=%arch% )
+  # Install Meson
+  - set PATH=C:\Python35\scripts;%PATH%
+  - echo installing meson
+  - pip3 install meson
+  - meson --version
 
-  - cmd: meson --version
-  - cmd: ninja.exe --version
-  - cmd: MSBuild.exe /v
+  # Configure MSBuild
+  - if %compiler%==msvc2010 ( call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %arch% )
+  - if %compiler%==msvc2015 ( call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %arch% )
+  - if %compiler%==msvc2017 ( call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat" -arch=%arch% )
+  - MSBuild /v
+
+  # Install Ninja Build
+    
+  - set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
+  - appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
+  - 7z x ninja.zip -oC:\projects\deps\ninja > nul
+  - set PATH=C:\projects\deps\ninja;%PATH%
+  - ninja --version
 
 skip_tags: true
 
