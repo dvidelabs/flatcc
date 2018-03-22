@@ -12,6 +12,11 @@ clone_folder: c:\projects\flatcc
 environment:
   matrix:
 
+    - arch: x86
+      compiler: msvc2010
+      frontend: meson
+      backend: vs2010
+
     - arch: x64
       compiler: msvc2015
       frontend: meson
