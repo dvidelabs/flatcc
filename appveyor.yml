@@ -63,7 +63,7 @@ before_build:
 
 build:
   parallel: true # enable MSBuild parallel builds
-  project: c:\projects\flatcc\build\MSVC\FlatCC.sln
+  project: c:\projects\flatcc\build\FlatCC.sln
 
 test_script:
   - ctest -C "%configuration%" -VV
