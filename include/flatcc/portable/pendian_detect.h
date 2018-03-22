@@ -12,8 +12,8 @@
  * which is not a known flag. If __BYTE_ORDER__ is defined but
  * not big or little endian, __UNKNOWN_ENDIAN__ is also defined.
  *
- * Note: Some systems define __BYTE_ORDER without __ at the end -
- * we detect this and map it to __BYTE_ORDER__.
+ * Note: Some systems define __BYTE_ORDER without __ at the end
+ * - this will be mapped to to __BYTE_ORDER__.
  */
 
 #ifndef PENDIAN_DETECT
@@ -95,9 +95,9 @@ extern "C" {
 #else
 
 /*
- * Custom extension - we only define __BYTE_ORDER if known big or little.
+ * Custom extension - we only define __BYTE_ORDER__ if known big or little.
  * User code that understands __BYTE_ORDER__ may also assume unkown if
- * it is not defined by know - this will allow other endian formats than
+ * it is not defined by now - this will allow other endian formats than
  * big or little when supported by compiler.
  */
 #ifndef __UNKNOWN_ENDIAN__
