@@ -21,9 +21,9 @@
     * [Union Vectors](#union-vectors)
     * [Unions of Strings and Structs](#unions-of-strings-and-structs)
 * [Error Handling](#error-handling)
-* [Type System Overfiew](#type-system-overfiew)
+* [Type System Overview](#type-system-overview)
 * [Cloning](#cloning)
-* [Piciking](#piciking)
+* [Picking](#picking)
 * [Sorting Vectors](#sorting-vectors)
     * [Dangers of Sorting](#dangers-of-sorting)
     * [Scanning](#scanning)
@@ -1407,7 +1407,7 @@ would be in total control and need not be concerned with any errors.
 
 
 
-## Type System Overfiew
+## Type System Overview
 
 The generated methods for building buffers may look the same but
 have different semantics. For example `_clone` on a table field
@@ -1507,7 +1507,7 @@ invalid to share references between buffers and there are no
 safety checks for this.
 
 
-## Piciking
+## Picking
 
 Picking is a method that is related to clone and also introduced
 with flatcc 0.5.2. A pick method is only defined on a table
