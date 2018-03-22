@@ -97,11 +97,12 @@ before_build:
   - if "%frontend%-%arch%-%compiler%"=="cmake-x86-msvc2017" cmake -G "Visual Studio 15 2017" -DCMAKE_BUILD_TYPE=%configuration% ..
   - if "%frontend%-%arch%-%compiler%"=="cmake-x64-msvc2017" cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
   - if "%frontend%"=="meson" meson --backend=%backend% --buildtype=%MESON_BUILDTYPE% ..
+  - set SOLUTION=c:\projects\flatcc\build\MSVC\flatcc.sln
 
 build_script:
   - echo running build
   - if "%frontend%"=="cmake" cmake --build .
-  - if "%frontend%-%backend%"=="meson-ninja" ( ninja ) else ( if "%frontend%"==meson msbuild %configuration% )
+  - if "%frontend%-%backend%"=="meson-ninja" ( ninja ) else ( if "%frontend%"==meson msbuild /p:Configuration=%configuration% %SOLUTION% )
 
 test_script:
   - echo running tests
