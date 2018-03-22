@@ -31,6 +31,7 @@ before_build:
   - set VS_VER=14.0
   - call "%ProgramFiles(x86)%\Microsoft Visual Studio %VS_VER%\VC\vcvarsall.bat" %platform%
   - meson ..\.. --backend=vs2015 --buildtype=%configuration%
+
     #- if "%platform%"=="Win32" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..\..
     #- if "%platform%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..\..
 
