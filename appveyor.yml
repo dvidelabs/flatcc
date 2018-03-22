@@ -23,12 +23,19 @@ environment:
 
 configuration:
   - Debug
-  - Release
+ #- Release
 
 install:
-  - cmd set PATH=C:\Python35\scripts;%PATH%
-  - cmd echo installing meson
-  - cmd pip3 install meson
+  - cmd: set PATH=C:\Python35\scripts;%PATH%
+  - cmd: echo installing meson
+  - cmd: pip3 install meson
+  - cmd: if %compiler%==msvc2010 ( call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %arch% )
+  - cmd: if %compiler%==msvc2015 ( call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %arch% )
+  - cmd: if %compiler%==msvc2017 ( call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat" -arch=%arch% )
+
+  - cmd: meson --version
+  - cmd: ninja.exe --version
+  - cmd: MSBuild.exe /v
 
 skip_tags: true
 
