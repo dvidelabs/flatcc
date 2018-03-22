@@ -87,7 +87,7 @@ before_build:
   - cd c:\projects\flatcc
   - mkdir build
   - cd build
-  - echo configuring for "%frontend%-%arch%-%compiler%"
+  - echo configuring for %frontend%-%arch%-%compiler%
   - if "%frontend%-%arch%-%compiler%"=="cmake-x86-msvc2010" cmake -G "Visual Studio 10 2010" -DCMAKE_BUILD_TYPE=%configuration% ..
   - if "%frontend%-%arch%-%compiler%"=="cmake-x64-msvc2010" cmake -G "Visual Studio 10 2010 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
   - if "%frontend%-%arch%-%compiler%"=="cmake-x86-msvc2013" cmake -G "Visual Studio 14 2013" -DCMAKE_BUILD_TYPE=%configuration% ..
