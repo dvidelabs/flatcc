@@ -68,8 +68,13 @@ before_build:
   - if "%tool%"=="cmake" if "%arch%"=="x64" meson .. --backend=%backend% --buildtype=%configuration%
 
 build_script:
-  - if "%backend%"=="ninja" ninja else msbuild
+  #- if "%backend%"=="ninja" ninja else msbuild
+  - echo %cd% # pwd
+  - if "%tool%"=="cmake" cmake --build .
+  - if "%tool%"=="meson" ninja
+
 
 test_script:
-  - ctest -C "%configuration%" -VV
+  - if "%tool%"=="cmake" ctest -C "%configuration%" -VV
+  - if "%tool%"=="meson" ninja test
 
