@@ -13,19 +13,30 @@ clone_folder: c:\projects\flatcc
 
 environment:
   matrix:
-    - arch: x86
-      tool: cmake
-      compiler: msvc2015
-      backend: vs2015
+    - arch: x64
+      compiler: msvc2017
+      frontend: cmake
+      backend: vs2017
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
-   #- arch: x64
+    - arch: x86
+      compiler: msvc2010
+      frontend: cmake
+      backend: vs2010
+
+   #- arch: x86
+   #  frontend: cmake
    #  compiler: msvc2015
    #  backend: vs2015
-   #  tool: cmake
+
+   #- arch: x64
+   #  frontend: cmake
+   #  compiler: msvc2015
+   #  backend: vs2015
 
     - arch: x64
-      tool: meson
       compiler: msvc2015
+      frontend: meson
       backend: ninja
 
 configuration:
@@ -38,8 +49,8 @@ install:
   - echo installing meson
   - pip3 install meson
   - meson --version
-  - if %configuration%==Debug set MESON_BUILDTYPE=debug
-  - if %configuration%==Release set MESON_BUILDTYPE=release
+  - if %configuration%==debug set MESON_BUILDTYPE=debug
+  - if %configuration%==release set MESON_BUILDTYPE=release
 
   # Configure MSBuild
   - if %compiler%==msvc2010 ( call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %arch% )
@@ -65,14 +76,14 @@ before_build:
   - cd c:\projects\flatcc
   - mkdir build
   - cd build
-  - if "%tool%"=="cmake" if "%arch%"=="x86" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%tool%"=="cmake" if "%arch%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%tool%"=="meson" if "%arch%"=="x64" meson --backend=%backend% --buildtype=%MESON_BUILDTYPE% ..
+  - if "%frontend%"=="cmake" if "%arch%"=="x86" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%"=="cmake" if "%arch%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%"=="meson" if "%arch%"=="x64" meson --backend=%backend% --buildtype=%MESON_BUILDTYPE% ..
 
 build_script:
-  - if "%tool%"=="cmake" cmake --build .
-  - if "%tool%"=="meson" ninja
+  - if "%frontend%"=="cmake" cmake --build .
+  - if "%frontend%"=="meson" ninja
 
 test_script:
-  - if "%tool%"=="cmake" ctest -C "%configuration%" -VV
-  - if "%tool%"=="meson" meson test
+  - if "%frontend%"=="cmake" ctest -C "%configuration%" -VV
+  - if "%frontend%"=="meson" meson test
