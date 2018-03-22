@@ -101,8 +101,7 @@ before_build:
 build_script:
   - echo running build
   - if "%frontend%"=="cmake" cmake --build .
-  - if "%frontend%-%backend%"=="meson-ninja" ninja else if "%frontend%"==meson msbuild %configuration%
-  - if "%frontend%-%backend%"=="meson-ninja" ninja
+  - if "%frontend%-%backend%"=="meson-ninja" ( ninja ) else ( if "%frontend%"==meson msbuild %configuration% )
 
 test_script:
   - echo running tests
