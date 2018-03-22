@@ -105,7 +105,7 @@ build_script:
     #- if "%frontend%-%backend%"=="meson-ninja" ( ninja ) else ( if "%frontend%"==meson msbuild /p:Configuration=%configuration% %SOLUTION% )
 
   # hack this for now
-  - if "%frontend%"==meson msbuild /p:Configuration=%configuration% %SOLUTION%
+  - msbuild /p:Configuration=%configuration% %SOLUTION%
 
 test_script:
   - echo running tests
