@@ -2,68 +2,37 @@ version: "win#{build}"
 
 image: Visual Studio 2015
 
-environment:
-  matrix:
-   #- arch: x86
-   #  compiler: msvc2010
-   #  backend: vs2010
-
-   #- arch: x86
-   #  compiler: msvc2015
-   #  backend: ninja
-
-    - arch: x86
-      compiler: msvc2015
-      backend: vs2015
-
-   #- arch: x64
-   #  compiler: msvc2017
-   #  backend: vs2017
-   #  APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-
 init:
   - git config --global core.autocrlf input
+  - cmake --version
+  - msbuild /version
 
 shallow_clone: true
 
 clone_folder: c:\projects\flatcc
 
 platform:
+  - Win32 
   - x64
 
 configuration:
-  - debug
- #- release
-
-install:
-  - cmd set PATH=C:\Python35\scripts;%PATH%
-
-  - cmd: if %compiler%==msvc2010 ( call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %arch% )
-  - cmd: if %compiler%==msvc2015 ( call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %arch% )
-  - cmd: if %compiler%==msvc2017 ( call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat" -arch=%arch% )
-  - cmd echo installing meson
-  - cmd pip3 install meson
-  - cmd echo "checking tool presence"
-  - cmd meson --version
-  - cmd ninja.exe --version
-  - cmd MSBuild.exe /v
-  - cmd echo "tool check done"
+  - Debug
+  - Release
 
 skip_tags: true
 
 before_build:
-  - echo Running meson
+  - echo Running cmake...
   - cd c:\projects\flatcc
-  - mkdir build
-  - cd build
-  - meson .. --backend=%backend% --buildtype=%configuration%
+  - mkdir build\MSVC
+  - cd build\MSVC
+  - if "%platform%"=="Win32" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..\..
+  - if "%platform%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..\..
 
-build_script:
-  - cmd: if %backend%==ninja ( ninja.exe ) else ( MSBuild.exe )
+build:
+  parallel: true # enable MSBuild parallel builds
+  project: c:\projects\flatcc\build\MSVC\FlatCC.sln
 
 test_script:
-  - meson test
- #- meson flatbench
+  - ctest -C "%configuration%" -VV
 
-cache:
-  - C:\cache
