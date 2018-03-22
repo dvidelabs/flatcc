@@ -90,25 +90,27 @@ libflatccrt_sta = static_library('flatccrt', flatccrt_src, install : true,
         c_args : c_args,
         include_directories : inc_dir)
 
-libflatccrt_sha = shared_library('flatccrt', flatccrt_src, install : true,
-        c_args : c_args,
-        include_directories : inc_dir)
-
-libflatcc_sha = shared_library('flatcc', flatcc_src, install : true,
-        c_args : c_args,
-        include_directories : inc_dir)
-
 libflatcc_sta = static_library('flatcc', flatcc_src, install : true,
         c_args : c_args,
         include_directories : inc_dir)
 
-if get_option('default_library') == 'static'
+# Shared libraries don't work on Windows without a .lib file.
+
+# libflatccrt_sha = shared_library('flatccrt', flatccrt_src, install : true,
+#         c_args : c_args,
+#         include_directories : inc_dir)
+
+# libflatcc_sha = shared_library('flatcc', flatcc_src, install : true,
+#         c_args : c_args,
+#         include_directories : inc_dir)
+ 
+# if get_option('default_library') == 'static'
     libflatccrt = libflatccrt_sta
     libflatcc = libflatcc_sta
-else
-    libflatccrt = libflatccrt_sha
-    libflatcc = libflatcc_sha
-endif
+# else
+#     libflatccrt = libflatccrt_sha
+#     libflatcc = libflatcc_sha
+# endif
 
 flatcc = executable('flatcc', 'src/cli/flatcc_cli.c', install : true,
     link_with : libflatcc,
