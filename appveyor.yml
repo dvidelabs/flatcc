@@ -11,17 +11,33 @@ clone_folder: c:\projects\flatcc
 
 environment:
   matrix:
-    - arch: x86
-      compiler: msvc2010
-      frontend: cmake
-      backend: vs2010
 
     - arch: x64
-      compiler: msvc2017
-      frontend: cmake
-      backend: vs2017
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      compiler: msvc2015
+      frontend: meson
+      backend: vs2015
 
+    - arch: x64
+      compiler: msvc2015
+      frontend: meson
+      backend: ninja
+
+   #- arch: x64
+   #  compiler: msvc2017
+   #  frontend: cmake
+   #  backend: vs2017
+   #  APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+   #- arch: x86
+   #  compiler: msvc2010
+   #  frontend: cmake
+   #  backend: vs2010
+
+   #- arch: x86
+   #  frontend: cmake
+   #  compiler: msvc2013
+   #  backend: vs2013
+   #
    #- arch: x86
    #  frontend: cmake
    #  compiler: msvc2015
@@ -31,11 +47,6 @@ environment:
    #  frontend: cmake
    #  compiler: msvc2015
    #  backend: vs2015
-
-    - arch: x64
-      compiler: msvc2015
-      frontend: meson
-      backend: ninja
 
 configuration:
   - Debug
