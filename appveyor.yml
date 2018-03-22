@@ -25,6 +25,11 @@ configuration:
   - Debug
   - Release
 
+install:
+  - cmd set PATH=C:\Python35\scripts;%PATH%
+  - cmd echo installing meson
+  - cmd pip3 install meson
+
 skip_tags: true
 
 before_build:
