@@ -54,6 +54,7 @@ install:
 
   # Configure MSBuild
   - if %compiler%==msvc2010 ( call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %arch% )
+  - if %compiler%==msvc2013 ( call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" %arch% )
   - if %compiler%==msvc2015 ( call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %arch% )
   - if %compiler%==msvc2017 ( call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat" -arch=%arch% )
   - msbuild /version
@@ -76,8 +77,14 @@ before_build:
   - cd c:\projects\flatcc
   - mkdir build
   - cd build
-  - if "%frontend%"=="cmake" if "%arch%"=="x86" if "%compiler%"==msvc2010 cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%"=="cmake" if "%arch%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%-%arch%-%compiler%"==cmake-x86-msvc2010 cmake -G "Visual Studio 10 2010" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%-%arch%-%compiler%"==cmake-x64-msvc2010 cmake -G "Visual Studio 10 2010 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%-%arch%-%compiler%"==cmake-x86-msvc2013 cmake -G "Visual Studio 14 2013" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%-%arch%-%compiler%"==cmake-x64-msvc2013 cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%-%arch%-%compiler%"==cmake-x86-msvc2015 cmake -G "Visual Studio 12 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%-%arch%-%compiler%"==cmake-x64-msvc2015 cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%compiler%-%arch%-%compiler%"==cmake-x86-msvc2017 cmake -G "Visual Studio 15 2017" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%compiler%-%arch%-%compiler%"==cmake-x64-msvc2017 cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
   - if "%frontend%"=="meson" if "%arch%"=="x64" meson --backend=%backend% --buildtype=%MESON_BUILDTYPE% ..
 
 build_script:
