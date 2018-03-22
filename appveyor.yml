@@ -11,9 +11,15 @@ shallow_clone: true
 
 clone_folder: c:\projects\flatcc
 
-platform:
-  - Win32 
-  - x64
+environment:
+  matrix:
+    - arch: x86
+      compiler: msvc2015
+      backend: vs2015
+
+    - arch: x64
+      compiler: msvc2015
+      backend: vs2015
 
 configuration:
   - Debug
@@ -26,8 +32,8 @@ before_build:
   - cd c:\projects\flatcc
   - mkdir build\MSVC
   - cd build\MSVC
-  - if "%platform%"=="Win32" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..\..
-  - if "%platform%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..\..
+  - if "%arch%"=="x86" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..\..
+  - if "%arch%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..\..
 
 build:
   parallel: true # enable MSBuild parallel builds
