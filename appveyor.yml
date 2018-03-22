@@ -22,7 +22,7 @@ configuration:
 skip_tags: true
 
 before_build:
-  - set PATH=C:\Python34\scripts;%PATH%
+  - set PATH=C:\Python35\scripts;%PATH%
   - pip3 install meson
   - echo Running meson
   - cd c:\projects\flatcc
