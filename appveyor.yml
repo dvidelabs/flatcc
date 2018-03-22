@@ -58,8 +58,8 @@ before_build:
   - cd c:\projects\flatcc
   - mkdir build
   - cd build
-  - if ("%arch%"=="x86" and %tool%=="cmake") cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if ("%arch%"=="x64" and %tool%=="cmake") cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%arch%"=="x86" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%arch%"=="x64" and %tool%=="cmake" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
 
 build:
   parallel: true # enable MSBuild parallel builds
