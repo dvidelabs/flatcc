@@ -4,8 +4,6 @@ image: Visual Studio 2015
 
 init:
   - git config --global core.autocrlf input
-  - cmake --version
-  - msbuild /version
 
 shallow_clone: true
 
@@ -46,11 +44,13 @@ configuration:
 install:
   # Install Meson
   - set PATH=C:\Python35\scripts;%PATH%
-  - echo installing meson
-  - pip3 install meson
-  - meson --version
+  - if %frontend%==meson pip3 install meson
+  - if %frontend%==meson meson --version
   - if %configuration%==debug set MESON_BUILDTYPE=debug
   - if %configuration%==release set MESON_BUILDTYPE=release
+
+  # Check CMake
+  - if %frontend%==cmake cmake --version
 
   # Configure MSBuild
   - if %compiler%==msvc2010 ( call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %arch% )
@@ -60,12 +60,11 @@ install:
   - msbuild /version
 
   # Install Ninja Build
-
-  - set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
-  - appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
-  - 7z x ninja.zip -oC:\projects\deps\ninja > nul
-  - set PATH=C:\projects\deps\ninja;%PATH%
-  - ninja --version
+  - if %backend%==ninja set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
+  - if %backend%==ninja appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
+  - if %backend%==ninja 7z x ninja.zip -oC:\projects\deps\ninja > nul
+  - if %backend%==ninja set PATH=C:\projects\deps\ninja;%PATH%
+  - if %backend%==ninja ninja --version
 
 skip_tags: true
 
@@ -73,24 +72,27 @@ matrix:
     fast_finish: true
 
 before_build:
-  - echo Running cmake...
+  - echo running build frontent
   - cd c:\projects\flatcc
   - mkdir build
   - cd build
-  - if "%frontend%-%arch%-%compiler%"==cmake-x86-msvc2010 cmake -G "Visual Studio 10 2010" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%-%arch%-%compiler%"==cmake-x64-msvc2010 cmake -G "Visual Studio 10 2010 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%-%arch%-%compiler%"==cmake-x86-msvc2013 cmake -G "Visual Studio 14 2013" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%-%arch%-%compiler%"==cmake-x64-msvc2013 cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%-%arch%-%compiler%"==cmake-x86-msvc2015 cmake -G "Visual Studio 12 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%-%arch%-%compiler%"==cmake-x64-msvc2015 cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%compiler%-%arch%-%compiler%"==cmake-x86-msvc2017 cmake -G "Visual Studio 15 2017" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%compiler%-%arch%-%compiler%"==cmake-x64-msvc2017 cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - echo "configuring for: %frontend%-%arch%-%compiler%"
+  - if "%frontend%-%arch%-%compiler%"=="cmake-x86-msvc2010" cmake -G "Visual Studio 10 2010" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%-%arch%-%compiler%"=="cmake-x64-msvc2010" cmake -G "Visual Studio 10 2010 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%-%arch%-%compiler%"=="cmake-x86-msvc2013" cmake -G "Visual Studio 14 2013" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%-%arch%-%compiler%"=="cmake-x64-msvc2013" cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%-%arch%-%compiler%"=="cmake-x86-msvc2015" cmake -G "Visual Studio 12 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%frontend%-%arch%-%compiler%"=="cmake-x64-msvc2015" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%compiler%-%arch%-%compiler%"=="cmake-x86-msvc2017" cmake -G "Visual Studio 15 2017" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%compiler%-%arch%-%compiler%"=="cmake-x64-msvc2017" cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
   - if "%frontend%"=="meson" if "%arch%"=="x64" meson --backend=%backend% --buildtype=%MESON_BUILDTYPE% ..
 
 build_script:
+  - echo running build
   - if "%frontend%"=="cmake" cmake --build .
   - if "%frontend%"=="meson" ninja
 
 test_script:
+  - echo running tests
   - if "%frontend%"=="cmake" ctest -C "%configuration%" -VV
   - if "%frontend%"=="meson" meson test
