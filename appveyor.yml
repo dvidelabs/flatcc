@@ -14,14 +14,19 @@ clone_folder: c:\projects\flatcc
 environment:
   matrix:
     - arch: x86
+      tool: cmake
       compiler: msvc2015
       backend: vs2015
-      tool: cmake
+
+   #- arch: x64
+   #  compiler: msvc2015
+   #  backend: vs2015
+   #  tool: cmake
 
     - arch: x64
+      tool: meson
       compiler: msvc2015
-      backend: vs2015
-      tool: cmake
+      backend: ninja
 
 configuration:
   - Debug
@@ -58,12 +63,12 @@ before_build:
   - cd c:\projects\flatcc
   - mkdir build
   - cd build
-  - if "%arch%"=="x86" if "%tool%"=="cmake" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%arch%"=="x64" if "%tool%"=="cmake" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%tool%"=="cmake" if "%arch%"=="x86" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%tool%"=="cmake" if "%arch%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - if "%tool%"=="cmake" if "%arch%"=="x64" meson .. --backend=%backend% --buildtype=%configuration%
 
-build:
-  parallel: true # enable MSBuild parallel builds
-  project: c:\projects\flatcc\build\FlatCC.sln
+build_script:
+  - if "%backend%"=="ninja" ninja else msbuild
 
 test_script:
   - ctest -C "%configuration%" -VV
