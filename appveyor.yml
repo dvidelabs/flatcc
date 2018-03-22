@@ -38,6 +38,8 @@ install:
   - echo installing meson
   - pip3 install meson
   - meson --version
+  - if %configuration%==Debug set MESON_BUILDTYPE=debug
+  - if %configuration%==Release set MESON_BUILDTYPE=release
 
   # Configure MSBuild
   - if %compiler%==msvc2010 ( call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %arch% )
@@ -65,7 +67,7 @@ before_build:
   - cd build
   - if "%tool%"=="cmake" if "%arch%"=="x86" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
   - if "%tool%"=="cmake" if "%arch%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%tool%"=="meson" if "%arch%"=="x64" meson --backend=%backend% --buildtype=%configuration% ..
+  - if "%tool%"=="meson" if "%arch%"=="x64" meson --backend=%backend% --buildtype=%MESON_BUILDTYPE% ..
 
 build_script:
   - if "%tool%"=="cmake" cmake --build .
