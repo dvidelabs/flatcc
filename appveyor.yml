@@ -16,10 +16,12 @@ environment:
     - arch: x86
       compiler: msvc2015
       backend: vs2015
+      tool: cmake
 
     - arch: x64
       compiler: msvc2015
       backend: vs2015
+      tool: cmake
 
 configuration:
   - Debug
@@ -39,7 +41,7 @@ install:
   - msbuild /version
 
   # Install Ninja Build
-    
+
   - set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
   - appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
   - 7z x ninja.zip -oC:\projects\deps\ninja > nul
@@ -48,13 +50,16 @@ install:
 
 skip_tags: true
 
+matrix:
+    fast_finish: true
+
 before_build:
   - echo Running cmake...
   - cd c:\projects\flatcc
-  - mkdir build\MSVC
-  - cd build\MSVC
-  - if "%arch%"=="x86" cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..\..
-  - if "%arch%"=="x64" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..\..
+  - mkdir build
+  - cd build
+  - if "(%arch%"=="x86" and %tool%=="cmake") cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% ..\..
+  - if ("%arch%"=="x64" and %tool%=="cmake") cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..\..
 
 build:
   parallel: true # enable MSBuild parallel builds
