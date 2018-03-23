@@ -14,30 +14,7 @@ environment:
   parallel: true
   matrix:
 
-
-    - frontend: cmake
-      builder: ninja
-      compiler: clang-cl
-      toolchain: vs2015
-      arch: x86
-
-    - frontend: meson
-      builder: msbuild
-      compiler: cl
-      toolchain: vs2015
-      arch: x64
-
-    - frontend: meson
-      builder: msbuild
-      compiler: cl
-      toolchain: vs2015
-      arch: x86
-
-    - frontend: cmake
-      builder: ninja
-      compiler: clang-cl
-      toolchain: vs2015
-      arch: x64
+# Builds in development - placed early to fail fast
 
    #- frontend: meson
    #  builder: ninja
@@ -51,49 +28,130 @@ environment:
    #  toolchain: vs2010
    #  arch: x86
 
-   #- frontend: meson
-   #  builder: ninja
-   #  compiler: cl
-   #  toolchain: vs2015
-   #  arch: x64
+# meson-ninja (no vs2013 support)
+    - frontend: meson
+      builder: ninja
+      compiler: cl
+      toolchain: vs2015
+      arch: x64
 
-   #- frontend: cmake
-   #  builder: msbuild
-   #  compiler: cl
-   #  toolchain: vs2017
-   #  arch: x64
-   #  APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    - frontend: meson
+      builder: ninja
+      compiler: cl
+      toolchain: vs2015
+      arch: x86
 
-   #- frontend: cmake
-   #  builder: msbuild
-   #  compiler: cl
-   #  toolchain: vs2010
-   #  arch: x86
+    - frontend: meson
+      builder: ninja
+      compiler: cl
+      toolchain: vs2017
+      arch: x64
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
-   #- frontend: cmake
-   #  builder: msbuild
-   #  compiler: cl
-   #  toolchain: vs2013
-   #  arch: x86
+    - frontend: meson
+      builder: ninja
+      compiler: cl
+      toolchain: vs2017
+      arch: x86
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
-   #- frontend: cmake
-   #  builder: msbuild
-   #  compiler: cl
-   #  toolchain: vs2015
-   #  arch: x86
+# cmake-msbuild
 
+    - frontend: cmake
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2010
+      arch: x86
+
+    - frontend: cmake
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2010
+      arch: x64
+
+    - frontend: cmake
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2013
+      arch: x86
+
+    - frontend: cmake
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2013
+      arch: x64
+
+    - frontend: cmake
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2015
+      arch: x86
+
+# Most important build(s)
+
+#   builds ok
     - frontend: cmake
       builder: msbuild
       compiler: cl
       toolchain: vs2015
       arch: x64
 
-   # not supported as of Meson 0.45.1
-   #- frontend: meson
-   #  builder: ninja-cl
-   #  compiler: clang
-   #  toolchain: vs2015
-   #  arch: x64
+# Tested and parked builds we do not want to run all the time
+
+#   builds ok
+#   - frontend: cmake
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2017
+#     arch: x64
+#     Appveyor does not support vs2017 on same image as older compilers
+#     - this is a hack to work around that.
+#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+#   builds ok
+#   all meson-cl builds produce a harmless D9002 waring: -std=c++11 for no good reason
+#   - frontend: meson
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2015
+#     arch: x64
+
+#   builds ok
+#   - frontend: meson
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2015
+#     arch: x86
+
+
+# Sub-optimal, working builds, parked
+#    TODO: cmake+clang-cl generates lots of warnings -
+#    -DFLATCC_PORTABLE is set and the CRT flag is not causing problems
+#    - build works - but apparently lots of warnings are not disabled
+#    so some detection is failing in headers or build config.  This is
+#    not really the file to fix it, but this is where it is triggered.
+#   
+#   - frontend: cmake
+#     builder: ninja
+#     compiler: clang-cl
+#     toolchain: vs2015
+#     arch: x86
+
+#   - frontend: cmake
+#     builder: ninja
+#     compiler: clang-cl
+#     toolchain: vs2015
+#     arch: x64
+
+
+#   Currently impossible builds
+
+#   not supported as of Meson 0.45.1
+#   - frontend: meson
+#     builder: ninja-cl
+#     compiler: clang
+#     toolchain: vs2015
+#     arch: x64
 
 configuration:
   - debug
