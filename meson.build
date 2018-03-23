@@ -6,7 +6,10 @@ project('flatcc', 'c',
 
 buildtype = get_option('buildtype')
 
-message('compiler version:' + meson.get_compiler('c').get_id() + ':' + meson.get_compiler('c').version() + ':')
+# The monster example breaks with msvc2010 due to variable declarations not at block start
+# msvc 2010 has version 16.* an 2013 has version 18.*
+old_msvc = meson.get_compiler('c').get_id() != 'msvc' or meson.get_compiler('c').version().version_compare('>=18')
+has_c99_var_decl = get_option('c_std') != 'c89' and not old_msvc
 
 # Meson 0.34 does not support NDEBUG
 #

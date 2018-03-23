@@ -6,7 +6,9 @@
 # See also `monster_build_rules` where predefined
 # build rules are being used.
 
-my_schema_dir = meson.current_source_dir() 
+if has_c99_var_decl
+
+my_schema_dir = meson.current_source_dir()
 my_gen_dir = meson.current_build_dir()
 
 my_monster_gen = custom_target('my_monster_builder',
@@ -23,3 +25,7 @@ monster_sample = executable('monster', 'monster.c', my_monster_gen,
     include_directories : flatcc_include)
 
 test('monster_sample', monster_sample)
+
+else
+    message('Skipping monster sample because C compiler does not support late variable declarations')
+endif

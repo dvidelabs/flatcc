@@ -10,6 +10,8 @@ name = 'monster_build_rules'
 # things are adequately updaeted if, say, a schema included in another
 # schema is updated without rebulding thing unnecessarily.
 
+if has_c99_var_decl
+
 test(name,
     executable(name, monster_src,
         flatcc_common,
@@ -18,3 +20,5 @@ test(name,
         # -DNDEBUG, -DFLATCC_PORTABLE etc. as configured by main project
         c_args: c_args,
         include_directories : flatcc_include))
+
+endif
