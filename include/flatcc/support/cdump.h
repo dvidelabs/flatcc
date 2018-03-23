@@ -1,6 +1,10 @@
 #ifndef CDUMP_H
 #define CDUMP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 
 /* Generates a constant a C byte array. */
@@ -27,5 +31,9 @@ static void cdump(char *name, void *addr, size_t len, FILE *fp) {
     }
     fprintf(fp, "\n};\n");
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CDUMP_H */

@@ -1,6 +1,10 @@
 #ifndef FLATCC_RTCONFIG_H
 #define FLATCC_RTCONFIG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* Include portability layer here since all other files depend on it. */
 #ifdef FLATCC_PORTABLE
@@ -67,6 +71,11 @@
  */
 #ifndef FLATCC_JSON_PRINT_MAX_LEVELS
 #define FLATCC_JSON_PRINT_MAX_LEVELS 100
+#endif
+
+/* Maximum length of names printed exluding _type suffix. */
+#ifndef FLATCC_JSON_PRINT_NAME_LEN_MAX
+#define FLATCC_JSON_PRINT_NAME_LEN_MAX 100
 #endif
 
 /*
@@ -144,6 +153,10 @@
  */
 #ifndef FLATCC_JSON_PARSE_WIDE_SPACE
 #define FLATCC_JSON_PARSE_WIDE_SPACE 0
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* FLATCC_RTCONFIG_H */

@@ -1,0 +1,6 @@
+// Attributes not supported by flatcc
+attribute "flexbuffer";
+attribute "csharp_partial";
+attribute "cpp_type";
+attribute "streaming";
+attribute "idempotent";

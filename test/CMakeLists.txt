@@ -2,6 +2,7 @@
 # Under git such files are protected with the `.gitattributes` file.
 # Incorrect line endings may lead to failed tests.
 if (FLATCC_TEST)
+add_subdirectory(monster_test_cpp)
 add_subdirectory(cgen_test)
 add_subdirectory(monster_test)
 add_subdirectory(monster_test_solo)

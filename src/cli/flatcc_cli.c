@@ -19,6 +19,7 @@ void usage(FILE *fp)
             "  -w                         Generate builders (writable buffers)\n"
             "  -r                         Recursively generate included schema files\n"
             "  -a                         Generate all (like -cwvr)\n"
+            "  -g                         Use _get suffix only to avoid conflicts\n"
             "  -d                         Dependency file like gcc -MMD\n"
             "  -I<inpath>                 Search path for include files (multiple allowed)\n"
             "  -o<outpath>                Write files relative to this path (dir must exist)\n"
@@ -68,6 +69,11 @@ void help(FILE *fp)
         "All C output can be concated to a single file using --stdout or\n"
         "--outfile with content produced in dependency order. The outfile is\n"
         "relative to cwd.\n"
+        "\n"
+        "-g Only add '_get' suffix to read accessors such that, for example,\n"
+        "only 'Monster_name_get(monster)` will be generated and not also\n"
+        "'Monster_name(monster)'. This avoids potential conflicts with\n"
+        "other generated symbols when a schema change is impractical.\n"
         "\n"
         "-d generates a dependency file, e.g. 'monster.fbs.d' in the output dir.\n"
         "\n"
@@ -292,6 +298,9 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         return noarg;
     case 'r':
         opts->cgen_recursive = 1;
+        return noarg;
+    case 'g':
+        opts->cgen_no_conflicts = 1;
         return noarg;
     case 'd':
         opts->gen_dep = 1;

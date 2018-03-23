@@ -1,6 +1,10 @@
 #ifndef FLATCC_BUILDER_H
 #define FLATCC_BUILDER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Library for building untyped FlatBuffers. Intended as a support
  * library for generated C code to produce typed builders, but might
@@ -9,7 +13,7 @@
  *
  * The builder has two API layers: a stack based `start/end` approach,
  * and a direct `create`, and they may be fixed freely. The direct
- * appraoch may be used as part of more specialized optimizations such
+ * approach may be used as part of more specialized optimizations such
  * as rewriting buffers while the stack approach is convenient for state
  * machine driven parsers without a stack, or with a very simple stack
  * without extra allocations.
@@ -63,6 +67,7 @@
 
 #include "flatcc_flatbuffers.h"
 #include "flatcc_emitter.h"
+#include "flatcc_refmap.h"
 
 /* It is possible to enable logging here. */
 #ifndef FLATCC_BUILDER_ASSERT
@@ -105,6 +110,21 @@
  * and must be a signed type.
  */
 typedef flatbuffers_soffset_t flatcc_builder_ref_t;
+typedef flatbuffers_utype_t flatcc_builder_utype_t;
+
+/**
+ * This type must be compatible with code generation that
+ * creates union specific ref types.
+ */
+typedef struct flatcc_builder_union_ref {
+    flatcc_builder_utype_t type;
+    flatcc_builder_ref_t value;
+} flatcc_builder_union_ref_t;
+
+typedef struct flatcc_builder_union_vec_ref {
+    flatcc_builder_ref_t type;
+    flatcc_builder_ref_t value;
+} flatcc_builder_union_vec_ref_t;
 
 /**
  * Virtual tables are off by one to avoid being mistaken for error at
@@ -428,6 +448,9 @@ struct flatcc_builder {
 
     /* The offset to the end of the most recent user frame. */
     size_t user_frame_end;
+
+    /* The optional user supplied refmap for cloning DAG's - not shared with nested buffers. */
+    flatcc_refmap_t *refmap;
 };
 
 /**
@@ -585,6 +608,108 @@ void flatcc_builder_set_max_level(flatcc_builder_t *B, int level);
  */
 void flatcc_builder_set_vtable_clustering(flatcc_builder_t *B, int enable);
 
+/**
+ * Sets a new user supplied refmap which maps source pointers to
+ * references and returns the old refmap, or null. It is also
+ * possible to disable an existing refmap by setting a null
+ * refmap.
+ *
+ * A clone or pick operation may use this map when present,
+ * depending on the data type. If the a hit is found, the stored
+ * reference will be used instead of performing a new clone a
+ * pick operation. It is also possible to manually populate the
+ * refmap. Note that the builder does not have a concept of
+ * clone or pick - these are higher level recursive operations
+ * to add data from one buffer to another - but such code
+ * may rely on the builder to provide the current refmap during
+ * recursive operations. For this reason, the builder makes NO
+ * calls to the refmap interface on its own - it just stores
+ * the current refmap so recursive operations can fint it.
+ *
+ * Refmaps MUST be reset, replaced or disabled if a source
+ * pointer may be reused for different purposes - for example if
+ * repeatedly reading FlatBuffers into the same memory buffer
+ * and performing a clone into a buffer under construction.
+ * Refmaps may also be replaced if the same object is to be
+ * cloned several times keeping the internal DAG structure
+ * intact, but every new clone should be a separate object.
+ *
+ * Refmaps must also be replaced or disabled prior to starting a
+ * nested buffer and after stopping it, or when cloning a object
+ * as a nested root. THIS IS VERY EASY TO GET WRONG!  The
+ * builder does a lot of bookkeeping for nested buffers but not
+ * in this case. Shared references may happen and they WILL fail
+ * verification and they WILL break when copying out a nested
+ * buffer to somewhere else. The user_frame stack may be used
+ * for pushing refmaps, but often user codes recursive stack
+ * will work just as well.
+ *
+ * It is entirely optional to used refmaps when cloning - they
+ * preserve DAG structure and may speed up operations or slow
+ * them down, depending on the source material.
+ *
+ * Refmaps may consume a lot of space when large offset vectors
+ * are cloned when these do not have significant shared
+ * references. They may also be very cheap to use without any
+ * dynamic allocation when objects are small and have at most a
+ * few references.
+ *
+ * Refmaps only support init, insert, find, reset, clear but not
+ * delete. There is a standard implementation in the runtime
+ * source tree but it can easily be replaced compile time and it
+ * may also be left out if unused. The builder wraps reset, insert,
+ * and find so the user does not have to check if a refmap is
+ * present but other operations must be done direcly on the
+ * refmap.
+ *
+ * The refmap operations are valid on a null refmap which will
+ * find nothing and insert nothing.
+ *
+ * The builder will reset the refmap during a builder reset and
+ * clear the refmap during a builder clear operatoin. If the
+ * refmap goes out of scope before that happens it is important
+ * to call set_refmap with null and manually clear the refmap.
+ */
+static inline flatcc_refmap_t *flatcc_builder_set_refmap(flatcc_builder_t *B, flatcc_refmap_t *refmap)
+{
+    flatcc_refmap_t *refmap_old;
+
+    refmap_old = B->refmap;
+    B->refmap = refmap;
+    return refmap_old;
+}
+
+/* Retrieves the current refmap, or null. */
+static inline flatcc_refmap_t *flatcc_builder_get_refmap(flatcc_builder_t *B)
+{
+    return B->refmap;
+}
+
+/* Finds a reference, or a null reference if no refmap is active.  * */
+static inline flatcc_builder_ref_t flatcc_builder_refmap_find(flatcc_builder_t *B, const void *src)
+{
+    return B->refmap ? flatcc_refmap_find(B->refmap, src) : flatcc_refmap_not_found;
+}
+
+/*
+ * Inserts into the current refmap with the inseted ref upon
+ * upon success, or not_found on failure (default 0), or just
+ * returns ref if refmap is absent.
+ *
+ * Note that if an existing item exists, the ref is replaced
+ * and the new, not the old, ref is returned.
+ */
+static inline flatcc_builder_ref_t flatcc_builder_refmap_insert(flatcc_builder_t *B, const void *src, flatcc_builder_ref_t ref)
+{
+    return B->refmap ? flatcc_refmap_insert(B->refmap, src, ref) : ref;
+}
+
+static inline void flatcc_builder_refmap_reset(flatcc_builder_t *B)
+{
+    if (B->refmap) flatcc_refmap_reset(B->refmap);
+}
+
+
 enum flatcc_builder_buffer_flags {
     flatcc_builder_is_nested = 1,
     flatcc_builder_with_size = 2,
@@ -655,10 +780,12 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
 
 /**
  * Creates a struct within the current buffer without using any
- * allocation. Formally the struct should be used as a root in the
- * `end_buffer` call as there are no other way to use struct while
- * conforming to the FlatBuffer format - noting that tables embed
- * structs in their own data area.
+ * allocation.
+ *
+ * The struct should be used as a root in the `end_buffer` call or as a
+ * union value as there are no other ways to use struct while conforming
+ * to the FlatBuffer format - noting that tables embed structs in their
+ * own data area except in union fields.
  *
  * The struct should be in little endian format and follow the usual
  * FlatBuffers alignment rules, although this API won't care about what
@@ -675,7 +802,8 @@ flatcc_builder_ref_t flatcc_builder_create_struct(flatcc_builder_t *B,
  * Starts a struct and returns a pointer that should be used immediately
  * to fill in the struct in protocol endian format, and when done,
  * `end_struct` should be called. The returned reference should be used
- * as argument to `end_buffer`. See also `create_struct`.
+ * as argument to `end_buffer` or as a union value. See also
+ * `create_struct`.
  */
 void *flatcc_builder_start_struct(flatcc_builder_t *B,
         size_t size, uint16_t align);
@@ -688,9 +816,9 @@ void *flatcc_builder_struct_edit(flatcc_builder_t *B);
 
 /**
  * Emits the struct started by `start_struct` and returns a reference to
- * be used as root in an enclosing `end_buffer` call.
- * As mentioned in `create_struct`, these can also be used more freely,
- * but not while being conformant FlatBuffers.
+ * be used as root in an enclosing `end_buffer` call or as a union
+ * value.  As mentioned in `create_struct`, these can also be used more
+ * freely, but not while being conformant FlatBuffers.
  */
 flatcc_builder_ref_t flatcc_builder_end_struct(flatcc_builder_t *B);
 
@@ -812,7 +940,8 @@ enum flatcc_builder_type {
     flatcc_builder_table,
     flatcc_builder_vector,
     flatcc_builder_offset_vector,
-    flatcc_builder_string
+    flatcc_builder_string,
+    flatcc_builder_union_vector
 };
 
 /**
@@ -850,29 +979,37 @@ enum flatcc_builder_type flatcc_builder_get_type_at(flatcc_builder_t *B, int lev
  *
  * The frame is zeroed when entered.
  *
- * The returned pointer is only valid until the next call to
- * `enter/extend_user_frame`. The latest frame pointer
- * can be restored by calling `get_user_frame`.
+ * Returns a non-zero handle to the user frame upon success or
+ * 0 on allocation failure.
  */
-void *flatcc_builder_enter_user_frame(flatcc_builder_t *B, size_t size);
+size_t flatcc_builder_enter_user_frame(flatcc_builder_t *B, size_t size);
 
 /**
  * Makes the parent user frame current, if any. It is not valid to call
- * if there isn't any frame.
+ * if there isn't any current frame. Returns handle to parent frame if
+ * any, or 0.
  */
-void flatcc_builder_exit_user_frame(flatcc_builder_t *B);
+size_t flatcc_builder_exit_user_frame(flatcc_builder_t *B);
 
 /**
- * Returns a pointer to the start of the inner-most user frame. It is
- * not valid to call if there isn't any fram.
+ * Exits the frame represented by the given handle. All more
+ * recently entered frames will also be exited. Returns the parent
+ * frame handle if any, or 0.
  */
-void *flatcc_builder_get_user_frame(flatcc_builder_t *B);
+size_t flatcc_builder_exit_user_frame_at(flatcc_builder_t *B, size_t handle);
 
 /**
- * Returns 1 if there is a user frame, and 0 otherwise.
+ * Returns a non-zero handle to the current inner-most user frame if
+ * any, or 0.
  */
-int flatcc_builder_has_user_frame(flatcc_builder_t *B);
+size_t flatcc_builder_get_current_user_frame(flatcc_builder_t *B);
 
+/*
+ * Returns a pointer to the user frame at the given handle. Any active
+ * frame can be accessed in this manner but the pointer is invalidated
+ * by user frame enter and exit operations.
+ */
+void *flatcc_builder_get_user_frame_ptr(flatcc_builder_t *B, size_t handle);
 
 /**
  * Returns the size of the buffer and the logical start and end address
@@ -1240,6 +1377,33 @@ void *flatcc_builder_table_add_copy(flatcc_builder_t *B, int id, const void *dat
  */
 flatcc_builder_ref_t *flatcc_builder_table_add_offset(flatcc_builder_t *B, int id);
 
+/*
+ * Adds a union type and reference in a single operation and returns 0
+ * on success. Stores the type field at `id - 1` and the value at
+ * `id`. The `value` is a reference to a table, to a string, or to a
+ * standalone `struct` outside the table.
+ *
+ * If the type is 0, the value field must also be 0.
+ *
+ * Unions can also be added as separate calls to the type and the offset
+ * separately which can lead to better packing when the type is placed
+ * together will other small fields.
+ */
+int flatcc_builder_table_add_union(flatcc_builder_t *B, int id,
+        flatcc_builder_union_ref_t uref);
+
+/*
+ * Adds a union type vector and value vector in a single operations
+ * and returns 0 on success.
+ *
+ * If both the type and value vector is null, nothing is added.
+ * Otherwise both must be present and have the same length.
+ *
+ * Any 0 entry in the type vector must also have a 0 entry in
+ * the value vector.
+ */
+int flatcc_builder_table_add_union_vector(flatcc_builder_t *B, int id,
+        flatcc_builder_union_vec_ref_t uvref);
 /**
  * Creates a vector in a single operation using an externally supplied
  * buffer. This completely bypasses the stack, but the size must be
@@ -1274,7 +1438,7 @@ flatcc_builder_ref_t flatcc_builder_create_vector(flatcc_builder_t *B,
  * Do not use these calls for string or offset vectors, but do store
  * scalars, enums and structs, always in little endian encoding.
  *
- * Use `extend_vector` subseequentlu to add zero, one or more elements
+ * Use `extend_vector` subsequently to add zero, one or more elements
  * at time.
  *
  * See `create_vector` for `max_count` argument (strings and offset
@@ -1308,27 +1472,11 @@ size_t flatcc_builder_vector_count(flatcc_builder_t *B);
 void *flatcc_builder_vector_edit(flatcc_builder_t *B);
 
 /**
- * Similar to `end_vector` but updates all stored references so they
- * become offsets to the vector start.
- */
-flatcc_builder_ref_t flatcc_builder_end_offset_vector(flatcc_builder_t *B);
-
-/** Returns the number of elements currently on the stack. */
-size_t flatcc_builder_offset_vector_count(flatcc_builder_t *B);
-
-/**
- * Returns a pointer ot the first vector element on stack,
- * accessible up to the number of elements currently on stack.
- */
-void *flatcc_builder_offset_vector_edit(flatcc_builder_t *B);
-
-
-/**
  * Returns a zero initialized buffer to a new region of the vector which
  * is extended at the end. The buffer must be consumed before other api
  * calls that may affect the stack, including `extend_vector`.
  *
- * Do not use for strings or offset vectors. May be used for nested
+ * Do not use for strings, offset or union vectors. May be used for nested
  * buffers, but these have dedicated calls to provide better alignment.
  */
 void *flatcc_builder_extend_vector(flatcc_builder_t *B, size_t count);
@@ -1375,7 +1523,7 @@ flatcc_builder_ref_t flatcc_builder_create_offset_vector(flatcc_builder_t *B,
         const flatcc_builder_ref_t *data, size_t count);
 
 /*
- * NOTE: this call takes non-const source vector of references
+ * NOTE: this call takes non-const source array of references
  * and destroys the content.
  *
  * This is a faster version of `create_offset_vector` where the
@@ -1395,14 +1543,39 @@ flatcc_builder_ref_t flatcc_builder_create_offset_vector_direct(flatcc_builder_t
 int flatcc_builder_start_offset_vector(flatcc_builder_t *B);
 
 /**
+ * Similar to `end_vector` but updates all stored references so they
+ * become offsets to the vector start.
+ */
+flatcc_builder_ref_t flatcc_builder_end_offset_vector(flatcc_builder_t *B);
+
+/**
+ * Same as `flatcc_builder_end_offset_vector` except null references are
+ * permitted when the corresponding `type` entry is 0 (the 'NONE' type).
+ * This makes it possible to build union vectors with less overhead when
+ * the `type` vector is already known. Use standand offset vector calls
+ * prior to this call.
+ */
+flatcc_builder_ref_t flatcc_builder_end_offset_vector_for_unions(flatcc_builder_t *B,
+        const flatcc_builder_utype_t *type);
+
+/** Returns the number of elements currently on the stack. */
+size_t flatcc_builder_offset_vector_count(flatcc_builder_t *B);
+
+/**
+ * Returns a pointer ot the first vector element on stack,
+ * accessible up to the number of elements currently on stack.
+ */
+void *flatcc_builder_offset_vector_edit(flatcc_builder_t *B);
+
+/**
  * Similar to `extend_vector` but returns a buffer indexable as
  * `flatcc_builder_ref_t` array. All elements must be set to a valid
  * unique non-null reference, but truncate and extend may be used to
- * perform edits. All produced references must be stored at most
- * once in the buffer, including vectors. There are no checks, and this
- * is an easy place to make mistakes. Unused references will leave
- * garbage in the buffer. References should not originate from any other
- * buffer than the current, including parents and nested buffers.
+ * perform edits. Unused references will leave garbage in the buffer.
+ * References should not originate from any other buffer than the
+ * current, including parents and nested buffers.  It is valid to reuse
+ * references in DAG form when contained in the sammer, excluding any
+ * nested, sibling or parent buffers.
  */
 flatcc_builder_ref_t *flatcc_builder_extend_offset_vector(flatcc_builder_t *B, size_t count);
 
@@ -1426,6 +1599,104 @@ flatcc_builder_ref_t *flatcc_builder_offset_vector_push(flatcc_builder_t *B,
  */
 flatcc_builder_ref_t *flatcc_builder_append_offset_vector(flatcc_builder_t *B,
         const flatcc_builder_ref_t *refs, size_t count);
+
+/**
+ * All union vector operations are like offset vector operations,
+ * except they take a struct with a type and a reference rather than
+ * just a reference. The finished union vector is returned as a struct
+ * of two references, one for the type vector and one for the table offset
+ * vector. Each reference goes to a separate table field where the type
+ * offset vector id must be one larger than the type vector.
+ */
+
+/**
+ * Creates a union vector which is in reality two vectors, a type vector
+ * and an offset vector. Both vectors references are returned.
+ */
+flatcc_builder_union_vec_ref_t flatcc_builder_create_union_vector(flatcc_builder_t *B,
+        const flatcc_builder_union_ref_t *urefs, size_t count);
+
+/*
+ * NOTE: this call takes non-const source array of references
+ * and destroys the content. The type array remains intact.
+ *
+ * This is a faster version of `create_union_vector` where the source
+ * references are destroyed and where the types are given in a separate
+ * array. In return the vector can be emitted directly without passing
+ * over the stack.
+ *
+ * Unlike `create_offset_vector` we do allow null references but only if
+ * the union type is NONE (0).
+ */
+flatcc_builder_union_vec_ref_t flatcc_builder_create_union_vector_direct(flatcc_builder_t *B,
+        const flatcc_builder_utype_t *types, flatcc_builder_ref_t *data, size_t count);
+
+/*
+ * Creates just the type vector part of a union vector. This is
+ * similar to a normal `create_vector` call except that the size
+ * and alignment are given implicitly. Can be used during
+ * cloning or similar operations where the types are all given
+ * but the values must be handled one by one as prescribed by
+ * the type. The values can be added separately as an offset vector.
+ */
+flatcc_builder_ref_t flatcc_builder_create_type_vector(flatcc_builder_t *B,
+        const flatcc_builder_utype_t *types, size_t count);
+
+/**
+ * Starts a vector holding types and offsets to tables or strings. Before
+ * completion it will hold `flatcc_builder_union_ref_t` references because the
+ * offset is not known until the vector start location is known, which
+ * depends to the final size, which for parsers is generally unknown,
+ * and also because the union type must be separated out into a separate
+ * vector. It would not be practicaly to push on two different vectors
+ * during construction.
+ */
+int flatcc_builder_start_union_vector(flatcc_builder_t *B);
+
+/**
+ * Similar to `end_vector` but updates all stored references so they
+ * become offsets to the vector start and splits the union references
+ * into a type vector and an offset vector.
+ */
+flatcc_builder_union_vec_ref_t flatcc_builder_end_union_vector(flatcc_builder_t *B);
+
+/** Returns the number of elements currently on the stack. */
+size_t flatcc_builder_union_vector_count(flatcc_builder_t *B);
+
+/**
+ * Returns a pointer ot the first vector element on stack,
+ * accessible up to the number of elements currently on stack.
+ */
+void *flatcc_builder_union_vector_edit(flatcc_builder_t *B);
+
+/**
+ * Similar to `extend_offset_vector` but returns a buffer indexable as a
+ * `flatcc_builder_union_ref_t` array. All elements must be set to a valid
+ * unique non-null reference with a valid union type to match, or it
+ * must be null with a zero union type.
+ */
+flatcc_builder_union_ref_t *flatcc_builder_extend_union_vector(flatcc_builder_t *B, size_t count);
+
+/** Similar to truncate_vector. */
+int flatcc_builder_truncate_union_vector(flatcc_builder_t *B, size_t count);
+
+/**
+ * A specialized extend that pushes a single element.
+ *
+ * Returns the buffer holding a modifiable copy of the added content,
+ * or null on error.
+ */
+flatcc_builder_union_ref_t *flatcc_builder_union_vector_push(flatcc_builder_t *B,
+        flatcc_builder_union_ref_t uref);
+
+/**
+ * Takes an array of union_refs as argument to do a multi push operation.
+ *
+ * Returns the buffer holding a modifiable copy of the added content,
+ * or null on error.
+ */
+flatcc_builder_union_ref_t *flatcc_builder_append_union_vector(flatcc_builder_t *B,
+        const flatcc_builder_union_ref_t *urefs, size_t count);
 
 /**
  * Faster string operation that avoids temporary stack storage. The
@@ -1581,8 +1852,25 @@ void *flatcc_builder_finalize_buffer(flatcc_builder_t *B, size_t *size_out);
  * implemented via `flatcc_flatbuffers.h`. `free` will usually work but
  * is not portable to platforms without posix_memalign or C11
  * aligned_alloc support.
+ *
+ * NOTE: if a library might be compiled with a version of aligned_free
+ * that differs from the application using it, use
+ * `flatcc_builder_aligned_free` to make sure the correct deallocation
+ * function is used.
  */
 void *flatcc_builder_finalize_aligned_buffer(flatcc_builder_t *B, size_t *size_out);
+
+/*
+ * A stable implementation of `aligned_alloc` that is not sensitive
+ * to the applications compile time flags.
+ */
+void *flatcc_builder_aligned_alloc(size_t alignment, size_t size);
+
+/*
+ * A stable implementation of `aligned_free` that is not sensitive
+ * to the applications compile time flags.
+ */
+void flatcc_builder_aligned_free(void *p);
 
 /*
  * Only for use with the default emitter.
@@ -1598,5 +1886,9 @@ void *flatcc_builder_finalize_aligned_buffer(flatcc_builder_t *B, size_t *size_o
  * Other emitters have custom interfaces for reaching their content.
  */
 void *flatcc_builder_copy_buffer(flatcc_builder_t *B, void *buffer, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FLATCC_BUILDER_H */

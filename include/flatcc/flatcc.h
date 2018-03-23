@@ -1,6 +1,10 @@
 #ifndef FLATCC_H
 #define FLATCC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * This is the primary `flatcc` interface when compiling `flatcc` as a
  * library. Functions and types in the this interface will be kept
@@ -76,6 +80,8 @@ struct flatcc_options {
     int cgen_json_printer;
     int cgen_recursive;
     int cgen_spacing;
+    int cgen_no_conflicts;
+
 
     int bgen_bfbs;
     int bgen_qualify_names;
@@ -250,6 +256,10 @@ void flatcc_destroy_context(flatcc_context_t ctx);
 
 #ifdef _MSC_VER
 #pragma warning(pop)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* FLATCC_H */

@@ -106,7 +106,7 @@ static inline size_t ht_uint64_hash_function(const void *key, size_t len)
 
     x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
     x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
-    return x ^ (x >> 31);
+    return (size_t)(x ^ (x >> 31));
 }
 
 /*

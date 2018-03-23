@@ -1,8 +1,46 @@
 // test schema file
 
+include "attributes.fbs";
 include "include_test1.fbs";
 
 struct InGlobalNamespace {}
+
+namespace MyGame;
+
+table InParentNamespace {}
+
+namespace MyGame.Example2;
+
+table Monster {}  // Test having same name as below, but in different namespace.
+
+table Strange {}
+
+namespace MyGame.Example;
+
+// Note: parent namespace resolution only works without namespace prefix
+//
+// Won't work:
+//    union Foo { Example2.InParentNamespace }
+union Foo { InParentNamespace }
+
+
+namespace MyGame.Example2.SubSystem;
+
+// Note:
+//
+// parent namespace resolution only works without namespace prefix
+// or with a global namespace prefix (a fully qualified name), not
+// something in between.
+// (There is no really good reason for this, it just isn't implemented,
+//  and flatc JSON enum parsing works the same way.)
+// The more local name wins any conflict.
+//
+union SubSystemA { Strange }
+union SubSystemB { MyGame.Example2.Strange }
+
+// Works in C++ flatc 1.8 but won't work with flatcc:
+// union SubSystemC { Example2.Strange }
+
 
 namespace MyGame.Example;
 
@@ -31,7 +69,24 @@ attribute "priority";
 
 enum Color:byte (bit_flags) { Red = 0, Green, Blue = 3, }
 
-union Any { Monster, TestSimpleTableWithEnum }  // TODO: add more elements
+// Note:
+// For historic reasons C++ flatc 1.8 does permit conflicting base names
+// from different namespaces without explicitly resolving the conflict.
+//
+// flatcc does not, and cannot, support this because it needs a unique
+// base name to assign to the enumaration of union members - otherwise
+// these enumerations could not have a namespace prefix - which is used
+// in JSON and in default value assignment in the schema.
+//
+// Wont' work in flatc:
+//    union Any { Monster, TestSimpleTableWithEnum, MyGame.Example2.Monster }
+
+union Any {
+    Monster,
+    TestSimpleTableWithEnum,
+    Monster2: MyGame.Example2.Monster,
+    Alt
+}
 
 struct Test { a:short; b:byte; }
 
@@ -40,11 +95,18 @@ table emptytable {}
 table with_emptystruct { empty: emptystruct; }
 enum notemptyenum:int { x}
 
-table TestSimpleTableWithEnum {
+table TestSimpleTableWithEnum (csharp_partial) {
   color: Color = Green;
   color2: Color = Color.Green;
   uc : ubyte = MyGame.Example.Color.Green;
   uc2 : ubyte = Color.Green;
+
+  // C++ flatc 1.8 dislikes enum values on non-enums
+  // color2: Color = Green;
+  // C++ flatc 1.8 dislikes enum values on non-enums
+  // uc : ubyte = 1;
+  // C++ flatc 1.8 dislikes enum values on non-enums, and namespace prefix
+  // uc2 : ubyte = 1;
 }
 
 table TestInclude {
@@ -54,6 +116,11 @@ table TestInclude {
   incval3 : int (included_attribute);
   incval4:MyGame.OtherNameSpace.FromInclude = MyGame.OtherNameSpace.FromInclude.IncludeVal;
   incval5: long = MyGame.OtherNameSpace.FromInclude.IncludeVal;
+
+  // C++ flatc 1.8 dislikes namespace prefix
+  // incval4:MyGame.OtherNameSpace.FromInclude = IncludeVal;
+  // C++ flatc 1.8 dislikes enum values on non-enums, and namespace prefix
+  // incval5: long = 0;
 }
 
 struct Vec3 (force_align: 16) {
@@ -65,24 +132,41 @@ struct Vec3 (force_align: 16) {
   test3:Test;
 }
 
+struct Ability {
+  id:uint(key);
+  distance:uint;
+}
+
 table Stat {
   id:string;
   val:long;
   count:ushort;
 }
 
+table Alt {
+  prefix: TestJSONPrefix;
+  movie:Fantasy.Movie;
+  manyany: [Any];
+}
+
+table TestJSONPrefix {
+  testjsonprefixparsing:TestJSONPrefixParsing;
+  testjsonprefixparsing2:TestJSONPrefixParsing2;
+  testjsonprefixparsing3:TestJSONPrefixParsing3;
+}
+
 table TestJSONPrefixParsing
 {
   aaaa: string;
   aaaa12345: uint;
-  
+
   bbbb: string;
   bbbb1234: long;
-  
+
   cccc: string;
   cccc1234: long;
   cccc12345: uint;
-  
+
   dddd1234: long;
   dddd12345: uint;
 }
@@ -101,6 +185,17 @@ table TestJSONPrefixParsing3
     aaaa_bbbb_start_steps: uint;
 }
 
+// C++ flatc 1.8 does not yet support base64 as a built-in
+// attribute "base64";
+// attribute "base64url";
+
+table TestBase64
+{
+    data:[ubyte] (base64);
+    urldata:[ubyte] (base64url);
+    nested:[ubyte] (nested_flatbuffer: "Monster", base64);
+}
+
 table Monster {
   pos:Vec3 (id: 0);
   hp:short = 100 (id: 2);
@@ -113,10 +208,14 @@ table Monster {
   /// multiline too
   testarrayoftables:[Monster] (id: 11);
   testarrayofstring:[string] (id: 10);
+  testarrayofstring2:[string] (id: 28);
   testarrayofbools:[bool] (id: 24);
+  testarrayofsortedstruct:[Ability] (id: 29);
   enemy:MyGame.Example.Monster (id:12);  // Test referring by full namespace.
+  // id 7 resever for Any_type
   test:Any (id: 8);
   test4:[Test] (id: 9);
+  test5:[Test] (id: 31);
   testnestedflatbuffer:[ubyte] (id:13, nested_flatbuffer: "Monster");
   testempty:Stat (id:14);
   testbool:bool = 1 (id:15);
@@ -125,12 +224,76 @@ table Monster {
   testhashs64_fnv1:long (id:18, hash:"fnv1_64");
   testhashu64_fnv1:ulong (id:19, hash:"fnv1_64");
   testhashs32_fnv1a:int (id:20, hash:"fnv1a_32");
-  testhashu32_fnv1a:uint (id:21, hash:"fnv1a_32");
+  testhashu32_fnv1a:uint (id:21, hash:"fnv1a_32", cpp_type:"Stat");
   testhashs64_fnv1a:long (id:22, hash:"fnv1a_64");
   testhashu64_fnv1a:ulong (id:23, hash:"fnv1a_64");
-  testjsonprefixparsing:TestJSONPrefixParsing (id:25);
-  testjsonprefixparsing2:TestJSONPrefixParsing2 (id:26);
-  testjsonprefixparsing3:TestJSONPrefixParsing3 (id:27);
+
+  // Googles flatc uses Pi as default be we don't because it
+  // messes up JSON tests because the numeric print format is
+  // configuration dependent.
+  //testf:float = 3.14159 (id:25);
+  testf:float = 3.14159e5 (id:25);
+  testf2:float = 3 (id:26);
+  testf3:float (id:27);
+  flex:[ubyte] (id:30, flexbuffer);
+  vector_of_longs:[long] (id:32);
+  vector_of_doubles:[double] (id:33);
+  parent_namespace_test:InParentNamespace (id:34);
+  testbase64:TestBase64 (id:35);
+}
+
+table TypeAliases {
+    i8:int8;
+    u8:uint8;
+    i16:int16;
+    u16:uint16;
+    i32:int32;
+    u32:uint32;
+    i64:int64;
+    u64:uint64;
+    f32:float32;
+    f64:float64;
+    v8:[int8];
+    vf64:[float64];
+}
+
+rpc_service MonsterStorage {
+  Store(Monster):Stat (streaming: "none");
+  Retrieve(Stat):Monster (streaming: "server", idempotent);
+}
+
+// Demonstrates the ability to have vectors of unions, and also to
+// store structs and strings in unions.
+
+namespace Fantasy;
+
+table Attacker {
+    sword_attack_damage: int;
+}
+
+struct Rapunzel {
+    hair_length: uint16;
+}
+
+struct BookReader {
+    books_read: int;
+}
+
+union Character {
+    MuLan: Attacker = 2,  // Can have name be different from type.
+    Rapunzel = 8,         // Or just both the same, as before.
+    Belle: Fantasy.BookReader,
+    BookFan: BookReader,
+    Other: string,
+    Unused: string = 255
+}
+
+table Movie {
+    main_character: Character;
+    antagonist: Character;
+    side_kick: Character;
+    cameo: Character;
+    characters: [Character];
 }
 
 root_type MyGame.Example.Monster;

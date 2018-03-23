@@ -1,5 +1,144 @@
 # Change Log
 
+## [0.5.2-pre]
+
+- Handle union vectors in binary schema generation (.bfbs).
+- Handle mixed union types in binary schema (.bfbs).
+- Fix .bfbs bug failing to export fields of string type correctly.
+- Fix how vectors are printed in samples/reflection project.
+- Add support for KeyValue attributes in binary schema (.bfbs).
+- Added `__tmp` suffix to macro variables in `flatbuffers_common_reader.h`
+  to avoid potential name conflicts (#82).
+- Added `_get` suffix to all table and struct read accessors in
+  addition to existing accesors (`Monster_name()` vs `Monster_name_get()`
+  (#82).
+- Added `-g` option flatcc commandline to only generate read accessors
+  with the `_get` suffix in order to avoid potential name conficts (#82).
+- Fix stdalign.h not available in MSVC C++ in any known version.
+- Added test case for building flatcc project with C++ compiler (#79, #80).
+- Fix `flatbuffers_int8_vec_t` type which was incorrrectly unsigned.
+- Added table, union, vector clone, and union vector operations. Table
+  fields now also have a `_pick` method taking a source table of same
+  type as argument which is roughly a combined get, clone and add
+  operation for a single field. `_pick` will pick a field even if it is
+  a default value and it will succedd as a no-operation if the source is
+  absent. `_clone` discards deprecated fields. Unknown union types are
+  also discarded along with unions of type NONE, even if present in
+  source.  Warning: `_clone` will expand DAGs.
+- Added `_get_ptr` reader method on scalar struct and table member
+  fields which returns the equivalent of a single field struct `_get`
+  method. This is used to clone scalar values without endian
+  conversion. NOTE: scalars do not have assertions on `required`
+  attribute, so be careful with null return values. For structs it
+  is valid to apply `_get_ptr` to a null container struct such that
+  navigation can be done without additional checks.
+- Added `_push_clone` synonym for scalar and struct vector `_push_copy`.
+- Add `include/flatcc/flatcc_refmap_h` and `src/runtime/refmap.c` to
+  runtime library. The runtime library now depends of refmap.c but has
+  very low overhead when not expeclity enabled for use with cloning.
+
+## [0.5.1]
+
+- Fix parent namespace lookup in the schema parser when the namespace
+  prefix is omitted.
+- Fix buffer overrun in JSON printer when exhausting flush buffer (#70).
+- More consistent name generation across verifier and json parsers
+  allowing for namespace wrapped parse/verify/print table functions.
+- Fix unhelpful error on precision loss from float/double conversion
+  in schema and JSON parser.
+- Align `monster_test.fbs` Monster table more closely with Googles flatc
+  version after they diverged a bit. (Subtables may differ).
+- Some C++ compatiblity fixes so `include/{support/flatcc}` headers can
+  be included into C++ without `extern "C"`.
+- Fix missing null ptr check in fall-back `aligned_free`.
+- Enable `posix_memalign` as a default build option on recent GNU
+  systems because -std=c11 blocks automatic detection. This avoids
+  using a less efficient fallback implementation.
+- Add portable/include wrappers so build systems can add include paths
+  to ensure that <stdint.h>, <stdbool.h> etc. is available. Flatcc does
+  not currently rely on these.
+- Replace `flatcc/portable/pdiagnostic_push/pop.h` includes in generated
+  code with `flatcc/flatcc_pro/epilogue.h` and add `__cplusplus extern
+  "C"` guards in those. This removes explicit references to the portable
+  headers in generated code and improves C++ compatibility (#72).
+- Change inconsistent `const void *` to `const char *` in JSON buffer
+  argument to generated `_as_root` parsers (#73).
+- Simplify use of json printers by auto-flushing and terminating buffers
+  when a root object has been printed (#74).
+- BREAKING: in extension of the changes in 0.5.0 for unions and union
+  vectors, the low-level methods and structs now consistently use the
+  terminology { type, value } for union types and values rather than {
+  type, member } or { types, members }. The binary builder interface
+  remains unchanged.
+- Silence (unjustified) uninitialized gcc warnings (#75).
+- Fix C++14 missing `__alignas_is_defined`.
+- Remove newlib stdalign conflict (#77).
+- Add `flatcc_json_printer_total`.
+- Add `flatcc_builder_table_add_union_vector`.
+
+## [0.5.0]
+- New schema type aliases: int8, uint8, int16, uint16, int32, uint32,
+  int64, uint64, float32, float64.
+- Low-level: access multiple user frames in builder via handles.
+- Support for `_is_known_type` and `_is_known_value` on union and enum
+  types.
+- More casts for C++ compatiblity (#59).
+- Fix regressions in verifier fix in 0.4.3 that might report out of
+  bounds in rare cases (#60).
+- Silence gcc 7.x warnings about implicit fallthrough (#61).
+- Fix rare special in JSON parser causing spurious unknown symbol.
+- Reading and writing union vectors. The C++ interface also supports
+  these types, but other languages likely won't for a while.
+- New `_union(t)` method for accessing a union fields type and member
+  table in a single call. The method also supports union vectors to
+  retrieve the type vector and member vector as a single object.
+- BREAKING: In generated builder code for union references of the form
+  `<union-name>_union_ref_t` the union members and the hidden `_member`
+  field has been replaced with a single `member` field. Union
+  constructors work as before: `Any_union_ref_t uref =
+  Any_as_weapon(weapon_ref)` Otherwise use `.type` and `.member` fields
+  directly. This change was necessary to support the builder API's new
+  union vectors without hitting strict aliasing rules, for example as
+  argument to `flatcc_builder_union_vector_push`. Expected impact: low
+  or none. The physical struct layout remains unchanged.
+- BREAKING: `flatbuffers_generic_table_[vec_]t` has been renamed to 
+  `flatbuffers_generic_[vec_]t`.
+- BREAKING: The verifiers runtime library interface has changed argument
+  order from `align, size` to `size, align` in order to be consistent
+  with the builders interface so generated code must match library
+  version. No impact on user code calling generated verifier functions.
+- BREAKING: generated json table parser now calls `table_end` and
+  returns the reference in a new `pref` argument. Generated json struct
+  parsers now renamed with an `_inline` suffix and the orignal name now
+  parses a non-inline struct similar to the table parsers. No impact to
+  user code that only calls the generated root parser.
+- Fix off-by-one indexing in `flatbuffers_generic_vec_at`. Impact
+  low since it was hardly relevant before union vectors were introduced
+  in this release.
+- Add document on security considerations (#63).
+- Add support for base64 and base64url attributes in JSON printing and
+  parsing of [ubyte] table fields.
+- Added `flatcc_builder_aligned_free` and `flatcc_builder_aligned_alloc`
+  to ensure `aligned_free` implementation matches allocation compiled
+  into the runtime library. Note that alignment and size arguments are
+  ordered opposite to most runtime library calls for consistency with
+  the C11 `aligned_alloc` prototype.
+- Support for struct and string types in unions.
+- Add missing `_create` method on table union member fields.
+- Add `_clone` and `_clone_as_[typed_]root[_with_size]` methods on structs.
+  `_clone` was already supported on structs inlined in table fields.
+- Fix harmless but space consuming overalignment of union types.
+- Add `flatbuffers_union_type_t` with `flatbuffers_union_type_vec` operations.
+- Fix scoping bug on union types in JSON parser: symbolic names of the form
+  `MyUnion.MyUnionMember` were not accepted on a union type field but
+  `MyNamespace.MyUnion.MyMember` and `MyMember` was supported. This has been
+  fixed so all forms are valid. Plain enums did not have this issue.
+- Place type identifiers early in generated `_reader.h` file to avoid
+  circular reference issue with nested buffers when nested buffer type
+  is placed after referencing table in schema.
+- Fix verify bug on struct buffers - and in test case - not affecting
+  ordinary buffers with table as root.
+
 ## [0.4.3]
 - Fix issue with initbuild.sh for custom builds (#43)
 - Add casts to aid clean C++ builds (#47)

@@ -126,10 +126,9 @@ int encode(flatcc_jsonbench_t *bench, void *buffer, size_t *size)
     // flatcc_json_printer_set_noenum(&bench->printer, 1);
     // flatcc_json_printer_set_unquoted(&bench->printer, 1);
     ret = flatbench_print_json(&bench->printer, bench->bin, bench->bin_size);
-    flatcc_json_printer_flush(&bench->printer);
-    *size = bench->printer.total;
+    *size = flatcc_json_printer_flush(&bench->printer);
 
-    return ret;
+    return ret < 0 ? ret : 0;
 }
 
 int64_t decode(flatcc_jsonbench_t *bench, void *buffer, size_t size, int64_t sum)

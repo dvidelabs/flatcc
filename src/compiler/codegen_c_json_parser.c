@@ -54,14 +54,14 @@ static int gen_json_parser_pretext(fb_output_t *out)
     println(out, "");
     println(out, "#include \"flatcc/flatcc_json_parser.h\"");
     fb_gen_c_includes(out, "_json_parser.h", "_JSON_PARSER_H");
-    gen_pragma_push(out);
+    gen_prologue(out);
     println(out, "");
     return 0;
 }
 
 static int gen_json_parser_footer(fb_output_t *out)
 {
-    gen_pragma_pop(out);
+    gen_epilogue(out);
     println(out, "#endif /* %s_JSON_PARSER_H */", out->S->basenameup);
     return 0;
 }
@@ -225,6 +225,13 @@ static int dict_cmp(const void *x, const void *y)
     return k ? k : a->len - b->len;
 }
 
+/* Includes union vectors. */
+static inline int is_union_member(fb_member_t *member)
+{
+    return (member->type.type == vt_compound_type_ref || member->type.type == vt_vector_compound_type_ref)
+            && member->type.ct->symbol.kind == fb_is_union;
+}
+
 static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
 {
     fb_symbol_t *sym;
@@ -234,6 +241,7 @@ static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
     char *strbuf = 0;
     int strbufsiz = 0;
     int is_union;
+    int union_index = 0;
 
     n = 0;
     for (sym = ct->members; sym; sym = sym->link) {
@@ -241,8 +249,7 @@ static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
         if (member->metadata_flags & fb_f_deprecated) {
             continue;
         }
-        is_union = member->type.type == vt_compound_type_ref
-                && member->type.ct->symbol.kind == fb_is_union;
+        is_union = is_union_member(member);
         if (is_union) {
             ++n;
             strbufsiz += member->symbol.ident->len + 6;
@@ -269,9 +276,9 @@ static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
         de->data = member;
         de->hint = 0;
         ++de;
-        is_union = member->type.type == vt_compound_type_ref
-                && member->type.ct->symbol.kind == fb_is_union;
+        is_union = is_union_member(member);
         if (is_union) {
+            member->export_index = union_index++;
             de->len = member->symbol.ident->len + 5;
             de->text = strbuf;
             memcpy(strbuf, member->symbol.ident->text, member->symbol.ident->len);
@@ -404,6 +411,10 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     int is_table = 0;
     int is_struct = 0;
     int is_union = 0;
+    int is_union_vector = 0;
+    int is_union_type_vector = 0;
+    int is_base64 = 0;
+    int is_base64url = 0;
     int is_nested = 0;
     int st = 0;
     const char *tname_prefix = "n/a", *tname = "n/a"; /* suppress compiler warnigns */
@@ -441,14 +452,34 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     case vt_vector_type:
         /* Nested types are processed twice, once as an array, once as an object. */
         is_nested = member->nest != 0;
+        is_base64 = member->metadata_flags & fb_f_base64;
+        is_base64url = member->metadata_flags & fb_f_base64url;
         /* Fall through. */
     case vt_scalar_type:
         is_scalar = 1;
         st = member->type.st;
         break;
     }
+    if (is_base64 || is_base64url) {
+        /* Even if it is nested, parse it as a regular base64 or base64url encoded vector. */
+        if (st != fb_ubyte || !is_vector) {
+            gen_panic(out, "internal error: unexpected base64 or base64url field type\n");
+            return -1;
+        }
+        is_nested = 0;
+        is_vector = 0;
+        is_scalar = 0;
+    }
     if (is_union_type) {
         is_scalar = 0;
+    }
+    if (is_vector && is_union_type) {
+        is_union_type_vector = 1;
+        is_vector = 0;
+    }
+    if (is_vector && is_union) {
+        is_union_vector = 1;
+        is_vector = 0;
     }
 
     if (is_nested == 1) {
@@ -493,7 +524,7 @@ repeat_nested:
         println(out, "static flatcc_json_parser_integral_symbol_f *symbolic_parsers[] = {");
         indent(); indent();
         /*
-         * The scopename may be empty when no namespace is used. In that
+         * The scope name may be empty when no namespace is used. In that
          * case the global scope is the same, but performance the
          * duplicate doesn't matter.
          */
@@ -517,8 +548,8 @@ repeat_nested:
     } else if (is_struct && !is_vector) {
         /* Same logic as scalars in tables, but scalars must be tested for default. */
         println(out,
-            "if (!(pval = flatcc_builder_table_add(ctx->ctx, %"PRIu64", %"PRIu64", %hu))) goto failed;",
-            (uint64_t)member->id, (uint64_t)member->size, (short)member->align);
+            "if (!(pval = flatcc_builder_table_add(ctx->ctx, %"PRIu64", %"PRIu64", %"PRIu16"))) goto failed;",
+            (uint64_t)member->id, (uint64_t)member->size, (uint16_t)member->align);
     }
     if (is_scalar) {
         println(out, "buf = flatcc_json_parser_%s(ctx, (mark = buf), end, &val);", tname_prefix);
@@ -526,7 +557,7 @@ repeat_nested:
         println(out, "buf = flatcc_json_parser_symbolic_%s(ctx, (mark = buf), end, symbolic_parsers, &val);", tname_prefix);
         println(out, "if (buf == mark || buf == end) goto failed;");
         unindent(); println(out, "}");
-        if (!is_struct_container && !is_vector) {
+        if (!is_struct_container && !is_vector && !is_base64 && !is_base64url) {
 #if !FLATCC_JSON_PARSE_FORCE_DEFAULTS
             /* We need to create a check for the default value and create a table field if not the default. */
             switch(member->value.type) {
@@ -542,7 +573,7 @@ repeat_nested:
                  * if the field type is a 32-bit single precision float
                  * we might not print the exact value and thus we cannot
                  * test exactly for default - but then we store a value
-                 * close to the defualt, or get a default close to the
+                 * close to the default, or get a default close to the
                  * value. The same problem exists in the generated
                  * builder. Regardless, there is also truncation and
                  * rounding when parsing the original default value from
@@ -571,16 +602,22 @@ repeat_nested:
             unindent(); println(out, "}");
         }
     } else if (is_struct) {
-            println(out, "buf = %s_parse_json_struct(ctx, buf, end, pval);", snref.text);
+            println(out, "buf = %s_parse_json_struct_inline(ctx, buf, end, pval);", snref.text);
     } else if (is_string) {
         println(out, "buf = flatcc_json_parser_build_string(ctx, buf, end, &ref);");
+    } else if (is_base64 || is_base64url) {
+        println(out, "buf = flatcc_json_parser_build_uint8_vector_base64(ctx, buf, end, &ref, %u);",
+                !is_base64);
     } else if (is_table) {
-        println(out, "buf = %s_parse_json_table(ctx, buf, end);", snref.text);
-        println(out, "if (buf == end) goto failed;");
-        println(out, "ref = flatcc_builder_end_table(ctx->ctx);");
+        println(out, "buf = %s_parse_json_table(ctx, buf, end, &ref);", snref.text);
     } else if (is_union) {
-        println(out, "buf = flatcc_json_parser_union(ctx, buf, end, %"PRIu64", %"PRIu64", %s_parse_json_union);",
+        if (is_union_vector) {
+            println(out, "buf = flatcc_json_parser_union_vector(ctx, buf, end, %"PRIu64", %"PRIu64", h_unions, %s_parse_json_union);",
                 (uint64_t)member->export_index, member->id, snref.text);
+        } else {
+            println(out, "buf = flatcc_json_parser_union(ctx, buf, end, %"PRIu64", %"PRIu64", h_unions, %s_parse_json_union);",
+                (uint64_t)member->export_index, member->id, snref.text);
+        }
     } else if (is_union_type) {
         println(out, "static flatcc_json_parser_integral_symbol_f *symbolic_parsers[] = {");
         indent(); indent();
@@ -588,8 +625,13 @@ repeat_nested:
         println(out, "%s_local_%sjson_parser_enum,", out->S->basename, scope_name);
         println(out, "%s_global_json_parser_enum, 0 };", out->S->basename);
         unindent(); unindent();
-        println(out, "buf = flatcc_json_parser_union_type(ctx, buf, end, %"PRIu64", %"PRIu64", symbolic_parsers, %s_parse_json_union);",
+        if (is_union_type_vector) {
+        println(out, "buf = flatcc_json_parser_union_type_vector(ctx, buf, end, %"PRIu64", %"PRIu64", h_unions, symbolic_parsers, %s_parse_json_union, %s_json_union_accept_type);",
+                (uint64_t)member->export_index, member->id, snref.text, snref.text);
+        } else {
+            println(out, "buf = flatcc_json_parser_union_type(ctx, buf, end, %"PRIu64", %"PRIu64", h_unions, symbolic_parsers, %s_parse_json_union);",
                 (uint64_t)member->export_index, member->id, snref.text);
+        }
     } else if (!is_vector) {
         gen_panic(out, "internal error: unexpected type for trie member\n");
         return -1;
@@ -597,7 +639,7 @@ repeat_nested:
     if (is_vector) {
         if (is_offset) {
             /* Deal with table and string vector elements - unions cannot be elements. */
-            println(out, "if (!(pref = flatcc_builder_extend_offset_vector(ctx->ctx, 1))) goto failed;");
+            println(out, "if (!ref || !(pref = flatcc_builder_extend_offset_vector(ctx->ctx, 1))) goto failed;");
             /* We don't need to worry about endian conversion - offsets vectors fix this automatically. */
             println(out, "*pref = ref;");
         }
@@ -618,7 +660,7 @@ repeat_nested:
         println(out, "ref = flatcc_builder_end_buffer(ctx->ctx, ref);");
         unindent(); println(out, "} /* end nested */");
     }
-    if (is_nested || is_vector || is_table || is_string) {
+    if (is_nested || is_vector || is_table || is_string || is_base64 || is_base64url) {
         println(out, "if (!ref || !(pref = flatcc_builder_table_add_offset(ctx->ctx, %"PRIu64"))) goto failed;", member->id);
         println(out, "*pref = ref;");
     }
@@ -1017,7 +1059,7 @@ static void gen_trie(fb_output_t *out, trie_t *trie, int a, int b, int pos)
     }
     if (x <= b) {
         gen_trie(out, trie, x, b, pos);
-    } else {
+    } else if (a >= k) {
         trie->gen_unmatched(out);
     }
     if (prefix_guard) {
@@ -1249,7 +1291,7 @@ static int gen_enum_parser(fb_output_t *out, fb_compound_type_t *ct)
  * in. As long as we get input from our own parser we should, however,
  * be reasonable safe as nesting is bounded.
  */
-static int gen_struct_parser(fb_output_t *out, fb_compound_type_t *ct)
+static int gen_struct_parser_inline(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_scoped_name_t snt;
     int n;
@@ -1268,7 +1310,7 @@ static int gen_struct_parser(fb_output_t *out, fb_compound_type_t *ct)
 
     fb_clear(snt);
     fb_compound_name(ct, &snt);
-    println(out, "static const char *%s_parse_json_struct(flatcc_json_parser_t *ctx, const char *buf, const char *end, void *struct_base)", snt.text);
+    println(out, "static const char *%s_parse_json_struct_inline(flatcc_json_parser_t *ctx, const char *buf, const char *end, void *struct_base)", snt.text);
     println(out, "{"); indent();
     println(out, "int more;");
     if (n > 0) {
@@ -1304,10 +1346,38 @@ static int gen_struct_parser(fb_output_t *out, fb_compound_type_t *ct)
     return 0;
 }
 
-/*
- * The table end call is omitted in the builder such that callee
- * can do this and get the table reference when and where it is needed.
- */
+static int gen_struct_parser(fb_output_t *out, fb_compound_type_t *ct)
+{
+    fb_scoped_name_t snt;
+
+    assert(ct->symbol.kind == fb_is_struct);
+    fb_clear(snt);
+    fb_compound_name(ct, &snt);
+    println(out, "static const char *%s_parse_json_struct(flatcc_json_parser_t *ctx, const char *buf, const char *end, flatcc_builder_ref_t *result)", snt.text);
+    println(out, "{"); indent();
+    println(out, "void *pval;");
+    println(out, "");
+    println(out, "*result = 0;");
+    println(out, "if (!(pval = flatcc_builder_start_struct(ctx->ctx, %"PRIu64", %"PRIu16"))) goto failed;",
+            (uint64_t)ct->size, (uint16_t)ct->align);
+    println(out, "buf = %s_parse_json_struct_inline(ctx, buf, end, pval);", snt.text);
+    println(out, "if (buf == end || !(*result = flatcc_builder_end_struct(ctx->ctx))) goto failed;");
+    println(out, "return buf;");
+    margin();
+    println(out, "failed:");
+    unmargin();
+    println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);");
+    unindent(); println(out, "}");
+    println(out, "");
+    println(out, "static inline int %s_parse_json_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx, const char *buf, size_t bufsiz, int flags, const char *fid)", snt.text);
+    println(out, "{"); indent();
+    println(out, "return flatcc_json_parser_struct_as_root(B, ctx, buf, bufsiz, flags, fid, %s_parse_json_struct);",
+            snt.text);
+    unindent(); println(out, "}");
+    println(out, "");
+    return 0;
+}
+
 static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_scoped_name_t snt;
@@ -1329,17 +1399,12 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
 
     trie.union_total = 0;
     for (i = 0; i < n; ++i) {
-        member = trie.dict[i].data;
-        is_union = member->type.type == vt_compound_type_ref
-            && member->type.ct->symbol.kind == fb_is_union;
-        if (is_union) {
-            member->export_index = trie.union_total++;
-        }
+        trie.union_total += !!trie.dict[i].hint;
     }
 
     fb_clear(snt);
     fb_compound_name(ct, &snt);
-    println(out, "static const char *%s_parse_json_table(flatcc_json_parser_t *ctx, const char *buf, const char *end)", snt.text);
+    println(out, "static const char *%s_parse_json_table(flatcc_json_parser_t *ctx, const char *buf, const char *end, flatcc_builder_ref_t *result)", snt.text);
     println(out, "{"); indent();
     println(out, "int more;");
 
@@ -1349,12 +1414,15 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
         println(out, "const char *mark;");
         println(out, "uint64_t w;");
     }
+    if (trie.union_total) {
+        println(out, "size_t h_unions;");
+    }
     println(out, "");
-
+    println(out, "*result = 0;");
     println(out, "if (flatcc_builder_start_table(ctx->ctx, %"PRIu64")) goto failed;",
         ct->count);
     if (trie.union_total) {
-        println(out, "if (end == flatcc_json_parser_prepare_unions(ctx, buf, end, %"PRIu64")) goto failed;", (uint64_t)trie.union_total);
+        println(out, "if (end == flatcc_json_parser_prepare_unions(ctx, buf, end, %"PRIu64", &h_unions)) goto failed;", (uint64_t)trie.union_total);
     }
     println(out, "buf = flatcc_json_parser_object_start(ctx, buf, end, &more);");
     println(out, "while (more) {"); indent();
@@ -1368,13 +1436,13 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
     }
     println(out, "buf = flatcc_json_parser_object_end(ctx, buf, end, &more);");
     unindent(); println(out, "}");
+    println(out, "if (ctx->error) goto failed;");
     for (first = 1, i = 0; i < n; ++i) {
         member = trie.dict[i].data;
         if (member->metadata_flags & fb_f_deprecated) {
             continue;
         }
-        is_union = member->type.type == vt_compound_type_ref &&
-                member->type.ct->symbol.kind == fb_is_union;
+        is_union = is_union_member(member);
         is_required = member->metadata_flags & fb_f_required;
         if (is_required) {
             if (first) {
@@ -1393,8 +1461,9 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
         unindent(); println(out, "}");
     }
     if (trie.union_total) {
-        println(out, "buf = flatcc_json_parser_finalize_unions(ctx, buf, end);");
+        println(out, "buf = flatcc_json_parser_finalize_unions(ctx, buf, end, h_unions);");
     }
+    println(out, "if (!(*result = flatcc_builder_end_table(ctx->ctx))) goto failed;");
     println(out, "return buf;");
     /* Set runtime error if no other error was set already. */
     margin();
@@ -1403,43 +1472,69 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);");
     unindent(); println(out, "}");
     println(out, "");
+    println(out, "static inline int %s_parse_json_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx, const char *buf, size_t bufsiz, int flags, const char *fid)", snt.text);
+    println(out, "{"); indent();
+    println(out, "return flatcc_json_parser_table_as_root(B, ctx, buf, bufsiz, flags, fid, %s_parse_json_table);",
+            snt.text);
+    unindent(); println(out, "}");
+    println(out, "");
     clear_dict(trie.dict);
     return 0;
 }
 
-/*
- * Like ordinary tables, the table end call is not executed such that
- * callee can get the reference by ending the table.
- */
 static int gen_union_parser(fb_output_t *out, fb_compound_type_t *ct)
 {
     fb_scoped_name_t snt, snref;
     fb_symbol_t *sym;
     fb_member_t *member;
+    int n;
+    const char *s;
 
     fb_clear(snt);
     fb_clear(snref);
     fb_compound_name(ct, &snt);
-    println(out, "static const char *%s_parse_json_union(flatcc_json_parser_t *ctx, const char *buf, const char *end, uint8_t type, flatbuffers_voffset_t id)", snt.text);
+    println(out, "static const char *%s_parse_json_union(flatcc_json_parser_t *ctx, const char *buf, const char *end, uint8_t type, flatcc_builder_ref_t *result)", snt.text);
     println(out, "{"); indent();
-    println(out, "flatcc_builder_ref_t ref, *pref;");
-    println(out, "uint8_t *ptype;");
     println(out, "");
+    println(out, "*result = 0;");
     println(out, "switch (type) {");
-    println(out, "case 0:"); indent();
-    println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_union_none);"); unindent();
+    println(out, "case 0: /* NONE */"); indent();
+    println(out, "return flatcc_json_parser_none(ctx, buf, end);");
+    unindent();
     for (sym = ct->members; sym; sym = sym->link) {
         member = (fb_member_t *)sym;
-        if (member->type.type == vt_missing) {
+        symbol_name(sym, &n, &s);
+        switch (member->type.type) {
+        case vt_missing:
             /* NONE is of type vt_missing and already handled. */
             continue;
+        case vt_compound_type_ref:
+            fb_compound_name(member->type.ct, &snref);
+            println(out, "case %u: /* %.*s */", (unsigned)member->value.u, n, s); indent();
+            switch (member->type.ct->symbol.kind) {
+            case fb_is_table:
+                println(out, "buf = %s_parse_json_table(ctx, buf, end, result);", snref.text);
+                break;
+            case fb_is_struct:
+                println(out, "buf = %s_parse_json_struct(ctx, buf, end, result);", snref.text);
+                break;
+            default:
+                gen_panic(out, "internal error: unexpected compound union member type\n");
+                return -1;
+            }
+            println(out, "break;");
+            unindent();
+            continue;
+        case vt_string_type:
+            println(out, "case %u: /* %.*s */", (unsigned)member->value.u, n, s); indent();
+            println(out, "buf = flatcc_json_parser_build_string(ctx, buf, end, result);");
+            println(out, "break;");
+            unindent();
+            continue;
+        default:
+            gen_panic(out, "internal error: unexpected union member type\n");
+            return -1;
         }
-        assert(member->type.type == vt_compound_type_ref);
-        fb_compound_name(member->type.ct, &snref);
-        println(out, "case %u:", (unsigned)member->value.u); indent();
-        println(out, "buf = %s_parse_json_table(ctx, buf, end);", snref.text);
-        println(out, "break;");
-        unindent();
     }
     /* Unknown union, but not an error if we allow schema forwarding. */
     println(out, "default:"); indent();
@@ -1449,18 +1544,42 @@ static int gen_union_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "return flatcc_json_parser_generic_json(ctx, buf, end);");
     unindent(); println(out, "}");
     unindent(); println(out, "}");
-    println(out, "if (buf != end) {"); indent();
-    println(out, "if(!(ref = flatcc_builder_end_table(ctx->ctx))) goto failed;");
-    println(out, "if (!(pref = flatcc_builder_table_add_offset(ctx->ctx, id))) goto failed;");
-    println(out, "*pref = ref;");
-    println(out, "if (!(ptype = (uint8_t *)flatcc_builder_table_add(ctx->ctx, id - 1, 1, 1))) goto failed;");
-    println(out, "*ptype = type;");
+    println(out, "if (ctx->error) return buf;");
+    println(out, "if (!*result) {");
+    indent(); println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);");
     unindent(); println(out, "}");
     println(out, "return buf;");
-    margin();
-    println(out, "failed:");
-    unmargin();
-    println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);");
+    unindent(); println(out, "}");
+    println(out, "");
+    return 0;
+}
+
+static int gen_union_accept_type(fb_output_t *out, fb_compound_type_t *ct)
+{
+    fb_scoped_name_t snt, snref;
+    fb_symbol_t *sym;
+    fb_member_t *member;
+    int n;
+    const char *s;
+
+    fb_clear(snt);
+    fb_clear(snref);
+    fb_compound_name(ct, &snt);
+    println(out, "static int %s_json_union_accept_type(uint8_t type)", snt.text);
+    println(out, "{"); indent();
+    println(out, "switch (type) {");
+    for (sym = ct->members; sym; sym = sym->link) {
+        member = (fb_member_t *)sym;
+        symbol_name(sym, &n, &s);
+        if (member->type.type == vt_missing) {
+            println(out, "case 0: return 1; /* NONE */");
+            continue;
+        }
+        println(out, "case %u: return 1; /* %.*s */", (unsigned)member->value.u, n, s);
+    }
+    /* Unknown union, but not an error if we allow schema forwarding. */
+    println(out, "default: return 0;"); indent();
+    unindent(); println(out, "}");
     unindent(); println(out, "}");
     println(out, "");
     return 0;
@@ -1501,11 +1620,10 @@ static int gen_root_table_parser(fb_output_t *out, fb_compound_type_t *ct)
     } else {
         println(out, "if (flatcc_builder_start_buffer(B, 0, 0, 0)) return -1;");
     }
-    println(out, "%s_parse_json_table(ctx, buf, buf + bufsiz);", snt.text);
+    println(out, "%s_parse_json_table(ctx, buf, buf + bufsiz, &root);", snt.text);
     println(out, "if (ctx->error) {"); indent();
     println(out, "return ctx->error;");
     unindent(); println(out, "}");
-    println(out, "root = flatcc_builder_end_table(B);");
     println(out, "if (!flatcc_builder_end_buffer(B, root)) return -1;");
     println(out, "ctx->end_loc = buf;");
     println(out, "return 0;");
@@ -1537,11 +1655,10 @@ static int gen_root_struct_parser(fb_output_t *out, fb_compound_type_t *ct)
     } else {
         println(out, "if (flatcc_builder_start_buffer(B, 0, 0, 0)) return -1;");
     }
-    println(out, "buf = %s_parse_json_struct(ctx, buf, buf + bufsiz);", snt.text);
+    println(out, "buf = %s_parse_json_struct(ctx, buf, buf + bufsiz, &root);", snt.text);
     println(out, "if (ctx->error) {"); indent();
     println(out, "return ctx->error;");
     unindent(); println(out, "}");
-    println(out, "root = flatcc_builder_end_struct(B);");
     println(out, "if (!flatcc_builder_end_buffer(B, root)) return -1;");
     println(out, "ctx->end_loc = buf;");
     println(out, "return 0;");
@@ -1605,7 +1722,8 @@ static int gen_json_parser_prototypes(fb_output_t *out)
         switch (sym->kind) {
         case fb_is_union:
             fb_compound_name((fb_compound_type_t *)sym, &snt);
-            println(out, "static const char *%s_parse_json_union(flatcc_json_parser_t *ctx, const char *buf, const char *end, uint8_t type, flatbuffers_voffset_t id);", snt.text);
+            println(out, "static const char *%s_parse_json_union(flatcc_json_parser_t *ctx, const char *buf, const char *end, uint8_t type, flatcc_builder_ref_t *pref);", snt.text);
+            println(out, "static int %s_json_union_accept_type(uint8_t type);", snt.text);
             /* A union also has an enum parser to get the type. */
             println(out, "static const char *%s_parse_json_enum(flatcc_json_parser_t *ctx, const char *buf, const char *end,", snt.text);
             indent(); indent();
@@ -1614,11 +1732,12 @@ static int gen_json_parser_prototypes(fb_output_t *out)
             break;
         case fb_is_struct:
             fb_compound_name((fb_compound_type_t *)sym, &snt);
-            println(out, "static const char *%s_parse_json_struct(flatcc_json_parser_t *ctx, const char *buf, const char *end, void *struct_base);", snt.text);
+            println(out, "static const char *%s_parse_json_struct_inline(flatcc_json_parser_t *ctx, const char *buf, const char *end, void *struct_base);", snt.text);
+            println(out, "static const char *%s_parse_json_struct(flatcc_json_parser_t *ctx, const char *buf, const char *end, flatcc_builder_ref_t *result);", snt.text);
             break;
         case fb_is_table:
             fb_compound_name((fb_compound_type_t *)sym, &snt);
-            println(out, "static const char *%s_parse_json_table(flatcc_json_parser_t *ctx, const char *buf, const char *end);", snt.text);
+            println(out, "static const char *%s_parse_json_table(flatcc_json_parser_t *ctx, const char *buf, const char *end, flatcc_builder_ref_t *result);", snt.text);
             break;
         case fb_is_enum:
             fb_compound_name((fb_compound_type_t *)sym, &snt);
@@ -1646,9 +1765,11 @@ static int gen_json_parsers(fb_output_t *out)
         switch (sym->kind) {
         case fb_is_union:
             gen_union_parser(out, (fb_compound_type_t *)sym);
+            gen_union_accept_type(out, (fb_compound_type_t *)sym);
             gen_enum_parser(out, (fb_compound_type_t *)sym);
             break;
         case fb_is_struct:
+            gen_struct_parser_inline(out, (fb_compound_type_t *)sym);
             gen_struct_parser(out, (fb_compound_type_t *)sym);
             break;
         case fb_is_table:

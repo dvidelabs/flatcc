@@ -1,6 +1,10 @@
 #ifndef FLATCC_JSON_PRINTER_H
 #define FLATCC_JSON_PRINTER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Definitions for default implementation, do not assume these are
  * always valid.
@@ -317,6 +321,12 @@ static inline void flatcc_json_printer_flush_partial(flatcc_json_printer_t *ctx)
     }
 }
 
+/* Returns the total printed size but flushed and in buffer. */
+static inline size_t flatcc_json_printer_total(flatcc_json_printer_t *ctx)
+{
+    return (size_t)(ctx->total + (ctx->p - ctx->buf));
+}
+
 /*
  * Flush the remaining data not flushed by partial flush. It is valid to
  * call at any point if it is acceptable to have unaligned flush units,
@@ -337,7 +347,7 @@ static inline void flatcc_json_printer_flush_partial(flatcc_json_printer_t *ctx)
 static inline size_t flatcc_json_printer_flush(flatcc_json_printer_t *ctx)
 {
     ctx->flush(ctx, 1);
-    return ctx->total;
+    return flatcc_json_printer_total(ctx);
 }
 
 /*
@@ -451,13 +461,25 @@ struct flatcc_json_printer_table_descriptor {
     int count;
 };
 
+typedef struct flatcc_json_printer_union_descriptor flatcc_json_printer_union_descriptor_t;
+
+struct flatcc_json_printer_union_descriptor {
+    const void *member;
+    int ttl;
+    uint8_t type;
+};
+
 typedef void flatcc_json_printer_table_f(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td);
 
 typedef void flatcc_json_printer_struct_f(flatcc_json_printer_t *ctx,
         const void *p);
 
+typedef void flatcc_json_printer_union_f(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_union_descriptor_t *ud);
+
 /* Generated value to name map callbacks. */
+typedef void flatcc_json_printer_union_type_f(flatcc_json_printer_t *ctx, flatbuffers_utype_t type);
 typedef void flatcc_json_printer_uint8_enum_f(flatcc_json_printer_t *ctx, uint8_t v);
 typedef void flatcc_json_printer_uint16_enum_f(flatcc_json_printer_t *ctx, uint16_t v);
 typedef void flatcc_json_printer_uint32_enum_f(flatcc_json_printer_t *ctx, uint32_t v);
@@ -569,6 +591,10 @@ __define_print_enum_vector_field_proto(int32, int32_t)
 __define_print_enum_vector_field_proto(int64, int64_t)
 __define_print_enum_vector_field_proto(bool, flatbuffers_bool_t)
 
+void flatcc_json_printer_uint8_vector_base64_field(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_table_descriptor_t *td,
+        int id, const char *name, int len, int urlsafe);
+
 /*
  * If `fid` is null, the identifier is not checked and is allowed to be
  * entirely absent.
@@ -639,6 +665,12 @@ void flatcc_json_printer_table_vector_field(flatcc_json_printer_t *ctx,
         int id, const char *name, int len,
         flatcc_json_printer_table_f pf);
 
+void flatcc_json_printer_union_vector_field(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_table_descriptor_t *td,
+        int id, const char *name, int len,
+        flatcc_json_printer_union_type_f ptf,
+        flatcc_json_printer_union_f pf);
+
 void flatcc_json_printer_struct_as_nested_root(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
         int id, const char *name, int len,
@@ -651,13 +683,25 @@ void flatcc_json_printer_table_as_nested_root(flatcc_json_printer_t *ctx,
         const char *fid,
         flatcc_json_printer_table_f pf);
 
-int flatcc_json_printer_read_union_type(
+void flatcc_json_printer_union_field(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
-        int id);
+        int id, const char *name, int len,
+        flatcc_json_printer_union_type_f ptf,
+        flatcc_json_printer_union_f pf);
 
-void flatcc_json_printer_union_type(flatcc_json_printer_t *ctx,
-        flatcc_json_printer_table_descriptor_t *td,
-        const char *name, int len, int type,
-        const char *type_name, int type_len);
+void flatcc_json_printer_union_table(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_union_descriptor_t *ud,
+        flatcc_json_printer_table_f pf);
+
+void flatcc_json_printer_union_struct(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_union_descriptor_t *ud,
+        flatcc_json_printer_struct_f pf);
+
+void flatcc_json_printer_union_string(flatcc_json_printer_t *ctx,
+        flatcc_json_printer_union_descriptor_t *ud);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FLATCC_JSON_PRINTER_H */

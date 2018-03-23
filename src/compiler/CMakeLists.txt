@@ -28,6 +28,7 @@ set (SOURCES
     # needed for building binary schema
     ../runtime/builder.c
     ../runtime/emitter.c
+    ../runtime/refmap.c
 )
 
 if (FLATCC_REFLECTION)

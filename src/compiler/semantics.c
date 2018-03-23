@@ -4,6 +4,12 @@
 #include "semantics.h"
 #include "parser.h"
 #include "coerce.h"
+#include "stdio.h"
+
+/* -DFLATCC_PORTABLE may help if inttypes.h is missing. */
+#ifndef PRId64
+#include <inttypes.h>
+#endif
 
 /* Same order as enum! */
 static const char *fb_known_attribute_names[] = {
@@ -16,11 +22,13 @@ static const char *fb_known_attribute_names[] = {
     "nested_flatbuffer",
     "key",
     "required",
-    "hash"
+    "hash",
+    "base64",
+    "base64url",
 };
 
 static const int fb_known_attribute_types[] = {
-    vt_invalid, /* Uknowns have arbitrary types. */
+    vt_invalid, /* Unknowns have arbitrary types. */
     vt_uint,
     vt_missing,
     vt_missing,
@@ -29,32 +37,44 @@ static const int fb_known_attribute_types[] = {
     vt_string,
     vt_missing,
     vt_missing,
-    vt_string
+    vt_string,
+    vt_missing,
+    vt_missing,
 };
 
 static fb_scalar_type_t map_scalar_token_type(fb_token_t *t)
 {
     switch (t->id) {
+    case tok_kw_uint64:
     case tok_kw_ulong:
         return fb_ulong;
+    case tok_kw_uint32:
     case tok_kw_uint:
         return fb_uint;
+    case tok_kw_uint16:
     case tok_kw_ushort:
         return fb_ushort;
+    case tok_kw_uint8:
     case tok_kw_ubyte:
         return fb_ubyte;
     case tok_kw_bool:
         return fb_bool;
+    case tok_kw_int64:
     case tok_kw_long:
         return fb_long;
+    case tok_kw_int32:
     case tok_kw_int:
         return fb_int;
+    case tok_kw_int16:
     case tok_kw_short:
         return fb_short;
+    case tok_kw_int8:
     case tok_kw_byte:
         return fb_byte;
+    case tok_kw_float64:
     case tok_kw_double:
         return fb_double;
+    case tok_kw_float32:
     case tok_kw_float:
         return fb_float;
     default:
@@ -168,6 +188,39 @@ static inline int is_in_value_set(fb_value_set_t *vs, fb_value_t *value)
     return 0 != fb_value_set_find_item(vs, value);
 }
 
+/*
+ * An immediate parent scope does not necessarily exist and it might
+ * appear in a later search, so we return the nearest existing parent
+ * and do not cache the parent.
+ */
+static inline fb_scope_t *find_parent_scope(fb_parser_t *P, fb_scope_t *scope) 
+{
+    fb_ref_t *p;
+    int count;
+    fb_scope_t *parent;
+
+    parent = 0;
+    count = 0;
+    if (scope == 0) {
+        return 0;
+    }
+    p = scope->name;
+    while (p) {
+        ++count;
+        p = p->link;
+    }
+    if (count == 0) {
+        return 0;
+    }
+    while (count-- > 1) {
+        if ((parent = fb_find_scope_by_ref(&P->schema, scope->name, count))) {
+            return parent;
+        }
+    }
+    /* Root scope. */
+    return fb_find_scope_by_ref(&P->schema, 0, 0);
+}
+
 static inline fb_symbol_t *lookup_string_reference(fb_parser_t *P, fb_scope_t *local, const char *s, int len)
 {
     fb_symbol_t *sym;
@@ -187,9 +240,15 @@ static inline fb_symbol_t *lookup_string_reference(fb_parser_t *P, fb_scope_t *l
     }
     len -= k;
     if (local && k == 0) {
-        if ((sym = fb_symbol_table_find(&local->symbol_index, basename, len))) {
-            return sym;
-        }
+        do {
+            if ((sym = fb_symbol_table_find(&local->symbol_index, basename, len))) {
+                if (get_compound_if_visible(&P->schema, sym)) {
+                    return sym;
+                }
+            }
+            local = find_parent_scope(P, local);
+        } while (local);
+        return 0;
     }
     if (!(scope = fb_find_scope_by_string(&P->schema, name, k))) {
         return 0;
@@ -201,6 +260,19 @@ static inline fb_symbol_t *lookup_string_reference(fb_parser_t *P, fb_scope_t *l
  * First search the optional local scope, then the scope of the namespace prefix if any.
  * If `enumval` is non-zero, the last namepart is stored in that
  * pointer and the lookup stops before that part.
+ *
+ * If the reference is prefixed with a namespace then the scope is
+ * looked up relative to root then the basename is searched in that
+ * scope.
+ *
+ * If the refernce is not prefixed with a namespace then the name is
+ * search in the local symbol table (which may be the root if null) and
+ * if that fails, the nearest existing parent scope is used as the new
+ * local scope and the process is repeated until local is root.
+ *
+ * This means that namespace prefixes cannot be relative to a parent
+ * namespace or to the current scope, but simple names can be found in a
+ * parent namespace.
  */
 static inline fb_symbol_t *lookup_reference(fb_parser_t *P, fb_scope_t *local, fb_ref_t *name, fb_ref_t **enumval)
 {
@@ -230,11 +302,15 @@ static inline fb_symbol_t *lookup_reference(fb_parser_t *P, fb_scope_t *local, f
         return 0;
     }
     if (local && count == 1) {
-        if ((sym = find_fb_symbol_by_token(&local->symbol_index, basename->ident))) {
-            if (get_compound_if_visible(&P->schema, sym)) {
-                return sym;
+        do {
+            if ((sym = find_fb_symbol_by_token(&local->symbol_index, basename->ident))) {
+                if (get_compound_if_visible(&P->schema, sym)) {
+                    return sym;
+                }
             }
-        }
+            local = find_parent_scope(P, local);
+        } while (local);
+        return 0;
     }
     /* Null name is valid in scope lookup, indicating global scope. */
     if (count == 1) {
@@ -669,6 +745,7 @@ enum { unused_field = 0, normal_field, type_field };
 
 static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
 {
+    char msg_buf [100];
     fb_symbol_t *sym, *old, *type_sym;
     fb_member_t *member;
     fb_metadata_t *knowns[KNOWN_ATTR_COUNT], *m;
@@ -677,6 +754,9 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
     int need_id = 0, id_failed = 0;
     uint64_t max_id = 0;
     int key_ok, key_count = 0;
+    int is_union_vector;
+    uint64_t i;
+    int max_id_errors = 10;
 
     /*
      * This just tracks the presence of a `normal_field` or a hidden
@@ -712,13 +792,27 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         if (member->type.type == vt_scalar_type || member->type.type == vt_vector_type) {
             member->type.st = map_scalar_token_type(member->type.t);
         }
-        member->metadata_flags = process_metadata(P, member->metadata, fb_f_id |
-                fb_f_nested_flatbuffer | fb_f_deprecated | fb_f_key | fb_f_required | fb_f_hash, knowns);
+        member->metadata_flags = process_metadata(P, member->metadata,
+                fb_f_id | fb_f_nested_flatbuffer | fb_f_deprecated | fb_f_key |
+                fb_f_required | fb_f_hash | fb_f_base64 | fb_f_base64url, knowns);
         if ((m = knowns[fb_attr_nested_flatbuffer])) {
             define_nested_table(P, ct->scope, member, m);
         }
         if ((member->metadata_flags & fb_f_required) && member->type.type == vt_scalar_type) {
             error_sym(P, sym, "'required' attribute is redundant on scalar table field");
+        }
+        /* Note: we allow base64 and base64url with nested attribute. */
+        if ((member->metadata_flags & fb_f_base64) &&
+                (member->type.type != vt_vector_type || member->type.st != fb_ubyte)) {
+            error_sym(P, sym, "'base64' attribute is only allowed on vectors of type ubyte");
+        }
+        if ((member->metadata_flags & fb_f_base64url) &&
+                (member->type.type != vt_vector_type || member->type.st != fb_ubyte)) {
+            error_sym(P, sym, "'base64url' attribute is only allowed on vectors of type ubyte");
+        }
+        if ((member->metadata_flags & (fb_f_base64 | fb_f_base64url)) ==
+                (fb_f_base64 | fb_f_base64url)) {
+            error_sym(P, sym, "'base64' and 'base64url' attributes cannot both be set");
         }
         m = knowns[fb_attr_id];
         if (m && count == 0) {
@@ -734,7 +828,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                 member->id = (unsigned short)count;
             }
             ++count;
-        }
+        } 
         switch (member->type.type) {
         case vt_scalar_type:
             key_ok = 1;
@@ -889,9 +983,11 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             case fb_is_enum:
             case fb_is_table:
             case fb_is_struct:
+            case fb_is_union:
                 break;
             default:
-                error_sym_tok(P, sym, "vectors can only hold scalars, structs, enums, and tables", member->type.t);
+                /* Vectors of strings are handled separately but this is irrelevant to the user. */
+                error_sym_tok(P, sym, "vectors can only hold scalars, structs, enums, strings, tables, and unions", member->type.t);
                 member->type.type = vt_invalid;
                 continue;
             }
@@ -905,6 +1001,13 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             member->type.ct = (fb_compound_type_t*)type_sym;
             member->size = member->type.ct->size;
             member->align = member->type.ct->align;
+            if (type_sym->kind == fb_is_union && !id_failed) {
+                /* Hidden union type field. */
+                if (!need_id) {
+                    member->id = (unsigned short)count;
+                }
+                ++count;
+            }
             break;
         default:
             error_sym(P, sym, "unexpected table field type encountered");
@@ -948,14 +1051,21 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                 field_marker[member->id] = normal_field;
             }
             if (!id_failed && type_sym && type_sym->kind == fb_is_union) {
+                is_union_vector = member->type.type == vt_vector_type_ref;
                 if (member->id <= 1) {
-                    error_tok(P, m->ident, "id attribute value should be larger to accomdate hidden union type field");
+                    error_tok(P, m->ident, is_union_vector ?
+                            "id attribute value should be larger to accomdate hidden union vector type field" :
+                            "id attribute value should be larger to accomdate hidden union type field");
                     id_failed = 1;
                 } else if (field_marker[member->id - 1] == type_field) {
-                    error_tok(P, m->ident, "hidden union field below attribute id value conflicts with another hidden type field");
+                    error_tok(P, m->ident, is_union_vector ?
+                            "hidden union vector type field below attribute id value conflicts with another hidden type field" :
+                            "hidden union type field below attribute id value conflicts with another hidden type field");
                     id_failed = 1;
                 } else if (field_marker[member->id - 1]) {
-                    error_tok(P, m->ident, "hidden union field below attribute id value conflicts with another field");
+                    error_tok(P, m->ident, is_union_vector ?
+                            "hidden union vector type field below attribute id value conflicts with another field" :
+                            "hidden union type field below attribute id value conflicts with another field");
                     id_failed = 1;
                 } else {
                     field_marker[member->id - 1] = type_field;
@@ -974,7 +1084,16 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
     }
     if (!id_failed && need_id) {
         if (count && max_id >= count) {
-            error_sym(P, &ct->symbol, "id field attribute range exceeds field count");
+            for (i = 0; i < max_id; ++i) {
+                if (field_marker[i] == 0) {
+                    if (!max_id_errors--) {
+                        error_sym(P, &ct->symbol, "... more id's missing");
+                        break;
+                    }
+                    sprintf(msg_buf,  "id range not consequtive from 0, missing id: %"PRIu64"", i);
+                    error_sym(P, &ct->symbol, msg_buf);
+                }
+            }
             id_failed = 1;
         }
     }
@@ -1198,9 +1317,12 @@ static int process_enum(fb_parser_t *P, fb_compound_type_t *ct)
             if (member->symbol.ident == &P->t_none) {
                 /* Handle implicit NONE specially. */
                 member->type.type = vt_missing;
+            } else if (member->type.type == vt_string_type) {
+				member->size = 0;
             } else if (member->type.type != vt_type_ref) {
                 if (member->type.type != vt_invalid) {
-                    error_sym_2(P, sym, "union member has unexpected type", &member->symbol);
+                    error_sym(P, sym, "union member type must be string or a reference to a table or a struct");
+                	member->type.type = vt_invalid;
                 }
                 continue;
             } else {
@@ -1210,8 +1332,8 @@ static int process_enum(fb_parser_t *P, fb_compound_type_t *ct)
                     member->type.type = vt_invalid;
                     continue;
                 } else {
-                    if (type_sym->kind != fb_is_table) {
-                        error_sym_2(P, sym, "union member must reference a table, defined here", type_sym);
+                    if (type_sym->kind != fb_is_table && type_sym->kind != fb_is_struct) {
+                        error_sym_2(P, sym, "union member type reference must be a table or a struct, defined here", type_sym);
                         member->type.type = vt_invalid;
                         continue;
                     }

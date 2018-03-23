@@ -41,6 +41,10 @@
 #ifndef GRISU3_PRINT_H
 #define GRISU3_PRINT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h> /* sprintf */
 #include <assert.h> /* assert */
 
@@ -234,5 +238,9 @@ static int grisu3_print_double(double v, char *dst)
     s2[len] = '\0'; /* grisu3 doesn't null terminate, so ensure termination. */
     return (int)(s2+len-dst);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GRISU3_PRINT_H */

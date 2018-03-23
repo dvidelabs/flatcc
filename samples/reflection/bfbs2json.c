@@ -33,7 +33,7 @@ void print_type(reflection_Type_table_t T)
         if (!first) {
             printf(",");
         }
-        printf("\"element\":\"%s\"", reflection_BaseType_name(reflection_Type_base_type(T)));
+        printf("\"element\":\"%s\"", reflection_BaseType_name(reflection_Type_element(T)));
         first = 0;
     }
     if (reflection_Type_index_is_present(T)) {
@@ -44,6 +44,30 @@ void print_type(reflection_Type_table_t T)
         first = 0;
     }
     printf("}");
+}
+
+void print_attributes(reflection_KeyValue_vec_t KV)
+{
+    size_t i;
+    reflection_KeyValue_table_t attribute;
+    const char *key, *value;
+
+    printf("[");
+    for (i = 0; i < reflection_KeyValue_vec_len(KV); ++i) {
+        attribute = reflection_KeyValue_vec_at(KV, i);
+        key = reflection_KeyValue_key(attribute);
+        value = reflection_KeyValue_value(attribute);
+        if (i > 0) {
+            printf(",");
+        }
+        printf("{\"key\":\"%s\"", key);
+        if (value) {
+            /* TODO: we ought to escape '\"' and other non-string-able characters. */
+            printf(",\"value\":\"%s\"", value);
+        }
+        printf("}");
+    }
+    printf("]");
 }
 
 void print_object(reflection_Object_table_t O)
@@ -77,6 +101,10 @@ void print_object(reflection_Object_table_t O)
         if (reflection_Field_key_is_present(F)) {
             printf(",\"key\":%s", reflection_Field_key(F) ? "true" : "false");
         }
+        if (reflection_Field_attributes_is_present(F)) {
+            printf(",\"attributes\":");
+            print_attributes(reflection_Field_attributes(F));
+        }
         printf("}");
     }
     printf("]");
@@ -88,6 +116,10 @@ void print_object(reflection_Object_table_t O)
     }
     if (reflection_Object_bytesize_is_present(O)) {
         printf(",\"bytesize\":%d", reflection_Object_bytesize(O));
+    }
+    if (reflection_Object_attributes_is_present(O)) {
+        printf(",\"attributes\":");
+        print_attributes(reflection_Object_attributes(O));
     }
     printf("}");
 }
@@ -114,6 +146,10 @@ void print_enum(reflection_Enum_table_t E)
             printf(",\"object\":");
             print_object(reflection_EnumVal_object(EV));
         }
+        if (reflection_EnumVal_union_type_is_present(EV)) {
+            printf(",\"union_type\":");
+            print_type(reflection_EnumVal_union_type(EV));
+        } 
         printf("}");
     }
     printf("]");
@@ -122,6 +158,10 @@ void print_enum(reflection_Enum_table_t E)
     }
     printf(",\"underlying_type\":");
     print_type(reflection_Enum_underlying_type(E));
+    if (reflection_Enum_attributes_is_present(E)) {
+        printf(",\"attributes\":");
+        print_attributes(reflection_Enum_attributes(E));
+    }
     printf("}");
 }
 
@@ -170,7 +210,7 @@ int load_and_dump_schema(const char *filename)
     int ret = -1;
     reflection_Schema_table_t S;
 
-    buffer = readfile(filename, 10000, &size);
+    buffer = readfile(filename, 100000, &size);
     if (!buffer) {
         fprintf(stderr, "failed to load binary schema file: '%s'\n", filename);
         goto done;

@@ -1,6 +1,10 @@
 #ifndef PWARNINGS_H
 #define PWARNINGS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * See also pdiagnostics.h headers for per file control of common
  * warnings.
@@ -40,5 +44,9 @@
 #pragma warning(disable: 4201) /* nonstandard extension used: nameless struct/union */
 
 #endif /* _MSV_VER */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PWARNINGS_H */

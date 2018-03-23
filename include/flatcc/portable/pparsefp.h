@@ -1,6 +1,10 @@
 #ifndef PPARSEFP_H
 #define PPARSEFP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Parses a float or double number and returns the length parsed if
  * successful. The length argument is of limited value due to dependency
@@ -116,4 +120,9 @@ static inline const char *parse_float(const char *buf, int len, float *result)
 }
 
 #include "pdiagnostic_pop.h"
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* PPARSEFP_H */

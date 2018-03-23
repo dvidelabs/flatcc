@@ -5,6 +5,7 @@ include_directories (
 add_library(flatccrt
     builder.c
     emitter.c
+    refmap.c
     verifier.c
     json_parser.c
     json_printer.c

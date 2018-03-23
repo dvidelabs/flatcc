@@ -26,6 +26,10 @@
 #ifndef GRISU3_PARSE_H
 #define GRISU3_PARSE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef UINT8_MAX
 #include <stdint.h>
 #endif
@@ -132,7 +136,7 @@ static int grisu3_diy_fp_cached_dec_pow(int d_exp, grisu3_diy_fp_t *p)
  *
  * but `strtod` seems to return +/-HUGE_VAL on overflow?
  */
-int grisu3_diy_fp_encode_double(uint64_t fraction, int exponent, int fraction_exp, int ulp_half_error, double *result)
+static int grisu3_diy_fp_encode_double(uint64_t fraction, int exponent, int fraction_exp, int ulp_half_error, double *result)
 {
     /*
      * Error is measures in fractions of integers, so we scale up to get
@@ -571,5 +575,9 @@ static const char *grisu3_parse_double(const char *buf, int len, double *result)
     }
     return grisu3_encode_double(mark, buf, sign, fraction, exponent, fraction_exp, ulp_half_error, result);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GRISU3_PARSE_H */
