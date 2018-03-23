@@ -11,7 +11,7 @@ clone_folder: c:\projects\flatcc
 
 environment:
   # set to true or false or absent for default for tool
-  parallel=false
+  parallel: false
   matrix:
 
    #- frontend: meson
