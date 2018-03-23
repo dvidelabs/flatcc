@@ -1,5 +1,10 @@
 version: "win#{build}"
 
+# Note: vs2017 builds cannot run on 2015 image and
+# 2017 image does not support older compilers
+# setting the following env moves the image to 2017:
+# APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#
 image: Visual Studio 2015
 
 init:
@@ -28,88 +33,110 @@ environment:
    #  toolchain: vs2010
    #  arch: x86
 
-# meson-ninja (no vs2013 support)
     - frontend: meson
-      builder: ninja
-      compiler: cl
-      toolchain: vs2015
-      arch: x64
-
-    - frontend: meson
-      builder: ninja
-      compiler: cl
-      toolchain: vs2015
-      arch: x86
-
-    - frontend: meson
-      builder: ninja
+      builder: msbuild
       compiler: cl
       toolchain: vs2017
       arch: x64
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
     - frontend: meson
-      builder: ninja
+      builder: msbuild
       compiler: cl
       toolchain: vs2017
       arch: x86
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-
-# cmake-msbuild
-
-    - frontend: cmake
-      builder: msbuild
-      compiler: cl
-      toolchain: vs2010
-      arch: x86
-
-    - frontend: cmake
-      builder: msbuild
-      compiler: cl
-      toolchain: vs2010
-      arch: x64
-
-    - frontend: cmake
-      builder: msbuild
-      compiler: cl
-      toolchain: vs2013
-      arch: x86
-
-    - frontend: cmake
-      builder: msbuild
-      compiler: cl
-      toolchain: vs2013
-      arch: x64
-
-    - frontend: cmake
-      builder: msbuild
-      compiler: cl
-      toolchain: vs2015
-      arch: x86
 
 # Most important build(s)
 
-#   builds ok
     - frontend: cmake
       builder: msbuild
       compiler: cl
-      toolchain: vs2015
+      toolchain: vs2017
+      arch: x86
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+    - frontend: cmake
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2017
       arch: x64
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
-# Tested and parked builds we do not want to run all the time
+# meson-ninja - tested and parked
+#       (no vs2013 support)
 
-#   builds ok
-#   - frontend: cmake
-#     builder: msbuild
+#   - frontend: meson
+#     builder: ninja
+#     compiler: cl
+#     toolchain: vs2015
+#     arch: x64
+
+#   - frontend: meson
+#     builder: ninja
+#     compiler: cl
+#     toolchain: vs2015
+#     arch: x86
+
+#   - frontend: meson
+#     builder: ninja
 #     compiler: cl
 #     toolchain: vs2017
 #     arch: x64
-#     Appveyor does not support vs2017 on same image as older compilers
-#     - this is a hack to work around that.
 #     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
-#   builds ok
-#   all meson-cl builds produce a harmless D9002 waring: -std=c++11 for no good reason
+#   - frontend: meson
+#     builder: ninja
+#     compiler: cl
+#     toolchain: vs2017
+#     arch: x86
+#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+
+
+# cmake-msbuild - tested and parked
+
+#   - frontend: cmake
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2010
+#     arch: x86
+
+#   - frontend: cmake
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2010
+#     arch: x64
+
+#   - frontend: cmake
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2013
+#     arch: x86
+
+#   - frontend: cmake
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2013
+#     arch: x64
+
+#   - frontend: cmake
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2015
+#     arch: x86
+
+#   - frontend: cmake
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2015
+#     arch: x64
+
+
+# meson-msbuild - tested and parked
+#       all meson-cl builds produce a harmless but unwarranted
+#       D9002 waring: -std=c++11 ignoring unknown option
+#
 #   - frontend: meson
 #     builder: msbuild
 #     compiler: cl
@@ -124,12 +151,12 @@ environment:
 #     arch: x86
 
 
-# Sub-optimal, working builds, parked
-#    TODO: cmake+clang-cl generates lots of warnings -
-#    -DFLATCC_PORTABLE is set and the CRT flag is not causing problems
-#    - build works - but apparently lots of warnings are not disabled
-#    so some detection is failing in headers or build config.  This is
-#    not really the file to fix it, but this is where it is triggered.
+# meson-ninja-clang-cl - sub-optimal parked build
+#       TODO: cmake+clang-cl generates lots of warnings -
+#       -DFLATCC_PORTABLE is set and the CRT flag is not causing problems
+#       - build works - but apparently lots of warnings are not disabled
+#       so some detection is failing in headers or build config.  This is
+#       not really the file to fix it, but this is where it is triggered.
 #   
 #   - frontend: cmake
 #     builder: ninja
@@ -144,12 +171,12 @@ environment:
 #     arch: x64
 
 
-#   Currently impossible builds
-
+# meson-ninja-clang-cl - impossible
 #   not supported as of Meson 0.45.1
+#
 #   - frontend: meson
-#     builder: ninja-cl
-#     compiler: clang
+#     builder: ninja
+#     compiler: clang-cl
 #     toolchain: vs2015
 #     arch: x64
 
@@ -232,5 +259,5 @@ build_script:
 
 test_script:
   - echo running tests
-  - if %frontend%==cmake ctest -C "%configuration%" -VV
+  - if %frontend%==cmake ctest -C "%CMAKE_BUILD_TYPE%" -VV
   - if %frontend%==meson meson test
