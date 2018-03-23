@@ -38,6 +38,7 @@ install_subdir('include/flatcc', install_dir: 'include')
 
 if get_option('flatcc_portable') or meson.get_compiler('c').get_id() == 'msvc'
     c_args = c_args + ['-DFLATCC_PORTABLE']
+    test_c_args = test_c_args + ['-DFLATCC_PORTABLE']
 endif
 
 if get_option('flatcc_debug_verify')
