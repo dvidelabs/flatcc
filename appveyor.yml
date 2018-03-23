@@ -80,11 +80,12 @@ environment:
 #     toolchain: vs2010
 #     arch: x86
 
-    - frontend: meson
-      builder: ninja
-      compiler: cl
-      toolchain: vs2010
-      arch: x64
+#    # broken - meson 0.45.1 detects this as a clang compiler and the build gets wrong flags.
+#   - frontend: meson
+#     builder: ninja
+#     compiler: cl
+#     toolchain: vs2010
+#     arch: x64
 
 #   - frontend: meson
 #     builder: ninja
