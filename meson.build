@@ -36,10 +36,7 @@ inc_dir = include_directories('include', 'config', 'external')
 
 install_subdir('include/flatcc', install_dir: 'include')
 
-if get_option('flatcc_portable') or meson.get_compiler('c').get_id() == 'msvc' or (build_machine.system() == 'windows')
-        # system() test handles clang compiler for Windows
-        # since clang-cl is not supported as of meson-0.45.1
-
+if get_option('flatcc_portable') or meson.get_compiler('c').get_id() == 'msvc'
     c_args = c_args + ['-DFLATCC_PORTABLE']
     test_c_args = test_c_args + ['-DFLATCC_PORTABLE']
 endif
