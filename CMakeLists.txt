@@ -162,7 +162,7 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
         if (FLATCC_IGNORE_CONST_COND)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-constant-out-of-range-compare")
         endif()
-    endif
+    endif()
 
     # To get assembly output
     # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -save-temps")
