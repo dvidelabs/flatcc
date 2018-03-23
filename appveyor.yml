@@ -16,7 +16,7 @@ clone_folder: c:\projects\flatcc
 
 environment:
   # set to true or false or absent for default for tool
-  parallel: false
+  parallel: true
   matrix:
 
 # Builds in development - placed early to fail fast
@@ -32,39 +32,31 @@ environment:
 #       builds commented below.
 #########################################
 
-#   - frontend: meson
-#     builder: msbuild
-#     compiler: cl
-#     toolchain: vs2017
-#     arch: x64
-#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    - frontend: meson
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2017
+      arch: x64
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
-#   - frontend: meson
-#     builder: ninja
-#     compiler: cl
-#     toolchain: vs2017
-#     arch: x64
-#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    - frontend: meson
+      builder: ninja
+      compiler: cl
+      toolchain: vs2017
+      arch: x86
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
-#   - frontend: cmake
-#     builder: msbuild
-#     compiler: cl
-#     toolchain: vs2017
-#     arch: x64
-#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    - frontend: cmake
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2015
+      arch: x64
 
-#   - frontend: cmake
-#     builder: msbuild
-#     compiler: cl
-#     toolchain: vs2010
-#     arch: x86
-
-      # this build is broken
-#   - frontend: meson
-#     builder: msbuild
-#     compiler: cl
-#     toolchain: vs2010
-#     arch: x86
+    - frontend: cmake
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2010
+      arch: x86
 
 
 #########################################
@@ -79,13 +71,6 @@ environment:
 #     compiler: cl
 #     toolchain: vs2010
 #     arch: x86
-
-#    # broken - meson 0.45.1 detects this as a clang compiler and the build gets wrong flags.
-#   - frontend: meson
-#     builder: ninja
-#     compiler: cl
-#     toolchain: vs2010
-#     arch: x64
 
 #   - frontend: meson
 #     builder: ninja
@@ -185,13 +170,6 @@ environment:
 #     toolchain: vs2010
 #     arch: x86
 
-    - frontend: meson
-      builder: msbuild
-      compiler: cl
-      toolchain: vs2010
-      arch: x64
-
-#
 #   - frontend: meson
 #     builder: msbuild
 #     compiler: cl
@@ -251,10 +229,25 @@ environment:
 #   not supported as of Meson 0.45.1
 #########################################
 #
+#       meson don't acccept clang-cl
 #   - frontend: meson
 #     builder: ninja
 #     compiler: clang-cl
 #     toolchain: vs2015
+#     arch: x64
+
+#       broken - meson 0.45.1 detects this as a clang compiler but flags are wrong
+#   - frontend: meson
+#     builder: ninja
+#     compiler: cl
+#     toolchain: vs2010
+#     arch: x64
+
+#       broken - meson 0.45.1 detects this as a clang compiler but flags are wrong
+#   - frontend: meson
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2010
 #     arch: x64
 
 configuration:
