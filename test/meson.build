@@ -47,7 +47,9 @@ subdir('benchmark/benchflatccjson')
 # As of meson 0.34 the benchmark loops over the test program incl. warmup
 # and dumps output in a condensed json file - so we add a run_target to
 # drive the test instead.
-message('Run benchmark with `ninja flatbench`, not `ninja benchmark`')
+if meson.backend() == 'ninja'
+    message('Note: run benchmark with `ninja flatbench`, not `ninja benchmark`')
+endif
 
 run_target('flatbench',
     depends: [benchflatcc, benchflatc, benchraw, benchflatccjson],
