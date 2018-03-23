@@ -141,7 +141,7 @@ before_build:
 
   - if %builder%==msbuild set SOLUTION=c:\projects\flatcc\build\flatcc.sln
   - if %builder%-%parallel%==msbuild-true set MSBUILD_PARALLEL="/m'
-  - if %builder%-%parallel%==ninja-false set NINJA_PARALLEL="-j 0"
+  - if %builder%-%parallel%==ninja-false set NINJA_PARALLEL="-j 1"
 
   - if %frontend%-%builder%==cmake-ninja cmake -G "Ninja" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
 
