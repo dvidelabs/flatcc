@@ -14,18 +14,17 @@ environment:
   parallel: false
   matrix:
 
+    - frontend: meson
+      builder: ninja
+      compiler: clang
+      toolchain: vs2015
+      arch: x64
+
     - frontend: cmake
       builder: ninja
       compiler: clang-cl
       toolchain: vs2015
       arch: x64
-
-   # Meson (0.45.1) doesn't support clang on Windows
-   #- frontend: meson
-   #  builder: ninja
-   #  compiler: clang-cl
-   #  toolchain: vs2015
-   #  arch: x64
 
    #- frontend: meson
    #  builder: ninja
@@ -107,10 +106,11 @@ install:
 
   # Configure clang
   - if %compiler%==clang-cl set PATH="C:\Program Files\LLVM\bin";%PATH%
-  - if %compiler%==clang-cl set CC=clang
-  - if %compiler%==clang-cl set CXX=clang
   - if %compiler%==clang-cl clang-cl -v
-  - if %compiler%==clang-cl clang -v
+
+  - if %compiler%==clang set CC=clang
+  - if %compiler%==clang set CXX=clang
+  - if %compiler%==clang clang -v
 
   # Install Ninja Build
   - if %builder%==ninja set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"

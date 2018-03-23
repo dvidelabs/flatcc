@@ -41,6 +41,12 @@ if get_option('flatcc_portable') or meson.get_compiler('c').get_id() == 'msvc'
     test_c_args = test_c_args + ['-DFLATCC_PORTABLE']
 endif
 
+if (build_machine.system() == 'windows')
+    # also goes for clang-cl disguised as 'clang'
+    # since clang-cl is not supported as of meson-0.45.1
+    c_args = c_args + ['-D_CRT_SECURE_NO_WARNINGS']
+endif
+
 if get_option('flatcc_debug_verify')
     c_args = c_args + ['-DFLATCC_DEBUG_VERIFY=1']
 endif
