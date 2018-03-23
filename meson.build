@@ -6,6 +6,8 @@ project('flatcc', 'c',
 
 buildtype = get_option('buildtype')
 
+message('compiler version:' + meson.get_compiler('c').get_id() + ':' + meson.get_compiler('c').version() + ':')
+
 # Meson 0.34 does not support NDEBUG
 #
 # Test cases do not use global arguments by design and therefore miss
