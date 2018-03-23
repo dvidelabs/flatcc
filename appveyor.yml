@@ -11,14 +11,33 @@ clone_folder: c:\projects\flatcc
 
 environment:
   # set to true or false or absent for default for tool
-  parallel: false
+  parallel: true
   matrix:
+
+    - frontend: meson
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2015
+      arch: x64
+
+    - frontend: meson
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2015
+      arch: x86
 
     - frontend: cmake
       builder: ninja
       compiler: clang-cl
       toolchain: vs2015
       arch: x64
+
+    - frontend: cmake
+      builder: ninja
+      compiler: clang-cl
+      toolchain: vs2015
+      arch: x86
+
 
    #- frontend: meson
    #  builder: ninja
@@ -31,12 +50,6 @@ environment:
    #  compiler: cl
    #  toolchain: vs2010
    #  arch: x86
-
-   #- frontend: meson
-   #  builder: msbuild
-   #  compiler: cl
-   #  toolchain: vs2015
-   #  arch: x64
 
    #- frontend: meson
    #  builder: ninja
