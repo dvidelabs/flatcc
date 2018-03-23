@@ -14,7 +14,7 @@ environment:
   parallel: false
   matrix:
 
-    - frontend: meson
+    - frontend: cmake
       builder: ninja
       compiler: clang-cl
       toolchain: vs2015
@@ -100,8 +100,8 @@ install:
 
   # Configure clang-cl
   - if %compiler%==clang-cl set PATH="C:\Program Files\LLVM\bin";%PATH%
-  - if %compiler%==clang-cl set CC=clang
-  - if %compiler%==clang-cl set CXX=clang++
+  - if %compiler%==clang-cl set CC=clang-cl
+  - if %compiler%==clang-cl set CXX=clang-cl
   - if %compiler%==clang-cl clang-cl -v
 
   # Install Ninja Build
