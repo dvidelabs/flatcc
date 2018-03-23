@@ -21,19 +21,6 @@ environment:
 
 # Builds in development - placed early to fail fast
 
-    - frontend: meson
-      builder: ninja
-      compiler: cl
-      toolchain: vs2010
-      arch: x86
-
-      # this build is broken
-    - frontend: meson
-      builder: msbuild
-      compiler: cl
-      toolchain: vs2010
-      arch: x86
-
 
 #########################################
 #
@@ -72,6 +59,13 @@ environment:
 #     toolchain: vs2010
 #     arch: x86
 
+      # this build is broken
+#   - frontend: meson
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2010
+#     arch: x86
+
 
 #########################################
 #
@@ -83,8 +77,14 @@ environment:
 #   - frontend: meson
 #     builder: ninja
 #     compiler: cl
-#     toolchain: vs2015
-#     arch: x64
+#     toolchain: vs2010
+#     arch: x86
+
+    - frontend: meson
+      builder: ninja
+      compiler: cl
+      toolchain: vs2010
+      arch: x64
 
 #   - frontend: meson
 #     builder: ninja
@@ -95,15 +95,21 @@ environment:
 #   - frontend: meson
 #     builder: ninja
 #     compiler: cl
-#     toolchain: vs2017
+#     toolchain: vs2015
 #     arch: x64
+
+#   - frontend: meson
+#     builder: ninja
+#     compiler: cl
+#     toolchain: vs2017
+#     arch: x86
 #     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
 #   - frontend: meson
 #     builder: ninja
 #     compiler: cl
 #     toolchain: vs2017
-#     arch: x86
+#     arch: x64
 #     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
 
@@ -116,20 +122,6 @@ environment:
 #   - frontend: cmake
 #     builder: msbuild
 #     compiler: cl
-#     toolchain: vs2017
-#     arch: x86
-#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-
-#   - frontend: cmake
-#     builder: msbuild
-#     compiler: cl
-#     toolchain: vs2017
-#     arch: x64
-#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-
-#   - frontend: cmake
-#     builder: msbuild
-#     compiler: cl
 #     toolchain: vs2010
 #     arch: x86
 #
@@ -142,6 +134,18 @@ environment:
 #   - frontend: cmake
 #     builder: msbuild
 #     compiler: cl
+#     toolchain: vs2013
+#     arch: x86
+
+#   - frontend: cmake
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2013
+#     arch: x64
+
+#   - frontend: cmake
+#     builder: msbuild
+#     compiler: cl
 #     toolchain: vs2015
 #     arch: x86
 
@@ -154,14 +158,16 @@ environment:
 #   - frontend: cmake
 #     builder: msbuild
 #     compiler: cl
-#     toolchain: vs2013
+#     toolchain: vs2017
 #     arch: x86
+#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
 #   - frontend: cmake
 #     builder: msbuild
 #     compiler: cl
-#     toolchain: vs2013
+#     toolchain: vs2017
 #     arch: x64
+#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
 
 #########################################
@@ -171,20 +177,18 @@ environment:
 #       all meson-cl builds produce a harmless but unwarranted
 #       D9002 waring: -std=c++11 ignoring unknown option
 #########################################
-#
-#   - frontend: meson
-#     builder: msbuild
-#     compiler: cl
-#     toolchain: vs2017
-#     arch: x64
-#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
 #   - frontend: meson
 #     builder: msbuild
 #     compiler: cl
-#     toolchain: vs2017
+#     toolchain: vs2010
 #     arch: x86
-#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+    - frontend: meson
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2010
+      arch: x64
 
 #
 #   - frontend: meson
@@ -199,6 +203,20 @@ environment:
 #     compiler: cl
 #     toolchain: vs2015
 #     arch: x86
+
+#   - frontend: meson
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2017
+#     arch: x64
+#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+#   - frontend: meson
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2017
+#     arch: x86
+#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
 
 #########################################
@@ -240,7 +258,7 @@ environment:
 
 configuration:
   - debug
- #- release
+  - release
 
 install:
   # Install Meson
