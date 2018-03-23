@@ -32,15 +32,17 @@ environment:
 #       builds commented below.
 #########################################
 
+      # ninja is faster
     - frontend: meson
-      builder: msbuild
+      builder: ninja
       compiler: cl
       toolchain: vs2017
       arch: x64
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
+      # msbuild gives better errors (ninja -v is silent for some reason)
     - frontend: meson
-      builder: ninja
+      builder: msbuild
       compiler: cl
       toolchain: vs2017
       arch: x86
