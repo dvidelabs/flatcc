@@ -22,13 +22,14 @@ environment:
 # Builds in development - placed early to fail fast
 
     - frontend: meson
-      builder: msbuild
+      builder: ninja
       compiler: cl
       toolchain: vs2010
       arch: x86
 
+      # this build is broken
     - frontend: meson
-      builder: ninja
+      builder: msbuild
       compiler: cl
       toolchain: vs2010
       arch: x86
@@ -39,10 +40,20 @@ environment:
 # Most important build(s) - tested and active
 #
 #       Disabled during testing of other builds
+#
+#       These can be edited - copies of tested
+#       builds commented below.
 #########################################
 
 #   - frontend: meson
 #     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2017
+#     arch: x64
+#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+#   - frontend: meson
+#     builder: ninja
 #     compiler: cl
 #     toolchain: vs2017
 #     arch: x64
@@ -60,6 +71,7 @@ environment:
 #     compiler: cl
 #     toolchain: vs2010
 #     arch: x86
+
 
 #########################################
 #
@@ -95,7 +107,6 @@ environment:
 #     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
 
-
 #########################################
 #
 # cmake-msbuild - tested and parked
@@ -112,31 +123,44 @@ environment:
 #   - frontend: cmake
 #     builder: msbuild
 #     compiler: cl
+#     toolchain: vs2017
+#     arch: x64
+#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+#   - frontend: cmake
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2010
+#     arch: x86
+#
+#   - frontend: cmake
+#     builder: msbuild
+#     compiler: cl
 #     toolchain: vs2010
 #     arch: x64
 
 #   - frontend: cmake
 #     builder: msbuild
 #     compiler: cl
-#     toolchain: vs2013
+#     toolchain: vs2015
 #     arch: x86
 
 #   - frontend: cmake
 #     builder: msbuild
 #     compiler: cl
-#     toolchain: vs2013
+#     toolchain: vs2015
 #     arch: x64
 
 #   - frontend: cmake
 #     builder: msbuild
 #     compiler: cl
-#     toolchain: vs2015
+#     toolchain: vs2013
 #     arch: x86
 
 #   - frontend: cmake
 #     builder: msbuild
 #     compiler: cl
-#     toolchain: vs2015
+#     toolchain: vs2013
 #     arch: x64
 
 
@@ -147,6 +171,13 @@ environment:
 #       all meson-cl builds produce a harmless but unwarranted
 #       D9002 waring: -std=c++11 ignoring unknown option
 #########################################
+#
+#   - frontend: meson
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2017
+#     arch: x64
+#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
 #   - frontend: meson
 #     builder: msbuild
