@@ -18,6 +18,8 @@ my_monster_gen = custom_target('my_monster_builder',
 
 monster_sample = executable('monster', 'monster.c', my_monster_gen,
     link_with : libflatccrt,
+    # -DNDEBUG, -DFLATCC_PORTABLE etc. as configured by main project
+    c_args: c_args,
     include_directories : flatcc_include)
 
 test('monster_sample', monster_sample)

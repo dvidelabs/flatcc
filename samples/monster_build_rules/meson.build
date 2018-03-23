@@ -14,8 +14,7 @@ test(name,
     executable(name, monster_src,
         flatcc_common,
         flatcc_gen.process(monster_fbs),
-        # See also main meson.build  where both a static and a shared
-        # library is available. The static version will likely optimize
-        # much better.
         link_with : libflatccrt,
+        # -DNDEBUG, -DFLATCC_PORTABLE etc. as configured by main project
+        c_args: c_args,
         include_directories : flatcc_include))

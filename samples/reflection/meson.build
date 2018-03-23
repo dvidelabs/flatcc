@@ -11,6 +11,6 @@ bfbs_monster = custom_target('monster.bfbs',
 test(name,
     executable(name, name + '.c',
         bfbs_monster,
-        link_with : libflatcc,
+        link_with : libflatcc, c_args: c_args,
         include_directories : flatcc_include),
     args: bfbs_monster.full_path())
