@@ -10,77 +10,106 @@ shallow_clone: true
 clone_folder: c:\projects\flatcc
 
 environment:
+  # set to true or false or absent for default for tool
+  parallel=false
   matrix:
 
-    - arch: x86
-      compiler: msvc2010
-      frontend: meson
-      backend: vs2010
+   #- frontend: meson
+   #  builder: ninja
+   #  compiler: clang-cl
+   #  toolchain: vs2015
+   #  arch: x86
 
-    - arch: x64
-      compiler: msvc2015
-      frontend: meson
-      backend: vs2015
+   #- frontend: meson
+   #  builder: ninja
+   #  compiler: cl
+   #  toolchain: vs2010
+   #  arch: x86
 
-    - arch: x64
-      compiler: msvc2015
-      frontend: meson
-      backend: ninja
+   #- frontend: meson
+   #  builder: msbuild
+   #  compiler: cl
+   #  toolchain: vs2010
+   #  arch: x86
 
-   #- arch: x64
-   #  compiler: msvc2017
-   #  frontend: cmake
-   #  backend: vs2017
+   #- frontend: meson
+   #  builder: msbuild
+   #  compiler: cl
+   #  toolchain: vs2015
+   #  arch: x64
+
+   #- frontend: meson
+   #  builder: ninja
+   #  compiler: cl
+   #  toolchain: vs2015
+   #  arch: x64
+
+   #- frontend: cmake
+   #  builder: msbuild
+   #  compiler: cl
+   #  toolchain: vs2017
+   #  arch: x64
    #  APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
-   #- arch: x86
-   #  compiler: msvc2010
-   #  frontend: cmake
-   #  backend: vs2010
+   #- frontend: cmake
+   #  builder: msbuild
+   #  compiler: cl
+   #  toolchain: vs2010
+   #  arch: x86
 
-   #- arch: x86
-   #  frontend: cmake
-   #  compiler: msvc2013
-   #  backend: vs2013
-   #
-   #- arch: x86
-   #  frontend: cmake
-   #  compiler: msvc2015
-   #  backend: vs2015
+   #- frontend: cmake
+   #  builder: msbuild
+   #  compiler: cl
+   #  toolchain: vs2013
+   #  arch: x86
 
-   #- arch: x64
-   #  frontend: cmake
-   #  compiler: msvc2015
-   #  backend: vs2015
+   #- frontend: cmake
+   #  builder: msbuild
+   #  compiler: cl
+   #  toolchain: vs2015
+   #  arch: x86
+
+    - frontend: cmake
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2015
+      arch: x64
 
 configuration:
-  - Debug
- #- Release
+  - debug
+ #- release
 
 install:
   # Install Meson
   - set PATH=C:\Python35\scripts;%PATH%
   - if %frontend%==meson pip3 install meson
   - if %frontend%==meson meson --version
-  - if %configuration%==Debug set MESON_BUILDTYPE=debug
-  - if %configuration%==Release set MESON_BUILDTYPE=release
+
+  - if %configuration%==debug set CMAKE_BUILD_TYPE=Debug
+  - if %configuration%==release set CMAKE_BUILD_TYPE=Release
 
   # Check CMake
   - if %frontend%==cmake cmake --version
 
-  # Configure MSBuild
-  - if %compiler%==msvc2010 ( call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %arch% )
-  - if %compiler%==msvc2013 ( call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" %arch% )
-  - if %compiler%==msvc2015 ( call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %arch% )
-  - if %compiler%==msvc2017 ( call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat" -arch=%arch% )
+  # Configure Visual Studio environment
+  - if %toolchain%==vs2010 ( call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %arch% )
+  - if %toolchain%==vs2013 ( call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" %arch% )
+  - if %toolchain%==vs2015 ( call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %arch% )
+  - if %toolchain%==vs2017 ( call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat" -arch=%arch% )
   - msbuild /version
 
+  # Configure clang-cl
+  - if %compiler%==clang-cl set PATH="C:\Program Files\LLVM\bin";%PATH%
+  - if %compiler%==clang-cl set CC=clang-cl
+  - if %compiler%==clang-cl set CXX=clang-cl
+  - if %compiler%==clang-cl clang-cl -v
+
   # Install Ninja Build
-  - if %backend%==ninja set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
-  - if %backend%==ninja appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
-  - if %backend%==ninja 7z x ninja.zip -oC:\projects\deps\ninja > nul
-  - if %backend%==ninja set PATH=C:\projects\deps\ninja;%PATH%
-  - if %backend%==ninja ninja --version
+  - if %builder%==ninja set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
+  - if %builder%==ninja appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
+  - if %builder%==ninja 7z x ninja.zip -oC:\projects\deps\ninja > nul
+  - if %builder%==ninja set PATH=C:\projects\deps\ninja;%PATH%
+  - if %builder%==ninja ninja --version
 
 skip_tags: true
 
@@ -92,25 +121,32 @@ before_build:
   - cd c:\projects\flatcc
   - mkdir build
   - cd build
-  - echo configuring for %frontend%-%arch%-%compiler%
-  - if "%frontend%-%arch%-%compiler%"=="cmake-x86-msvc2010" cmake -G "Visual Studio 10 2010" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%-%arch%-%compiler%"=="cmake-x64-msvc2010" cmake -G "Visual Studio 10 2010 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%-%arch%-%compiler%"=="cmake-x86-msvc2013" cmake -G "Visual Studio 14 2013" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%-%arch%-%compiler%"=="cmake-x64-msvc2013" cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%-%arch%-%compiler%"=="cmake-x86-msvc2015" cmake -G "Visual Studio 12 2015" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%-%arch%-%compiler%"=="cmake-x64-msvc2015" cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%-%arch%-%compiler%"=="cmake-x86-msvc2017" cmake -G "Visual Studio 15 2017" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%-%arch%-%compiler%"=="cmake-x64-msvc2017" cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=%configuration% ..
-  - if "%frontend%"=="meson" meson --backend=%backend% --buildtype=%MESON_BUILDTYPE% ..
-  - set SOLUTION=c:\projects\flatcc\build\flatcc.sln
+  - echo configuring for %frontend%-%builder%-%arch%-%toolchain%-%compiler%
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x86-vs2010 cmake -G "Visual Studio 10 2010" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x64-vs2010 cmake -G "Visual Studio 10 2010 Win64" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x86-vs2013 cmake -G "Visual Studio 12 2013" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x64-vs2013 cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x86-vs2015 cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x64-vs2015 cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x86-vs2017 cmake -G "Visual Studio 15 2017" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x64-vs2017 cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+
+  - if %builder%==msbuild set SOLUTION=c:\projects\flatcc\build\flatcc.sln
+  - if %builder%-%parallel%==msbuild-true set MSBUILD_PARALLEL="/m'
+  - if %builder%-%parallel%==ninja-false set NINJA_PARALLEL="-j 0"
+
+  - if %frontend%-%builder%==cmake-ninja cmake -G "Ninja" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+
+  - if %frontend%-%builder%==meson-msbuild meson --backend=%toolchain% --buildtype=%configuration% ..
+  - if %frontend%-%builder%==meson-ninja meson --buildtype=%configuration% ..
 
 build_script:
   - echo running build
-    # /m option for parallel builds
-  - if "%frontend%"=="cmake" cmake --build . -- /m
-  - if "%frontend%-%backend%"=="meson-ninja" ( ninja ) else ( if "%frontend%"=="meson" msbuild /m /p:Configuration=%configuration% %SOLUTION% )
+  - if %frontend%==cmake-cl cmake --build . -- %MSBUILD_PARALLEL%
+  - if %frontend%-%builder%=="meson-ninja" ninja %NINJA_PARALLEL%
+  - if %frontend%-%builder%==meson-msbuild msbuild %MSBUILD_PARALLEL% /p:Configuration=%configuration% %SOLUTION% )
 
 test_script:
   - echo running tests
-  - if "%frontend%"=="cmake" ctest -C "%configuration%" -VV
-  - if "%frontend%"=="meson" meson test
+  - if %frontend%==cmake ctest -C "%configuration%" -VV
+  - if %frontend%==meson meson test
