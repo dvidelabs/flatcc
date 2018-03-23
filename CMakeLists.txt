@@ -142,26 +142,32 @@ set (dist_dir "${PROJECT_SOURCE_DIR}")
 # and constants should be turned off - those are plentiful. They are
 # silenced for Clang, GCC and MSVC in generated headers.headers.
 
-if (CMAKE_C_COMPILER_ID MATCHES "Clang")
-    if (MSVC) 
-        message(STATUS "Setting Clang compiler options for MSVC toolchain")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xclang -std=c11 -Xclang -pedantic -Xclang -Wall -Xclang -Wextra")
-        if (FLATCC_ALLOW_WERROR)
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xclang -Werror")
-        endif()
-        if (FLATCC_IGNORE_CONST_COND)
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xclang -Wno-tautological-constant-out-of-range-compare")
-        endif()
-    else()
-        # Clang or AppleClang
-        message(STATUS "Setting Clang compiler options")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
-        if (FLATCC_ALLOW_WERROR)
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
-        endif()
-        if (FLATCC_IGNORE_CONST_COND)
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-constant-out-of-range-compare")
-        endif()
+# Note: clang-cl matches both (MSVC) and (CMAKE_C_COMPILER_ID MATCHES "Clang")
+# we could forward clang flags with `-Xclang -std=c11`, but we just
+# allow it to play MSVC compiler by testing MSVC first. clang-cl uses the
+# same runtime library as MSVC cl and we need -D_CRT_SECURE_NO_WARNING
+if (MSVC) # using STREQUAL here conflicts with string interpretation changes in CMake
+    message(STATUS "Setting MSVC C compiler options")
+    # -DFLATCC_PORTABLE also required, but set earlier
+    # -W3 is the highest warning level that is reasonable.
+    # See include/flatcc/portable/pwarnings.h for disabled warnings.
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W3 -D_CRT_SECURE_NO_WARNINGS")
+    # MSVC 2013 (1800) supports inline variable declations
+    # while MSVC 2010 (1600) does not.
+    if (MSVC_VERSION STRLESS "1800")
+        # Disables monster sample build which uses C99 style variable decls.
+        set (FLATCC_NEED_C89_VAR_DECLS true)
+    endif()
+    set(FLATCC_PORTABLE true)
+elseif (CMAKE_C_COMPILER_ID MATCHES "Clang")
+    # Clang or AppleClang
+    message(STATUS "Setting Clang compiler options")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
+    if (FLATCC_ALLOW_WERROR)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+    endif()
+    if (FLATCC_IGNORE_CONST_COND)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-constant-out-of-range-compare")
     endif()
 
     # To get assembly output
@@ -195,19 +201,6 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Intel")
     message(STATUS "Setting Intel C compiler options")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -Wextra")
-elseif (MSVC) # using STREQUAL here conflicts with string interpretation changes in CMake
-    message(STATUS "Setting MSVC C compiler options")
-    # -DFLATCC_PORTABLE also required, but set earlier
-    # -W3 is the highest warning level that is reasonable.
-    # See include/flatcc/portable/pwarnings.h for disabled warnings.
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W3 -D_CRT_SECURE_NO_WARNINGS")
-    # MSVC 2013 (1800) supports inline variable declations
-    # while MSVC 2010 (1600) does not.
-    if (MSVC_VERSION STRLESS "1800")
-        # Disables monster sample build which uses C99 style variable decls.
-        set (FLATCC_NEED_C89_VAR_DECLS true)
-    endif()
-    set(FLATCC_PORTABLE true)
  elseif (CMAKE_C_COMPILER_ID STREQUAL "XL")
     # IBM's native XLC C compiler in extended C99 mode
 
