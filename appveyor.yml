@@ -154,7 +154,7 @@ before_build:
   - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x64-vs2017 cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
 
   - if %builder%==msbuild set SOLUTION=c:\projects\flatcc\build\flatcc.sln
-  - if %builder%-%parallel%==msbuild-true set MSBUILD_PARALLEL="/m'
+  - if %builder%-%parallel%==msbuild-true set MSBUILD_PARALLEL="/m"
   - if %builder%-%parallel%==ninja-false set NINJA_PARALLEL="-j 1"
 
   - if %frontend%-%builder%==cmake-ninja cmake -G "Ninja" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
