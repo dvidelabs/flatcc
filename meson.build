@@ -1,7 +1,7 @@
 project('flatcc', 'c',
     version : '0.3.5-pre',
     license : 'Apache-2.0',
-    default_options : ['c_std=c11'],
+    default_options : ['c_std=c11', 'default_library=static'],
     meson_version : '>=0.41.0')
 
 buildtype = get_option('buildtype')
@@ -87,24 +87,11 @@ flatcc_src = [
     flatccrt_src]
 
 
-if get_option('default_library') == 'static'
-    libflatccrt = static_library('flatccrt', flatccrt_src, install : true,
-            c_args : c_args,
-            include_directories : inc_dir)
+libflatccrt = library('flatccrt', flatccrt_src, install : true,
+        c_args : c_args, include_directories : inc_dir)
 
-    libflatcc = static_library('flatcc', flatcc_src, install : true,
-            c_args : c_args,
-            include_directories : inc_dir)
-else
-    # Shared libraries don't work on Windows without a .lib file.
-    libflatccrt = shared_library('flatccrt', flatccrt_src, install : true,
-            c_args : c_args,
-            include_directories : inc_dir)
-
-    libflatcc = shared_library('flatcc', flatcc_src, install : true,
-            c_args : c_args,
-            include_directories : inc_dir)
-endif
+libflatcc = library('flatcc', flatcc_src, install : true,
+            c_args : c_args, include_directories : inc_dir)
 
 flatcc = executable('flatcc', 'src/cli/flatcc_cli.c', install : true,
     link_with : libflatcc,
