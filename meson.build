@@ -67,6 +67,7 @@ endif
 flatccrt_src = [
     'src/runtime/builder.c',
     'src/runtime/emitter.c',
+    'src/runtime/refmap.c',
     'src/runtime/json_parser.c',
     'src/runtime/json_printer.c',
     'src/runtime/verifier.c']

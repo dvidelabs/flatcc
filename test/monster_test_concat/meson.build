@@ -38,6 +38,7 @@ name2 = name + '_explicit'
 concat_gen_explicit = custom_target(name + '_explicit',
     output : 'monster_test_explicit.h',
     input : [
+        monster_test_dir + '/attributes.fbs',
         monster_test_dir + '/include_test2.fbs',
         monster_test_dir + '/include_test1.fbs',
         monster_test_dir + '/monster_test.fbs',
