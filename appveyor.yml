@@ -41,7 +41,7 @@ build:
 
 test_script:
   - meson test
-  - meson flatbench
-  #- ctest -C "%configuration%" -VV
-  #
+ #- meson flatbench
+ #- ctest -C "%configuration%" -VV
+ #
 
