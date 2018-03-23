@@ -16,55 +16,57 @@ clone_folder: c:\projects\flatcc
 
 environment:
   # set to true or false or absent for default for tool
-  parallel: true
+  parallel: false
   matrix:
 
 # Builds in development - placed early to fail fast
 
-   #- frontend: meson
-   #  builder: ninja
-   #  compiler: cl
-   #  toolchain: vs2010
-   #  arch: x86
-
-   #- frontend: meson
-   #  builder: msbuild
-   #  compiler: cl
-   #  toolchain: vs2010
-   #  arch: x86
-
     - frontend: meson
       builder: msbuild
       compiler: cl
-      toolchain: vs2017
-      arch: x64
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      toolchain: vs2010
+      arch: x86
 
     - frontend: meson
-      builder: msbuild
+      builder: ninja
       compiler: cl
-      toolchain: vs2017
+      toolchain: vs2010
       arch: x86
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
-# Most important build(s)
 
-    - frontend: cmake
-      builder: msbuild
-      compiler: cl
-      toolchain: vs2017
-      arch: x86
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#########################################
+#
+# Most important build(s) - tested and active
+#
+#       Disabled during testing of other builds
+#########################################
 
-    - frontend: cmake
-      builder: msbuild
-      compiler: cl
-      toolchain: vs2017
-      arch: x64
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#   - frontend: meson
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2017
+#     arch: x64
+#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
+#   - frontend: cmake
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2017
+#     arch: x64
+#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+#   - frontend: cmake
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2010
+#     arch: x86
+
+#########################################
+#
 # meson-ninja - tested and parked
+#
 #       (no vs2013 support)
+#########################################
 
 #   - frontend: meson
 #     builder: ninja
@@ -94,13 +96,18 @@ environment:
 
 
 
+#########################################
+#
 # cmake-msbuild - tested and parked
+#
+#########################################
 
 #   - frontend: cmake
 #     builder: msbuild
 #     compiler: cl
-#     toolchain: vs2010
+#     toolchain: vs2017
 #     arch: x86
+#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
 #   - frontend: cmake
 #     builder: msbuild
@@ -133,9 +140,21 @@ environment:
 #     arch: x64
 
 
+#########################################
+#
 # meson-msbuild - tested and parked
+#
 #       all meson-cl builds produce a harmless but unwarranted
 #       D9002 waring: -std=c++11 ignoring unknown option
+#########################################
+
+#   - frontend: meson
+#     builder: msbuild
+#     compiler: cl
+#     toolchain: vs2017
+#     arch: x86
+#     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
 #
 #   - frontend: meson
 #     builder: msbuild
@@ -151,13 +170,17 @@ environment:
 #     arch: x86
 
 
+#########################################
+#
 # meson-ninja-clang-cl - sub-optimal parked build
+#
 #       TODO: cmake+clang-cl generates lots of warnings -
 #       -DFLATCC_PORTABLE is set and the CRT flag is not causing problems
 #       - build works - but apparently lots of warnings are not disabled
 #       so some detection is failing in headers or build config.  This is
 #       not really the file to fix it, but this is where it is triggered.
-#   
+#########################################
+
 #   - frontend: cmake
 #     builder: ninja
 #     compiler: clang-cl
@@ -171,8 +194,12 @@ environment:
 #     arch: x64
 
 
+#########################################
+#
 # meson-ninja-clang-cl - impossible
+#
 #   not supported as of Meson 0.45.1
+#########################################
 #
 #   - frontend: meson
 #     builder: ninja
