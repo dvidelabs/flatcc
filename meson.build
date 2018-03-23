@@ -14,8 +14,6 @@ else
     has_c99_var_decl = get_option('c_std') != 'c89'
 endif
 
-message('std option:'+ get_option('c_std'))
-
 # Meson 0.34 does not support NDEBUG
 #
 # Test cases do not use global arguments by design and therefore miss
