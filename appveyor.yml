@@ -14,8 +14,7 @@ environment:
   parallel: true
   matrix:
 
-     clang-cl broken with cmake for x86 (contrary to meson)
-     says target macine conflict
+
     - frontend: cmake
       builder: ninja
       compiler: clang-cl
