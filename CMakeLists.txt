@@ -143,15 +143,26 @@ set (dist_dir "${PROJECT_SOURCE_DIR}")
 # silenced for Clang, GCC and MSVC in generated headers.headers.
 
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
-    # Clang or AppleClang
-    message(STATUS "Setting Clang compiler options")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
-    if (FLATCC_ALLOW_WERROR)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
-    endif()
-    if (FLATCC_IGNORE_CONST_COND)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-constant-out-of-range-compare")
-    endif()
+    if (MSVC) 
+        message(STATUS "Setting Clang compiler options for MSVC toolchain")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -X -std=c11 -X -pedantic -X -Wall -X -Wextra")
+        if (FLATCC_ALLOW_WERROR)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -X -Werror")
+        endif()
+        if (FLATCC_IGNORE_CONST_COND)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -X -Wno-tautological-constant-out-of-range-compare")
+        endif()
+    else()
+        # Clang or AppleClang
+        message(STATUS "Setting Clang compiler options")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
+        if (FLATCC_ALLOW_WERROR)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+        endif()
+        if (FLATCC_IGNORE_CONST_COND)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-constant-out-of-range-compare")
+        endif()
+    endif
 
     # To get assembly output
     # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -save-temps")
