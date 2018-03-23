@@ -16,7 +16,7 @@ environment:
 
     - frontend: cmake
       builder: ninja
-      compiler: clang
+      compiler: clang-cl
       toolchain: vs2015
       arch: x64
 
@@ -107,6 +107,8 @@ install:
 
   # Configure clang
   - if %compiler%==clang-cl set PATH="C:\Program Files\LLVM\bin";%PATH%
+  - if %compiler%==clang-cl set CC=clang
+  - if %compiler%==clang-cl set CXX=clang
   - if %compiler%==clang-cl clang-cl -v
   - if %compiler%==clang-cl clang -v
 
