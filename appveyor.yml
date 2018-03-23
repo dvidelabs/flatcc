@@ -14,6 +14,14 @@ environment:
   parallel: true
   matrix:
 
+     clang-cl broken with cmake for x86 (contrary to meson)
+     says target macine conflict
+    - frontend: cmake
+      builder: ninja
+      compiler: clang-cl
+      toolchain: vs2015
+      arch: x86
+
     - frontend: meson
       builder: msbuild
       compiler: cl
@@ -31,13 +39,6 @@ environment:
       compiler: clang-cl
       toolchain: vs2015
       arch: x64
-
-    - frontend: cmake
-      builder: ninja
-      compiler: clang-cl
-      toolchain: vs2015
-      arch: x86
-
 
    #- frontend: meson
    #  builder: ninja
@@ -121,6 +122,10 @@ install:
   # Configure clang
   - if %compiler%==clang-cl set PATH="C:\Program Files\LLVM\bin";%PATH%
   - if %compiler%==clang-cl clang-cl -v
+
+  # Cmakes clang-cl generator
+  - if %frontend%-%builder%-%compiler%-%arch%==cmake-ninja-clang-cl-x86 set CFLAGS=-m32
+  - if %frontend%-%builder%-%compiler%-%arch%==cmake-ninja-clang-cl-x86 set CXXFLAGS=-m32
 
   - if %compiler%==clang set CC=clang
   - if %compiler%==clang set CXX=clang
