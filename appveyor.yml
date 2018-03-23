@@ -14,11 +14,11 @@ environment:
   parallel: false
   matrix:
 
-   #- frontend: meson
-   #  builder: ninja
-   #  compiler: clang-cl
-   #  toolchain: vs2015
-   #  arch: x86
+    - frontend: meson
+      builder: ninja
+      compiler: clang-cl
+      toolchain: vs2015
+      arch: x64
 
    #- frontend: meson
    #  builder: ninja
