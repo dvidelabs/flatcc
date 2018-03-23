@@ -49,4 +49,5 @@ test(name2,
     executable(name2, name2 + '.c',
         concat_gen_explicit,
         link_with : libflatccrt,
+        c_args: test_c_args,
         include_directories : testinc_dir))
