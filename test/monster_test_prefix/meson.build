@@ -15,4 +15,5 @@ test(name,
     executable(name, name + '.c',
         prefix_gen,
         link_with : libflatccrt,
+        c_args: test_c_args,
         include_directories : testinc_dir))

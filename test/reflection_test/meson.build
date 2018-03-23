@@ -23,6 +23,7 @@ test(name,
     executable(name, name + '.c',
         bfbs_monster_test,
         link_with : libflatcc,
+        c_args: test_c_args,
         include_directories : testinc_dir),
     args: out_dir + '/monster_test.bfbs')
 
