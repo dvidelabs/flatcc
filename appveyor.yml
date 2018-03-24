@@ -325,11 +325,11 @@ before_build:
 
 build_script:
   - echo running build
-  - if %frontend%==cmake cmake --build . -- %MSBUILD_PARALLEL%
+  - if %frontend%==cmake cmake --build -C "%configuration%" . -- %MSBUILD_PARALLEL%
   - if %frontend%-%builder%=="meson-ninja" ninja %NINJA_PARALLEL% -v
   - if %frontend%-%builder%==meson-msbuild msbuild %MSBUILD_PARALLEL% /p:Configuration=%configuration% %SOLUTION%
 
 test_script:
   - echo running tests
-  - if %frontend%==cmake ctest -C %configuration% -VV
+  - if %frontend%==cmake ctest -C "%configuration%" -VV
   - if %frontend%==meson meson test
