@@ -32,12 +32,6 @@ environment:
 #       builds commented below.
 #########################################
 #
-    - frontend: cmake
-      builder: msbuild
-      compiler: cl
-      toolchain: vs2015
-      arch: x64
-
       # ninja is faster
     - frontend: meson
       builder: ninja
@@ -59,6 +53,12 @@ environment:
       compiler: cl
       toolchain: vs2010
       arch: x86
+
+    - frontend: cmake
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2015
+      arch: x64
 
 
 #########################################
