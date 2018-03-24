@@ -31,6 +31,12 @@ environment:
 #       These can be edited - copies of tested
 #       builds commented below.
 #########################################
+#
+    - frontend: cmake
+      builder: msbuild
+      compiler: cl
+      toolchain: vs2015
+      arch: x64
 
       # ninja is faster
     - frontend: meson
@@ -47,12 +53,6 @@ environment:
       toolchain: vs2017
       arch: x86
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-
-    - frontend: cmake
-      builder: msbuild
-      compiler: cl
-      toolchain: vs2015
-      arch: x64
 
     - frontend: cmake
       builder: msbuild
@@ -253,8 +253,8 @@ environment:
 #     arch: x64
 
 configuration:
-  - debug
   - release
+  - debug
 
 install:
   # Install Meson
@@ -264,6 +264,7 @@ install:
 
   - if %configuration%==debug set CMAKE_BUILD_TYPE=Debug
   - if %configuration%==release set CMAKE_BUILD_TYPE=Release
+  - echo "CMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE%"
 
   # Check CMake
   - if %frontend%==cmake cmake --version
