@@ -28,5 +28,4 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install meson; fi
 
 script:
-  - meson build
-  - meson test
+  - scripts/meson-test.sh
