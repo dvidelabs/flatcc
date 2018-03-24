@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # only used with new installation
-INSTALL_VER=${VER:-0.45.1}
+# 0.44.0 is last version working with Python 3.4
+INSTALL_VER=${VER:-0.44.0}
 INSTALL_DIR=${INSTALL_DIR:-$(pwd)/meson}
 INSTALL_URL=https://github.com/mesonbuild/meson.git
 
