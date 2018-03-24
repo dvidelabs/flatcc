@@ -253,8 +253,8 @@ environment:
 #     arch: x64
 
 configuration:
-  - release
-  - debug
+  - Release
+  - Debug
 
 install:
   # Install Meson
@@ -262,9 +262,8 @@ install:
   - if %frontend%==meson pip3 install meson
   - if %frontend%==meson meson --version
 
-  - if %configuration%==debug set CMAKE_BUILD_TYPE=Debug
-  - if %configuration%==release set CMAKE_BUILD_TYPE=Release
-  - echo CMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE%
+  - if %configuration%==Debug set MESON_BUILDTYPE=debug
+  - if %configuration%==Release set MESON_BUILDTYPE=release
 
   # Check CMake
   - if %frontend%==cmake cmake --version
@@ -306,23 +305,23 @@ before_build:
   - mkdir build
   - cd build
   - echo configuring for %frontend%-%builder%-%arch%-%toolchain%-%compiler%
-  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x86-vs2010 cmake -G "Visual Studio 10 2010" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
-  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x64-vs2010 cmake -G "Visual Studio 10 2010 Win64" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
-  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x86-vs2013 cmake -G "Visual Studio 12 2013" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
-  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x64-vs2013 cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
-  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x86-vs2015 cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
-  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x64-vs2015 cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ..
-  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x86-vs2017 cmake -G "Visual Studio 15 2017" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
-  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x64-vs2017 cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x86-vs2010 cmake -G "Visual Studio 10 2010" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x64-vs2010 cmake -G "Visual Studio 10 2010 Win64" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x86-vs2013 cmake -G "Visual Studio 12 2013" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x64-vs2013 cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x86-vs2015 cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x64-vs2015 cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x86-vs2017 cmake -G "Visual Studio 15 2017" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%-%arch%-%toolchain%==cmake-msbuild-x64-vs2017 cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
 
   - if %builder%==msbuild set SOLUTION=c:\projects\flatcc\build\flatcc.sln
   - if %builder%-%parallel%==msbuild-true set MSBUILD_PARALLEL="/m"
   - if %builder%-%parallel%==ninja-false set NINJA_PARALLEL="-j 1"
 
-  - if %frontend%-%builder%==cmake-ninja cmake -G "Ninja" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
+  - if %frontend%-%builder%==cmake-ninja cmake -G "Ninja" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_C_COMPILER="%compiler%" -DCMAKE_CXX_COMPILER="%compiler%" ..
 
-  - if %frontend%-%builder%==meson-msbuild meson --backend=%toolchain% --buildtype=%configuration% ..
-  - if %frontend%-%builder%==meson-ninja meson --buildtype=%configuration% ..
+  - if %frontend%-%builder%==meson-msbuild meson --backend=%toolchain% --buildtype=%MESON_BUILDTYPE% ..
+  - if %frontend%-%builder%==meson-ninja meson --buildtype=%MESON_BUILDTYPE% ..
 
 build_script:
   - echo running build
@@ -332,5 +331,5 @@ build_script:
 
 test_script:
   - echo running tests
-  - if %frontend%==cmake ctest -C "%CMAKE_BUILD_TYPE%" -VV
+  - if %frontend%==cmake ctest -C %configuration% -VV
   - if %frontend%==meson meson test
