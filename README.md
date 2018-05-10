@@ -1281,7 +1281,7 @@ flatbuffers which also align data.
 
 ### Generic Parsing and Printing.
 
-As of v0.5.1 [test_json.c] demonstrates how a single parser driver can used to parse
+As of v0.5.1 [test_json.c] demonstrates how a single parser driver can be used to parse
 different table types without changes to the driver or to the schema.
 
 For example, the following layout can be used to configure a generic parser or printer.
