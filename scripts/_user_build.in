@@ -15,8 +15,7 @@ mkdir -p generated
 
 cd build
 
-PORTABLE=
-if [[ "$FLATCC_PORTABLE" -eq "yes" ]]; then
+if [[ "$FLATCC_PORTABLE" = "yes" ]]; then
     CFLAGS="$CFLAGS -DFLATCC_PORTABLE"
 fi
 
@@ -29,5 +28,5 @@ ${ROOT}/bin/flatcc -a -o ${ROOT}/generated ${ROOT}/src/*.fbs
 echo "building '$NAME' for debug"
 $CC $CFLAGS $CFLAGS_DEBUG ${ROOT}/src/*.c ${ROOT}/lib/libflatccrt_d.a -o ${NAME}_d
 
-echo "building '$NAME' for relase"
+echo "building '$NAME' for release"
 $CC $CFLAGS $CFLAGS_RELEASE ${ROOT}/src/*.c ${ROOT}/lib/libflatccrt.a -o ${NAME}
