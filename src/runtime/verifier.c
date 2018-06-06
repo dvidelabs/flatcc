@@ -111,7 +111,7 @@ static inline uoffset_t read_uoffset(const void *p, uoffset_t base)
 static inline thash_t read_thash_identifier(const char *identifier)
 {
     flatbuffers_thash_t id = 0;
-    strncpy((char *)&id, identifier, sizeof(id));
+    memcpy(&id, identifier, sizeof(id));
     return __flatbuffers_thash_cast_from_le(id);
 }
 
