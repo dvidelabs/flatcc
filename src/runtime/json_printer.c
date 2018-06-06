@@ -1020,7 +1020,7 @@ static int accept_header(flatcc_json_printer_t * ctx,
         return 0;
     }
     if (fid != 0) {
-        strncpy((char *)&id2, fid, FLATBUFFERS_IDENTIFIER_SIZE);
+        memcpy(&id2, fid, FLATBUFFERS_IDENTIFIER_SIZE);
         id2 = __flatbuffers_thash_cast_from_le(id2);
         id = __flatbuffers_thash_read_from_pe((uint8_t *)buf + offset_size);
         if (!(id2 == 0 || id == id2)) {
