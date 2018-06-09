@@ -13,42 +13,56 @@
 #define __flatbuffers_read_scalar(N, p) N ## _read_from_pe(p)
 #define __flatbuffers_read_vt(ID, offset, t)\
 flatbuffers_voffset_t offset = 0;\
-{   flatbuffers_voffset_t id, *vt;\
+{   flatbuffers_voffset_t id__tmp, *vt__tmp;\
     assert(t != 0 && "null pointer table access");\
-    id = ID;\
-    vt = (flatbuffers_voffset_t *)((uint8_t *)(t) -\
+    id__tmp = ID;\
+    vt__tmp = (flatbuffers_voffset_t *)((uint8_t *)(t) -\
         __flatbuffers_soffset_read_from_pe(t));\
-    if (__flatbuffers_voffset_read_from_pe(vt) >= sizeof(vt[0]) * (id + 3)) {\
-        offset = __flatbuffers_voffset_read_from_pe(vt + id + 2);\
+    if (__flatbuffers_voffset_read_from_pe(vt__tmp) >= sizeof(vt__tmp[0]) * (id__tmp + 3)) {\
+        offset = __flatbuffers_voffset_read_from_pe(vt__tmp + id__tmp + 2);\
     }\
 }
-#define __flatbuffers_field_present(ID, t) { __flatbuffers_read_vt(ID, offset, t) return offset != 0; }
+#define __flatbuffers_field_present(ID, t) { __flatbuffers_read_vt(ID, offset__tmp, t) return offset__tmp != 0; }
+#define __flatbuffers_scalar_field(T, ID, t)\
+{\
+    __flatbuffers_read_vt(ID, offset__tmp, t)\
+    if (offset__tmp) {\
+        return (const T *)((uint8_t *)(t) + offset__tmp);\
+    }\
+    return 0;\
+}
 #define __flatbuffers_define_scalar_field(ID, N, NK, TK, T, V)\
-static inline T N ## _ ## NK (N ## _table_t t)\
-{ __flatbuffers_read_vt(ID, offset, t)\
-  return offset ? __flatbuffers_read_scalar_at_byteoffset(TK, t, offset) : V;\
+static inline T N ## _ ## NK ## _get(N ## _table_t t__tmp)\
+{ __flatbuffers_read_vt(ID, offset__tmp, t__tmp)\
+  return offset__tmp ? __flatbuffers_read_scalar_at_byteoffset(TK, t__tmp, offset__tmp) : V;\
 }\
-static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\
-__flatbuffers_field_present(ID, t)\
+static inline T N ## _ ## NK(N ## _table_t t__tmp)\
+{ __flatbuffers_read_vt(ID, offset__tmp, t__tmp)\
+  return offset__tmp ? __flatbuffers_read_scalar_at_byteoffset(TK, t__tmp, offset__tmp) : V;\
+}\
+static inline const T *N ## _ ## NK ## _get_ptr(N ## _table_t t__tmp)\
+__flatbuffers_scalar_field(T, ID, t__tmp)\
+static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\
+__flatbuffers_field_present(ID, t__tmp)\
 __flatbuffers_define_scan_by_scalar_field(N, NK, T)
 #define __flatbuffers_struct_field(T, ID, t, r)\
 {\
-    __flatbuffers_read_vt(ID, offset, t)\
-    if (offset) {\
-        return (T)((uint8_t *)(t) + offset);\
+    __flatbuffers_read_vt(ID, offset__tmp, t)\
+    if (offset__tmp) {\
+        return (T)((uint8_t *)(t) + offset__tmp);\
     }\
     assert(!(r) && "required field missing");\
     return 0;\
 }
 #define __flatbuffers_offset_field(T, ID, t, r, adjust)\
 {\
-    flatbuffers_uoffset_t *elem;\
-    __flatbuffers_read_vt(ID, offset, t)\
-    if (offset) {\
-        elem = (flatbuffers_uoffset_t *)((uint8_t *)(t) + offset);\
+    flatbuffers_uoffset_t *elem__tmp;\
+    __flatbuffers_read_vt(ID, offset__tmp, t)\
+    if (offset__tmp) {\
+        elem__tmp = (flatbuffers_uoffset_t *)((uint8_t *)(t) + offset__tmp);\
         /* Add sizeof so C api can have raw access past header field. */\
-        return (T)((uint8_t *)(elem) + adjust +\
-              __flatbuffers_uoffset_read_from_pe(elem));\
+        return (T)((uint8_t *)(elem__tmp) + adjust +\
+              __flatbuffers_uoffset_read_from_pe(elem__tmp));\
     }\
     assert(!(r) && "required field missing");\
     return 0;\
@@ -56,25 +70,33 @@ __flatbuffers_define_scan_by_scalar_field(N, NK, T)
 #define __flatbuffers_vector_field(T, ID, t, r) __flatbuffers_offset_field(T, ID, t, r, sizeof(flatbuffers_uoffset_t))
 #define __flatbuffers_table_field(T, ID, t, r) __flatbuffers_offset_field(T, ID, t, r, 0)
 #define __flatbuffers_define_struct_field(ID, N, NK, T, r)\
-static inline T N ## _ ## NK(N ## _table_t t)\
-__flatbuffers_struct_field(T, ID, t, r)\
-static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\
-__flatbuffers_field_present(ID, t)
+static inline T N ## _ ## NK ## _get(N ## _table_t t__tmp)\
+__flatbuffers_struct_field(T, ID, t__tmp, r)\
+static inline T N ## _ ## NK(N ## _table_t t__tmp)\
+__flatbuffers_struct_field(T, ID, t__tmp, r)\
+static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\
+__flatbuffers_field_present(ID, t__tmp)
 #define __flatbuffers_define_vector_field(ID, N, NK, T, r)\
-static inline T N ## _ ## NK(N ## _table_t t)\
-__flatbuffers_vector_field(T, ID, t, r)\
-static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\
-__flatbuffers_field_present(ID, t)
+static inline T N ## _ ## NK ## _get(N ## _table_t t__tmp)\
+__flatbuffers_vector_field(T, ID, t__tmp, r)\
+static inline T N ## _ ## NK(N ## _table_t t__tmp)\
+__flatbuffers_vector_field(T, ID, t__tmp, r)\
+static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\
+__flatbuffers_field_present(ID, t__tmp)
 #define __flatbuffers_define_table_field(ID, N, NK, T, r)\
-static inline T N ## _ ## NK(N ## _table_t t)\
-__flatbuffers_table_field(T, ID, t, r)\
-static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\
-__flatbuffers_field_present(ID, t)
+static inline T N ## _ ## NK ## _get(N ## _table_t t__tmp)\
+__flatbuffers_table_field(T, ID, t__tmp, r)\
+static inline T N ## _ ## NK(N ## _table_t t__tmp)\
+__flatbuffers_table_field(T, ID, t__tmp, r)\
+static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\
+__flatbuffers_field_present(ID, t__tmp)
 #define __flatbuffers_define_string_field(ID, N, NK, r)\
-static inline flatbuffers_string_t N ## _ ## NK(N ## _table_t t)\
-__flatbuffers_vector_field(flatbuffers_string_t, ID, t, r)\
-static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\
-__flatbuffers_field_present(ID, t)\
+static inline flatbuffers_string_t N ## _ ## NK ## _get(N ## _table_t t__tmp)\
+__flatbuffers_vector_field(flatbuffers_string_t, ID, t__tmp, r)\
+static inline flatbuffers_string_t N ## _ ## NK(N ## _table_t t__tmp)\
+__flatbuffers_vector_field(flatbuffers_string_t, ID, t__tmp, r)\
+static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\
+__flatbuffers_field_present(ID, t__tmp)\
 __flatbuffers_define_scan_by_string_field(N, NK)
 #define __flatbuffers_vec_len(vec)\
 { return (vec) ? (size_t)__flatbuffers_uoffset_read_from_pe((flatbuffers_uoffset_t *)vec - 1) : 0; }
@@ -88,15 +110,15 @@ __flatbuffers_vec_len(vec)
 { assert(flatbuffers_vec_len(vec) > (i) && "index out of range"); return (vec) + (i); }
 /* `adjust` skips past the header for string vectors. */
 #define __flatbuffers_offset_vec_at(T, vec, i, adjust)\
-{ const flatbuffers_uoffset_t *elem = (vec) + (i);\
+{ const flatbuffers_uoffset_t *elem__tmp = (vec) + (i);\
   assert(flatbuffers_vec_len(vec) > (i) && "index out of range");\
-  return (T)((uint8_t *)(elem) + (size_t)__flatbuffers_uoffset_read_from_pe(elem) + adjust); }
-#define __flatbuffers_define_scalar_vec_len(N) \
-static inline size_t N ## _vec_len(N ##_vec_t vec)\
-{ return flatbuffers_vec_len(vec); }
+  return (T)((uint8_t *)(elem__tmp) + (size_t)__flatbuffers_uoffset_read_from_pe(elem__tmp) + (adjust)); }
+#define __flatbuffers_define_scalar_vec_len(N)\
+static inline size_t N ## _vec_len(N ##_vec_t vec__tmp)\
+{ return flatbuffers_vec_len(vec__tmp); }
 #define __flatbuffers_define_scalar_vec_at(N, T) \
-static inline T N ## _vec_at(N ## _vec_t vec, size_t i)\
-__flatbuffers_scalar_vec_at(N, vec, i)
+static inline T N ## _vec_at(N ## _vec_t vec__tmp, size_t i__tmp)\
+__flatbuffers_scalar_vec_at(N, vec__tmp, i__tmp)
 typedef const char *flatbuffers_string_t;
 static inline size_t flatbuffers_string_len(flatbuffers_string_t s)
 __flatbuffers_string_len(s)
@@ -107,16 +129,16 @@ __flatbuffers_vec_len(vec)
 static inline flatbuffers_string_t flatbuffers_string_vec_at(flatbuffers_string_vec_t vec, size_t i)
 __flatbuffers_offset_vec_at(flatbuffers_string_t, vec, i, sizeof(vec[0]))
 typedef const void *flatbuffers_generic_t;
-static inline flatbuffers_string_t flatbuffers_string_cast_from_generic(const flatbuffers_generic_t p)\
+static inline flatbuffers_string_t flatbuffers_string_cast_from_generic(const flatbuffers_generic_t p)
 { return p ? ((const char *)p) + __flatbuffers_uoffset__size() : 0; }
 typedef const flatbuffers_uoffset_t *flatbuffers_generic_vec_t;
 typedef flatbuffers_uoffset_t *flatbuffers_generic_table_mutable_vec_t;
 static inline size_t flatbuffers_generic_vec_len(flatbuffers_generic_vec_t vec)
 __flatbuffers_vec_len(vec)
 static inline flatbuffers_generic_t flatbuffers_generic_vec_at(flatbuffers_generic_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(flatbuffers_generic_t, vec, i, 0)\
+__flatbuffers_offset_vec_at(flatbuffers_generic_t, vec, i, 0)
 static inline flatbuffers_generic_t flatbuffers_generic_vec_at_as_string(flatbuffers_generic_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(flatbuffers_generic_t, vec, i, sizeof(vec[0]))\
+__flatbuffers_offset_vec_at(flatbuffers_generic_t, vec, i, sizeof(vec[0]))
 typedef struct flatbuffers_union {
     flatbuffers_union_type_t type;
     flatbuffers_generic_t value;
@@ -127,35 +149,39 @@ typedef struct flatbuffers_union_vec {
 } flatbuffers_union_vec_t;
 #define __flatbuffers_union_type_field(ID, t)\
 {\
-    __flatbuffers_read_vt(ID, offset, t)\
-    return offset ? __flatbuffers_read_scalar_at_byteoffset(__flatbuffers_utype, t, offset) : 0;\
+    __flatbuffers_read_vt(ID, offset__tmp, t)\
+    return offset__tmp ? __flatbuffers_read_scalar_at_byteoffset(__flatbuffers_utype, t, offset__tmp) : 0;\
 }
-static inline flatbuffers_string_t flatbuffers_string_cast_from_union(const flatbuffers_union_t u)\
-{ return flatbuffers_string_cast_from_generic(u.value); }
+static inline flatbuffers_string_t flatbuffers_string_cast_from_union(const flatbuffers_union_t u__tmp)\
+{ return flatbuffers_string_cast_from_generic(u__tmp.value); }
 #define __flatbuffers_define_union_field(NS, ID, N, NK, T, r)\
-static inline T ## _union_type_t N ## _ ## NK ## _type(N ## _table_t t)\
-__## NS ## union_type_field(((ID) - 1), t)\
-static inline NS ## generic_t N ## _ ## NK(N ## _table_t t)\
-__## NS ## table_field(NS ## generic_t, ID, t, r)\
-static inline int N ## _ ## NK ## _is_present(N ## _table_t t)\
-__## NS ## field_present(ID, t)\
-static inline T ## _union_t N ## _ ## NK ## _union(N ## _table_t t)\
-{ T ## _union_t u = { 0, 0 }; u.type = N ## _ ## NK ## _type(t);\
-  if (u.type == 0) return u; u.value = N ## _ ## NK (t); return u; }\
-static inline NS ## string_t N ## _ ## NK ## _as_string(N ## _table_t t)\
-{ return NS ## string_cast_from_generic(N ## _ ## NK(t)); }\
+static inline T ## _union_type_t N ## _ ## NK ## _type_get(N ## _table_t t__tmp)\
+__## NS ## union_type_field(((ID) - 1), t__tmp)\
+static inline NS ## generic_t N ## _ ## NK ## _get(N ## _table_t t__tmp)\
+__## NS ## table_field(NS ## generic_t, ID, t__tmp, r)\
+static inline T ## _union_type_t N ## _ ## NK ## _type(N ## _table_t t__tmp)\
+__## NS ## union_type_field(((ID) - 1), t__tmp)\
+static inline NS ## generic_t N ## _ ## NK(N ## _table_t t__tmp)\
+__## NS ## table_field(NS ## generic_t, ID, t__tmp, r)\
+static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\
+__## NS ## field_present(ID, t__tmp)\
+static inline T ## _union_t N ## _ ## NK ## _union(N ## _table_t t__tmp)\
+{ T ## _union_t u__tmp = { 0, 0 }; u__tmp.type = N ## _ ## NK ## _type(t__tmp);\
+  if (u__tmp.type == 0) return u__tmp; u__tmp.value = N ## _ ## NK (t__tmp); return u__tmp; }\
+static inline NS ## string_t N ## _ ## NK ## _as_string(N ## _table_t t__tmp)\
+{ return NS ## string_cast_from_generic(N ## _ ## NK(t__tmp)); }\
 
 #define __flatbuffers_define_union_vector_ops(NS, T)\
-static inline size_t T ## _union_vec_len(T ## _union_vec_t uv)\
-{ return NS ## vec_len(uv.type); }\
-static inline T ## _union_t T ## _union_vec_at(T ## _union_vec_t uv, size_t i)\
-{ T ## _union_t u = { 0, 0 }; size_t n = NS ## vec_len(uv.type);\
-  assert(n > (i) && "index out of range"); u.type = uv.type[i];\
+static inline size_t T ## _union_vec_len(T ## _union_vec_t uv__tmp)\
+{ return NS ## vec_len(uv__tmp.type); }\
+static inline T ## _union_t T ## _union_vec_at(T ## _union_vec_t uv__tmp, size_t i__tmp)\
+{ T ## _union_t u__tmp = { 0, 0 }; size_t n__tmp = NS ## vec_len(uv__tmp.type);\
+  assert(n__tmp > (i__tmp) && "index out of range"); u__tmp.type = uv__tmp.type[i__tmp];\
   /* Unknown type is treated as NONE for schema evolution. */\
-  if (u.type == 0) return u;\
-  u.value = NS ## generic_vec_at(uv.value, i); return u; }\
-static inline NS ## string_t T ## _union_vec_at_as_string(T ## _union_vec_t uv, size_t i)\
-{ return NS ## generic_vec_at_as_string(uv.value, i); }\
+  if (u__tmp.type == 0) return u__tmp;\
+  u__tmp.value = NS ## generic_vec_at(uv__tmp.value, i__tmp); return u__tmp; }\
+static inline NS ## string_t T ## _union_vec_at_as_string(T ## _union_vec_t uv__tmp, size_t i__tmp)\
+{ return (NS ## string_t) NS ## generic_vec_at_as_string(uv__tmp.value, i__tmp); }\
 
 #define __flatbuffers_define_union_vector(NS, T)\
 typedef NS ## union_vec_t T ## _union_vec_t;\
@@ -166,10 +192,10 @@ __## NS ## define_union_vector(NS, T)
 #define __flatbuffers_define_union_vector_field(NS, ID, N, NK, T, r)\
 __## NS ## define_vector_field(ID - 1, N, NK ## _type, T ## _vec_t, r)\
 __## NS ## define_vector_field(ID, N, NK, flatbuffers_generic_vec_t, r)\
-static inline T ## _union_vec_t N ## _ ## NK ## _union(N ## _table_t t)\
-{ T ## _union_vec_t uv; uv.type = N ## _ ## NK ## _type(t); uv.value = N ## _ ## NK(t);\
-  assert(NS ## vec_len(uv.type) == NS ## vec_len(uv.value)\
-  && "union vector type length mismatch"); return uv; }
+static inline T ## _union_vec_t N ## _ ## NK ## _union(N ## _table_t t__tmp)\
+{ T ## _union_vec_t uv__tmp; uv__tmp.type = N ## _ ## NK ## _type(t__tmp); uv__tmp.value = N ## _ ## NK(t__tmp);\
+  assert(NS ## vec_len(uv__tmp.type) == NS ## vec_len(uv__tmp.value)\
+  && "union vector type length mismatch"); return uv__tmp; }
 #include <string.h>
 static size_t flatbuffers_not_found = (size_t)-1;
 static size_t flatbuffers_end = (size_t)-1;
@@ -185,21 +211,21 @@ static inline int __flatbuffers_string_cmp(flatbuffers_string_t v, const char *s
 /* A = identity if searching scalar vectors rather than key fields. */
 /* Returns lowest matching index or not_found. */
 #define __flatbuffers_find_by_field(A, V, E, L, K, Kn, T, D)\
-{ T v; size_t a = 0, b, m; if (!(b = L(V))) { return flatbuffers_not_found; }\
-  --b;\
-  while (a < b) {\
-    m = a + ((b - a) >> 1);\
-    v = A(E(V, m));\
-    if ((D(v, (K), (Kn))) < 0) {\
-      a = m + 1;\
+{ T v__tmp; size_t a__tmp = 0, b__tmp, m__tmp; if (!(b__tmp = L(V))) { return flatbuffers_not_found; }\
+  --b__tmp;\
+  while (a__tmp < b__tmp) {\
+    m__tmp = a__tmp + ((b__tmp - a__tmp) >> 1);\
+    v__tmp = A(E(V, m__tmp));\
+    if ((D(v__tmp, (K), (Kn))) < 0) {\
+      a__tmp = m__tmp + 1;\
     } else {\
-      b = m;\
+      b__tmp = m__tmp;\
     }\
   }\
-  if (a == b) {\
-    v = A(E(V, a));\
-    if (D(v, (K), (Kn)) == 0) {\
-       return a;\
+  if (a__tmp == b__tmp) {\
+    v__tmp = A(E(V, a__tmp));\
+    if (D(v__tmp, (K), (Kn)) == 0) {\
+       return a__tmp;\
     }\
   }\
   return flatbuffers_not_found;\
@@ -211,43 +237,43 @@ __flatbuffers_find_by_field(A, V, E, L, K, 0, flatbuffers_string_t, __flatbuffer
 #define __flatbuffers_find_by_string_n_field(A, V, E, L, K, Kn)\
 __flatbuffers_find_by_field(A, V, E, L, K, Kn, flatbuffers_string_t, __flatbuffers_string_n_cmp)
 #define __flatbuffers_define_find_by_scalar_field(N, NK, TK)\
-static inline size_t N ## _vec_find_by_ ## NK(N ## _vec_t vec, TK key)\
-__flatbuffers_find_by_scalar_field(N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, TK)
+static inline size_t N ## _vec_find_by_ ## NK(N ## _vec_t vec__tmp, TK key__tmp)\
+__flatbuffers_find_by_scalar_field(N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, TK)
 #define __flatbuffers_define_scalar_find(N, T)\
-static inline size_t N ## _vec_find(N ## _vec_t vec, T key)\
-__flatbuffers_find_by_scalar_field(__flatbuffers_identity, vec, N ## _vec_at, N ## _vec_len, key, T)
+static inline size_t N ## _vec_find(N ## _vec_t vec__tmp, T key__tmp)\
+__flatbuffers_find_by_scalar_field(__flatbuffers_identity, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)
 #define __flatbuffers_define_find_by_string_field(N, NK) \
 /* Note: find only works on vectors sorted by this field. */\
-static inline size_t N ## _vec_find_by_ ## NK(N ## _vec_t vec, const char *s)\
-__flatbuffers_find_by_string_field(N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\
-static inline size_t N ## _vec_find_n_by_ ## NK(N ## _vec_t vec, const char *s, int n)\
-__flatbuffers_find_by_string_n_field(N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)
+static inline size_t N ## _vec_find_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp)\
+__flatbuffers_find_by_string_field(N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\
+static inline size_t N ## _vec_find_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\
+__flatbuffers_find_by_string_n_field(N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)
 #define __flatbuffers_define_default_find_by_scalar_field(N, NK, TK)\
-static inline size_t N ## _vec_find(N ## _vec_t vec, TK key)\
-{ return N ## _vec_find_by_ ## NK(vec, key); }
+static inline size_t N ## _vec_find(N ## _vec_t vec__tmp, TK key__tmp)\
+{ return N ## _vec_find_by_ ## NK(vec__tmp, key__tmp); }
 #define __flatbuffers_define_default_find_by_string_field(N, NK) \
-static inline size_t N ## _vec_find(N ## _vec_t vec, const char *s)\
-{ return N ## _vec_find_by_ ## NK(vec, s); }\
-static inline size_t N ## _vec_find_n(N ## _vec_t vec, const char *s, int n)\
-{ return N ## _vec_find_n_by_ ## NK(vec, s, n); }
+static inline size_t N ## _vec_find(N ## _vec_t vec__tmp, const char *s__tmp)\
+{ return N ## _vec_find_by_ ## NK(vec__tmp, s__tmp); }\
+static inline size_t N ## _vec_find_n(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\
+{ return N ## _vec_find_n_by_ ## NK(vec__tmp, s__tmp, n__tmp); }
 /* A = identity if searching scalar vectors rather than key fields. */
 /* Returns lowest matching index or not_found. */
 #define __flatbuffers_scan_by_field(b, e, A, V, E, L, K, Kn, T, D)\
-{ T v; size_t i;\
-  for (i = b; i < e; ++i) {\
-    v = A(E(V, i));\
-    if (D(v, (K), (Kn)) == 0) {\
-       return i;\
+{ T v__tmp; size_t i__tmp;\
+  for (i__tmp = b; i__tmp < e; ++i__tmp) {\
+    v__tmp = A(E(V, i__tmp));\
+    if (D(v__tmp, (K), (Kn)) == 0) {\
+       return i__tmp;\
     }\
   }\
   return flatbuffers_not_found;\
 }
 #define __flatbuffers_rscan_by_field(b, e, A, V, E, L, K, Kn, T, D)\
-{ T v; size_t i = e;\
-  while (i-- > b) {\
-    v = A(E(V, i));\
-    if (D(v, (K), (Kn)) == 0) {\
-       return i;\
+{ T v__tmp; size_t i__tmp = e;\
+  while (i__tmp-- > b) {\
+    v__tmp = A(E(V, i__tmp));\
+    if (D(v__tmp, (K), (Kn)) == 0) {\
+       return i__tmp;\
     }\
   }\
   return flatbuffers_not_found;\
@@ -265,114 +291,114 @@ __flatbuffers_rscan_by_field(b, e, A, V, E, L, K, 0, flatbuffers_string_t, __fla
 #define __flatbuffers_rscan_by_string_n_field(b, e, A, V, E, L, K, Kn)\
 __flatbuffers_rscan_by_field(b, e, A, V, E, L, K, Kn, flatbuffers_string_t, __flatbuffers_string_n_cmp)
 #define __flatbuffers_define_scan_by_scalar_field(N, NK, T)\
-static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec, T key)\
-__flatbuffers_scan_by_scalar_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, T)\
-static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, T key)\
-__flatbuffers_scan_by_scalar_field(begin, __flatbuffers_min(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, T)\
-static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec, T key)\
-__flatbuffers_rscan_by_scalar_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, T)\
-static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, T key)\
-__flatbuffers_rscan_by_scalar_field(begin, __flatbuffers_min(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, key, T)
+static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec__tmp, T key__tmp)\
+__flatbuffers_scan_by_scalar_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\
+static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, T key__tmp)\
+__flatbuffers_scan_by_scalar_field(begin__tmp, __flatbuffers_min(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\
+static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec__tmp, T key__tmp)\
+__flatbuffers_rscan_by_scalar_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\
+static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, T key__tmp)\
+__flatbuffers_rscan_by_scalar_field(begin__tmp, __flatbuffers_min(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)
 #define __flatbuffers_define_scalar_scan(N, T)\
-static inline size_t N ## _vec_scan(N ## _vec_t vec, T key)\
-__flatbuffers_scan_by_scalar_field(0, N ## _vec_len(vec), __flatbuffers_identity, vec, N ## _vec_at, N ## _vec_len, key, T)\
-static inline size_t N ## _vec_scan_ex(N ## _vec_t vec, size_t begin, size_t end, T key)\
-__flatbuffers_scan_by_scalar_field(begin, __flatbuffers_min(end, N ## _vec_len(vec)), __flatbuffers_identity, vec, N ## _vec_at, N ## _vec_len, key, T)\
-static inline size_t N ## _vec_rscan(N ## _vec_t vec, T key)\
-__flatbuffers_rscan_by_scalar_field(0, N ## _vec_len(vec), __flatbuffers_identity, vec, N ## _vec_at, N ## _vec_len, key, T)\
-static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec, size_t begin, size_t end, T key)\
-__flatbuffers_rscan_by_scalar_field(begin, __flatbuffers_min(end, N ## _vec_len(vec)), __flatbuffers_identity, vec, N ## _vec_at, N ## _vec_len, key, T)
+static inline size_t N ## _vec_scan(N ## _vec_t vec__tmp, T key__tmp)\
+__flatbuffers_scan_by_scalar_field(0, N ## _vec_len(vec__tmp), __flatbuffers_identity, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\
+static inline size_t N ## _vec_scan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, T key__tmp)\
+__flatbuffers_scan_by_scalar_field(begin__tmp, __flatbuffers_min(end__tmp, N ## _vec_len(vec__tmp)), __flatbuffers_identity, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\
+static inline size_t N ## _vec_rscan(N ## _vec_t vec__tmp, T key__tmp)\
+__flatbuffers_rscan_by_scalar_field(0, N ## _vec_len(vec__tmp), __flatbuffers_identity, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)\
+static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, T key__tmp)\
+__flatbuffers_rscan_by_scalar_field(begin__tmp, __flatbuffers_min(end__tmp, N ## _vec_len(vec__tmp)), __flatbuffers_identity, vec__tmp, N ## _vec_at, N ## _vec_len, key__tmp, T)
 #define __flatbuffers_define_scan_by_string_field(N, NK) \
-static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec, const char *s)\
-__flatbuffers_scan_by_string_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\
-static inline size_t N ## _vec_scan_n_by_ ## NK(N ## _vec_t vec, const char *s, int n)\
-__flatbuffers_scan_by_string_n_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\
-static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s)\
-__flatbuffers_scan_by_string_field(begin, __flatbuffers_min(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\
-static inline size_t N ## _vec_scan_ex_n_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\
-__flatbuffers_scan_by_string_n_field(begin, __flatbuffers_min( end, N ## _vec_len(vec) ), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\
-static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec, const char *s)\
-__flatbuffers_rscan_by_string_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\
-static inline size_t N ## _vec_rscan_n_by_ ## NK(N ## _vec_t vec, const char *s, int n)\
-__flatbuffers_rscan_by_string_n_field(0, N ## _vec_len(vec), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)\
-static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s)\
-__flatbuffers_rscan_by_string_field(begin, __flatbuffers_min(end, N ## _vec_len(vec)), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s)\
-static inline size_t N ## _vec_rscan_ex_n_by_ ## NK(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\
-__flatbuffers_rscan_by_string_n_field(begin, __flatbuffers_min( end, N ## _vec_len(vec) ), N ## _ ## NK, vec, N ## _vec_at, N ## _vec_len, s, n)
+static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp)\
+__flatbuffers_scan_by_string_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\
+static inline size_t N ## _vec_scan_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\
+__flatbuffers_scan_by_string_n_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\
+static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\
+__flatbuffers_scan_by_string_field(begin__tmp, __flatbuffers_min(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\
+static inline size_t N ## _vec_scan_ex_n_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\
+__flatbuffers_scan_by_string_n_field(begin__tmp, __flatbuffers_min( end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\
+static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp)\
+__flatbuffers_rscan_by_string_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\
+static inline size_t N ## _vec_rscan_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\
+__flatbuffers_rscan_by_string_n_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\
+static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\
+__flatbuffers_rscan_by_string_field(begin__tmp, __flatbuffers_min(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\
+static inline size_t N ## _vec_rscan_ex_n_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\
+__flatbuffers_rscan_by_string_n_field(begin__tmp, __flatbuffers_min( end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)
 #define __flatbuffers_define_default_scan_by_scalar_field(N, NK, TK)\
-static inline size_t N ## _vec_scan(N ## _vec_t vec, TK key)\
-{ return N ## _vec_scan_by_ ## NK(vec, key); }\
-static inline size_t N ## _vec_scan_ex(N ## _vec_t vec, size_t begin, size_t end, TK key)\
-{ return N ## _vec_scan_ex_by_ ## NK(vec, begin, end, key); }\
-static inline size_t N ## _vec_rscan(N ## _vec_t vec, TK key)\
-{ return N ## _vec_rscan_by_ ## NK(vec, key); }\
-static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec, size_t begin, size_t end, TK key)\
-{ return N ## _vec_rscan_ex_by_ ## NK(vec, begin, end, key); }
+static inline size_t N ## _vec_scan(N ## _vec_t vec__tmp, TK key__tmp)\
+{ return N ## _vec_scan_by_ ## NK(vec__tmp, key__tmp); }\
+static inline size_t N ## _vec_scan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, TK key__tmp)\
+{ return N ## _vec_scan_ex_by_ ## NK(vec__tmp, begin__tmp, end__tmp, key__tmp); }\
+static inline size_t N ## _vec_rscan(N ## _vec_t vec__tmp, TK key__tmp)\
+{ return N ## _vec_rscan_by_ ## NK(vec__tmp, key__tmp); }\
+static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, TK key__tmp)\
+{ return N ## _vec_rscan_ex_by_ ## NK(vec__tmp, begin__tmp, end__tmp, key__tmp); }
 #define __flatbuffers_define_default_scan_by_string_field(N, NK) \
-static inline size_t N ## _vec_scan(N ## _vec_t vec, const char *s)\
-{ return N ## _vec_scan_by_ ## NK(vec, s); }\
-static inline size_t N ## _vec_scan_n(N ## _vec_t vec, const char *s, int n)\
-{ return N ## _vec_scan_n_by_ ## NK(vec, s, n); }\
-static inline size_t N ## _vec_scan_ex(N ## _vec_t vec, size_t begin, size_t end, const char *s)\
-{ return N ## _vec_scan_ex_by_ ## NK(vec, begin, end, s); }\
-static inline size_t N ## _vec_scan_ex_n(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\
-{ return N ## _vec_scan_ex_n_by_ ## NK(vec, begin, end, s, n); }\
-static inline size_t N ## _vec_rscan(N ## _vec_t vec, const char *s)\
-{ return N ## _vec_rscan_by_ ## NK(vec, s); }\
-static inline size_t N ## _vec_rscan_n(N ## _vec_t vec, const char *s, int n)\
-{ return N ## _vec_rscan_n_by_ ## NK(vec, s, n); }\
-static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec, size_t begin, size_t end, const char *s)\
-{ return N ## _vec_rscan_ex_by_ ## NK(vec, begin, end, s); }\
-static inline size_t N ## _vec_rscan_ex_n(N ## _vec_t vec, size_t begin, size_t end, const char *s, int n)\
-{ return N ## _vec_rscan_ex_n_by_ ## NK(vec, begin, end, s, n); }
+static inline size_t N ## _vec_scan(N ## _vec_t vec__tmp, const char *s__tmp)\
+{ return N ## _vec_scan_by_ ## NK(vec__tmp, s__tmp); }\
+static inline size_t N ## _vec_scan_n(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\
+{ return N ## _vec_scan_n_by_ ## NK(vec__tmp, s__tmp, n__tmp); }\
+static inline size_t N ## _vec_scan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\
+{ return N ## _vec_scan_ex_by_ ## NK(vec__tmp, begin__tmp, end__tmp, s__tmp); }\
+static inline size_t N ## _vec_scan_ex_n(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\
+{ return N ## _vec_scan_ex_n_by_ ## NK(vec__tmp, begin__tmp, end__tmp, s__tmp, n__tmp); }\
+static inline size_t N ## _vec_rscan(N ## _vec_t vec__tmp, const char *s__tmp)\
+{ return N ## _vec_rscan_by_ ## NK(vec__tmp, s__tmp); }\
+static inline size_t N ## _vec_rscan_n(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\
+{ return N ## _vec_rscan_n_by_ ## NK(vec__tmp, s__tmp, n__tmp); }\
+static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\
+{ return N ## _vec_rscan_ex_by_ ## NK(vec__tmp, begin__tmp, end__tmp, s__tmp); }\
+static inline size_t N ## _vec_rscan_ex_n(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\
+{ return N ## _vec_rscan_ex_n_by_ ## NK(vec__tmp, begin__tmp, end__tmp, s__tmp, n__tmp); }
 #define __flatbuffers_heap_sort(N, X, A, E, L, TK, TE, D, S)\
 static inline void __ ## N ## X ## __heap_sift_down(\
-        N ## _mutable_vec_t vec, size_t start, size_t end)\
-{ size_t child, root; TK v1, v2, vroot;\
-  root = start;\
-  while ((root << 1) <= end) {\
-    child = root << 1;\
-    if (child < end) {\
-      v1 = A(E(vec, child));\
-      v2 = A(E(vec, child + 1));\
-      if (D(v1, v2) < 0) {\
-        child++;\
+        N ## _mutable_vec_t vec__tmp, size_t start__tmp, size_t end__tmp)\
+{ size_t child__tmp, root__tmp; TK v1__tmp, v2__tmp, vroot__tmp;\
+  root__tmp = start__tmp;\
+  while ((root__tmp << 1) <= end__tmp) {\
+    child__tmp = root__tmp << 1;\
+    if (child__tmp < end__tmp) {\
+      v1__tmp = A(E(vec__tmp, child__tmp));\
+      v2__tmp = A(E(vec__tmp, child__tmp + 1));\
+      if (D(v1__tmp, v2__tmp) < 0) {\
+        child__tmp++;\
       }\
     }\
-    vroot = A(E(vec, root));\
-    v1 = A(E(vec, child));\
-    if (D(vroot, v1) < 0) {\
-      S(vec, root, child, TE);\
-      root = child;\
+    vroot__tmp = A(E(vec__tmp, root__tmp));\
+    v1__tmp = A(E(vec__tmp, child__tmp));\
+    if (D(vroot__tmp, v1__tmp) < 0) {\
+      S(vec__tmp, root__tmp, child__tmp, TE);\
+      root__tmp = child__tmp;\
     } else {\
       return;\
     }\
   }\
 }\
-static inline void __ ## N ## X ## __heap_sort(N ## _mutable_vec_t vec)\
-{ size_t start, end, size;\
-  size = L(vec); if (size == 0) return; end = size - 1; start = size >> 1;\
-  do { __ ## N ## X ## __heap_sift_down(vec, start, end); } while (start--);\
-  while (end > 0) { \
-    S(vec, 0, end, TE);\
-    __ ## N ## X ## __heap_sift_down(vec, 0, --end); } }
+static inline void __ ## N ## X ## __heap_sort(N ## _mutable_vec_t vec__tmp)\
+{ size_t start__tmp, end__tmp, size__tmp;\
+  size__tmp = L(vec__tmp); if (size__tmp == 0) return; end__tmp = size__tmp - 1; start__tmp = size__tmp >> 1;\
+  do { __ ## N ## X ## __heap_sift_down(vec__tmp, start__tmp, end__tmp); } while (start__tmp--);\
+  while (end__tmp > 0) { \
+    S(vec__tmp, 0, end__tmp, TE);\
+    __ ## N ## X ## __heap_sift_down(vec__tmp, 0, --end__tmp); } }
 #define __flatbuffers_define_sort_by_field(N, NK, TK, TE, D, S)\
-  __flatbuffers_heap_sort(N, _sort_by_ ## NK, N ## _ ## NK, N ## _vec_at, N ## _vec_len, TK, TE, D, S)\
-static inline void N ## _vec_sort_by_ ## NK(N ## _mutable_vec_t vec)\
-{ __ ## N ## _sort_by_ ## NK ## __heap_sort(vec); }
+  __flatbuffers_heap_sort(N, _sort_by_ ## NK, N ## _ ## NK ## _get, N ## _vec_at, N ## _vec_len, TK, TE, D, S)\
+static inline void N ## _vec_sort_by_ ## NK(N ## _mutable_vec_t vec__tmp)\
+{ __ ## N ## _sort_by_ ## NK ## __heap_sort(vec__tmp); }
 #define __flatbuffers_define_sort(N, TK, TE, D, S)\
 __flatbuffers_heap_sort(N, , __flatbuffers_identity, N ## _vec_at, N ## _vec_len, TK, TE, D, S)\
-static inline void N ## _vec_sort(N ## _mutable_vec_t vec) { __ ## N ## __heap_sort(vec); }
+static inline void N ## _vec_sort(N ## _mutable_vec_t vec__tmp) { __ ## N ## __heap_sort(vec__tmp); }
 #define __flatbuffers_scalar_diff(x, y) ((x) < (y) ? -1 : (x) > (y))
 #define __flatbuffers_string_diff(x, y) __flatbuffers_string_n_cmp((x), (const char *)(y), flatbuffers_string_len(y))
-#define __flatbuffers_scalar_swap(vec, a, b, TE) { TE tmp = vec[b]; vec[b] = vec[a]; vec[a] = tmp; }
+#define __flatbuffers_scalar_swap(vec, a, b, TE) { TE x__tmp = vec[b]; vec[b] = vec[a]; vec[a] = x__tmp; }
 #define __flatbuffers_string_swap(vec, a, b, TE)\
-{ TE ta, tb, d;\
-  d = (TE)((a - b) * sizeof(vec[0]));\
-  ta =  __flatbuffers_uoffset_read_from_pe(vec + b) - d;\
-  tb =  __flatbuffers_uoffset_read_from_pe(vec + a) + d;\
-  __flatbuffers_uoffset_write_to_pe(vec + a, ta);\
-  __flatbuffers_uoffset_write_to_pe(vec + b, tb); }
+{ TE ta__tmp, tb__tmp, d__tmp;\
+  d__tmp = (TE)((a - b) * sizeof(vec[0]));\
+  ta__tmp =  __flatbuffers_uoffset_read_from_pe(vec + b) - d__tmp;\
+  tb__tmp =  __flatbuffers_uoffset_read_from_pe(vec + a) + d__tmp;\
+  __flatbuffers_uoffset_write_to_pe(vec + a, ta__tmp);\
+  __flatbuffers_uoffset_write_to_pe(vec + b, tb__tmp); }
 #define __flatbuffers_define_sort_by_scalar_field(N, NK, TK, TE)\
   __flatbuffers_define_sort_by_field(N, NK, TK, TE, __flatbuffers_scalar_diff, __flatbuffers_scalar_swap)
 #define __flatbuffers_define_sort_by_string_field(N, NK)\
@@ -425,11 +451,16 @@ static inline size_t flatbuffers_string_vec_rscan_ex_n(flatbuffers_string_vec_t 
 __flatbuffers_rscan_by_string_n_field(begin, __flatbuffers_min(end, flatbuffers_string_vec_len(vec)), __flatbuffers_identity, vec, flatbuffers_string_vec_at, flatbuffers_string_vec_len, s, n)
 __flatbuffers_define_string_sort()
 #define __flatbuffers_define_struct_scalar_field(N, NK, TK, T)\
-static inline T N ## _ ## NK (N ## _struct_t t)\
-{ return t ? __flatbuffers_read_scalar(TK, &(t->NK)) : 0; }\
+static inline T N ## _ ## NK ## _get(N ## _struct_t t__tmp)\
+{ return t__tmp ? __flatbuffers_read_scalar(TK, &(t__tmp->NK)) : 0; }\
+static inline const T *N ## _ ## NK ## _get_ptr(N ## _struct_t t__tmp)\
+{ return t__tmp ? &(t__tmp->NK) : 0; }\
+static inline T N ## _ ## NK (N ## _struct_t t__tmp)\
+{ return t__tmp ? __flatbuffers_read_scalar(TK, &(t__tmp->NK)) : 0; }\
 __flatbuffers_define_scan_by_scalar_field(N, NK, T)
 #define __flatbuffers_define_struct_struct_field(N, NK, T)\
-static inline T N ## _ ## NK(N ## _struct_t t) { return t ? &(t->NK) : 0; }
+static inline T N ## _ ## NK ## _get(N ## _struct_t t__tmp) { return t__tmp ? &(t__tmp->NK) : 0; }\
+static inline T N ## _ ## NK (N ## _struct_t t__tmp) { return t__tmp ? &(t__tmp->NK) : 0; }
 /* If fid is null, the function returns true without testing as buffer is not expected to have any id. */
 static inline int flatbuffers_has_identifier(const void *buffer, const char *fid)
 { flatbuffers_thash_t id, id2 = 0; if (fid == 0) { return 1; };
@@ -458,23 +489,23 @@ static inline void *flatbuffers_read_size_prefix(void *b, size_t *size_out)
   ((T ## _ ## K ## t)(((uint8_t *)buffer) +\
     __flatbuffers_uoffset_read_from_pe(buffer))))
 #define __flatbuffers_nested_buffer_as_root(C, N, T, K)\
-static inline T ## _ ## K ## t C ## _ ## N ## _as_root_with_identifier(C ## _ ## table_t t, const char *fid)\
-{ const uint8_t *buffer = C ## _ ## N(t); return __flatbuffers_read_root(T, K, buffer, fid); }\
-static inline T ## _ ## K ## t C ## _ ## N ## _as_typed_root(C ## _ ## table_t t)\
-{ const uint8_t *buffer = C ## _ ## N(t); return __flatbuffers_read_root(T, K, buffer, C ## _ ## type_identifier); }\
-static inline T ## _ ## K ## t C ## _ ## N ## _as_root(C ## _ ## table_t t)\
-{ const char *fid = T ## _identifier;\
-  const uint8_t *buffer = C ## _ ## N(t); return __flatbuffers_read_root(T, K, buffer, fid); }
+static inline T ## _ ## K ## t C ## _ ## N ## _as_root_with_identifier(C ## _ ## table_t t__tmp, const char *fid__tmp)\
+{ const uint8_t *buffer__tmp = C ## _ ## N(t__tmp); return __flatbuffers_read_root(T, K, buffer__tmp, fid__tmp); }\
+static inline T ## _ ## K ## t C ## _ ## N ## _as_typed_root(C ## _ ## table_t t__tmp)\
+{ const uint8_t *buffer__tmp = C ## _ ## N(t__tmp); return __flatbuffers_read_root(T, K, buffer__tmp, C ## _ ## type_identifier); }\
+static inline T ## _ ## K ## t C ## _ ## N ## _as_root(C ## _ ## table_t t__tmp)\
+{ const char *fid__tmp = T ## _identifier;\
+  const uint8_t *buffer__tmp = C ## _ ## N(t__tmp); return __flatbuffers_read_root(T, K, buffer__tmp, fid__tmp); }
 #define __flatbuffers_buffer_as_root(N, K)\
-static inline N ## _ ## K ## t N ## _as_root_with_identifier(const void *buffer, const char *fid)\
-{ return __flatbuffers_read_root(N, K, buffer, fid); }\
-static inline N ## _ ## K ## t N ## _as_root_with_type_hash(const void *buffer, flatbuffers_thash_t thash)\
-{ return __flatbuffers_read_typed_root(N, K, buffer, thash); }\
-static inline N ## _ ## K ## t N ## _as_root(const void *buffer)\
-{ const char *fid = N ## _identifier;\
-  return __flatbuffers_read_root(N, K, buffer, fid); }\
-static inline N ## _ ## K ## t N ## _as_typed_root(const void *buffer)\
-{ return __flatbuffers_read_typed_root(N, K, buffer, N ## _type_hash); }
+static inline N ## _ ## K ## t N ## _as_root_with_identifier(const void *buffer__tmp, const char *fid__tmp)\
+{ return __flatbuffers_read_root(N, K, buffer__tmp, fid__tmp); }\
+static inline N ## _ ## K ## t N ## _as_root_with_type_hash(const void *buffer__tmp, flatbuffers_thash_t thash__tmp)\
+{ return __flatbuffers_read_typed_root(N, K, buffer__tmp, thash__tmp); }\
+static inline N ## _ ## K ## t N ## _as_root(const void *buffer__tmp)\
+{ const char *fid__tmp = N ## _identifier;\
+  return __flatbuffers_read_root(N, K, buffer__tmp, fid__tmp); }\
+static inline N ## _ ## K ## t N ## _as_typed_root(const void *buffer__tmp)\
+{ return __flatbuffers_read_typed_root(N, K, buffer__tmp, N ## _type_hash); }
 #define __flatbuffers_struct_as_root(N) __flatbuffers_buffer_as_root(N, struct_)
 #define __flatbuffers_table_as_root(N) __flatbuffers_buffer_as_root(N, table_)
 

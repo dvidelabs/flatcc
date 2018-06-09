@@ -19,6 +19,11 @@ typedef flatcc_builder_union_vec_ref_t flatbuffers_union_vec_ref_t;
 typedef flatbuffers_ref_t flatbuffers_root_t;
 #define flatbuffers_root(ref) ((flatbuffers_root_t)(ref))
 
+#define __flatbuffers_memoize_begin(B, src)\
+do { flatcc_builder_ref_t _ref; if ((_ref = flatcc_builder_refmap_find((B), (src)))) return _ref; } while (0)
+#define __flatbuffers_memoize_end(B, src, op) do { return flatcc_builder_refmap_insert((B), (src), (op)); } while (0)
+#define __flatbuffers_memoize(B, src, op) do { __flatbuffers_memoize_begin(B, src); __flatbuffers_memoize_end(B, src, op); } while (0)
+
 #define __flatbuffers_build_buffer(NS)\
 typedef NS ## ref_t NS ## buffer_ref_t;\
 static inline int NS ## buffer_start(NS ## builder_t *B, const NS ##fid_t fid)\
@@ -52,7 +57,15 @@ static inline NS ## buffer_ref_t N ## _create_as_root_with_size(NS ## builder_t 
 static inline NS ## buffer_ref_t N ## _create_as_typed_root(NS ## builder_t *B __ ## N ## _formal_args)\
 { if (NS ## buffer_start(B, TFID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }\
 static inline NS ## buffer_ref_t N ## _create_as_typed_root_with_size(NS ## builder_t *B __ ## N ## _formal_args)\
-{ if (NS ## buffer_start_with_size(B, TFID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }
+{ if (NS ## buffer_start_with_size(B, TFID)) return 0; return NS ## buffer_end(B, N ## _create(B __ ## N ## _call_args)); }\
+static inline NS ## buffer_ref_t N ## _clone_as_root(NS ## builder_t *B, N ## _table_t t)\
+{ if (NS ## buffer_start(B, FID)) return 0; return NS ## buffer_end(B, N ## _clone(B, t)); }\
+static inline NS ## buffer_ref_t N ## _clone_as_root_with_size(NS ## builder_t *B, N ## _table_t t)\
+{ if (NS ## buffer_start_with_size(B, FID)) return 0; return NS ## buffer_end(B, N ## _clone(B, t)); }\
+static inline NS ## buffer_ref_t N ## _clone_as_typed_root(NS ## builder_t *B, N ## _table_t t)\
+{ if (NS ## buffer_start(B, TFID)) return 0;return NS ## buffer_end(B, N ## _clone(B, t)); }\
+static inline NS ## buffer_ref_t N ## _clone_as_typed_root_with_size(NS ## builder_t *B, N ## _table_t t)\
+{ if (NS ## buffer_start_with_size(B, TFID)) return 0; return NS ## buffer_end(B, N ## _clone(B, t)); }
 
 #define __flatbuffers_build_table_prolog(NS, N, FID, TFID)\
 __flatbuffers_build_table_vector_ops(NS, N ## _vec, N)\
@@ -110,7 +123,11 @@ static inline int N ## _nest(NS ## builder_t *B, void *data, size_t size, uint16
   align ? align : 8, FLATBUFFERS_COUNT_MAX(1))); }\
 static inline int N ## _typed_nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\
 { return N ## _add(B, flatcc_builder_create_vector(B, data, size, 1,\
-  align ? align : 8, FLATBUFFERS_COUNT_MAX(1))); }
+  align ? align : 8, FLATBUFFERS_COUNT_MAX(1))); }\
+static inline int N ## _clone_as_root(NS ## builder_t *B, TN ## _table_t t)\
+{ return N ## _add(B, TN ## _clone_as_root(B, t)); }\
+static inline int N ## _clone_as_typed_root(NS ## builder_t *B, TN ## _table_t t)\
+{ return N ## _add(B, TN ## _clone_as_typed_root(B, t)); }
 
 #define __flatbuffers_build_nested_struct_root(NS, N, TN, A, FID, TFID)\
 static inline TN ## _t *N ## _start_as_root(NS ## builder_t *B)\
@@ -134,7 +151,11 @@ static inline int N ## _nest(NS ## builder_t *B, void *data, size_t size, uint16
   align < A ? A : align, FLATBUFFERS_COUNT_MAX(1))); }\
 static inline int N ## _typed_nest(NS ## builder_t *B, void *data, size_t size, uint16_t align)\
 { return N ## _add(B, flatcc_builder_create_vector(B, data, size, 1,\
-  align < A ? A : align, FLATBUFFERS_COUNT_MAX(1))); }
+  align < A ? A : align, FLATBUFFERS_COUNT_MAX(1))); }\
+static inline int N ## _clone_as_root(NS ## builder_t *B, TN ## _struct_t p)\
+{ return N ## _add(B, TN ## _clone_as_root(B, p)); }\
+static inline int N ## _clone_as_typed_root(NS ## builder_t *B, TN ## _struct_t p)\
+{ return N ## _add(B, TN ## _clone_as_typed_root(B, p)); }
 
 #define __flatbuffers_build_vector_ops(NS, V, N, TN, T)\
 static inline T *V ## _extend(NS ## builder_t *B, size_t len)\
@@ -150,6 +171,8 @@ static inline size_t V ## _reserved_len(NS ## builder_t *B)\
 static inline T *V ## _push(NS ## builder_t *B, const T *p)\
 { T *_p; return (_p = (T *)flatcc_builder_extend_vector(B, 1)) ? (memcpy(_p, p, TN ## __size()), _p) : 0; }\
 static inline T *V ## _push_copy(NS ## builder_t *B, const T *p)\
+{ T *_p; return (_p = (T *)flatcc_builder_extend_vector(B, 1)) ? TN ## _copy(_p, p) : 0; }\
+static inline T *V ## _push_clone(NS ## builder_t *B, const T *p)\
 { T *_p; return (_p = (T *)flatcc_builder_extend_vector(B, 1)) ? TN ## _copy(_p, p) : 0; }\
 static inline T *V ## _push_create(NS ## builder_t *B __ ## TN ## _formal_args)\
 { T *_p; return (_p = (T *)flatcc_builder_extend_vector(B, 1)) ? TN ## _assign(_p __ ## TN ## _call_args) : 0; }
@@ -172,7 +195,7 @@ static inline N ## _vec_ref_t N ## _vec_create(NS ## builder_t *B, const T *data
   for (i = 0; i < len; ++i) { N ## _copy_to_pe(N ## __ptr_add(p, i), N ## __const_ptr_add(data, i)); }\
   return flatcc_builder_end_vector(B); } else return flatcc_builder_create_vector(B, data, len, S, A, FLATBUFFERS_COUNT_MAX(S)); }\
 static inline N ## _vec_ref_t N ## _vec_clone(NS ## builder_t *B, N ##_vec_t vec)\
-{ return flatcc_builder_create_vector(B, vec, N ## _vec_len(vec), S, A, FLATBUFFERS_COUNT_MAX(S)); }\
+{ __flatbuffers_memoize(B, vec, flatcc_builder_create_vector(B, vec, N ## _vec_len(vec), S, A, FLATBUFFERS_COUNT_MAX(S))); }\
 static inline N ## _vec_ref_t N ## _vec_slice(NS ## builder_t *B, N ##_vec_t vec, size_t index, size_t len)\
 { size_t n = N ## _vec_len(vec); if (index >= n) index = n; n -= index; if (len > n) len = n;\
   return flatcc_builder_create_vector(B, N ## __const_ptr_add(vec, index), len, S, A, FLATBUFFERS_COUNT_MAX(S)); }\
@@ -186,11 +209,13 @@ static inline TN ## _union_ref_t *V ## _append(NS ## builder_t *B, const TN ## _
 static inline int V ## _truncate(NS ## builder_t *B, size_t len)\
 { return flatcc_builder_truncate_union_vector(B, len); }\
 static inline TN ## _union_ref_t *V ## _edit(NS ## builder_t *B)\
-{ return flatcc_builder_union_vector_edit(B); }\
+{ return (TN ## _union_ref_t *) flatcc_builder_union_vector_edit(B); }\
 static inline size_t V ## _reserved_len(NS ## builder_t *B)\
 { return flatcc_builder_union_vector_count(B); }\
 static inline TN ## _union_ref_t *V ## _push(NS ## builder_t *B, const TN ## _union_ref_t ref)\
-{ return flatcc_builder_union_vector_push(B, ref); }
+{ return flatcc_builder_union_vector_push(B, ref); }\
+static inline TN ## _union_ref_t *V ## _push_clone(NS ## builder_t *B, TN ## _union_t u)\
+{ return TN ## _vec_push(B, TN ## _clone(B, u)); }
 
 #define __flatbuffers_build_union_vector(NS, N)\
 static inline int N ## _vec_start(NS ## builder_t *B)\
@@ -199,7 +224,20 @@ static inline N ## _union_vec_ref_t N ## _vec_end(NS ## builder_t *B)\
 { return flatcc_builder_end_union_vector(B); }\
 static inline N ## _union_vec_ref_t N ## _vec_create(NS ## builder_t *B, const N ## _union_ref_t *data, size_t len)\
 { return flatcc_builder_create_union_vector(B, data, len); }\
-__flatbuffers_build_union_vector_ops(NS, N ## _vec, N, N)
+__flatbuffers_build_union_vector_ops(NS, N ## _vec, N, N)\
+/* Preserves DAG structure separately for type and value vector, so a type vector could be shared for many value vectors. */\
+static inline N ## _union_vec_ref_t N ## _vec_clone(NS ## builder_t *B, N ##_union_vec_t vec)\
+{ N ## _union_vec_ref_t _uvref, _ret = { 0, 0 }; NS ## union_ref_t _uref; size_t _i, _len; flatcc_builder_ref_t *_p;\
+  if (vec.type == 0) return _ret;\
+  _uvref.type = flatcc_builder_refmap_find(B, vec.type); _uvref.value = flatcc_builder_refmap_find(B, vec.value);\
+  _len = N ## _union_vec_len(vec); if (_uvref.type == 0) {\
+  _uvref.type = flatcc_builder_refmap_insert(B, vec.type, (flatcc_builder_create_type_vector(B, vec.type, _len))); }\
+  if (_uvref.type == 0) return _ret; if (_uvref.value == 0) {\
+    if (flatcc_builder_start_offset_vector(B)) return _ret;\
+    _p = flatcc_builder_extend_offset_vector(B, _len); if (!_p) return _ret;\
+   for (_i = 0; _i < _len; ++_i) { _uref = N ## _clone(B, N ## _union_vec_at(vec, _i)); _p[_i] = _uref.value; }\
+  _uvref.value = flatcc_builder_refmap_insert(B, vec.value, flatcc_builder_end_offset_vector(B));\
+  if (_uvref.value == 0) return _ret; } return _uvref; }
 
 #define __flatbuffers_build_string_vector_ops(NS, N)\
 static inline int N ## _push_start(NS ## builder_t *B)\
@@ -247,7 +285,13 @@ static inline N ## _vec_ref_t N ## _vec_end(NS ## builder_t *B)\
 { return flatcc_builder_end_offset_vector(B); }\
 static inline N ## _vec_ref_t N ## _vec_create(NS ## builder_t *B, const N ## _ref_t *data, size_t len)\
 { return flatcc_builder_create_offset_vector(B, data, len); }\
-__flatbuffers_build_offset_vector_ops(NS, N ## _vec, N, N)
+__flatbuffers_build_offset_vector_ops(NS, N ## _vec, N, N)\
+static inline N ## _vec_ref_t N ## _vec_clone(NS ## builder_t *B, N ##_vec_t vec)\
+{ int _ret; N ## _ref_t *_p; size_t _i, _len; __flatbuffers_memoize_begin(B, vec);\
+ _len = N ## _vec_len(vec); if (flatcc_builder_start_offset_vector(B)) return 0;\
+  _p = flatcc_builder_extend_offset_vector(B, _len); if (!_p) return 0;\
+  for (_i = 0; _i < _len; ++_i) { if (!(_p[_i] = N ## _clone(B, N ## _vec_at(vec, _i)))) return 0; }\
+  __flatbuffers_memoize_end(B, vec, flatcc_builder_end_offset_vector(B)); }\
 
 #define __flatbuffers_build_string_ops(NS, N)\
 static inline char *N ## _append(NS ## builder_t *B, const char *s, size_t len)\
@@ -278,7 +322,7 @@ static inline NS ## ref_t NS ## string_create_str(NS ## builder_t *B, const char
 static inline NS ## ref_t NS ## string_create_strn(NS ## builder_t *B, const char *s, size_t len)\
 { return flatcc_builder_create_string_strn(B, s, len); }\
 static inline NS ## string_ref_t NS ## string_clone(NS ## builder_t *B, NS ## string_t string)\
-{ return flatcc_builder_create_string(B, string, NS ## string_len(string)); }\
+{ __flatbuffers_memoize(B, string, flatcc_builder_create_string(B, string, NS ## string_len(string))); }\
 static inline NS ## string_ref_t NS ## string_slice(NS ## builder_t *B, NS ## string_t string, size_t index, size_t len)\
 { size_t n = NS ## string_len(string); if (index >= n) index = n; n -= index; if (len > n) len = n;\
   return flatcc_builder_create_string(B, string + index, len); }\
@@ -328,13 +372,12 @@ static inline N ## _ref_t N ## _create(NS ## builder_t *B __ ## N ## _formal_arg
 { N ## _t *_p = N ## _start(B); if (!_p) return 0; N ##_assign_to_pe(_p __ ## N ## _call_args);\
   return N ## _end_pe(B); }\
 static inline N ## _ref_t N ## _clone(NS ## builder_t *B, N ## _struct_t p)\
-{ N ## _t *_p = N ## _start(B); if (!_p) return 0;\
-  N ## _copy(_p, p); return N ##_end_pe(B); }\
+{ N ## _t *_p; __flatbuffers_memoize_begin(B, p); _p = N ## _start(B); if (!_p) return 0;\
+  N ## _copy(_p, p); __flatbuffers_memoize_end(B, p, N ##_end_pe(B)); }\
 __flatbuffers_build_vector(NS, N, N ## _t, S, A)\
 __flatbuffers_build_struct_root(NS, N, A, FID, TFID)
 
 #define __flatbuffers_build_table(NS, N, K)\
-typedef NS ## ref_t N ## _ref_t;\
 static inline int N ## _start(NS ## builder_t *B)\
 { return flatcc_builder_start_table(B, K); }\
 static inline N ## _ref_t N ## _end(NS ## builder_t *B)\
@@ -343,7 +386,7 @@ static inline N ## _ref_t N ## _end(NS ## builder_t *B)\
   return flatcc_builder_end_table(B); }\
 __flatbuffers_build_offset_vector(NS, N)
 
-#define __flatbuffers_build_table_field(ID, NS, N, TN)\
+#define __flatbuffers_build_table_field(ID, NS, N, TN, TT)\
 static inline int N ## _add(NS ## builder_t *B, TN ## _ref_t ref)\
 { TN ## _ref_t *_p; return (ref && (_p = flatcc_builder_table_add_offset(B, ID))) ?\
   ((*_p = ref), 0) : -1; }\
@@ -352,9 +395,13 @@ static inline int N ## _start(NS ## builder_t *B)\
 static inline int N ## _end(NS ## builder_t *B)\
 { return N ## _add(B, TN ## _end(B)); }\
 static inline TN ## _ref_t N ## _create(NS ## builder_t *B __ ## TN ##_formal_args)\
-{ return N ## _add(B, TN ## _create(B __ ## TN ## _call_args)); }
+{ return N ## _add(B, TN ## _create(B __ ## TN ## _call_args)); }\
+static inline int N ## _clone(NS ## builder_t *B, TN ## _table_t p)\
+{ return N ## _add(B, TN ## _clone(B, p)); }\
+static inline int N ## _pick(NS ## builder_t *B, TT ## _table_t t)\
+{ TN ## _table_t _p = N ## _get(t); return _p ? N ## _clone(B, _p) : 0; }
 
-#define __flatbuffers_build_union_field(ID, NS, N, TN)\
+#define __flatbuffers_build_union_field(ID, NS, N, TN, TT)\
 static inline int N ## _add(NS ## builder_t *B, TN ## _union_ref_t uref)\
 { NS ## ref_t *_p; TN ## _union_type_t *_pt; if (uref.type == TN ## _NONE) return 0; if (uref.value == 0) return -1;\
   if (!(_pt = (TN ## _union_type_t *)flatcc_builder_table_add(B, ID - 1, sizeof(*_pt), sizeof(*_pt))) ||\
@@ -364,7 +411,11 @@ static inline int N ## _add_type(NS ## builder_t *B, TN ## _union_type_t type)\
   sizeof(*_pt), sizeof(*_pt))) ? ((*_pt = type), 0) : -1; }\
 static inline int N ## _add_value(NS ## builder_t *B, TN ## _union_ref_t uref)\
 { NS ## ref_t *p; if (uref.type == TN ## _NONE) return 0; return (p = flatcc_builder_table_add_offset(B, ID)) ?\
-  ((*p = uref.value), 0) : -1; }
+  ((*p = uref.value), 0) : -1; }\
+static inline int N ## _clone(NS ## builder_t *B, TN ## _union_t p)\
+{ return N ## _add(B, TN ## _clone(B, p)); }\
+static inline int N ## _pick(NS ## builder_t *B, TT ## _table_t t)\
+{ TN ## _union_t _p = N ## _union(t); return _p.type ? N ## _clone(B, _p) : 0; }
 
 /* M is the union value name and T is its type, i.e. the qualified name. */
 #define __flatbuffers_build_union_table_value_field(NS, N, NU, M, T)\
@@ -377,6 +428,9 @@ static inline int N ## _ ## M ## _end(NS ## builder_t *B)\
   return ref ? N ## _ ## M ## _add(B, ref) : -1; }\
 static inline int N ## _ ## M ## _create(NS ## builder_t *B __ ## T ##_formal_args)\
 { T ## _ref_t ref = T ## _create(B __ ## T ## _call_args);\
+  return ref ? N ## _add(B, NU ## _as_ ## M(ref)) : -1; }\
+static inline int N ## _ ## M ## _clone(NS ## builder_t *B, T ## _table_t t)\
+{ T ## _ref_t ref = T ## _clone(B, t);\
   return ref ? N ## _add(B, NU ## _as_ ## M(ref)) : -1; }
 
 /* M is the union value name and T is its type, i.e. the qualified name. */
@@ -397,23 +451,28 @@ static inline int N ## _ ## M ## _end_pe(NS ## builder_t *B)\
 static inline int N ## _ ## M ## _clone(NS ## builder_t *B, T ## _struct_t p)\
 { T ## _ref_t ref = T ## _clone(B, p);\
   return ref ? N ## _add(B, NU ## _as_ ## M(ref)) : -1; }
-
 #define __flatbuffers_build_union_string_value_field(NS, N, NU, M)\
 static inline int N ## _ ## M ## _add(NS ## builder_t *B, NS ## string_ref_t ref)\
 { return N ## _add(B, NU ## _as_ ## M (ref)); }\
 __flatbuffers_build_string_field_ops(NS, N ## _ ## M)
 
-/* NS: common namespace, ID: table field id (not offset), TN: name of type T,
+/* NS: common namespace, ID: table field id (not offset), TN: name of type T, TT: name of table type
  * S: sizeof of scalar type, A: alignment of type T, default value V of type T. */
-#define __flatbuffers_build_scalar_field(ID, NS, N, TN, T, S, A, V)\
+#define __flatbuffers_build_scalar_field(ID, NS, N, TN, T, S, A, V, TT)\
 static inline int N ## _add(NS ## builder_t *B, const T v)\
 { T *_p; if (v == V) return 0; if (!(_p = (T *)flatcc_builder_table_add(B, ID, S, A))) return -1;\
   TN ## _assign_to_pe(_p, v); return 0; }\
 static inline int N ## _force_add(NS ## builder_t *B, const T v)\
 { T *_p; if (!(_p = (T *)flatcc_builder_table_add(B, ID, S, A))) return -1;\
-  TN ## _assign_to_pe(_p, v); return 0; }
+  TN ## _assign_to_pe(_p, v); return 0; }\
+/* Clone does not skip default values and expects pe endian content. */\
+static inline int N ## _clone(NS ## builder_t *B, const T *p)\
+{ return 0 == flatcc_builder_table_add_copy(B, ID, p, S, A) ? -1 : 0; }\
+/* Transferring a missing field is a nop success with 0 as result. */\
+static inline int N ## _pick(NS ## builder_t *B, TT ## _table_t t)\
+{ const T *_p = N ## _get_ptr(t); return _p ? N ## _clone(B, _p) : 0; }
 
-#define __flatbuffers_build_struct_field(ID, NS, N, TN, S, A)\
+#define __flatbuffers_build_struct_field(ID, NS, N, TN, S, A, TT)\
 static inline TN ## _t *N ## _start(NS ## builder_t *B)\
 { return (TN ## _t *)flatcc_builder_table_add(B, ID, S, A); }\
 static inline int N ## _end(NS ## builder_t *B)\
@@ -425,9 +484,11 @@ static inline int N ## _create(NS ## builder_t *B __ ## TN ## _formal_args)\
 static inline int N ## _add(NS ## builder_t *B, const TN ## _t *p)\
 { TN ## _t *_p = N ## _start(B); if (!_p) return -1; TN ##_copy_to_pe(_p, p); return 0; }\
 static inline int N ## _clone(NS ## builder_t *B, TN ## _struct_t p)\
-{ return 0 == flatcc_builder_table_add_copy(B, ID, p, S, A) ? -1 : 0; }
+{ return 0 == flatcc_builder_table_add_copy(B, ID, p, S, A) ? -1 : 0; }\
+static inline int N ## _pick(NS ## builder_t *B, TT ## _table_t t)\
+{ TN ## _struct_t _p = N ## _get(t); return _p ? N ## _clone(B, _p) : 0; }
 
-#define __flatbuffers_build_vector_field(ID, NS, N, TN, T)\
+#define __flatbuffers_build_vector_field(ID, NS, N, TN, T, TT)\
 static inline int N ## _add(NS ## builder_t *B, TN ## _vec_ref_t ref)\
 { TN ## _vec_ref_t *_p; return (ref && (_p = flatcc_builder_table_add_offset(B, ID))) ? ((*_p = ref), 0) : -1; }\
 static inline int N ## _start(NS ## builder_t *B)\
@@ -440,13 +501,15 @@ static inline int N ## _create_pe(NS ## builder_t *B, T *data, size_t len)\
 { return N ## _add(B, TN ## _vec_create_pe(B, data, len)); }\
 static inline int N ## _create(NS ## builder_t *B, T *data, size_t len)\
 { return N ## _add(B, TN ## _vec_create(B, data, len)); }\
-static inline int N ## _clone(NS ## builder_t *B, TN ## _vec_t vec)\
-{ return N ## _add(B, TN ## _vec_clone(B, vec)); }\
 static inline int N ## _slice(NS ## builder_t *B, TN ## _vec_t vec, size_t index, size_t len)\
 { return N ## _add(B, TN ## _vec_slice(B, vec, index, len)); }\
-__flatbuffers_build_vector_ops(NS, N, N, TN, T)
+static inline int N ## _clone(NS ## builder_t *B, TN ## _vec_t vec)\
+{ return N ## _add(B, TN ## _vec_clone(B, vec)); }\
+static inline int N ## _pick(NS ## builder_t *B, TT ## _table_t t)\
+{ TN ## _vec_t _p = N ## _get(t); return _p ? N ## _clone(B, _p) : 0; }\
+__flatbuffers_build_vector_ops(NS, N, N, TN, T)\
 
-#define __flatbuffers_build_offset_vector_field(ID, NS, N, TN)\
+#define __flatbuffers_build_offset_vector_field(ID, NS, N, TN, TT)\
 static inline int N ## _add(NS ## builder_t *B, TN ## _vec_ref_t ref)\
 { TN ## _vec_ref_t *_p; return (ref && (_p = flatcc_builder_table_add_offset(B, ID))) ? ((*_p = ref), 0) : -1; }\
 static inline int N ## _start(NS ## builder_t *B)\
@@ -455,8 +518,13 @@ static inline int N ## _end(NS ## builder_t *B)\
 { return N ## _add(B, flatcc_builder_end_offset_vector(B)); }\
 static inline int N ## _create(NS ## builder_t *B, const TN ## _ref_t *data, size_t len)\
 { return N ## _add(B, flatcc_builder_create_offset_vector(B, data, len)); }\
-__flatbuffers_build_offset_vector_ops(NS, N, N, TN)
+__flatbuffers_build_offset_vector_ops(NS, N, N, TN)\
+static inline int N ## _clone(NS ## builder_t *B, TN ## _vec_t vec)\
+{ return N ## _add(B, TN ## _vec_clone(B, vec)); }\
+static inline int N ## _pick(NS ## builder_t *B, TT ## _table_t t)\
+{ TN ## _vec_t _p = N ## _get(t); return _p ? N ## _clone(B, _p) : 0; }
 
+/* depends on N ## _add which differs for union member fields and ordinary fields */\
 #define __flatbuffers_build_string_field_ops(NS, N)\
 static inline int N ## _start(NS ## builder_t *B)\
 { return flatcc_builder_start_string(B); }\
@@ -474,16 +542,18 @@ static inline int N ## _slice(NS ## builder_t *B, NS ## string_t string, size_t 
 { return N ## _add(B, NS ## string_slice(B, string, index, len)); }\
 __flatbuffers_build_string_ops(NS, N)
 
-#define __flatbuffers_build_string_field(ID, NS, N)\
+#define __flatbuffers_build_string_field(ID, NS, N, TT)\
 static inline int N ## _add(NS ## builder_t *B, NS ## string_ref_t ref)\
 { NS ## string_ref_t *_p; return (ref && (_p = flatcc_builder_table_add_offset(B, ID))) ? ((*_p = ref), 0) : -1; }\
-__flatbuffers_build_string_field_ops(NS, N)
+__flatbuffers_build_string_field_ops(NS, N)\
+static inline int N ## _pick(NS ## builder_t *B, TT ## _table_t t)\
+{ NS ## string_t _p = N ## _get(t); return _p ? N ## _clone(B, _p) : 0; }
 
-#define __flatbuffers_build_table_vector_field(ID, NS, N, TN)\
-__flatbuffers_build_offset_vector_field(ID, NS, N, TN)\
+#define __flatbuffers_build_table_vector_field(ID, NS, N, TN, TT)\
+__flatbuffers_build_offset_vector_field(ID, NS, N, TN, TT)\
 __flatbuffers_build_table_vector_ops(NS, N, TN)
 
-#define __flatbuffers_build_union_vector_field(ID, NS, N, TN)\
+#define __flatbuffers_build_union_vector_field(ID, NS, N, TN, TT)\
 static inline int N ## _add(NS ## builder_t *B, TN ## _union_vec_ref_t uvref)\
 { NS ## vec_ref_t *_p; if (!uvref.type || !uvref.value) return uvref.type == uvref.value ? 0 : -1;\
   if (!(_p = flatcc_builder_table_add_offset(B, ID - 1))) return -1; *_p = uvref.type;\
@@ -494,7 +564,11 @@ static inline int N ## _end(NS ## builder_t *B)\
 { return N ## _add(B, flatcc_builder_end_union_vector(B)); }\
 static inline int N ## _create(NS ## builder_t *B, const TN ## _union_ref_t *data, size_t len)\
 { return N ## _add(B, flatcc_builder_create_union_vector(B, data, len)); }\
-__flatbuffers_build_union_vector_ops(NS, N, N, TN)
+__flatbuffers_build_union_vector_ops(NS, N, N, TN)\
+static inline int N ## _clone(NS ## builder_t *B, TN ## _union_vec_t vec)\
+{ return N ## _add(B, TN ## _vec_clone(B, vec)); }\
+static inline int N ## _pick(NS ## builder_t *B, TT ## _table_t t)\
+{ TN ## _union_vec_t _p = N ## _union(t); return _p.type ? N ## _clone(B, _p) : 0; }
 
 #define __flatbuffers_build_union_table_vector_value_field(NS, N, NU, M, T)\
 static inline int N ## _ ## M ## _push_start(NS ## builder_t *B)\
@@ -504,7 +578,9 @@ static inline NU ## _union_ref_t *N ## _ ## M ## _push_end(NS ## builder_t *B)\
 static inline NU ## _union_ref_t *N ## _ ## M ## _push(NS ## builder_t *B, T ## _ref_t ref)\
 { return NU ## _vec_push(B, NU ## _as_ ## M (ref)); }\
 static inline NU ## _union_ref_t *N ## _ ## M ## _push_create(NS ## builder_t *B __ ## T ##_formal_args)\
-{ return NU ## _vec_push(B, NU ## _as_ ## M(T ## _create(B __ ## T ## _call_args))); }
+{ return NU ## _vec_push(B, NU ## _as_ ## M(T ## _create(B __ ## T ## _call_args))); }\
+static inline NU ## _union_ref_t *N ## _ ## M ## _push_clone(NS ## builder_t *B, T ## _table_t t)\
+{ return NU ## _vec_push(B, NU ## _as_ ## M(T ## _clone(B, t))); }
 
 #define __flatbuffers_build_union_struct_vector_value_field(NS, N, NU, M, T)\
 static inline T ## _t *N ## _ ## M ## _push_start(NS ## builder_t *B)\
@@ -514,7 +590,9 @@ static inline NU ## _union_ref_t *N ## _ ## M ## _push_end(NS ## builder_t *B)\
 static inline NU ## _union_ref_t *N ## _ ## M ## _push(NS ## builder_t *B, T ## _ref_t ref)\
 { return NU ## _vec_push(B, NU ## _as_ ## M (ref)); }\
 static inline NU ## _union_ref_t *N ## _ ## M ## _push_create(NS ## builder_t *B __ ## T ##_formal_args)\
-{ return NU ## _vec_push(B, NU ## _as_ ## M(T ## _create(B __ ## T ## _call_args))); }
+{ return NU ## _vec_push(B, NU ## _as_ ## M(T ## _create(B __ ## T ## _call_args))); }\
+static inline NU ## _union_ref_t *N ## _ ## M ## _push_clone(NS ## builder_t *B, T ## _struct_t p)\
+{ return NU ## _vec_push(B, NU ## _as_ ## M(T ## _clone(B, p))); }
 
 #define __flatbuffers_build_union_string_vector_value_field(NS, N, NU, M)\
 static inline NU ## _union_ref_t *N ## _ ## M ## _push(NS ## builder_t *B, NS ## string_ref_t ref)\
@@ -534,8 +612,8 @@ static inline NU ## _union_ref_t *N ## _ ## M ## _push_clone(NS ## builder_t *B,
 static inline NU ## _union_ref_t *N ## _ ## M ## _push_slice(NS ## builder_t *B, NS ## string_t string, size_t index, size_t len)\
 { return NU ## _vec_push(B, NU ## _as_ ## M(NS ## string_slice(B, string, index, len))); }
 
-#define __flatbuffers_build_string_vector_field(ID, NS, N)\
-__flatbuffers_build_offset_vector_field(ID, NS, N, NS ## string)\
+#define __flatbuffers_build_string_vector_field(ID, NS, N, TT)\
+__flatbuffers_build_offset_vector_field(ID, NS, N, NS ## string, TT)\
 __flatbuffers_build_string_vector_ops(NS, N)
 
 #define __flatbuffers_uint8_formal_args , uint8_t v0
