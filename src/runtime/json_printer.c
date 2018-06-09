@@ -20,6 +20,7 @@
 
 #include "flatcc/flatcc_flatbuffers.h"
 #include "flatcc/flatcc_json_printer.h"
+#include "flatcc/flatcc_identifier.h"
 
 #include "flatcc/portable/pprintint.h"
 #include "flatcc/portable/pprintfp.h"
@@ -1008,6 +1009,9 @@ void flatcc_json_printer_struct_field(flatcc_json_printer_t *ctx,
 /*
  * Make sure the buffer identifier is valid before assuming the rest of
  * the buffer is sane.
+ * NOTE: this won't work with type hashes because these can contain
+ * nulls in the fid string. In this case use null as fid to disable
+ * check.
  */
 static int accept_header(flatcc_json_printer_t * ctx,
         const void *buf, size_t bufsiz, const char *fid)
@@ -1020,8 +1024,7 @@ static int accept_header(flatcc_json_printer_t * ctx,
         return 0;
     }
     if (fid != 0) {
-        strncpy((char *)&id2, fid, FLATBUFFERS_IDENTIFIER_SIZE);
-        id2 = __flatbuffers_thash_cast_from_le(id2);
+        id2 = flatbuffers_type_hash_from_string(fid);
         id = __flatbuffers_thash_read_from_pe((uint8_t *)buf + offset_size);
         if (!(id2 == 0 || id == id2)) {
             RAISE_ERROR(bad_input);

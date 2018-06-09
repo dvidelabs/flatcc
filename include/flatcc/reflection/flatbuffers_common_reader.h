@@ -464,9 +464,7 @@ static inline T N ## _ ## NK (N ## _struct_t t__tmp) { return t__tmp ? &(t__tmp-
 /* If fid is null, the function returns true without testing as buffer is not expected to have any id. */
 static inline int flatbuffers_has_identifier(const void *buffer, const char *fid)
 { flatbuffers_thash_t id, id2 = 0; if (fid == 0) { return 1; };
-  strncpy((char *)&id2, fid, sizeof(id2));
-  /* Identifier strings are always considered little endian. */
-  id2 = __flatbuffers_thash_cast_from_le(id2);
+  id2 = flatbuffers_type_hash_from_string(fid);
   id = __flatbuffers_thash_read_from_pe(((flatbuffers_uoffset_t *)buffer) + 1);
   return id2 == 0 || id == id2; }
 static inline int flatbuffers_has_type_hash(const void *buffer, flatbuffers_thash_t thash)

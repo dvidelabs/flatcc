@@ -36,6 +36,8 @@
 - Add `include/flatcc/flatcc_refmap_h` and `src/runtime/refmap.c` to
   runtime library. The runtime library now depends of refmap.c but has
   very low overhead when not expeclity enabled for use with cloning.
+- Add `flatbuffers_type_hash_from_string` to avoid gcc-8 strncpy warning
+  (#86).
 
 ## [0.5.1]
 

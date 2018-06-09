@@ -10,6 +10,7 @@
 #include "flatcc/flatcc_rtconfig.h"
 #include "flatcc/flatcc_flatbuffers.h"
 #include "flatcc/flatcc_verifier.h"
+#include "flatcc/flatcc_identifier.h"
 
 /* Customization for testing. */
 #if FLATCC_DEBUG_VERIFY
@@ -110,9 +111,7 @@ static inline uoffset_t read_uoffset(const void *p, uoffset_t base)
 
 static inline thash_t read_thash_identifier(const char *identifier)
 {
-    flatbuffers_thash_t id = 0;
-    strncpy((char *)&id, identifier, sizeof(id));
-    return __flatbuffers_thash_cast_from_le(id);
+    return flatbuffers_type_hash_from_string(identifier);
 }
 
 static inline thash_t read_thash(const void *p, uoffset_t base)
