@@ -26,50 +26,50 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
-	* [Main features supported as of 0.5.1](#main-features-supported-as-of-051)
-	* [Supported platforms (CI tested)](#supported-platforms-ci-tested)
-	* [Platforms reported to work by users](#platforms-reported-to-work-by-users)
-	* [Portability](#portability)
+    * [Main features supported as of 0.5.1](#main-features-supported-as-of-051)
+    * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
+    * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
+    * [Portability](#portability)
 * [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
 * [Generated Files](#generated-files)
-	* [Use of Macros in Generated Code](#use-of-macros-in-generated-code)
-	* [Extracting Documentation](#extracting-documentation)
+    * [Use of Macros in Generated Code](#use-of-macros-in-generated-code)
+    * [Extracting Documentation](#extracting-documentation)
 * [Using flatcc](#using-flatcc)
 * [Quickstart](#quickstart)
-	* [Reading a Buffer](#reading-a-buffer)
-	* [Compiling for Read-Only](#compiling-for-read-only)
-	* [Building a Buffer](#building-a-buffer)
-	* [Verifying a Buffer](#verifying-a-buffer)
-	* [Potential Name Conflicts](#potential-name-conflicts)
-	* [Debugging a Buffer](#debugging-a-buffer)
+    * [Reading a Buffer](#reading-a-buffer)
+    * [Compiling for Read-Only](#compiling-for-read-only)
+    * [Building a Buffer](#building-a-buffer)
+    * [Verifying a Buffer](#verifying-a-buffer)
+    * [Potential Name Conflicts](#potential-name-conflicts)
+    * [Debugging a Buffer](#debugging-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
-	* [File Identifiers](#file-identifiers)
-	* [Type Identifiers](#type-identifiers)
+    * [File Identifiers](#file-identifiers)
+    * [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
-	* [Base64 Encoding](#base64-encoding)
-	* [Generic Parsing and Printing.](#generic-parsing-and-printing)
-	* [Performance Notes](#performance-notes)
+    * [Base64 Encoding](#base64-encoding)
+    * [Generic Parsing and Printing.](#generic-parsing-and-printing)
+    * [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
 * [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
 * [Fast Buffers](#fast-buffers)
 * [Types](#types)
 * [Unions](#unions)
-	* [Union Scope Resolution](#union-scope-resolution)
+    * [Union Scope Resolution](#union-scope-resolution)
 * [Endianness](#endianness)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
 * [Searching and Sorting](#searching-and-sorting)
 * [Null Values](#null-values)
 * [Portability Layer](#portability-layer)
 * [Building](#building)
-	* [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
-	* [Windows Build (MSVC)](#windows-build-msvc)
-	* [Docker](#docker)
-	* [Cross-compilation](#cross-compilation)
-	* [Custom Allocation](#custom-allocation)
-	* [Shared Libraries](#shared-libraries)
+    * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
+    * [Windows Build (MSVC)](#windows-build-msvc)
+    * [Docker](#docker)
+    * [Cross-compilation](#cross-compilation)
+    * [Custom Allocation](#custom-allocation)
+    * [Shared Libraries](#shared-libraries)
 * [Distribution](#distribution)
-	* [Unix Files](#unix-files)
-	* [Windows Files](#windows-files)
+    * [Unix Files](#unix-files)
+    * [Windows Files](#windows-files)
 * [Running Tests on Unix](#running-tests-on-unix)
 * [Running Tests on Windows](#running-tests-on-windows)
 * [Configuration](#configuration)
@@ -543,11 +543,13 @@ documented using:
         clang-format -style="WebKit" | \
     	grep "^static.* reflection_Object_\w*(" | \
         cut -f 1 -d '{' | \
-        grep -v deprecated
+        grep -v deprecated | \
+        sed 's/__tmp//g' \
 
 The WebKit style of clang-format ensures that parameters and the return
 type are all placed on the same line. Grep extracts the function headers
-and cut strips function bodies starting on the same line.
+and cut strips function bodies starting on the same line. Sed stripts
+`__tmp` suffix from parameter names used to avoid macro name conflicts.
 
 The above is not guaranteed to always work as output may change, but it
 should go a long way.
@@ -556,20 +558,17 @@ A small extract of the output, as of flatcc-v0.5.2
 
 	static inline size_t reflection_Object_vec_len(reflection_Object_vec_t vec)
 	static inline reflection_Object_table_t reflection_Object_vec_at(reflection_Object_vec_t vec, size_t i)
-	static inline reflection_Object_table_t reflection_Object_as_root_with_identifier(const void* buffer__tmp, const char* fid__tmp)
-	static inline reflection_Object_table_t reflection_Object_as_root_with_type_hash(const void* buffer__tmp, flatbuffers_thash_t thash__tmp)
-	static inline reflection_Object_table_t reflection_Object_as_root(const void* buffer__tmp)
-	static inline reflection_Object_table_t reflection_Object_as_typed_root(const void* buffer__tmp)
-	static inline flatbuffers_string_t reflection_Object_name_get(reflection_Object_table_t t__tmp)
-	static inline flatbuffers_string_t reflection_Object_name(reflection_Object_table_t t__tmp)
-	static inline int reflection_Object_name_is_present(reflection_Object_table_t t__tmp)
-	static inline size_t reflection_Object_vec_scan_by_name(reflection_Object_vec_t vec__tmp, const char* s__tmp)
-	static inline size_t reflection_Object_vec_scan_n_by_name(reflection_Object_vec_t vec__tmp, const char* s__tmp, int n__tmp)
+	static inline reflection_Object_table_t reflection_Object_as_root_with_identifier(const void* buffer, const char* fid)
+	static inline reflection_Object_table_t reflection_Object_as_root_with_type_hash(const void* buffer, flatbuffers_thash_t thash)
+	static inline reflection_Object_table_t reflection_Object_as_root(const void* buffer)
+	static inline reflection_Object_table_t reflection_Object_as_typed_root(const void* buffer)
+	static inline flatbuffers_string_t reflection_Object_name_get(reflection_Object_table_t t)
+	static inline flatbuffers_string_t reflection_Object_name(reflection_Object_table_t t)
+	static inline int reflection_Object_name_is_present(reflection_Object_table_t t)
+	static inline size_t reflection_Object_vec_scan_by_name(reflection_Object_vec_t vec, const char* s)
+	static inline size_t reflection_Object_vec_scan_n_by_name(reflection_Object_vec_t vec, const char* s, int n)
 	...
 
-
-Note that the `__tmp` style names are used to avoid name conflicts during macro
-expansion.
 
 The `flatcc -g` may be used to strip non-get read functions to avoid
 conflicts and also duplicates in the documentation.
@@ -596,19 +595,19 @@ Resulting in the file `MyGame_Sample_Monster_.doc`:
 
 	static inline size_t MyGame_Sample_Monster_vec_len(MyGame_Sample_Monster_vec_t vec)
 	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_vec_at(MyGame_Sample_Monster_vec_t vec, size_t i)
-	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root_with_identifier(const void* buffer__tmp, const char* fid__tmp)
-	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root_with_type_hash(const void* buffer__tmp, flatbuffers_thash_t thash__tmp)
-	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root(const void* buffer__tmp)
-	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_typed_root(const void* buffer__tmp)
-	static inline MyGame_Sample_Vec3_struct_t MyGame_Sample_Monster_pos_get(MyGame_Sample_Monster_table_t t__tmp)
-	static inline MyGame_Sample_Vec3_struct_t MyGame_Sample_Monster_pos(MyGame_Sample_Monster_table_t t__tmp)
-	static inline int MyGame_Sample_Monster_pos_is_present(MyGame_Sample_Monster_table_t t__tmp)
-	static inline int16_t MyGame_Sample_Monster_mana_get(MyGame_Sample_Monster_table_t t__tmp)
-	static inline int16_t MyGame_Sample_Monster_mana(MyGame_Sample_Monster_table_t t__tmp)
-	static inline const int16_t* MyGame_Sample_Monster_mana_get_ptr(MyGame_Sample_Monster_table_t t__tmp)
-	static inline int MyGame_Sample_Monster_mana_is_present(MyGame_Sample_Monster_table_t t__tmp)
-	static inline size_t MyGame_Sample_Monster_vec_scan_by_mana(MyGame_Sample_Monster_vec_t vec__tmp, int16_t key__tmp)
-	static inline size_t MyGame_Sample_Monster_vec_scan_ex_by_mana(MyGame_Sample_Monster_vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, int16_t key__tmp)
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root_with_identifier(const void* buffer, const char* fid)
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root_with_type_hash(const void* buffer, flatbuffers_thash_t thash)
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root(const void* buffer)
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_typed_root(const void* buffer)
+	static inline MyGame_Sample_Vec3_struct_t MyGame_Sample_Monster_pos_get(MyGame_Sample_Monster_table_t t)
+	static inline MyGame_Sample_Vec3_struct_t MyGame_Sample_Monster_pos(MyGame_Sample_Monster_table_t t)
+	static inline int MyGame_Sample_Monster_pos_is_present(MyGame_Sample_Monster_table_t t)
+	static inline int16_t MyGame_Sample_Monster_mana_get(MyGame_Sample_Monster_table_t t)
+	static inline int16_t MyGame_Sample_Monster_mana(MyGame_Sample_Monster_table_t t)
+	static inline const int16_t* MyGame_Sample_Monster_mana_get_ptr(MyGame_Sample_Monster_table_t t)
+	static inline int MyGame_Sample_Monster_mana_is_present(MyGame_Sample_Monster_table_t t)
+	static inline size_t MyGame_Sample_Monster_vec_scan_by_mana(MyGame_Sample_Monster_vec_t vec, int16_t key)
+	static inline size_t MyGame_Sample_Monster_vec_scan_ex_by_mana(MyGame_Sample_Monster_vec_t vec, size_t begin, size_t end, int16_t key)
 	...
 
 

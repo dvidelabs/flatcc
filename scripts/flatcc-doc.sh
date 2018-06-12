@@ -29,5 +29,6 @@ $FLATCC $SCHEMA -a --json --stdout | \
     clang-format -style="WebKit" | \
     grep "^static.* $PREFIX\w*(" | \
     cut -f 1 -d '{' | \
-    grep -v deprecated \
+    grep -v deprecated | \
+    sed 's/__tmp//g' \
     > $OUTDIR/$PREFIX.doc
