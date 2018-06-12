@@ -30,6 +30,7 @@ or printing in less than 2 us for a 10 field mixed type message.
     * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
     * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
     * [Portability](#portability)
+* [Making Sense of Generated Code](#making-sense-of-generated-code)
 * [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
 * [Generated Files](#generated-files)
 * [Using flatcc](#using-flatcc)
@@ -352,6 +353,48 @@ generated from `reflection/reflection.fbs`, and removing
 `include/flatcc/support` which is only used for tests and samples. The
 exact set of required files may change from release to release, and it
 doesn't really matter with respect to the compiled code size.
+
+
+## Making Sense of Generated Code
+
+Occasionally a concern is raised about the dense nature of the macros
+used in the generated code. These macros make it difficult to understand
+which functions are actually available. The [Builder Interface Reference]
+attempts to document the operations in general fashion. Unfortunately
+there is no auto-generated documented - which would be a welcome
+contribution to the project if anyone is up for it.
+
+Some are also concerned with macros being "unsafe". Macros are not
+unsafe when used with FlatCC because they generate static or static
+inline functions. These will trigger compile time errors if used
+incorrectly to the same extend that they would in direct C code.
+
+The expansion compresses the generated output by more than a factor 10
+ensuring that code under source control does not explode and making it
+possible to compare versions of generated code in a meaningful manner
+and see if it matches the intended schema. The macros are also important
+for dealing with platform abstractions via the portable headers.
+
+Still, it is possible to see the generated output although not supported
+directly by the build system. As an example,
+`include/flatcc/reflection` contains pre-generated header files for the
+reflection schema. To see the expanded output using the `clang` compiler
+tool chain, enter the directory and run
+
+    cd include/flatcc/reflection
+    clang -E -DNDEBUG reflection_reader.h -I ../.. | clang-format
+
+Other similar commands are likely available on platforms not supporting
+clang.
+
+Note that the compiler will optimize out nearly all of the generated
+code and only use the logic actually referenced by end-user code because
+the functions are static or static inline. The remaining parts generally
+inline efficiently into the application code resulting in a reasonably
+small binary code size.
+
+More details can be found in
+[#88](https://github.com/dvidelabs/flatcc/issues/88)
 
 
 ## Time / Space / Usability Tradeoff
