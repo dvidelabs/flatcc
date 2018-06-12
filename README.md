@@ -583,8 +583,8 @@ reader, builder and verifier documents:
 
     scripts/flatcc-doc.sh <schema-file> <name-prefix> [<outdir>]
 
-Note that the script requires the clang compiler, but it could be
-adapted for other compilers.
+Note that the script requires the clang compiler and the clang-format
+tool, but the script could likely be adapted for other tool chains as well.
 
 An example is provided in the following script using the reflection schema:
 
