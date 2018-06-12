@@ -539,7 +539,7 @@ The following script automates this process:
 
     scripts/flatcc-doc.sh <schema-file> <name-prefix> [<outdir>]
 
-writing function prototypes to <outdir>/<name-prefix>.doc
+writing function prototypes to `<outdir>/<name-prefix>.doc`.
 
 Note that the script requires the clang compiler and the clang-format
 tool, but the script could likely be adapted for other tool chains as well.
