@@ -32,5 +32,5 @@ $FLATCC $SCHEMA -a --json --stdout | \
     grep -v deprecated | \
     grep -v ");$" | \
     sed 's/__tmp//g' | \
-    sed 's/)$/);/g' \
+    sed 's/)/);/g' \
     > $OUTDIR/$PREFIX.doc

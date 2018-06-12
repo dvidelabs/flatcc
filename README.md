@@ -26,50 +26,50 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
-    * [Main features supported as of 0.5.1](#main-features-supported-as-of-051)
-    * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
-    * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
-    * [Portability](#portability)
+	* [Main features supported as of 0.5.1](#main-features-supported-as-of-051)
+	* [Supported platforms (CI tested)](#supported-platforms-ci-tested)
+	* [Platforms reported to work by users](#platforms-reported-to-work-by-users)
+	* [Portability](#portability)
 * [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
 * [Generated Files](#generated-files)
-    * [Use of Macros in Generated Code](#use-of-macros-in-generated-code)
-    * [Extracting Documentation](#extracting-documentation)
+	* [Use of Macros in Generated Code](#use-of-macros-in-generated-code)
+	* [Extracting Documentation](#extracting-documentation)
 * [Using flatcc](#using-flatcc)
 * [Quickstart](#quickstart)
-    * [Reading a Buffer](#reading-a-buffer)
-    * [Compiling for Read-Only](#compiling-for-read-only)
-    * [Building a Buffer](#building-a-buffer)
-    * [Verifying a Buffer](#verifying-a-buffer)
-    * [Potential Name Conflicts](#potential-name-conflicts)
-    * [Debugging a Buffer](#debugging-a-buffer)
+	* [Reading a Buffer](#reading-a-buffer)
+	* [Compiling for Read-Only](#compiling-for-read-only)
+	* [Building a Buffer](#building-a-buffer)
+	* [Verifying a Buffer](#verifying-a-buffer)
+	* [Potential Name Conflicts](#potential-name-conflicts)
+	* [Debugging a Buffer](#debugging-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
-    * [File Identifiers](#file-identifiers)
-    * [Type Identifiers](#type-identifiers)
+	* [File Identifiers](#file-identifiers)
+	* [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
-    * [Base64 Encoding](#base64-encoding)
-    * [Generic Parsing and Printing.](#generic-parsing-and-printing)
-    * [Performance Notes](#performance-notes)
+	* [Base64 Encoding](#base64-encoding)
+	* [Generic Parsing and Printing.](#generic-parsing-and-printing)
+	* [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
 * [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
 * [Fast Buffers](#fast-buffers)
 * [Types](#types)
 * [Unions](#unions)
-    * [Union Scope Resolution](#union-scope-resolution)
+	* [Union Scope Resolution](#union-scope-resolution)
 * [Endianness](#endianness)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
 * [Searching and Sorting](#searching-and-sorting)
 * [Null Values](#null-values)
 * [Portability Layer](#portability-layer)
 * [Building](#building)
-    * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
-    * [Windows Build (MSVC)](#windows-build-msvc)
-    * [Docker](#docker)
-    * [Cross-compilation](#cross-compilation)
-    * [Custom Allocation](#custom-allocation)
-    * [Shared Libraries](#shared-libraries)
+	* [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
+	* [Windows Build (MSVC)](#windows-build-msvc)
+	* [Docker](#docker)
+	* [Cross-compilation](#cross-compilation)
+	* [Custom Allocation](#custom-allocation)
+	* [Shared Libraries](#shared-libraries)
 * [Distribution](#distribution)
-    * [Unix Files](#unix-files)
-    * [Windows Files](#windows-files)
+	* [Unix Files](#unix-files)
+	* [Windows Files](#windows-files)
 * [Running Tests on Unix](#running-tests-on-unix)
 * [Running Tests on Windows](#running-tests-on-windows)
 * [Configuration](#configuration)
@@ -544,9 +544,9 @@ documented using:
     	grep "^static.* reflection_Object_\w*(" | \
         cut -f 1 -d '{' | \
         grep -v deprecated | \
-        grep -v ");$" | \
+        grep -v ");" | \
         sed 's/__tmp//g' | \
-        sed 's/)$/);/g' \
+        sed 's/)$/);/g'
 
 The WebKit style of clang-format ensures that parameters and the return
 type are all placed on the same line. Grep extracts the function headers
@@ -591,11 +591,11 @@ Examples are provided in following script using the reflection and monster schem
     scripts/reflection-doc-example.sh
     scripts/monster-doc-example.sh
 
-The monster example essentially calls:
+The monster doc example essentially calls:
 
 	scripts/flatcc-doc.sh samples/monster/monster.fbs MyGame_Sample_Monster_
 
-Resulting in the file `MyGame_Sample_Monster_.doc`:
+resulting in the file `MyGame_Sample_Monster_.doc`:
 
 	static inline size_t MyGame_Sample_Monster_vec_len(MyGame_Sample_Monster_vec_t vec);
 	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_vec_at(MyGame_Sample_Monster_vec_t vec, size_t i);
@@ -614,6 +614,24 @@ Resulting in the file `MyGame_Sample_Monster_.doc`:
 	static inline size_t MyGame_Sample_Monster_vec_scan_ex_by_mana(MyGame_Sample_Monster_vec_t vec, size_t begin, size_t end, int16_t key);
 	...
 
+
+FlatBuffer native types can also be extracted, for example string operations:
+
+	scripts/flatcc-doc.sh samples/monster/monster.fbs flatbuffers_string_
+
+resulting in `flatbuffers_string_.doc`:
+
+	static inline size_t flatbuffers_string_len(flatbuffers_string_t s);
+	static inline size_t flatbuffers_string_vec_len(flatbuffers_string_vec_t vec);
+	static inline flatbuffers_string_t flatbuffers_string_vec_at(flatbuffers_string_vec_t vec, size_t i);
+	static inline flatbuffers_string_t flatbuffers_string_cast_from_generic(const flatbuffers_generic_t p);
+	static inline flatbuffers_string_t flatbuffers_string_cast_from_union(const flatbuffers_union_t u);
+	static inline size_t flatbuffers_string_vec_find(flatbuffers_string_vec_t vec, const char* s);
+	static inline size_t flatbuffers_string_vec_find_n(flatbuffers_string_vec_t vec, const char* s, size_t n);
+	static inline size_t flatbuffers_string_vec_scan(flatbuffers_string_vec_t vec, const char* s);
+	static inline size_t flatbuffers_string_vec_scan_n(flatbuffers_string_vec_t vec, const char* s, size_t n);
+	static inline size_t flatbuffers_string_vec_scan_ex(flatbuffers_string_vec_t vec, size_t begin, size_t end, const char* s);
+	...
 
 ## Using flatcc
 
