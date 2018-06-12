@@ -544,7 +544,7 @@ and cut strips function bodies starting on the same line.
 The above is not guaranteed to always work as output may change, but it
 should go a long way.
 
-The above example results in the following output, as of flatcc-v0.5.2:
+The above example stores the following output in `Field.txt`,  as of flatcc-v0.5.2:
 
     static inline reflection_Field_table_t reflection_Field_vec_at(reflection_Field_vec_t vec, size_t i)
     static inline reflection_Field_table_t reflection_Field_as_root_with_identifier(const void* buffer__tmp, const
