@@ -1,12 +1,14 @@
-```
 flatcc FlatBuffers schema compiler for C by dvide.com
 version: 0.5.2-pre
 usage: flatcc [options] file [...]
 options:
-                             No option generates reader only
-  -c                         Generate common include header(s)
-  -w                         Generate builders (writable buffers)
-  -r                         Recursively generate included schema files
+  --reader                   (default) Generate reader
+  -c, --common               Generate common include header(s)
+  --common_reader            Generate common reader include header(s)
+  --common_builder           Generate common builder include header(s)
+  -w, --builder              Generate builders (writable buffers)
+  -v, --verifier             Generate verifier
+  -r, --recursive            Recursively generate included schema files
   -a                         Generate all (like -cwvr)
   -g                         Use _get suffix only to avoid conflicts
   -d                         Dependency file like gcc -MMD
@@ -37,14 +39,19 @@ provides functions to read a flatbuffer. A common include header is also
 required. The common file is generated with the -c option. The reader
 has no external dependencies.
 
-The -w option enables code generation to write buffers: `flatbuffers -w
-monster.fbs` will generate `monster.h` and `monster_builder.h`, and also
-a builder specific common file with the -cw option. The builder must
-link with the extern `flatbuilder` library.
+The -w (--builder) option enables code generation to build buffers:
+`flatbuffers -w monster.fbs` will generate `monster.h` and
+`monster_builder.h`, and also a builder specific common file with the
+-cw option. The builder must link with the extern `flatbuilder` library.
 
--v generates a verifier file per schema. It depends on the runtime
-library but not on other generated files, except other included
+-v (--verifier) generates a verifier file per schema. It depends on the
+runtime library but not on other generated files, except other included
 verifiers.
+
+-r (--recursive) generates all schema included recursively.
+
+--reader is the default option to generate reader output but can be used
+explicitly together with other options that would otherwise disable it.
 
 All C output can be concated to a single file using --stdout or
 --outfile with content produced in dependency order. The outfile is
@@ -82,10 +89,6 @@ and has dependencies similar to --json-parser.
 
 --json is generates both printer and parser.
 
-DEPRECATED:
-  --schema-namespace controls if typenames in schema are prefixed a namespace.
-  namespaces should always be present.
-
 The generated source can redefine offset sizes by including a modified
 `flatcc_types.h` file. The flatbuilder library must then be compiled with the
 same `flatcc_types.h` file. In this case --prefix and --common-prefix options
@@ -99,4 +102,3 @@ time assertions and inline functions but an optional set of portability
 headers can be included to work with most any compiler. The portability
 layer is not throughly tested so a platform specific test is required
 before production use. Upstream patches are welcome.
-```

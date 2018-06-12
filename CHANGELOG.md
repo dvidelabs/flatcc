@@ -38,6 +38,9 @@
   very low overhead when not expeclity enabled for use with cloning.
 - Add `flatbuffers_type_hash_from_string` to avoid gcc-8 strncpy warning
   (#86).
+- Add long form flatcc options --common, --common-reader, --common-builder,
+  --reader, --builder, --verifier.
+- Remove flatcc deprecated option for schema namespace.
 
 ## [0.5.1]
 
