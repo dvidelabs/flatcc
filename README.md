@@ -492,9 +492,9 @@ documented in [Builder Interface Reference].
 Occasionally a concern is raised about the dense nature of the macros
 used in the generated code. These macros make it difficult to understand
 which functions are actually available. The [Builder Interface Reference]
-attempts to document the operations in general fashion. Unfortunately
-there is no auto-generated documentation - which would be a welcome
-contribution to the project if anyone is up for it.
+attempts to document the operations in general fashion. To get more
+detailed information, generated function prototypes can be extracted
+with the `scripts/flatcc-doc.sh` script.
 
 Some are also concerned with macros being "unsafe". Macros are not
 unsafe when used with FlatCC because they generate static or static
