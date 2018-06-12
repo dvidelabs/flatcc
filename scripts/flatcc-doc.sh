@@ -26,7 +26,7 @@ echo generating $OUTDIR/$PREFIX.reader.doc
 $FLATCC $SCHEMA -cr --reader --stdout | \
     clang - -E -DNDEBUG -I $INCLUDE | \
     clang-format -style="WebKit" | \
-    grep "^static .* $PREFIX" | \
+    grep "^static.* $PREFIX\w*(" | \
     cut -f 1 -d '{' | \
     grep -v deprecated \
     > $OUTDIR/$PREFIX.reader.doc
@@ -35,7 +35,7 @@ echo generating $OUTDIR/$PREFIX.builder.doc
 $FLATCC $SCHEMA -cr --builder --stdout | \
     clang - -E -DNDEBUG -I $INCLUDE | \
     clang-format -style="WebKit" | \
-    grep "^static .* $PREFIX" | \
+    grep "^static.* $PREFIX\w*(" | \
     cut -f 1 -d '{' | \
     grep -v deprecated \
     > $OUTDIR/$PREFIX.builder.doc
@@ -44,7 +44,7 @@ echo generating $OUTDIR/$PREFIX.verifier.doc
 $FLATCC $SCHEMA -cr --verifier --stdout | \
     clang - -E -DNDEBUG -I $INCLUDE | \
     clang-format -style="WebKit" | \
-    grep "^static .* $PREFIX" | \
+    grep "^static.* $PREFIX\w*(" | \
     cut -f 1 -d '{' | \
     grep -v deprecated \
     > $OUTDIR/$PREFIX.verifier.doc
