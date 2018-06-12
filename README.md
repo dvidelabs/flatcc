@@ -537,10 +537,8 @@ a specific object type.
 For example the Field table in the reflection.fbs schema can be
 documented using:
 
-echo generating $OUTDIR/$PREFIX.reader.doc
-
-    flatcc reflection/reflection.fbs -a --stdout | \
-        clang - -E -DNDEBUG -I $INCLUDE | \
+    bin/flatcc reflection/reflection.fbs -a --stdout | \
+        clang - -E -DNDEBUG -I include | \
         clang-format -style="WebKit" | \
         grep "^static .* reflection_Object_" | \
         cut -f 1 -d '{' | \
