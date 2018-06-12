@@ -41,6 +41,7 @@
 - Add long form flatcc options --common, --common-reader, --common-builder,
   --reader, --builder, --verifier.
 - Remove flatcc deprecated option for schema namespace.
+- Add scripts/flatcc-doc.sh to help document generated code.
 
 ## [0.5.1]
 

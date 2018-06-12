@@ -537,13 +537,15 @@ a specific object type.
 For example the Field table in the reflection.fbs schema can be
 documented using:
 
-    cd include/flatcc/reflection
-    clang -E -DNDEBUG reflection_reader.h -I ../.. | \
-    clang-format -style="WebKit" | \
-    grep "static inline reflection_Field_" | \
-    cut -d '{' -f 1 \
-    > Field.txt
-    
+echo generating $OUTDIR/$PREFIX.reader.doc
+
+    flatcc reflection/reflection.fbs -a --stdout | \
+        clang - -E -DNDEBUG -I $INCLUDE | \
+        clang-format -style="WebKit" | \
+        grep "^static .* reflection_Object_" | \
+        cut -f 1 -d '{' | \
+        grep -v deprecated
+
 The WebKit style of clang-format ensures that parameters and the return
 type are all placed on the same line. Grep extracts the function headers
 and cut strips function bodies starting on the same line.
@@ -551,25 +553,46 @@ and cut strips function bodies starting on the same line.
 The above is not guaranteed to always work as output may change, but it
 should go a long way.
 
-The above example stores the following output in `Field.txt`,  as of flatcc-v0.5.2:
+A small extract of the output, as of flatcc-v0.5.2
 
-    static inline reflection_Field_table_t reflection_Field_vec_at(reflection_Field_vec_t vec, size_t i)
-    static inline reflection_Field_table_t reflection_Field_as_root_with_identifier(const void* buffer__tmp, const
-    char* fid__tmp) static inline reflection_Field_table_t
-    reflection_Field_as_root_with_type_hash(const void* buffer__tmp, flatbuffers_thash_t thash__tmp)
-    static inline reflection_Field_table_t reflection_Field_as_root(const void* buffer__tmp)
-    static inline reflection_Field_table_t reflection_Field_as_typed_root(const void* buffer__tmp)
-    static inline reflection_Field_vec_t reflection_Object_fields_get(reflection_Object_table_t t__tmp)
-    static inline reflection_Field_vec_t reflection_Object_fields(reflection_Object_table_t t__tmp)
+    static inline reflection_Object_table_t reflection_EnumVal_object_get(reflection_EnumVal_table_t t__tmp)
+    static inline reflection_Object_table_t reflection_EnumVal_object(reflection_EnumVal_table_t t__tmp)
+    static inline size_t reflection_Object_vec_len(reflection_Object_vec_t vec)
+    static inline reflection_Object_table_t reflection_Object_vec_at(reflection_Object_vec_t vec, size_t i)
+    static inline reflection_Object_table_t reflection_Object_as_root_with_identifier(const void* buffer__tmp, const
+    char* fid__tmp)
+    static inline reflection_Object_table_t reflection_Object_as_root_with_type_hash(const void* buffer__tmp,
+    flatbuffers_thash_t thash__tmp)
+    static inline reflection_Object_table_t reflection_Object_as_root(const void* buffer__tmp)
+    static inline reflection_Object_table_t reflection_Object_as_typed_root(const void* buffer__tmp)
+    static inline flatbuffers_string_t reflection_Object_name_get(reflection_Object_table_t t__tmp)
+    static inline flatbuffers_string_t reflection_Object_name(reflection_Object_table_t t__tmp)
+    static inline int reflection_Object_name_is_present(reflection_Object_table_t t__tmp)
+    static inline size_t reflection_Object_vec_scan_by_name(reflection_Object_vec_t vec__tmp,
+    const char* s__tmp)
+    ...
 
-Note that the __tmp style names are used to avoid name conflicts during macro
+Note that the `__tmp` style names are used to avoid name conflicts during macro
 expansion.
 
-The flatcc command line options -g and --stdout may also be useful. `-g`
-adds a get suffix to read operations which avoids potential conflicts
-and `--stdout` combines all output to single file which allows all
-schema output to be expanded and grepped in one operation (but it might
-be huge and slow).
+The `flatcc -g` may be used to strip non-get read functions to avoid
+conflicts and also duplicates in the documentation.
+
+The following script automates this process and splits the output into
+reader, builder and verifier documents:
+
+    scripts/flatcc-doc.sh <schema-file> <name-prefix> [<outdir>]
+
+Note that the script requires the clang compiler, but it could be
+adapted for other compilers.
+
+An example is provided in the following script using the reflection schema:
+
+    scripts/reflection-doc-example.sh
+
+It essentially calls:
+
+    scripts/flatcc-doc.sh reflection/reflection.fbs reflection_Object_ 
 
 
 ## Using flatcc
