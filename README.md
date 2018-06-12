@@ -535,8 +535,18 @@ More details can be found in
 The expansion of generated code can be used to get documentation for
 a specific object type.
 
-For example the Object table in the reflection.fbs schema can be
-documented using:
+The following script automates this process:
+
+    scripts/flatcc-doc.sh <schema-file> <name-prefix> [<outdir>]
+
+writing function prototypes to <outdir>/<name-prefix>.doc
+
+Note that the script requires the clang compiler and the clang-format
+tool, but the script could likely be adapted for other tool chains as well.
+
+The principle behind the script can be illustrated using the reflection
+schema as an example, where documentation for the Object table is
+extracted:
 
     bin/flatcc reflection/reflection.fbs -a --json --stdout | \
         clang - -E -DNDEBUG -I include | \
@@ -573,18 +583,6 @@ A small extract of the output, as of flatcc-v0.5.2
 	static inline size_t reflection_Object_vec_scan_n_by_name(reflection_Object_vec_t vec, const char* s, int n);
 	...
 
-
-The `flatcc -g` may be used to strip non-get read functions to avoid
-conflicts and also duplicates in the documentation.
-
-The following script automates this process:
-
-    scripts/flatcc-doc.sh <schema-file> <name-prefix> [<outdir>]
-
-writing function prototypes to <outdir>/<name-prefix>.doc
-
-Note that the script requires the clang compiler and the clang-format
-tool, but the script could likely be adapted for other tool chains as well.
 
 Examples are provided in following script using the reflection and monster schema:
 
