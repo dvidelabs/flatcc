@@ -534,7 +534,7 @@ More details can be found in
 The expansion of generated code can be used to get documentation for
 a specific object type.
 
-For example the Field table in the reflection.fbs schema can be
+For example the Object table in the reflection.fbs schema can be
 documented using:
 
     bin/flatcc reflection/reflection.fbs -a --stdout | \
