@@ -20,31 +20,14 @@ if [ "x$PREFIX" = "x" ]; then
     exit 1
 fi
 
-echo "generating doc for schema: '$SCHEMA' with name prefix: '$PREFIX' to '$OUTDIR'"
+echo "flatcc doc for schema: '$SCHEMA' with name prefix: '$PREFIX'"
 
-echo generating $OUTDIR/$PREFIX.reader.doc
-$FLATCC $SCHEMA -cr --reader --stdout | \
+echo "generating $OUTDIR/$PREFIX.doc"
+
+$FLATCC $SCHEMA -a --json --stdout | \
     clang - -E -DNDEBUG -I $INCLUDE | \
     clang-format -style="WebKit" | \
     grep "^static.* $PREFIX\w*(" | \
     cut -f 1 -d '{' | \
     grep -v deprecated \
-    > $OUTDIR/$PREFIX.reader.doc
-
-echo generating $OUTDIR/$PREFIX.builder.doc
-$FLATCC $SCHEMA -cr --builder --stdout | \
-    clang - -E -DNDEBUG -I $INCLUDE | \
-    clang-format -style="WebKit" | \
-    grep "^static.* $PREFIX\w*(" | \
-    cut -f 1 -d '{' | \
-    grep -v deprecated \
-    > $OUTDIR/$PREFIX.builder.doc
-
-echo generating $OUTDIR/$PREFIX.verifier.doc
-$FLATCC $SCHEMA -cr --verifier --stdout | \
-    clang - -E -DNDEBUG -I $INCLUDE | \
-    clang-format -style="WebKit" | \
-    grep "^static.* $PREFIX\w*(" | \
-    cut -f 1 -d '{' | \
-    grep -v deprecated \
-    > $OUTDIR/$PREFIX.verifier.doc
+    > $OUTDIR/$PREFIX.doc

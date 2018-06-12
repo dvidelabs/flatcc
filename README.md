@@ -26,50 +26,50 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
-	* [Main features supported as of 0.5.1](#main-features-supported-as-of-051)
-	* [Supported platforms (CI tested)](#supported-platforms-ci-tested)
-	* [Platforms reported to work by users](#platforms-reported-to-work-by-users)
-	* [Portability](#portability)
+    * [Main features supported as of 0.5.1](#main-features-supported-as-of-051)
+    * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
+    * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
+    * [Portability](#portability)
 * [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
 * [Generated Files](#generated-files)
-	* [Use of Macros in Generated Code](#use-of-macros-in-generated-code)
-	* [Extracting Documentation](#extracting-documentation)
+    * [Use of Macros in Generated Code](#use-of-macros-in-generated-code)
+    * [Extracting Documentation](#extracting-documentation)
 * [Using flatcc](#using-flatcc)
 * [Quickstart](#quickstart)
-	* [Reading a Buffer](#reading-a-buffer)
-	* [Compiling for Read-Only](#compiling-for-read-only)
-	* [Building a Buffer](#building-a-buffer)
-	* [Verifying a Buffer](#verifying-a-buffer)
-	* [Potential Name Conflicts](#potential-name-conflicts)
-	* [Debugging a Buffer](#debugging-a-buffer)
+    * [Reading a Buffer](#reading-a-buffer)
+    * [Compiling for Read-Only](#compiling-for-read-only)
+    * [Building a Buffer](#building-a-buffer)
+    * [Verifying a Buffer](#verifying-a-buffer)
+    * [Potential Name Conflicts](#potential-name-conflicts)
+    * [Debugging a Buffer](#debugging-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
-	* [File Identifiers](#file-identifiers)
-	* [Type Identifiers](#type-identifiers)
+    * [File Identifiers](#file-identifiers)
+    * [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
-	* [Base64 Encoding](#base64-encoding)
-	* [Generic Parsing and Printing.](#generic-parsing-and-printing)
-	* [Performance Notes](#performance-notes)
+    * [Base64 Encoding](#base64-encoding)
+    * [Generic Parsing and Printing.](#generic-parsing-and-printing)
+    * [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
 * [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
 * [Fast Buffers](#fast-buffers)
 * [Types](#types)
 * [Unions](#unions)
-	* [Union Scope Resolution](#union-scope-resolution)
+    * [Union Scope Resolution](#union-scope-resolution)
 * [Endianness](#endianness)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
 * [Searching and Sorting](#searching-and-sorting)
 * [Null Values](#null-values)
 * [Portability Layer](#portability-layer)
 * [Building](#building)
-	* [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
-	* [Windows Build (MSVC)](#windows-build-msvc)
-	* [Docker](#docker)
-	* [Cross-compilation](#cross-compilation)
-	* [Custom Allocation](#custom-allocation)
-	* [Shared Libraries](#shared-libraries)
+    * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
+    * [Windows Build (MSVC)](#windows-build-msvc)
+    * [Docker](#docker)
+    * [Cross-compilation](#cross-compilation)
+    * [Custom Allocation](#custom-allocation)
+    * [Shared Libraries](#shared-libraries)
 * [Distribution](#distribution)
-	* [Unix Files](#unix-files)
-	* [Windows Files](#windows-files)
+    * [Unix Files](#unix-files)
+    * [Windows Files](#windows-files)
 * [Running Tests on Unix](#running-tests-on-unix)
 * [Running Tests on Windows](#running-tests-on-windows)
 * [Configuration](#configuration)
@@ -538,7 +538,7 @@ a specific object type.
 For example the Object table in the reflection.fbs schema can be
 documented using:
 
-    bin/flatcc reflection/reflection.fbs -a --stdout | \
+    bin/flatcc reflection/reflection.fbs -a --json --stdout | \
         clang - -E -DNDEBUG -I include | \
         clang-format -style="WebKit" | \
     	grep "^static.* reflection_Object_\w*(" | \
@@ -574,10 +574,11 @@ expansion.
 The `flatcc -g` may be used to strip non-get read functions to avoid
 conflicts and also duplicates in the documentation.
 
-The following script automates this process and splits the output into
-reader, builder and verifier documents:
+The following script automates this process:
 
     scripts/flatcc-doc.sh <schema-file> <name-prefix> [<outdir>]
+
+writing function prototypes to <outdir>/<name-prefix>.doc
 
 Note that the script requires the clang compiler and the clang-format
 tool, but the script could likely be adapted for other tool chains as well.
