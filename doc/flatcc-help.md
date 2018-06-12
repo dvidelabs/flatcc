@@ -1,3 +1,4 @@
+```
 flatcc FlatBuffers schema compiler for C by dvide.com
 version: 0.5.2-pre
 usage: flatcc [options] file [...]
@@ -102,3 +103,4 @@ time assertions and inline functions but an optional set of portability
 headers can be included to work with most any compiler. The portability
 layer is not throughly tested so a platform specific test is required
 before production use. Upstream patches are welcome.
+```
