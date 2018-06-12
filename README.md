@@ -492,7 +492,7 @@ Occasionally a concern is raised about the dense nature of the macros
 used in the generated code. These macros make it difficult to understand
 which functions are actually available. The [Builder Interface Reference]
 attempts to document the operations in general fashion. Unfortunately
-there is no auto-generated documented - which would be a welcome
+there is no auto-generated documentation - which would be a welcome
 contribution to the project if anyone is up for it.
 
 Some are also concerned with macros being "unsafe". Macros are not
@@ -526,6 +526,43 @@ small binary code size.
 
 More details can be found in
 [#88](https://github.com/dvidelabs/flatcc/issues/88)
+
+The expansion can also be used to get documentation for specific object
+type, for example the Field table in reflection:
+
+    cd include/flatcc/reflection
+    clang -E -DNDEBUG reflection_reader.h -I ../.. | \
+    clang-format -style="WebKit" | \
+    grep "static inline reflection_Field_" | \
+    cut -d '{' -f 1 \
+    > Field.txt
+    
+The WebKit style of clang-format ensures that parameters and the return
+type are all placed on the same line. Grep extracts the function headers
+and cut strips function bodies starting on the same line.
+
+The above is not guaranteed to always work as output may change, but it
+should go a long way.
+
+The above example results in the following output, as of flatcc-v0.5.2:
+
+    static inline reflection_Field_table_t reflection_Field_vec_at(reflection_Field_vec_t vec, size_t i)
+    static inline reflection_Field_table_t reflection_Field_as_root_with_identifier(const void* buffer__tmp, const
+    char* fid__tmp) static inline reflection_Field_table_t
+    reflection_Field_as_root_with_type_hash(const void* buffer__tmp, flatbuffers_thash_t thash__tmp)
+    static inline reflection_Field_table_t reflection_Field_as_root(const void* buffer__tmp)
+    static inline reflection_Field_table_t reflection_Field_as_typed_root(const void* buffer__tmp)
+    static inline reflection_Field_vec_t reflection_Object_fields_get(reflection_Object_table_t t__tmp)
+    static inline reflection_Field_vec_t reflection_Object_fields(reflection_Object_table_t t__tmp)
+
+Note that the __tmp style names are used to avoid name conflicts during macro
+expansion.
+
+The flatcc command line options -g and --stdout may also be useful. `-g`
+adds a get suffix to read operations which avoids potential conflicts
+and `--stdout` combines all output to single file which allows all
+schema output to be expanded and grepped in one operation (but it might
+be huge and slow).
 
 
 ## Using flatcc
