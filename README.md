@@ -544,29 +544,33 @@ documented using:
     	grep "^static.* reflection_Object_\w*(" | \
         cut -f 1 -d '{' | \
         grep -v deprecated | \
-        sed 's/__tmp//g' \
+        grep -v ");$" | \
+        sed 's/__tmp//g' | \
+        sed 's/)$/);/g' \
 
 The WebKit style of clang-format ensures that parameters and the return
 type are all placed on the same line. Grep extracts the function headers
-and cut strips function bodies starting on the same line. Sed stripts
+and cut strips function bodies starting on the same line. Sed strips
 `__tmp` suffix from parameter names used to avoid macro name conflicts.
+Grep strips `);` to remove redundant forward declarations and sed then
+adds ; to make each line a valid C prototype.
 
 The above is not guaranteed to always work as output may change, but it
 should go a long way.
 
 A small extract of the output, as of flatcc-v0.5.2
 
-	static inline size_t reflection_Object_vec_len(reflection_Object_vec_t vec)
-	static inline reflection_Object_table_t reflection_Object_vec_at(reflection_Object_vec_t vec, size_t i)
-	static inline reflection_Object_table_t reflection_Object_as_root_with_identifier(const void* buffer, const char* fid)
-	static inline reflection_Object_table_t reflection_Object_as_root_with_type_hash(const void* buffer, flatbuffers_thash_t thash)
-	static inline reflection_Object_table_t reflection_Object_as_root(const void* buffer)
-	static inline reflection_Object_table_t reflection_Object_as_typed_root(const void* buffer)
-	static inline flatbuffers_string_t reflection_Object_name_get(reflection_Object_table_t t)
-	static inline flatbuffers_string_t reflection_Object_name(reflection_Object_table_t t)
-	static inline int reflection_Object_name_is_present(reflection_Object_table_t t)
-	static inline size_t reflection_Object_vec_scan_by_name(reflection_Object_vec_t vec, const char* s)
-	static inline size_t reflection_Object_vec_scan_n_by_name(reflection_Object_vec_t vec, const char* s, int n)
+	static inline size_t reflection_Object_vec_len(reflection_Object_vec_t vec);
+	static inline reflection_Object_table_t reflection_Object_vec_at(reflection_Object_vec_t vec, size_t i);
+	static inline reflection_Object_table_t reflection_Object_as_root_with_identifier(const void* buffer, const char* fid);
+	static inline reflection_Object_table_t reflection_Object_as_root_with_type_hash(const void* buffer, flatbuffers_thash_t thash);
+	static inline reflection_Object_table_t reflection_Object_as_root(const void* buffer);
+	static inline reflection_Object_table_t reflection_Object_as_typed_root(const void* buffer);
+	static inline flatbuffers_string_t reflection_Object_name_get(reflection_Object_table_t t);
+	static inline flatbuffers_string_t reflection_Object_name(reflection_Object_table_t t);
+	static inline int reflection_Object_name_is_present(reflection_Object_table_t t);
+	static inline size_t reflection_Object_vec_scan_by_name(reflection_Object_vec_t vec, const char* s);
+	static inline size_t reflection_Object_vec_scan_n_by_name(reflection_Object_vec_t vec, const char* s, int n);
 	...
 
 
@@ -593,21 +597,21 @@ The monster example essentially calls:
 
 Resulting in the file `MyGame_Sample_Monster_.doc`:
 
-	static inline size_t MyGame_Sample_Monster_vec_len(MyGame_Sample_Monster_vec_t vec)
-	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_vec_at(MyGame_Sample_Monster_vec_t vec, size_t i)
-	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root_with_identifier(const void* buffer, const char* fid)
-	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root_with_type_hash(const void* buffer, flatbuffers_thash_t thash)
-	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root(const void* buffer)
-	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_typed_root(const void* buffer)
-	static inline MyGame_Sample_Vec3_struct_t MyGame_Sample_Monster_pos_get(MyGame_Sample_Monster_table_t t)
-	static inline MyGame_Sample_Vec3_struct_t MyGame_Sample_Monster_pos(MyGame_Sample_Monster_table_t t)
-	static inline int MyGame_Sample_Monster_pos_is_present(MyGame_Sample_Monster_table_t t)
-	static inline int16_t MyGame_Sample_Monster_mana_get(MyGame_Sample_Monster_table_t t)
-	static inline int16_t MyGame_Sample_Monster_mana(MyGame_Sample_Monster_table_t t)
-	static inline const int16_t* MyGame_Sample_Monster_mana_get_ptr(MyGame_Sample_Monster_table_t t)
-	static inline int MyGame_Sample_Monster_mana_is_present(MyGame_Sample_Monster_table_t t)
-	static inline size_t MyGame_Sample_Monster_vec_scan_by_mana(MyGame_Sample_Monster_vec_t vec, int16_t key)
-	static inline size_t MyGame_Sample_Monster_vec_scan_ex_by_mana(MyGame_Sample_Monster_vec_t vec, size_t begin, size_t end, int16_t key)
+	static inline size_t MyGame_Sample_Monster_vec_len(MyGame_Sample_Monster_vec_t vec);
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_vec_at(MyGame_Sample_Monster_vec_t vec, size_t i);
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root_with_identifier(const void* buffer, const char* fid);
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root_with_type_hash(const void* buffer, flatbuffers_thash_t thash);
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root(const void* buffer);
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_typed_root(const void* buffer);
+	static inline MyGame_Sample_Vec3_struct_t MyGame_Sample_Monster_pos_get(MyGame_Sample_Monster_table_t t);
+	static inline MyGame_Sample_Vec3_struct_t MyGame_Sample_Monster_pos(MyGame_Sample_Monster_table_t t);
+	static inline int MyGame_Sample_Monster_pos_is_present(MyGame_Sample_Monster_table_t t);
+	static inline int16_t MyGame_Sample_Monster_mana_get(MyGame_Sample_Monster_table_t t);
+	static inline int16_t MyGame_Sample_Monster_mana(MyGame_Sample_Monster_table_t t);
+	static inline const int16_t* MyGame_Sample_Monster_mana_get_ptr(MyGame_Sample_Monster_table_t t);
+	static inline int MyGame_Sample_Monster_mana_is_present(MyGame_Sample_Monster_table_t t);
+	static inline size_t MyGame_Sample_Monster_vec_scan_by_mana(MyGame_Sample_Monster_vec_t vec, int16_t key);
+	static inline size_t MyGame_Sample_Monster_vec_scan_ex_by_mana(MyGame_Sample_Monster_vec_t vec, size_t begin, size_t end, int16_t key);
 	...
 
 

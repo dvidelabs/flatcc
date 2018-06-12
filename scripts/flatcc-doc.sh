@@ -30,5 +30,7 @@ $FLATCC $SCHEMA -a --json --stdout | \
     grep "^static.* $PREFIX\w*(" | \
     cut -f 1 -d '{' | \
     grep -v deprecated | \
-    sed 's/__tmp//g' \
+    grep -v ");$" | \
+    sed 's/__tmp//g' | \
+    sed 's/)$/);/g' \
     > $OUTDIR/$PREFIX.doc
