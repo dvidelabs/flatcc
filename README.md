@@ -532,7 +532,7 @@ More details can be found in
 ### Extracting Documentation
 
 The expansion of generated code can be used to get documentation for
-specific object type.
+a specific object type.
 
 For example the Field table in the reflection.fbs schema can be
 documented using:
