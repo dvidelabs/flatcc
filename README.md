@@ -33,6 +33,7 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
 * [Generated Files](#generated-files)
     * [Use of Macros in Generated Code](#use-of-macros-in-generated-code)
+    * [Extracting Documentation](#extracting-documentation)
 * [Using flatcc](#using-flatcc)
 * [Quickstart](#quickstart)
     * [Reading a Buffer](#reading-a-buffer)
@@ -527,8 +528,14 @@ small binary code size.
 More details can be found in
 [#88](https://github.com/dvidelabs/flatcc/issues/88)
 
-The expansion can also be used to get documentation for specific object
-type, for example the Field table in reflection:
+
+### Extracting Documentation
+
+The expansion of generated code can be used to get documentation for
+specific object type.
+
+For example the Field table in the reflection.fbs schema can be
+documented using:
 
     cd include/flatcc/reflection
     clang -E -DNDEBUG reflection_reader.h -I ../.. | \
