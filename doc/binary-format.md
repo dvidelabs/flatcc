@@ -361,15 +361,17 @@ strings.
 
 A vector starts with a `uoffset_t` field the gives the length in element
 counts, not in bytes. Table fields points to the length field of a
-vector, not the first element. A vector may have 0 length. Note that
-the FlatCC C interface will return a pointer to a vectors first element
-and not the vector length although the internal reference does not.
+vector, not the first element. A vector may have 0 length. Note that the
+FlatCC C binding will return a pointer to a vectors first element which
+is different from the buffer internal reference.
 
 All elements of a vector has the same type which is either a scalar type
 including enums, a struct, or a uoffset reference where all the
-reference type is to tables all of the same type, all strings, or
-references to tables of the same union for union vectors. It is not
-possible to have vectors of vectors other than string vectors.
+reference type is to tables all of the same type, all strings, or,
+for union vectors, references to members of the same union. Because a
+union member can be a struct, it is possible to have vectors that
+reference structs instead of embeddding them, but only via unions. It is
+not possible to have vectors of vectors other than string vectors.
 
 A vectors first element is aligned to the size of `uoffset_t` or the
 alignment of its element type, or the alignment required by the schema,
