@@ -22,6 +22,7 @@ or printing in less than 2 us for a 10 field mixed type message.
 
 
 <!-- vim-markdown-toc GFM -->
+* [Online Forums](#online-forums)
 * [Project Details](#project-details)
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
@@ -80,6 +81,12 @@ or printing in less than 2 us for a 10 field mixed type message.
 
 <!-- vim-markdown-toc -->
 
+## Online Forums
+
+- [Google Groups - FlatBuffers](https://groups.google.com/forum/#!forum/flatbuffers)
+- [Gitter - FlatBuffers](https://gitter.im/google/flatbuffers)
+
+
 ## Project Details
 
 NOTE: see
@@ -104,13 +111,12 @@ The project includes:
   compilers, and small helpers for all compilers including endian
   handling and numeric printing and parsing.
 
+
 See also:
 
 - [Reporting Bugs](https://github.com/dvidelabs/flatcc#reporting-bugs)
 
-- [Google FPL FlatBuffers](http://google.github.io/flatbuffers/)
-
-- [Online Forum](https://groups.google.com/forum/#!forum/flatbuffers)
+- [Google FlatBuffers](http://google.github.io/flatbuffers/)
 
 - [Build Instructions](https://github.com/dvidelabs/flatcc#building)
 
