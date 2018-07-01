@@ -189,7 +189,7 @@ FlatBuffers are based on the following primitives that are 8, 16, 32 and
 
     uint8, uint16, uint32, uint64 (unsigned)
     int8, int16, int32, int64     (two's complement)
-    float32, float64              (IEE-754)
+    float32, float64              (IEEE-754)
 
 
 ### Boolean
