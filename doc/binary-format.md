@@ -70,7 +70,7 @@ union vector, or when used as a buffer root. Structs hold no references.
 Space between the above blocks are zero padded and present in order to
 ensure proper alignment. Structs must be packed as densely as possible
 according the alignment rules that apply - this ensures that all
-implements will agree on the layout. The blocks must not overlap in
+implementations will agree on the layout. The blocks must not overlap in
 memory but two blocks may be shared if they represent the same data such
 as sharing a string.
 
