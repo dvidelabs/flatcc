@@ -296,8 +296,10 @@ static inline const char *scalar_suffix(fb_scalar_type_t scalar_type)
         break;
     case fb_double:
         suffix = "";
+        break;
     case fb_float:
         suffix = "F";
+        break;
     default:
         gen_panic(0, "internal error: unexpected type during code generation");
         suffix = "";
