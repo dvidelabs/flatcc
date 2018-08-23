@@ -44,7 +44,6 @@
 #endif
 
 #include <stdlib.h>
-#include <memory.h>
 #include <assert.h>
 
 #ifndef HT_PROBE
