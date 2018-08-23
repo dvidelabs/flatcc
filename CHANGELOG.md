@@ -42,6 +42,7 @@
   --reader, --builder, --verifier.
 - Remove flatcc deprecated option for schema namespace.
 - Add scripts/flatcc-doc.sh to help document generated code.
+- Remove unnecessary memory.h includes (#92)
 
 ## [0.5.1]
 
