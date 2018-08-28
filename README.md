@@ -1,8 +1,6 @@
 OS-X & Ubuntu: [![Build Status](https://travis-ci.org/dvidelabs/flatcc.svg?branch=master)](https://travis-ci.org/dvidelabs/flatcc)
 Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/dvidelabs/flatcc?branch=master&svg=true)](https://ci.appveyor.com/project/dvidelabs/flatcc)
 
-_NOTE: 0.5.0 changed the union interface, and low-level union accessor names
-were cleaned up in 0.5.1._
 
 _The JSON parser may change the interface for parsing union vectors in a
 future release which requires code generation to match library
@@ -27,7 +25,7 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
-    * [Main features supported as of 0.5.1](#main-features-supported-as-of-051)
+    * [Main features supported as of 0.5.2](#main-features-supported-as-of-052)
     * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
     * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
     * [Portability](#portability)
@@ -252,13 +250,12 @@ fi
 
 ## Status
 
-Release 0.5.2 (ongoing) introduces optional `_get` suffix to
-reader methods. By using `flatcc -g` only `_get` methods are
-valid. This removes potential name conficts for some field
-names. 0.5.2 also introduces the long awaited clone operation
-for tables and vectors. A C++ smoketest was added to reduce the
-number void pointer assignment errors that kept sneaking in.
-The runtime library now needs an extra file `refmap.c`.
+Release 0.5.2 introduces optional `_get` suffix to reader methods. By
+using `flatcc -g` only `_get` methods are valid. This removes potential
+name conficts for some field names. 0.5.2 also introduces the long
+awaited clone operation for tables and vectors. A C++ smoketest was
+added to reduce the number void pointer assignment errors that kept
+sneaking in. The runtime library now needs an extra file `refmap.c`.
 
 Release 0.5.1 fixes a buffer overrun in the JSON printer and improves
 the portable libraries <stdalign.h> compatibility with C++ and the
@@ -274,7 +271,7 @@ low-level union interface so the terms { type, value } are used
 consistently over { type, member } and { types, members }.
 
 
-### Main features supported as of 0.5.1
+### Main features supported as of 0.5.2
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
