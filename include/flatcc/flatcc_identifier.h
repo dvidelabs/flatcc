@@ -78,6 +78,27 @@ static inline flatbuffers_thash_t flatbuffers_type_hash_from_identifier(const fl
 }
 
 /*
+ * Convert a null terminated string identifier like "MONS" or "X" into a
+ * native type hash identifier, usually for comparison. This will not
+ * work with type hash strings because they can contain null bytes.
+ */
+static inline flatbuffers_thash_t flatbuffers_type_hash_from_string(const char *identifier)
+{
+    flatbuffers_thash_t h = 0;
+    const uint8_t *p = (const uint8_t *)identifier;
+
+    if (!p[0]) return h;
+    h += p[0];
+    if (!p[1]) return h;
+    h += p[1] << 8;
+    if (!p[2]) return h;
+    h += p[2] << 16;
+    /* No need to test for termination here. */
+    h += p[3] << 24;
+    return h;
+}
+
+/*
  * Computes the little endian wire format of the type hash. It can be
  * used as a file identifer argument to various flatcc buffer calls.
  *

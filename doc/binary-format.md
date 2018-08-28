@@ -70,7 +70,7 @@ union vector, or when used as a buffer root. Structs hold no references.
 Space between the above blocks are zero padded and present in order to
 ensure proper alignment. Structs must be packed as densely as possible
 according the alignment rules that apply - this ensures that all
-implements will agree on the layout. The blocks must not overlap in
+implementations will agree on the layout. The blocks must not overlap in
 memory but two blocks may be shared if they represent the same data such
 as sharing a string.
 
@@ -174,9 +174,6 @@ before the table resulting in `20 00 00 00` style vtable offsets which
 might help understand why the soffset is subtracted from and not added
 to the table start. Both forms are equally valid.
 
-The actual buffer that the FlatCC builder might generated is:
-
-
 
 ## Primitives
 
@@ -192,7 +189,7 @@ FlatBuffers are based on the following primitives that are 8, 16, 32 and
 
     uint8, uint16, uint32, uint64 (unsigned)
     int8, int16, int32, int64     (two's complement)
-    float32, float64              (IEE-754)
+    float32, float64              (IEEE-754)
 
 
 ### Boolean
@@ -339,7 +336,7 @@ length, the containing table field pointing the sub-table or vector
 should be absent. Note that structs cannot contain sub-tables or
 vectors.
 
-A struct is always 0 padded up to its alignment. A structs a alignment
+A struct is always 0 padded up to its alignment. A structs alignment
 is given as the largest size of any non-struct member, or the alignment
 of a struct member (but not necessarily the size of a struct member), or
 the schema specified aligment.
@@ -353,23 +350,27 @@ scalars.
 
 A table is always aligned to `sizeof(uoffset_t)`, but may contain
 internal fields with larger alignment. That is, the table start or end
-is not affected by alignment requirements of field members unlike
+are not affected by alignment requirements of field members, unlike
 structs.
 
-Strings are a special case of vectors, so the following also applies to
+A string is a special case of a vector with the extra requirement that a
+0 byte must follow the counted content, so the following also applies to
 strings.
 
 A vector starts with a `uoffset_t` field the gives the length in element
 counts, not in bytes. Table fields points to the length field of a
-vector, not the first element. A vector may have 0 length. Note that
-the FlatCC C interface will return a pointer to a vectors first element
-and not the vector length although the internal reference does not.
+vector, not the first element. A vector may have 0 length. Note that the
+FlatCC C binding will return a pointer to a vectors first element which
+is different from the buffer internal reference.
 
 All elements of a vector has the same type which is either a scalar type
 including enums, a struct, or a uoffset reference where all the
-reference type is to tables all of the same type, all strings, or
-references to tables of the same union for union vectors. It is not
-possible to have vectors of vectors other than string vectors.
+reference type is to tables all of the same type, all strings, or,
+for union vectors, references to members of the same union. Because a
+union member can be a struct, it is possible to have vectors that
+reference structs instead of embeddding them, but only via unions. It is
+not possible to have vectors of vectors other than string vectors,
+except indirectly via vectors containing tables.
 
 A vectors first element is aligned to the size of `uoffset_t` or the
 alignment of its element type, or the alignment required by the schema,
@@ -391,13 +392,17 @@ should be preferred for binary data.
 
 A string, vector or table may be referenced by other tables and vectors.
 This is known as a directed acyclic graph (DAG). Because uoffsets are
-unsigned and because uoffsets are never stored with a zero value, it is
-not possible for a buffer to contain cycles which makes them safe to
-traverse with too much fear of excessive recursion. It also makes it
-possible to efficiently verify that buffers do not point out of bounds.
+unsigned and because uoffsets are never stored with a zero value (except
+for null entries in union vectors), it is not possible for a buffer to
+contain cycles which makes them safe to traverse with too much fear of
+excessive recursion. This makes it possible to efficiently verify that a
+buffer does not contain references or content outside of its expected
+boundaries.
 
 A vector can also hold unions, but it is not supported by all
-implementations. See unions.
+implementations. A union vector is in reality two separate vectors: a
+type vector and an offset vector in place of a single unions type and
+value fields in table. See unions. 
 
 
 ## Type Hashes

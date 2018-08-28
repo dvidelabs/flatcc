@@ -22,6 +22,7 @@ or printing in less than 2 us for a 10 field mixed type message.
 
 
 <!-- vim-markdown-toc GFM -->
+* [Online Forums](#online-forums)
 * [Project Details](#project-details)
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
@@ -32,6 +33,8 @@ or printing in less than 2 us for a 10 field mixed type message.
     * [Portability](#portability)
 * [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
 * [Generated Files](#generated-files)
+    * [Use of Macros in Generated Code](#use-of-macros-in-generated-code)
+    * [Extracting Documentation](#extracting-documentation)
 * [Using flatcc](#using-flatcc)
 * [Quickstart](#quickstart)
     * [Reading a Buffer](#reading-a-buffer)
@@ -78,6 +81,12 @@ or printing in less than 2 us for a 10 field mixed type message.
 
 <!-- vim-markdown-toc -->
 
+## Online Forums
+
+- [Google Groups - FlatBuffers](https://groups.google.com/forum/#!forum/flatbuffers)
+- [Gitter - FlatBuffers](https://gitter.im/google/flatbuffers)
+
+
 ## Project Details
 
 NOTE: see
@@ -102,13 +111,12 @@ The project includes:
   compilers, and small helpers for all compilers including endian
   handling and numeric printing and parsing.
 
+
 See also:
 
 - [Reporting Bugs](https://github.com/dvidelabs/flatcc#reporting-bugs)
 
-- [Google FPL FlatBuffers](http://google.github.io/flatbuffers/)
-
-- [Online Forum](https://groups.google.com/forum/#!forum/flatbuffers)
+- [Google FlatBuffers](http://google.github.io/flatbuffers/)
 
 - [Build Instructions](https://github.com/dvidelabs/flatcc#building)
 
@@ -484,6 +492,150 @@ The typeless builder library is documented in [flatcc_builder.h] and
 [flatcc_emitter.h] while the generated typed builder api for C is
 documented in [Builder Interface Reference].
 
+
+### Use of Macros in Generated Code
+
+Occasionally a concern is raised about the dense nature of the macros
+used in the generated code. These macros make it difficult to understand
+which functions are actually available. The [Builder Interface Reference]
+attempts to document the operations in general fashion. To get more
+detailed information, generated function prototypes can be extracted
+with the `scripts/flatcc-doc.sh` script.
+
+Some are also concerned with macros being "unsafe". Macros are not
+unsafe when used with FlatCC because they generate static or static
+inline functions. These will trigger compile time errors if used
+incorrectly to the same extend that they would in direct C code.
+
+The expansion compresses the generated output by more than a factor 10
+ensuring that code under source control does not explode and making it
+possible to compare versions of generated code in a meaningful manner
+and see if it matches the intended schema. The macros are also important
+for dealing with platform abstractions via the portable headers.
+
+Still, it is possible to see the generated output although not supported
+directly by the build system. As an example,
+`include/flatcc/reflection` contains pre-generated header files for the
+reflection schema. To see the expanded output using the `clang` compiler
+tool chain, run:
+
+	clang -E -DNDEBUG -I include \
+			include/flatcc/reflection/reflection_reader.h | \
+	clang-format
+
+Other similar commands are likely available on platforms not supporting
+clang.
+
+Note that the compiler will optimize out nearly all of the generated
+code and only use the logic actually referenced by end-user code because
+the functions are static or static inline. The remaining parts generally
+inline efficiently into the application code resulting in a reasonably
+small binary code size.
+
+More details can be found in
+[#88](https://github.com/dvidelabs/flatcc/issues/88)
+
+
+### Extracting Documentation
+
+The expansion of generated code can be used to get documentation for
+a specific object type.
+
+The following script automates this process:
+
+    scripts/flatcc-doc.sh <schema-file> <name-prefix> [<outdir>]
+
+writing function prototypes to `<outdir>/<name-prefix>.doc`.
+
+Note that the script requires the clang compiler and the clang-format
+tool, but the script could likely be adapted for other tool chains as well.
+
+The principle behind the script can be illustrated using the reflection
+schema as an example, where documentation for the Object table is
+extracted:
+
+    bin/flatcc reflection/reflection.fbs -a --json --stdout | \
+        clang - -E -DNDEBUG -I include | \
+        clang-format -style="WebKit" | \
+    	grep "^static.* reflection_Object_\w*(" | \
+        cut -f 1 -d '{' | \
+        grep -v deprecated | \
+        grep -v ");" | \
+        sed 's/__tmp//g' | \
+        sed 's/)/);/g'
+
+The WebKit style of clang-format ensures that parameters and the return
+type are all placed on the same line. Grep extracts the function headers
+and cut strips function bodies starting on the same line. Sed strips
+`__tmp` suffix from parameter names used to avoid macro name conflicts.
+Grep strips `);` to remove redundant forward declarations and sed then
+adds ; to make each line a valid C prototype.
+
+The above is not guaranteed to always work as output may change, but it
+should go a long way.
+
+A small extract of the output, as of flatcc-v0.5.2
+
+	static inline size_t reflection_Object_vec_len(reflection_Object_vec_t vec);
+	static inline reflection_Object_table_t reflection_Object_vec_at(reflection_Object_vec_t vec, size_t i);
+	static inline reflection_Object_table_t reflection_Object_as_root_with_identifier(const void* buffer, const char* fid);
+	static inline reflection_Object_table_t reflection_Object_as_root_with_type_hash(const void* buffer, flatbuffers_thash_t thash);
+	static inline reflection_Object_table_t reflection_Object_as_root(const void* buffer);
+	static inline reflection_Object_table_t reflection_Object_as_typed_root(const void* buffer);
+	static inline flatbuffers_string_t reflection_Object_name_get(reflection_Object_table_t t);
+	static inline flatbuffers_string_t reflection_Object_name(reflection_Object_table_t t);
+	static inline int reflection_Object_name_is_present(reflection_Object_table_t t);
+	static inline size_t reflection_Object_vec_scan_by_name(reflection_Object_vec_t vec, const char* s);
+	static inline size_t reflection_Object_vec_scan_n_by_name(reflection_Object_vec_t vec, const char* s, int n);
+	...
+
+
+Examples are provided in following script using the reflection and monster schema:
+
+    scripts/reflection-doc-example.sh
+    scripts/monster-doc-example.sh
+
+The monster doc example essentially calls:
+
+	scripts/flatcc-doc.sh samples/monster/monster.fbs MyGame_Sample_Monster_
+
+resulting in the file `MyGame_Sample_Monster_.doc`:
+
+	static inline size_t MyGame_Sample_Monster_vec_len(MyGame_Sample_Monster_vec_t vec);
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_vec_at(MyGame_Sample_Monster_vec_t vec, size_t i);
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root_with_identifier(const void* buffer, const char* fid);
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root_with_type_hash(const void* buffer, flatbuffers_thash_t thash);
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_root(const void* buffer);
+	static inline MyGame_Sample_Monster_table_t MyGame_Sample_Monster_as_typed_root(const void* buffer);
+	static inline MyGame_Sample_Vec3_struct_t MyGame_Sample_Monster_pos_get(MyGame_Sample_Monster_table_t t);
+	static inline MyGame_Sample_Vec3_struct_t MyGame_Sample_Monster_pos(MyGame_Sample_Monster_table_t t);
+	static inline int MyGame_Sample_Monster_pos_is_present(MyGame_Sample_Monster_table_t t);
+	static inline int16_t MyGame_Sample_Monster_mana_get(MyGame_Sample_Monster_table_t t);
+	static inline int16_t MyGame_Sample_Monster_mana(MyGame_Sample_Monster_table_t t);
+	static inline const int16_t* MyGame_Sample_Monster_mana_get_ptr(MyGame_Sample_Monster_table_t t);
+	static inline int MyGame_Sample_Monster_mana_is_present(MyGame_Sample_Monster_table_t t);
+	static inline size_t MyGame_Sample_Monster_vec_scan_by_mana(MyGame_Sample_Monster_vec_t vec, int16_t key);
+	static inline size_t MyGame_Sample_Monster_vec_scan_ex_by_mana(MyGame_Sample_Monster_vec_t vec, size_t begin, size_t end, int16_t key);
+	...
+
+
+FlatBuffer native types can also be extracted, for example string operations:
+
+	scripts/flatcc-doc.sh samples/monster/monster.fbs flatbuffers_string_
+
+resulting in `flatbuffers_string_.doc`:
+
+	static inline size_t flatbuffers_string_len(flatbuffers_string_t s);
+	static inline size_t flatbuffers_string_vec_len(flatbuffers_string_vec_t vec);
+	static inline flatbuffers_string_t flatbuffers_string_vec_at(flatbuffers_string_vec_t vec, size_t i);
+	static inline flatbuffers_string_t flatbuffers_string_cast_from_generic(const flatbuffers_generic_t p);
+	static inline flatbuffers_string_t flatbuffers_string_cast_from_union(const flatbuffers_union_t u);
+	static inline size_t flatbuffers_string_vec_find(flatbuffers_string_vec_t vec, const char* s);
+	static inline size_t flatbuffers_string_vec_find_n(flatbuffers_string_vec_t vec, const char* s, size_t n);
+	static inline size_t flatbuffers_string_vec_scan(flatbuffers_string_vec_t vec, const char* s);
+	static inline size_t flatbuffers_string_vec_scan_n(flatbuffers_string_vec_t vec, const char* s, size_t n);
+	static inline size_t flatbuffers_string_vec_scan_ex(flatbuffers_string_vec_t vec, size_t begin, size_t end, const char* s);
+	...
 
 ## Using flatcc
 
@@ -1281,7 +1433,7 @@ flatbuffers which also align data.
 
 ### Generic Parsing and Printing.
 
-As of v0.5.1 [test_json.c] demonstrates how a single parser driver can used to parse
+As of v0.5.1 [test_json.c] demonstrates how a single parser driver can be used to parse
 different table types without changes to the driver or to the schema.
 
 For example, the following layout can be used to configure a generic parser or printer.

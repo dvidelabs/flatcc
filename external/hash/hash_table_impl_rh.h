@@ -35,7 +35,6 @@
 #endif
 
 #include <stdlib.h>
-#include <memory.h>
 #include <assert.h>
 
 /*

@@ -14,10 +14,13 @@ void usage(FILE *fp)
     fprintf(fp, "version: %s\n", VERSION);
     fprintf(fp, "usage: flatcc [options] file [...]\n");
     fprintf(fp, "options:\n"
-            "                             No option generates reader only\n"
-            "  -c                         Generate common include header(s)\n"
-            "  -w                         Generate builders (writable buffers)\n"
-            "  -r                         Recursively generate included schema files\n"
+            "  --reader                   (default) Generate reader\n"
+            "  -c, --common               Generate common include header(s)\n"
+            "  --common_reader            Generate common reader include header(s)\n"
+            "  --common_builder           Generate common builder include header(s)\n"
+            "  -w, --builder              Generate builders (writable buffers)\n"
+            "  -v, --verifier             Generate verifier\n"
+            "  -r, --recursive            Recursively generate included schema files\n"
             "  -a                         Generate all (like -cwvr)\n"
             "  -g                         Use _get suffix only to avoid conflicts\n"
             "  -d                         Dependency file like gcc -MMD\n"
@@ -57,14 +60,19 @@ void help(FILE *fp)
         "required. The common file is generated with the -c option. The reader\n"
         "has no external dependencies.\n"
         "\n"
-        "The -w option enables code generation to write buffers: `flatbuffers -w\n"
-        "monster.fbs` will generate `monster.h` and `monster_builder.h`, and also\n"
-        "a builder specific common file with the -cw option. The builder must\n"
-        "link with the extern `flatbuilder` library.\n"
+        "The -w (--builder) option enables code generation to build buffers:\n"
+        "`flatbuffers -w monster.fbs` will generate `monster.h` and\n"
+        "`monster_builder.h`, and also a builder specific common file with the\n"
+        "-cw option. The builder must link with the extern `flatbuilder` library.\n"
         "\n"
-        "-v generates a verifier file per schema. It depends on the runtime\n"
-        "library but not on other generated files, except other included\n"
+        "-v (--verifier) generates a verifier file per schema. It depends on the\n"
+        "runtime library but not on other generated files, except other included\n"
         "verifiers.\n"
+        "\n"
+        "-r (--recursive) generates all schema included recursively.\n"
+        "\n"
+        "--reader is the default option to generate reader output but can be used\n"
+        "explicitly together with other options that would otherwise disable it.\n"
         "\n"
         "All C output can be concated to a single file using --stdout or\n"
         "--outfile with content produced in dependency order. The outfile is\n"
@@ -109,10 +117,12 @@ void help(FILE *fp)
         "--json is generates both printer and parser.\n"
         "\n"
 #if FLATCC_REFLECTION
+#if 0 /* Disable deprecated features. */
         "DEPRECATED:\n"
         "  --schema-namespace controls if typenames in schema are prefixed a namespace.\n"
         "  namespaces should always be present.\n"
         "\n"
+#endif
 #endif
         "The generated source can redefine offset sizes by including a modified\n"
         "`flatcc_types.h` file. The flatbuilder library must then be compiled with the\n"
@@ -171,6 +181,35 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         opts->gen_stdout = 1;
         return noarg;
     }
+    if (0 == strcmp("-common", s)) {
+        opts->cgen_common_reader = 1;
+        opts->cgen_common_builder = 1;
+        return noarg;
+    }
+    if (0 == strcmp("-common_reader", s)) {
+        opts->cgen_common_reader = 1;
+        return noarg;
+    }
+    if (0 == strcmp("-common_builder", s)) {
+        opts->cgen_common_builder = 1;
+        return noarg;
+    }
+    if (0 == strcmp("-reader", s)) {
+        opts->cgen_reader = 1;
+        return noarg;
+    }
+    if (0 == strcmp("-builder", s)) {
+        opts->cgen_builder = 1;
+        return noarg;
+    }
+    if (0 == strcmp("-verifier", s)) {
+        opts->cgen_verifier = 1;
+        return noarg;
+    }
+    if (0 == strcmp("-recursive", s)) {
+        opts->cgen_recursive = 1;
+        return noarg;
+    }
 #if FLATCC_REFLECTION
     if (0 == strcmp("-schema", s)) {
         opts->bgen_bfbs = 1;
@@ -191,6 +230,7 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         return noarg;
     }
 #if FLATCC_REFLECTION
+#if 0 /* Disable deprecated features. */
     if (match_long_arg("-schema-namespace", s, n)) {
         fprintf(stderr, "warning: --schema-namespace is deprecated\n"
                         "         a namespace is added by default and should always be present\n");
@@ -213,6 +253,7 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         }
         return v ? noarg : nextarg;
     }
+#endif
 #endif
     if (match_long_arg("-depfile", s, n)) {
         if (!a) {
@@ -295,6 +336,7 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         return noarg;
     case 'c':
         opts->cgen_common_reader = 1;
+        opts->cgen_common_builder = 1;
         return noarg;
     case 'r':
         opts->cgen_recursive = 1;
@@ -407,7 +449,7 @@ int main(int argc, const char *argv[])
         || opts.cgen_common_reader || opts.cgen_common_builder
         || opts.cgen_json_parser || opts.cgen_json_printer;
     if (!opts.bgen_bfbs && (!cgen || opts.cgen_builder || opts.cgen_verifier)) {
-        /* Assume default if no other output specified. */
+        /* Assume default if no other output specified when deps required it. */
         opts.cgen_reader = 1;
     }
     if (opts.bgen_bfbs && cgen) {
