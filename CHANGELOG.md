@@ -1,5 +1,7 @@
 # Change Log
 
+## [0.5.3-pre]
+
 ## [0.5.2]
 
 - Handle union vectors in binary schema generation (.bfbs).
