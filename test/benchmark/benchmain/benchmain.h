@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
 
     /* Warmup to preallocate internal buffers. */
     size = bufsize;
+    old_size = size;
     encode(BM, buf, &size);
     t1 = elapsed_realtime();
     for (i = 0; i < rep; ++i) {
