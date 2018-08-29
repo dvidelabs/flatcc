@@ -1,7 +1,7 @@
 project('flatcc', 'c', 'cpp', # cpp only used for test cases
     version : '0.5.2',
     license : 'Apache-2.0',
-    default_options : ['c_std=c11', 'cpp_std=c++14', 'default_library=static'],
+    default_options : ['c_std=c11', 'cpp_std=c++11', 'default_library=static'],
     meson_version : '>=0.41.0')
 
 buildtype = get_option('buildtype')
