@@ -24,6 +24,7 @@ subdir('monster_test')
 else
 subdir('cgen_test')
 subdir('monster_test')
+subdir('monster_test_cpp')
 subdir('monster_test_solo')
 subdir('monster_test_prefix')
 subdir('monster_test_concat')
