@@ -9,7 +9,7 @@ ROOT=`pwd`
 DBGDIR=$ROOT/build/Debug
 RELDIR=$ROOT/build/Release
 
-if [ "$1" == "--debug" ]; then
+if [ "$1" = "--debug" ]; then
     DEBUG=$1
     echo "running debug build"
     shift

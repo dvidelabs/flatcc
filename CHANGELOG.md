@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.5.2-pre]
+## [0.5.2]
 
 - Handle union vectors in binary schema generation (.bfbs).
 - Handle mixed union types in binary schema (.bfbs).
@@ -36,6 +36,13 @@
 - Add `include/flatcc/flatcc_refmap_h` and `src/runtime/refmap.c` to
   runtime library. The runtime library now depends of refmap.c but has
   very low overhead when not expeclity enabled for use with cloning.
+- Add `flatbuffers_type_hash_from_string` to avoid gcc-8 strncpy warning
+  (#86).
+- Add long form flatcc options --common, --common-reader, --common-builder,
+  --reader, --builder, --verifier.
+- Remove flatcc deprecated option for schema namespace.
+- Add scripts/flatcc-doc.sh to help document generated code.
+- Remove unnecessary memory.h includes (#92)
 
 ## [0.5.1]
 

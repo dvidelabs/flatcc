@@ -10,7 +10,7 @@ add_custom_target(gen_monster_test_solo ALL)
 add_custom_command (
     TARGET gen_monster_test_solo
     COMMAND cmake -E make_directory "${GEN_DIR}"
-    COMMAND flatcc_cli -cwv --stdout "${FBS_DIR}/attributes.fbs" "${FBS_DIR}/include_test2.fbs" "${FBS_DIR}/include_test1.fbs" "${FBS_DIR}/monster_test.fbs" > "${GEN_DIR}/monster_test.h" DEPENDS flatcc_cli "${FBS_DIR}/monster_test.fbs" "${FBS_DIR}/include_test1.fbs" "${FBS_DIR}/include_test2.fbs" "${FBS_DIR}/attributes.fbs"
+    COMMAND flatcc_cli -cwv --reader --stdout "${FBS_DIR}/attributes.fbs" "${FBS_DIR}/include_test2.fbs" "${FBS_DIR}/include_test1.fbs" "${FBS_DIR}/monster_test.fbs" > "${GEN_DIR}/monster_test.h" DEPENDS flatcc_cli "${FBS_DIR}/monster_test.fbs" "${FBS_DIR}/include_test1.fbs" "${FBS_DIR}/include_test2.fbs" "${FBS_DIR}/attributes.fbs"
 )
 
 include_directories("${GEN_DIR}" "${INC_DIR}")
