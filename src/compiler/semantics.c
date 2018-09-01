@@ -740,6 +740,101 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
     return 0;
 }
 
+static fb_member_t *original_order_members(fb_parser_t *P, fb_member_t *next)
+{
+    fb_member_t *head = 0;
+    fb_member_t **tail = &head;
+
+    /* Not used for now, but in case we need error messages etc. */
+    (void)P;
+
+    while (next) {
+        *tail = next;
+        tail = &next->order;
+        next = (fb_member_t *)(((fb_symbol_t *)next)->link);
+    }
+    *tail = 0;
+    return head;
+}
+
+/*
+ * Alignment of table offset fields are generally not stored, and
+ * vectors store the element alignment for scalar types, so we
+ * detect alignment based on type also. Unions are tricky since they
+ * use a single byte type followed by an offset, but it is impractical
+ * to store these separately so we sort by the type field.
+ */
+static fb_member_t *align_order_members(fb_parser_t *P, fb_member_t *members)
+{
+    uint16_t i, j, k;
+    fb_member_t *heads[9] = {0};
+    fb_member_t **tails[9] = {0};
+    fb_member_t *next = members;
+
+    while (next) {
+        k = next->align;
+        switch (next->type.type) {
+        case vt_compound_type_ref:
+            switch (next->type.ct->symbol.kind) {
+            case fb_is_struct:
+            case fb_is_enum:
+                k = next->type.ct->align;
+                break;
+            case fb_is_union:
+                /*
+                 * Unions align to their offsets because the type can
+                 * always be added last in a second pass since it is 1
+                 * byte.
+                 */
+                k = P->opts.offset_size;
+                break;
+            default:
+                k = P->opts.offset_size;
+                break;
+            }
+            break;
+        case vt_vector_compound_type_ref:
+        case vt_string_type:
+        case vt_vector_type:
+        case vt_vector_string_type:
+            k = P->opts.offset_size;
+            break;
+        case vt_invalid:
+            /* Just to have some sane behavior. */
+            // TODO: old
+            //return original_order_members(P, members);
+        default:
+            k = next->align;
+            break;
+        }
+        assert(k > 0);
+        i = 0;
+        while (k >>= 1) {
+            ++i;
+        }
+        /* Normally the largest alignment is 256, but otherwise we group them together. */
+        if (i > 7) {
+            i = 7;
+        }
+        if (!heads[i]) {
+            heads[i] = next;
+        } else {
+            *tails[i] = next;
+        }
+        tails[i] = &next->order;
+        next = (fb_member_t *)(((fb_symbol_t *)next)->link);
+    }
+    i = j = 8;
+    tails[8] = &heads[8];
+    while (j) {
+        while (i && !heads[--i]) {
+        }
+        *tails[j] = heads[i];
+        j = i;
+    }
+    return heads[8];
+}
+
 /* Temporary markers only used during assignment of field identifiers. */
 enum { unused_field = 0, normal_field, type_field };
 
@@ -755,7 +850,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
     uint64_t max_id = 0;
     int key_ok, key_count = 0;
     int is_union_vector;
-    uint64_t i;
+    uint64_t i, j;
     int max_id_errors = 10;
 
     /*
@@ -765,6 +860,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
      * attribute.
      */
     uint8_t *field_marker = 0;
+    fb_symbol_t **field_index = 0;
 
     assert(ct->symbol.kind == fb_is_table);
     assert(!ct->type.type);
@@ -1095,6 +1191,35 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                 }
             }
             id_failed = 1;
+        }
+    }
+    /* Order in which data is ordered in binary buffer. */
+    if (ct->metadata_flags & fb_f_original_order) {
+        ct->ordered_members = original_order_members(P, (fb_member_t *)ct->members);
+    } else {
+        /* Size efficient ordering. */ 
+        ct->ordered_members = align_order_members(P, (fb_member_t *)ct->members);
+    }
+    if (!id_failed && count > 0) {
+        field_index = P->tmp_field_index;
+        memset(field_index, 0, sizeof(field_index[0]) * (size_t)P->opts.vt_max_count);
+        /*
+         * Reorder by id so table constructor arguments in code
+         * generators always use same ordering across versions.
+         */
+        for (sym = ct->members; sym; sym = sym->link) {
+            member = (fb_member_t *)sym;
+            field_index[member->id] = sym;
+        }
+        j = 0;
+        if (field_index[0] == 0) {
+            j = 1; /* Adjust for union type. */
+        }
+        ct->members = field_index[j];
+        for (i = j + 1; i < max_id; ++i) {
+            if (field_index[i] == 0) ++i; /* Adjust for union type. */
+            field_index[j]->link = field_index[i];
+            j = i;
         }
     }
     if (key_count) {
@@ -1452,100 +1577,6 @@ static inline int process_union(fb_parser_t *P, fb_compound_type_t *ct)
     return process_enum(P, ct);
 }
 
-static fb_member_t *original_order_members(fb_parser_t *P, fb_member_t *next)
-{
-    fb_member_t *head = 0;
-    fb_member_t **tail = &head;
-
-    /* Not used for now, but in case we need error messages etc. */
-    (void)P;
-
-    while (next) {
-        *tail = next;
-        tail = &next->order;
-        next = (fb_member_t *)(((fb_symbol_t *)next)->link);
-    }
-    *tail = 0;
-    return head;
-}
-
-/*
- * Alignment of table offset fields are generally not stored, and
- * vectors store the element alignment for scalar types, so we
- * detect alignment based on type also. Unions are tricky since they
- * use a single byte type followed by an offset, but it is impractical
- * to store these separately so we sort by the type field.
- */
-static fb_member_t *align_order_members(fb_parser_t *P, fb_member_t *members)
-{
-    uint16_t i, j, k;
-    fb_member_t *heads[9] = {0};
-    fb_member_t **tails[9] = {0};
-    fb_member_t *next = members;
-
-    while (next) {
-        k = next->align;
-        switch (next->type.type) {
-        case vt_compound_type_ref:
-            switch (next->type.ct->symbol.kind) {
-            case fb_is_struct:
-            case fb_is_enum:
-                k = next->type.ct->align;
-                break;
-            case fb_is_union:
-                /*
-                 * Unions align to their offsets because the type can
-                 * always be added last in a second pass since it is 1
-                 * byte.
-                 */
-                k = P->opts.offset_size;
-                break;
-            default:
-                k = P->opts.offset_size;
-                break;
-            }
-            break;
-        case vt_vector_compound_type_ref:
-        case vt_string_type:
-        case vt_vector_type:
-        case vt_vector_string_type:
-            k = P->opts.offset_size;
-            break;
-        case vt_invalid:
-            /* Just to have some sane behavior. */
-            return original_order_members(P, members);
-        default:
-            k = next->align;
-            break;
-        }
-        assert(k > 0);
-        i = 0;
-        while (k >>= 1) {
-            ++i;
-        }
-        /* Normally the largest alignment is 256, but otherwise we group them together. */
-        if (i > 7) {
-            i = 7;
-        }
-        if (!heads[i]) {
-            heads[i] = next;
-        } else {
-            *tails[i] = next;
-        }
-        tails[i] = &next->order;
-        next = (fb_member_t *)(((fb_symbol_t *)next)->link);
-    }
-    i = j = 8;
-    tails[8] = &heads[8];
-    while (j) {
-        while (i && !heads[--i]) {
-        }
-        *tails[j] = heads[i];
-        j = i;
-    }
-    return heads[8];
-}
-
 int fb_build_schema(fb_parser_t *P)
 {
     fb_schema_t *S = &P->schema;
@@ -1680,6 +1711,8 @@ int fb_build_schema(fb_parser_t *P)
         }
     }
     revert_order(&P->schema.ordered_structs);
+//TODO: old
+    /*
     for (sym = P->schema.symbols; sym; sym = sym->link) {
         switch (sym->kind) {
         case fb_is_table:
@@ -1691,6 +1724,7 @@ int fb_build_schema(fb_parser_t *P)
             }
         }
     }
+    */
     if (!S->root_type.name) {
         if (P->opts.require_root_type) {
             error(P, "root type not declared");

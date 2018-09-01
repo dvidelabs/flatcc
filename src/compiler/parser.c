@@ -1367,7 +1367,8 @@ int fb_parse(fb_parser_t *P, const char *input, size_t len, int own_buffer)
     P->te = P->token;
     P->token = P->ts;
     /* Only used while processing table id's. */
-    checkmem((P->tmp_field_marker = malloc((size_t)P->opts.vt_max_count)));
+    checkmem((P->tmp_field_marker = malloc(sizeof(P->tmp_field_marker[0]) * (size_t)P->opts.vt_max_count)));
+    checkmem((P->tmp_field_index = malloc(sizeof(P->tmp_field_index[0]) * (size_t)P->opts.vt_max_count)));
     if (P->token->id == tok_kw_doc_comment) {
         next(P);
     }
@@ -1405,6 +1406,9 @@ void fb_clear_parser(fb_parser_t *P)
     ptr_set_clear(&P->schema.visible_schema);
     if (P->tmp_field_marker) {
         free(P->tmp_field_marker);
+    }
+    if (P->tmp_field_index) {
+        free(P->tmp_field_index);
     }
     if (P->ts) {
         free(P->ts);
