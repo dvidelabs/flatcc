@@ -6,6 +6,9 @@ _The JSON parser may change the interface for parsing union vectors in a
 future release which requires code generation to match library
 versions._
 
+BREAKING: 0.5.3 changes behavour of generated builder create calls so
+arguments are always ordered by field id when id attributes are being
+used (#81).
 
 # FlatCC FlatBuffers in C for C
 
@@ -25,7 +28,7 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
-    * [Main features supported as of 0.5.2](#main-features-supported-as-of-052)
+    * [Main features supported as of 0.5.3](#main-features-supported-as-of-053)
     * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
     * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
     * [Portability](#portability)
@@ -250,6 +253,11 @@ fi
 
 ## Status
 
+Release 0.5.3 (not released)
+BREAKING: 0.5.3 changes behavour of generated builder create calls so
+arguments are always ordered by field id when id attributes are being
+used (#81).
+
 Release 0.5.2 introduces optional `_get` suffix to reader methods. By
 using `flatcc -g` only `_get` methods are valid. This removes potential
 name conficts for some field names. 0.5.2 also introduces the long
@@ -271,7 +279,7 @@ low-level union interface so the terms { type, value } are used
 consistently over { type, member } and { types, members }.
 
 
-### Main features supported as of 0.5.2
+### Main features supported as of 0.5.3
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C

@@ -1,6 +1,8 @@
 # Change Log
 
 ## [0.5.3-pre]
+- BREAKING: 0.5.3 changes behavour of builder create calls so arguments
+  are always ordered by field id when id attributes are being used (#81).
 
 ## [0.5.2]
 
