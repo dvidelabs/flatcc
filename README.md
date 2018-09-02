@@ -1,14 +1,13 @@
 OS-X & Ubuntu: [![Build Status](https://travis-ci.org/dvidelabs/flatcc.svg?branch=master)](https://travis-ci.org/dvidelabs/flatcc)
 Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/dvidelabs/flatcc?branch=master&svg=true)](https://ci.appveyor.com/project/dvidelabs/flatcc)
 
+_BREAKING: 0.5.3 changes behavour of builder create calls so arguments
+are always ordered by field id when id attributes are being used, for
+example `MyGame_Example_Monster_create()` in `monster_test.fbs` (#81)._
 
 _The JSON parser may change the interface for parsing union vectors in a
 future release which requires code generation to match library
 versions._
-
-BREAKING: 0.5.3 changes behavour of generated builder create calls so
-arguments are always ordered by field id when id attributes are being
-used (#81).
 
 # FlatCC FlatBuffers in C for C
 
@@ -254,9 +253,9 @@ fi
 ## Status
 
 Release 0.5.3 (not released)
-BREAKING: 0.5.3 changes behavour of generated builder create calls so
-arguments are always ordered by field id when id attributes are being
-used (#81).
+_BREAKING: 0.5.3 changes behavour of builder create calls so arguments
+are always ordered by field id when id attributes are being used, for
+example `MyGame_Example_Monster_create()` in `monster_test.fbs` (#81)._
 
 Release 0.5.2 introduces optional `_get` suffix to reader methods. By
 using `flatcc -g` only `_get` methods are valid. This removes potential
