@@ -269,5 +269,4 @@ will otherwise break on argument count mismatch. Prior to flatcc-0.5.3
 argument order could change if the field (id: x) attribute was used
 which could lead to buffers with unexpected content. JSON parsers that
 support constructors (objects given as an array of create arguments)
-have similar concerns.
-
+have similar concerns but here trailing arguments can be optional.
