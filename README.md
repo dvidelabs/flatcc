@@ -665,8 +665,8 @@ first. All generated files use the input basename and will land in
 working directory or the path set by (-o).
 
 Files can be generated to stdout using (--stdout). C headers will be
-ordered and outfileenated, but otherwise identical to the separate file
-output. Each include statement is guarded so this will not lead to
+ordered and concatenated, but are otherwise identical to the separate
+file output. Each include statement is guarded so this will not lead to
 missing include files.
 
 The generated code, especially with all combined with --stdout, may
@@ -1541,7 +1541,7 @@ or `myschema_builder.h` all these dependencies are handled correctly.
 
 Note: `libflatcc.a` can only parse a single schema when the schema is
 given as a memory buffer, but can handle the above when given a
-filename. It is possible to outfileename schema files, but a `namespace;`
+filename. It is possible to concatenate schema files, but a `namespace;`
 declaration must be inserted as a separator to revert to global
 namespace at the start of each included file. This can lead to subtle
 errors because if one parent schema includes two child schema `a.fbs`
