@@ -977,7 +977,7 @@ Flatbuffers can optionally leave out the identifier, here "MONS". Use a
 null pointer as identifier argument to ignore any existing identifiers
 and allow for missing identifiers.
 
-Nested flatbbuffers are always verified with a null identifier, but it
+Nested flatbuffers are always verified with a null identifier, but it
 may be checked later when accessing the buffer.
 
 The verifier does NOT verify that two datastructures are not
