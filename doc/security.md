@@ -263,8 +263,8 @@ can potentially explode, as discussed earlier.
 
 FlatCC generated create calls such as `MyGame_Example_Monster_create()`
 will not be compatible across versions if there are deprecated fields
-even if the schema change otherwise respects schema evolutation rules
-this is mostly a concern if new fields are added because compilation
+even if the schema change otherwise respects schema evolutation rules.
+This is mostly a concern if new fields are added because compilation
 will otherwise break on argument count mismatch. Prior to flatcc-0.5.3
 argument order could change if the field (id: x) attribute was used
 which could lead to buffers with unexpected content. JSON parsers that
