@@ -3,6 +3,7 @@
 ## [0.5.3-pre]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments
   are always ordered by field id when id attributes are being used (#81).
+- Fix `refmap_clear` so that the refmap is always ready for reuse.
 
 ## [0.5.2]
 
