@@ -254,10 +254,10 @@ fi
 ## Status
 
 Release 0.5.3 (not released)
-_BREAKING: 0.5.3 changes behavour of builder create calls so arguments
+BREAKING: 0.5.3 changes behavour of builder create calls so arguments
 are always ordered by field id when id attributes are being used, for
 example `MyGame_Example_Monster_create()` in `monster_test.fbs`
-([#81](https://github.com/dvidelabs/flatcc/issues/81))._
+([#81](https://github.com/dvidelabs/flatcc/issues/81)).
 
 Release 0.5.2 introduces optional `_get` suffix to reader methods. By
 using `flatcc -g` only `_get` methods are valid. This removes potential
