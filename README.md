@@ -406,8 +406,7 @@ nature. Verification has not been benchmarked, but would presumably add
 less than 50% read overhead unless only a fraction of a large buffer is to
 be read.
 
-See also [benchmark](https://github.com/dvidelabs/flatcc#benchmark)
-below.
+See also [Benchmarks].
 
 The client C code can avoid almost any kind of allocation to build
 buffers as a builder stack provides an extensible arena before
