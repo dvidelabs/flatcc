@@ -4,7 +4,18 @@
 #cmake_minimum_required (VERSION 2.8.11)
 cmake_minimum_required (VERSION 2.8)
 
-project (FlatCC C CXX)
+# Disable build of tests and samples. Due to custom build step
+# dependency on flatcc tool, some custom build configurations may
+# experience issues, and this option can then help.
+option(FLATCC_TEST "enable tests" ON)
+
+# Conditionally set project languages based on FLATCC_TEST, as C++ is
+# only necessary if building the tests.
+if (FLATCC_TEST)
+    project (FlatCC C CXX)
+else()
+    project (FlatCC C)
+endif()
 
 #
 # NOTE: when changing build options, clean the build using on of:
@@ -34,11 +45,6 @@ option(FLATCC_RTONLY "enable build of runtime library only" OFF)
 # Libraries are built statically by default, but can CMake's
 # cmake -DBUILD_SHARED_LIBS=on can override.
 option(FLATCC_INSTALL "enable build of runtime library only" OFF)
-
-# Disable build of tests and samples. Due to custom build step
-# dependency on flatcc tool, some custom build configurations may
-# experience issues, and this option can then help.
-option(FLATCC_TEST "enable tests" ON)
 
 # Use with debug build with testing enabled only. Enables generation
 # of coverage information during build and run. Adds target "coverage"
