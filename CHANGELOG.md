@@ -5,6 +5,7 @@
   are always ordered by field id when id attributes are being used, for
   example `MyGame_Example_Monster_create()` in `monster_test_fbs` (#81).
 - Fix `refmap_clear` so that the refmap is always ready for reuse.
+- Remove C++ from CMake toolchain when not building tests (#94).
 
 ## [0.5.2]
 
