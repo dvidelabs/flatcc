@@ -336,46 +336,20 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
     fb_member_t *member;
     fb_scoped_name_t snt, snref;
     const char *tp;
-    fb_member_t **map;
-    uint64_t i;
     int ret = 0;
 
     fb_clear(snt);
     fb_clear(snref);
     fb_compound_name(ct, &snt);
 
-    /*
-     * The compound type can be iterated by the textual order of the
-     * parsed schema, or in a sorted order which is either
-     * "original_order", i.e. the textual order, or ordered by
-     * alignment usinger ct->ordered_members.
-     * The textual order makes most sense, but to provide a unique
-     * ordering we sort by id which is not provided by the compound
-     * type directly, but easy to obtain.
-     *
-     * NOTE: due to unions, not all entries will be non-zero because the
-     * type field is not stored as a member so calloc is important.
-     */
-    map = calloc((size_t)ct->count, sizeof(*map));
-    if (!map && ct->count > 0) {
-        gen_panic(out, "internal error: memory allocation failure");
-        goto fail;
-    }
-    for (sym = ct->members; sym; sym = sym->link) {
-        member = (fb_member_t *)sym;
-        map[member->id] = member;
-    }
+    /* Fields are printed in field id order for consistency across schema version. */
     fprintf(out->fp,
             "static void %s_print_json_table(flatcc_json_printer_t *ctx, flatcc_json_printer_table_descriptor_t *td)\n"
             "{",
             snt.text);
 
-    for (i = 0; i < ct->count; ++i) {
-        member = map[i];
-        if (!member) {
-            /* A union type. */
-            continue;
-        }
+    for (sym = ct->members; sym; sym = sym->link) {
+        member = (fb_member_t *)sym;
         sym = &member->symbol;
         if (member->metadata_flags & fb_f_deprecated) {
             continue;
@@ -552,9 +526,6 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
             "{\n    return flatcc_json_printer_table_as_root(ctx, buf, bufsiz, fid, %s_print_json_table);\n}\n\n",
             snt.text, snt.text);
 done:
-    if (map) {
-        free(map);
-    }
     return ret;
 fail:
     ret = -1;
