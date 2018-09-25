@@ -359,7 +359,7 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
     map = calloc((size_t)ct->count, sizeof(*map));
     if (!map && ct->count > 0) {
         gen_panic(out, "internal error: memory allocation failure");
-        return -1;
+        goto fail;
     }
     for (sym = ct->members; sym; sym = sym->link) {
         member = (fb_member_t *)sym;
@@ -404,7 +404,7 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
                 break;
             default:
                 gen_panic(out, "internal error: unexpected default value type\n");
-                return -1;
+                goto fail;
             }
             break;
         case vt_vector_type:
@@ -481,7 +481,7 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
 #endif
                 default:
                     gen_panic(out, "internal error: unexpected default value type for enum\n");
-                    return -1;
+                    goto fail;
                 }
                 break;
             case fb_is_struct:
