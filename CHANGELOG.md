@@ -6,6 +6,8 @@
   example `MyGame_Example_Monster_create()` in `monster_test_fbs` (#81).
 - Fix `refmap_clear` so that the refmap is always ready for reuse.
 - Remove C++ from CMake toolchain when not building tests (#94).
+- Add missing `_get` suffix in `flatbuffers_common_reader.h` needed when
+  used with flatcc -g option (#96).
 
 ## [0.5.2]
 
