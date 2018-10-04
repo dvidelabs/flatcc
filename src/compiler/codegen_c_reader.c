@@ -1138,7 +1138,6 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
             fprintf(out->fp,
                 "__%sdefine_struct_scalar_field(%s, %.*s, %s%s, %s%s)\n",
                 nsc, snt.text, n, s, nsc, tname_prefix, tname_ns, tname);
-            break;
             if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                 fprintf(out->fp,
                         "__%sdefine_scan_by_scalar_field(%s, %.*s, %s%s)\n",
