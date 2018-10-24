@@ -10,6 +10,8 @@
   used with flatcc -g option (#96).
 - Remove stray break statement that prevented generation of search
   methods for scalar table fields with the key attribute set (#97).
+- Fix return value when creating a struct field fails which is unlikely
+  to happen, and hence has low impact (#98).
 
 ## [0.5.2]
 
