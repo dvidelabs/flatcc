@@ -12,6 +12,8 @@
   methods for scalar table fields with the key attribute set (#97).
 - Fix return value when creating a struct field fails which is unlikely
   to happen, and hence has low impact (#98).
+- Fix file identifier string to type hash cast as implicit cast was not safe on
+  all platforms.
 
 ## [0.5.2]
 
@@ -121,7 +123,7 @@
   union vectors without hitting strict aliasing rules, for example as
   argument to `flatcc_builder_union_vector_push`. Expected impact: low
   or none. The physical struct layout remains unchanged.
-- BREAKING: `flatbuffers_generic_table_[vec_]t` has been renamed to 
+- BREAKING: `flatbuffers_generic_table_[vec_]t` has been renamed to
   `flatbuffers_generic_[vec_]t`.
 - BREAKING: The verifiers runtime library interface has changed argument
   order from `align, size` to `size, align` in order to be consistent
@@ -269,8 +271,8 @@ In more detail:
   vtables entirely in native format and reduces hash collisions and only
   converts when emitting the vtable to a buffer location.
 - Fix structs created with parameter list resulting in double endian
-  conversion back to native. 
-- Fix string swap used in sort due to endian sensitive diff math. 
+  conversion back to native.
+- Fix string swap used in sort due to endian sensitive diff math.
 - Disable direct vector access test case when running on non-native
   endian platform.
 - Update JSON printer test to handle `FLATBUFFERS_PROTOCOL_IS_BE`.
