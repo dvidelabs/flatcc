@@ -28,50 +28,50 @@ or printing in less than 2 us for a 10 field mixed type message.
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
-    * [Main features supported as of 0.5.3](#main-features-supported-as-of-053)
-    * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
-    * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
-    * [Portability](#portability)
+  * [Main features supported as of 0.5.3](#main-features-supported-as-of-053)
+  * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
+  * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
+  * [Portability](#portability)
 * [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
 * [Generated Files](#generated-files)
-    * [Use of Macros in Generated Code](#use-of-macros-in-generated-code)
-    * [Extracting Documentation](#extracting-documentation)
+  * [Use of Macros in Generated Code](#use-of-macros-in-generated-code)
+  * [Extracting Documentation](#extracting-documentation)
 * [Using flatcc](#using-flatcc)
 * [Quickstart](#quickstart)
-    * [Reading a Buffer](#reading-a-buffer)
-    * [Compiling for Read-Only](#compiling-for-read-only)
-    * [Building a Buffer](#building-a-buffer)
-    * [Verifying a Buffer](#verifying-a-buffer)
-    * [Potential Name Conflicts](#potential-name-conflicts)
-    * [Debugging a Buffer](#debugging-a-buffer)
+  * [Reading a Buffer](#reading-a-buffer)
+  * [Compiling for Read-Only](#compiling-for-read-only)
+  * [Building a Buffer](#building-a-buffer)
+  * [Verifying a Buffer](#verifying-a-buffer)
+  * [Potential Name Conflicts](#potential-name-conflicts)
+  * [Debugging a Buffer](#debugging-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
-    * [File Identifiers](#file-identifiers)
-    * [Type Identifiers](#type-identifiers)
+  * [File Identifiers](#file-identifiers)
+  * [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
-    * [Base64 Encoding](#base64-encoding)
-    * [Generic Parsing and Printing.](#generic-parsing-and-printing)
-    * [Performance Notes](#performance-notes)
+  * [Base64 Encoding](#base64-encoding)
+  * [Generic Parsing and Printing.](#generic-parsing-and-printing)
+  * [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
 * [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
 * [Fast Buffers](#fast-buffers)
 * [Types](#types)
 * [Unions](#unions)
-    * [Union Scope Resolution](#union-scope-resolution)
+  * [Union Scope Resolution](#union-scope-resolution)
 * [Endianness](#endianness)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
 * [Searching and Sorting](#searching-and-sorting)
 * [Null Values](#null-values)
 * [Portability Layer](#portability-layer)
 * [Building](#building)
-    * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
-    * [Windows Build (MSVC)](#windows-build-msvc)
-    * [Docker](#docker)
-    * [Cross-compilation](#cross-compilation)
-    * [Custom Allocation](#custom-allocation)
-    * [Shared Libraries](#shared-libraries)
+  * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
+  * [Windows Build (MSVC)](#windows-build-msvc)
+  * [Docker](#docker)
+  * [Cross-compilation](#cross-compilation)
+  * [Custom Allocation](#custom-allocation)
+  * [Shared Libraries](#shared-libraries)
 * [Distribution](#distribution)
-    * [Unix Files](#unix-files)
-    * [Windows Files](#windows-files)
+  * [Unix Files](#unix-files)
+  * [Windows Files](#windows-files)
 * [Running Tests on Unix](#running-tests-on-unix)
 * [Running Tests on Windows](#running-tests-on-windows)
 * [Configuration](#configuration)
@@ -314,7 +314,7 @@ different target platforms.
 
 The ci-more branch tests additional compilers:
 
-- Ubuntu Trusty gcc 4.4, 4.6-4.9, 5, 6, 7 and clang 3.6, 3.8 
+- Ubuntu Trusty gcc 4.4, 4.6-4.9, 5, 6, 7 and clang 3.6, 3.8
 - OS-X current clang / gcc
 - Windows MSVC 2010, 2013, 2015, 2015 Win64, 2017, 2017 Win64
 - C++11/C++14 user code on the above platforms.
@@ -343,6 +343,7 @@ uses C99 style code to better follow the C++ version.
   cleanly with C++ 14 using flatcc generated JSON parsers, as of flatcc
   0.5.1.
 - FreeRTOS when using custom memory allocation methods.
+- Arduino (at least reading buffers)
 - IBM XLC on AIX big endian Power PC has been tested for release 0.4.0
   but is not part of regular release tests.
 
@@ -1093,7 +1094,7 @@ The JSON parser and printer can also be used to create and display
 buffers. The parser will use the builder API correctly or issue a syntax
 error or an error on required field missing. This can rule out some
 uncertainty about using the api correctly. The [test_json.c] file and
-[test_json_parser.c] have 
+[test_json_parser.c] have
 test functions that can be adapted for custom tests.
 
 For advanced debugging the [hexdump.h] file can be used to dump the buffer
@@ -1703,7 +1704,7 @@ separate test focusing on mixed type unions that also has union vectors.
 ### Union Scope Resolution
 
 Googles `monster_test.fbs` schema has the union (details left out):
-    
+
 	namespace MyGame.Example2;
 	table Monster{}
 
