@@ -827,6 +827,10 @@ The include path or source path is likely different. Some files in
 flag includes additional files to support compilers lacking c11
 features.
 
+NOTE: on some clang/gcc platforms it may be necessary to use -std=gnu99 or
+-std=gnu11 if the linker is unable find `posix_memalign`, see also comments in
+`include/flatcc/portable/paligned_alloc.h`
+
 
 ### Building a Buffer
 
@@ -946,10 +950,6 @@ buffer:
     cc -std=c11 -I include monster_example.c \
         src/runtime/emitter.c src/runtime/builder.c \
         -o monster_example
-
-NOTE: on some clang/gcc platforms it may be necessary to use -std=gnu99 or
--std=gnu11 if the linker is unable find `posix_memalign`, see also comments in
-`include/flatcc/portable/paligned_alloc.h`
 
 Other features such as the verifier and the JSON printer and parser
 would each need a different file in src/runtime. Which file should be
