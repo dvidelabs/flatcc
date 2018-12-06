@@ -947,6 +947,10 @@ buffer:
         src/runtime/emitter.c src/runtime/builder.c \
         -o monster_example
 
+NOTE: on some gcc platforms it may be necessary to use -std=gnu99 or -std=gnu11
+if the linker is unable find `posix_memalign`, see also comments in
+`include/portable/paligned_alloc.h`
+
 Other features such as the verifier and the JSON printer and parser
 would each need a different file in src/runtime. Which file should be
 obvious from the filenames except that JSON parsing also requires the
