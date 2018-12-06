@@ -829,7 +829,7 @@ features.
 
 NOTE: on some clang/gcc platforms it may be necessary to use -std=gnu99 or
 -std=gnu11 if the linker is unable find `posix_memalign`, see also comments in
-`include/flatcc/portable/paligned_alloc.h`
+[paligned_alloc.h].
 
 
 ### Building a Buffer
@@ -2245,6 +2245,7 @@ See [Benchmarks]
 [Benchmarks]: https://github.com/dvidelabs/flatcc/blob/master/doc/benchmarks.md
 [monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
 [monster_test.fbs]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.fbs
+[paligned_alloc.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/portable/paligned_alloc.h
 [test_json.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json.c
 [test_json_parser.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json_parser.c
 [flatcc_builder.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_builder.h
