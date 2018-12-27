@@ -11,7 +11,8 @@ add_custom_command (
     TARGET gen_monster_test
     COMMAND cmake -E make_directory "${GEN_DIR}"
     COMMAND flatcc_cli -a -o "${GEN_DIR}" "${FBS_DIR}/monster_test.fbs"
-    DEPENDS flatcc_cli "${FBS_DIR}/monster_test.fbs" "${FBS_DIR}/include_test1.fbs" "${FBS_DIR}/include_test2.fbs"
+    COMMAND flatcc_cli -a -o "${GEN_DIR}" "${FBS_DIR}/pick_test.fbs"
+    DEPENDS flatcc_cli "${FBS_DIR}/pick_test.fbs" "${FBS_DIR}/monster_test.fbs" "${FBS_DIR}/include_test1.fbs" "${FBS_DIR}/include_test2.fbs"
 )
 add_executable(monster_test monster_test.c)
 add_dependencies(monster_test gen_monster_test)

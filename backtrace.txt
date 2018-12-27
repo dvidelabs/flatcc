@@ -1,0 +1,17 @@
+Program received signal SIGSEGV, Segmentation fault.
+
+Stack
+[0] from 0x00007ffff7a91f78
+[1] from 0x00007ffff7a93ae0 in malloc+-3531168
+[2] from 0x00007ffff7a83142 in vasprintf+34
+[3] from 0x00007ffff7a65597 in asprintf+135
+[4] from 0x00007ffff7a40b52
+[5] from 0x00007ffff7a40ca2 in __assert_fail+66
+[6] from 0x000000000042c9b3 in _create_offset_vector_direct+852 at /home/dev/src/flatcc/src/runtime/builder.c:1468
+[7] from 0x000000000042ca1d in flatcc_builder_create_offset_vector_direct+45 at /home/dev/src/flatcc/src/runtime/builder.c:1478
+[8] from 0x000000000042ca7a in flatcc_builder_end_offset_vector+91 at /home/dev/src/flatcc/src/runtime/builder.c:1486
+[9] from 0x000000000041b236 in PickTest_MA_vec_clone+244 at /home/dev/src/flatcc/build/lindebug/test/monster_test/generated/pick_test_builder.h:54
+[10] from 0x000000000041fc40 in PickTest_State_ma_clone+35 at /home/dev/src/flatcc/build/lindebug/test/monster_test/generated/pick_test_builder.h:492
+[11] from 0x000000000041fc8c in PickTest_State_ma_pick+58 at /home/dev/src/flatcc/build/lindebug/test/monster_test/generated/pick_test_builder.h:492
+[12] from 0x00000000004247b1 in test_pick_copy+4454 at /home/dev/src/flatcc/test/monster_test/monster_test.c:1203
+[13] from 0x0000000000428a2e in main+78 at /home/dev/src/flatcc/test/monster_test/monster_test.c:2856

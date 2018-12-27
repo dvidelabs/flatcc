@@ -1,0 +1,127 @@
+namespace PickTest;
+
+struct Vec3 {
+  a:float;
+  b:float;
+  c:float;
+}
+
+table MAParams
+{
+  aa                  : ubyte =   0 (id: 0);
+  bb                  : ubyte =   0 (id: 1);
+  cc                  : ubyte =   0 (id: 2);
+  x1                  : ubyte =   0 (id: 3);
+  x2                  : ubyte =   0 (id: 4);
+  x3                  : ubyte =   0 (id: 5);
+  x4                  : ubyte =   0 (id: 6);
+  x5                  : ubyte =   0 (id: 7);
+  x6                  : ubyte =   0 (id: 8);
+  x7                  : ubyte =   0 (id: 9);
+  x8                  : ubyte =   0 (id:10);
+  x9                  : ubyte =   0 (id:11);
+  y1                  : ubyte =   0 (id:12);
+  y2                  : ubyte =   0 (id:13);
+  y3                  : ubyte =   0 (id:14);
+  y4                  : ubyte =   0 (id:15);
+  y5                  : ubyte =   0 (id:16);
+  y6                  : ubyte =   0 (id:17);
+  y7                  : ubyte =   0 (id:18);
+  y8                  : ubyte =   0 (id:19);
+  y9                  : ubyte =   0 (id:20);
+  z0                  : ubyte =   0 (id:21);
+  z1                  : ubyte =   0 (id:22);
+  z2                  : ubyte =   0 (id:23);
+  z3                  : ubyte =   0 (id:24);
+  z4                  : ubyte =   0 (id:25);
+  z5                  : ubyte =   0 (id:26);
+  z6                  : ubyte =   0 (id:27);
+  z7                  : ubyte =   0 (id:28);
+  z8                  : ubyte =   0 (id:29);
+  z9                  : ubyte =   0 (id:30);
+  k0                  : ubyte =   0 (id:31);
+  k1                  : ubyte =   0 (id:32);
+  k2                  : ubyte =   0 (id:33);
+  k3                  : ubyte =   0 (id:34);
+  k4                  : ubyte =   0 (id:35);
+  k5                  : ubyte =   0 (id:36);
+  k6                  : ubyte =   0 (id:37);
+  k7                  : ubyte =   0 (id:38);
+  k8                  : ubyte =   0 (id:39);
+  k9                  : ubyte =   0 (id:40);
+  j0                  : ubyte =   0 (id:41);
+  j1                  : ubyte =   0 (id:42);
+  j2                  : ubyte =   0 (id:43);
+  j3                  : ubyte =   0 (id:44);
+  j4                  : ubyte =   0 (id:45);
+  j5                  : ubyte =   0 (id:46);
+  j6                  : ubyte =   0 (id:47);  // <--- XXX: If I remove a few fields near the end of this table, the crash changes from being in _create_offset_vector_direct
+}                                             // to being in flatcc_builder_end_table/flatcc_builder_create_table instead (which are also called from
+                                              // various _clone/_pick functions further up the stack. Probably the same issue, but worth pointing out.
+table TA                                      // The amount of fields I need to comment out to get this behavior seems to vary slightly, but usually 3-4 does the trick.
+{
+  pathA           : string              (id:  0);
+  hashA           : ulong          = 0  (id:  1);
+  pathB           : string              (id:  2);
+  hashB           : ulong          = 0  (id:  3);
+  pathC           : string              (id:  4);
+  hashC           : ulong          = 0  (id:  5);
+  pathD           : string              (id:  6);
+  hashD           : ulong          = 0  (id:  7);
+  pathE           : string              (id:  8);
+  hashE           : ulong          = 0  (id:  9);
+  pathF           : string              (id: 10);
+  hashF           : ulong          = 0  (id: 11);
+  pathG           : string              (id: 12);
+  hashG           : ulong          = 0  (id: 13);
+  pathH           : string              (id: 14);
+  hashH           : ulong          = 0  (id: 15);
+  pathJ           : string              (id: 16);
+  hashJ           : ulong          = 0  (id: 17);
+  pathK           : string              (id: 18);
+  hashK           : ulong          = 0  (id: 19);
+}
+
+table MA
+{
+  matHash            : ulong          = 0  (id:  0);
+  params             : MAParams            (id:  1);
+  ta                 : TA                  (id:  2);
+}
+
+table WSS
+{
+  scale         : float  = 1.0 (id: 0);
+}
+
+table UState
+{
+  wss        : WSS       (id: 0);
+}
+
+table TVV
+{
+  wss        : WSS         (id: 0);
+}
+
+table State
+{
+  cp                   : Vec3                         (id:  0);
+  ct                   : Vec3                         (id:  1);
+  cpp                 : Vec3                         (id:  2);
+  wbc                      : Vec3                         (id:  3);
+  eev                      : string                       (id:  4);
+  bgc                      : Vec3                         (id:  5);
+  wfc                      : Vec3                         (id:  6);
+  nvv                      : [ulong]                      (id:  7);
+  uState                   : UState                       (id:  8);
+  tvv                      : [TVV]                        (id:  9);
+  wOrder                   : [ushort]                     (id: 10);
+  ma                       : [MA]                         (id: 11);
+}
+
+file_identifier "PICK";
+
+root_type State;
+
+/* vim: set sw=2 ts=2 expandtab: */

@@ -3,6 +3,9 @@
 #include "monster_test_builder.h"
 #include "monster_test_verifier.h"
 
+#include "pick_test_builder.h"
+#include "pick_test_verifier.h"
+
 #include "flatcc/support/hexdump.h"
 #include "flatcc/support/elapsed.h"
 #include "../../config/config.h"
@@ -1028,6 +1031,182 @@ int test_monster(flatcc_builder_t *B)
     ret = verify_monster(buffer);
 
     flatcc_builder_aligned_free(buffer);
+    return ret;
+}
+
+#define ps(x) FLATBUFFERS_WRAP_NAMESPACE(PickTest, x)
+
+#define FLAT_BUFFER_PICK_FIELD_INTO(_to, _name)                                             \
+{                                                                                                    \
+    size_t bufSize = flatcc_builder_get_buffer_size(&_name);                                         \
+    if (0 != bufSize)                                                                                \
+    {                                                                                                \
+        uint8_t* bufPtr = (uint8_t*)flatcc_builder_finalize_aligned_buffer(&_name, NULL);            \
+        int32_t verRet = ps(State_verify_as_root_with_identifier(bufPtr, bufSize, "PICK"));          \
+        if (flatcc_verify_ok != verRet)                                                              \
+        {                                                                                            \
+            printf("failed verification for %s: %s\n", #_name, flatcc_verify_error_string(verRet));  \
+        }                                                                                            \
+        ps(State_table_t) attribSpecificState = (ps(State_table_t)) ps(State_as_root(bufPtr));       \
+        ps(State_##_name##_pick(_to, attribSpecificState));                                          \
+        flatcc_builder_aligned_free(bufPtr);                                                         \
+    }                                                                                                \
+}
+
+#define flatBufferStateSetVec3f(_name, _vec)                       \
+{                                                                  \
+    flatcc_builder_reset(&_name);                                  \
+    ps(State_start_as_root   (&_name));                            \
+    ps(State_##_name##_create(&_name, _vec[0], _vec[1], _vec[2])); \
+    ps(State_end_as_root     (&_name));                            \
+}
+
+#define flatBufferStateSetStr(_name, _str)                         \
+{                                                                  \
+    flatcc_builder_reset(&_name);                                  \
+    ps(State_start_as_root(&_name));                               \
+    ps(State_##_name##_create_str(&_name, _str));                  \
+    ps(State_end_as_root  (&_name));                               \
+}
+
+int test_pick_copy(flatcc_builder_t *B)
+{
+    int ret = 0;
+
+    flatcc_builder_t cp, ct, cpp, wbc, eev, bgc, wfc, nvv, uState, tvv, wOrder, ma;
+
+    flatcc_builder_init(&cp);
+    flatcc_builder_init(&ct);
+    flatcc_builder_init(&cpp);
+    flatcc_builder_init(&wbc);
+    flatcc_builder_init(&eev);
+    flatcc_builder_init(&bgc);
+    flatcc_builder_init(&wfc);
+    flatcc_builder_init(&nvv);
+    flatcc_builder_init(&uState);
+    flatcc_builder_init(&tvv);
+    flatcc_builder_init(&wOrder);
+    flatcc_builder_init(&ma);
+
+    float floatVec3[3] = { 0.0f, 0.0f, 0.0f };
+
+    flatBufferStateSetVec3f(cp,  floatVec3);
+    flatBufferStateSetVec3f(ct,  floatVec3);
+    flatBufferStateSetVec3f(cpp, floatVec3);
+    flatBufferStateSetVec3f(wbc, floatVec3);
+    flatBufferStateSetStr(eev, "testName");
+    flatBufferStateSetVec3f(bgc, floatVec3);
+    flatBufferStateSetVec3f(wfc, floatVec3);
+
+    ps(State_start_as_root(&nvv));
+    ps(State_nvv_start(&nvv));
+    uint64_t* visibility = ps(State_nvv_extend(&nvv, 381));
+    ps(State_nvv_end(&nvv));
+    ps(State_end_as_root(&nvv));
+
+    {
+        flatcc_builder_t* UB = &uState;
+        ps(State_start_as_root(UB));
+            ps(State_uState_start(UB));
+                ps(UState_wss_start(UB));
+                    ps(WSS_scale_add(UB, 2.0));
+                ps(UState_wss_end(UB));
+            ps(State_uState_end(UB));
+        ps(State_end_as_root(UB));
+    }
+
+    {
+        flatcc_builder_t* TB = &tvv;
+        ps(State_start_as_root(TB));
+            ps(State_tvv_start(TB));
+                ps(State_tvv_push_start(TB));
+                    ps(TVV_wss_start(TB));
+                        ps(WSS_scale_add(TB, 2.0));
+                    ps(TVV_wss_end(TB));
+                ps(State_tvv_push_end(TB));
+            ps(State_tvv_end(TB));
+        ps(State_end_as_root(TB));
+    }
+
+    {
+        flatcc_builder_t* WB = &wOrder;
+        ps(State_start_as_root(WB));
+            ps(State_wOrder_start(WB));
+                uint16_t* wOrder = ps(State_wOrder_extend(WB, 1));
+                wOrder[0] = 0;
+            ps(State_wOrder_end(WB));
+        ps(State_end_as_root(WB));
+    }
+
+    {
+        flatcc_builder_t* MB = &ma;
+        ps(State_start_as_root(MB));
+            ps(State_ma_start(MB));
+                for (uint64_t ii = 0, iiEnd = 26; ii < iiEnd; ii++)
+                {
+                    ps(State_ma_push_start(MB));
+                    ps(MA_matHash_add(MB, 1));
+                    ps(MA_params_start(MB));
+                    ps(MAParams_aa_add(MB, 1));
+                    ps(MAParams_bb_add(MB, 1));
+                    ps(MAParams_cc_add(MB, 1));
+                    ps(MA_params_end(MB));
+
+                    ps(MA_ta_start(MB));
+                    #define FB_MAT_STORE_TA(_name)                     \
+                        {                                                  \
+                            ps(TA_path##_name##_create_str(MB, "TEST"));   \
+                            ps(TA_hash##_name##_add(MB, 1));               \
+                        }
+                    FB_MAT_STORE_TA(A);
+                    FB_MAT_STORE_TA(B);
+                    FB_MAT_STORE_TA(C);
+                    FB_MAT_STORE_TA(D);
+                    #undef FB_MAT_STORE_TA
+
+                    ps(MA_ta_end(MB));
+
+                    ps(State_ma_push_end(MB));
+                }
+            ps(State_ma_end(MB));
+        ps(State_end_as_root(MB));
+    }
+
+    flatcc_builder_reset(B);
+    ps(State_start_as_root(B));
+
+    FLAT_BUFFER_PICK_FIELD_INTO(B, cp     ); //
+    FLAT_BUFFER_PICK_FIELD_INTO(B, ct     ); //
+    FLAT_BUFFER_PICK_FIELD_INTO(B, cpp    ); //
+    FLAT_BUFFER_PICK_FIELD_INTO(B, wbc    ); //
+    FLAT_BUFFER_PICK_FIELD_INTO(B, eev    ); //  XXX: Commenting out any one of these lines will
+    FLAT_BUFFER_PICK_FIELD_INTO(B, bgc    ); //  cause the crash to no longer occur. (I haven't tested
+    FLAT_BUFFER_PICK_FIELD_INTO(B, wfc    ); //  all of them this way, but for sure commenting out cp
+    FLAT_BUFFER_PICK_FIELD_INTO(B, nvv    ); //  ct, or wbc == no more crash.
+    FLAT_BUFFER_PICK_FIELD_INTO(B, uState ); //
+    FLAT_BUFFER_PICK_FIELD_INTO(B, tvv    ); //
+    FLAT_BUFFER_PICK_FIELD_INTO(B, wOrder ); //
+
+    {
+        size_t bufSize = flatcc_builder_get_buffer_size(&ma);
+        if (0 != bufSize)
+        {
+            uint8_t* bufPtr = (uint8_t*)flatcc_builder_finalize_buffer(&ma, NULL);
+
+            int32_t verRet = ps(State_verify_as_root_with_identifier(bufPtr, bufSize, "PICK"));
+            if (flatcc_verify_ok != verRet)
+            {
+                printf("failed verification: %s\n", flatcc_verify_error_string(verRet));
+            }
+
+            ps(State_table_t) attribSpecificState = (ps(State_table_t)) ps(State_as_root(bufPtr));
+            ps(State_ma_pick(B, attribSpecificState)); // <--- XXX: Crash happens here: '_create_offset_vector_direct: Assertion `0' failed.'
+            free(bufPtr);
+        }
+    }
+
+    ps(State_end_as_root(B));
+
     return ret;
 }
 
@@ -2647,6 +2826,7 @@ int main(int argc, char *argv[])
 #else
     printf("running debug monster test\n");
 #endif
+#if 0
 #if 1
     if (test_table_with_emptystruct(B)) {
         printf("TEST FAILED\n");
@@ -2671,6 +2851,14 @@ int main(int argc, char *argv[])
         return -1;
     }
 #endif
+#endif
+#if 1
+    if (test_pick_copy(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 0
 #if 1
     if (test_monster_with_size(B)) {
         printf("TEST FAILED\n");
@@ -2794,6 +2982,7 @@ int main(int argc, char *argv[])
 #ifdef FLATBUFFERS_BENCHMARK
     time_monster(B);
     time_struct_buffer(B);
+#endif
 #endif
     flatcc_builder_clear(B);
     return 0;
