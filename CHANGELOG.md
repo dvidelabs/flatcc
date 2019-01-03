@@ -14,6 +14,7 @@
   to happen, and hence has low impact (#98).
 - Fix file identifier string to type hash cast as implicit cast was not safe on
   all platforms.
+- Fix reallocation bug when cloning vectors of non-scalar content (#102).
 
 ## [0.5.2]
 
