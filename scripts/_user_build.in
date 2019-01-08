@@ -21,7 +21,7 @@ fi
 
 CFLAGS="$CFLAGS -I ${ROOT}/include -I ${ROOT}/generated"
 CFLAGS_DEBUG=${CFLAGS_DEBUG:--g}
-CFLAGS_RELEAE=${CFLAGS_RELEASE:--O2 -DNDEBUG}
+CFLAGS_RELEASE=${CFLAGS_RELEASE:--O2 -DNDEBUG}
 
 ${ROOT}/bin/flatcc -a -o ${ROOT}/generated ${ROOT}/src/*.fbs
 
