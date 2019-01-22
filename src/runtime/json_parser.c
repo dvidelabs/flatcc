@@ -154,10 +154,129 @@ descend:
     return buf;
 }
 
+static int decode_hex32(const char *buf, uint32_t *result)
+{
+    uint32_t u, x;
+    char c;
+
+    u = 0;
+    c = buf[0];
+    if (c >= '0' && c <= '9') {
+        x = c - '0';
+        u = x << 12;
+    } else {
+        /* Lower case. */
+        c |= 0x20;
+        if (c >= 'a' && c <= 'f') {
+            x = c - 'a' + 10;
+            u |= x << 12;
+        } else {
+            return -1;
+        }
+    }
+    c = buf[1];
+    if (c >= '0' && c <= '9') {
+        x = c - '0';
+        u |= x << 8;
+    } else {
+        /* Lower case. */
+        c |= 0x20;
+        if (c >= 'a' && c <= 'f') {
+            x = c - 'a' + 10;
+            u |= x << 8;
+        } else {
+            return -1;
+        }
+    }
+    c = buf[2];
+    if (c >= '0' && c <= '9') {
+        x = c - '0';
+        u |= x << 4;
+    } else {
+        /* Lower case. */
+        c |= 0x20;
+        if (c >= 'a' && c <= 'f') {
+            x = c - 'a' + 10;
+            u |= x << 4;
+        } else {
+            return -1;
+        }
+    }
+    c = buf[3];
+    if (c >= '0' && c <= '9') {
+        x = c - '0';
+        u |= x;
+    } else {
+        /* Lower case. */
+        c |= 0x20;
+        if (c >= 'a' && c <= 'f') {
+            x = c - 'a' + 10;
+            u |= x;
+        } else {
+            return -1;
+        }
+    }
+    *result = u;
+    return 0;
+}
+
+static int decode_unicode_char(uint32_t u, char *code)
+{
+    if (u <= 0x7f) {
+        code[0] = 1;
+        code[1] = (char)u;
+    } else if (u <= 0x7ff) {
+        code[0] = 2;
+        code[1] = (char)(0xc0 | (u >> 6));
+        code[2] = (char)(0x80 | (u & 0x3f));
+    } else if (u <= 0xffff) {
+        code[0] = 3;
+        code[1] = (char)(0xe0 | (u >> 12));
+        code[2] = (char)(0x80 | ((u >> 6) & 0x3f));
+        code[3] = (char)(0x80 | (u & 0x3f));
+    } else if (u <= 0x10ffff) {
+        code[0] = 4;
+        code[1] = (char)(0xf0 | (u >> 18));
+        code[2] = (char)(0x80 | ((u >> 12) & 0x3f));
+        code[3] = (char)(0x80 | ((u >> 6) & 0x3f));
+        code[4] = (char)(0x80 | (u & 0x3f));
+    } else {
+        code[0] = 0;
+        return -1;
+    }
+    return 0;
+}
+
+static inline uint32_t combine_utf16_surrogate_pair(uint32_t high, uint32_t low)
+{
+    return (low - 0xd800) * 0x400 + (high - 0xdc00) + 0x10000;
+}
+
+static inline int decode_utf16_surrogate_pair(uint32_t high, uint32_t low, char *code)
+{
+    return decode_unicode_char(combine_utf16_surrogate_pair(high, low), code);
+}
+
+
+/* 
+ * UTF-8 code points can have up to 4 bytes but JSON can only
+ * encode up to 3 bytes via the \uXXXX syntax.
+ * To handle the range U+10000..U+10FFFF two UTF-16 surrogate
+ * pairs must be used. If this is not detected, the pairs
+ * survive in the output which is not valid but often tolerated.
+ * Emojis generally require such a pair, unless encoded
+ * unescaped in UTF-8.
+ *
+ * If a high surrogate pair is detected and a low surrogate pair
+ * follows, the combined sequence is decoded as a 4 byte
+ * UTF-8 sequence. Unpaired surrogate halves are decoded as is
+ * despite being an invalid UTF-8 value.
+ */
+
 const char *flatcc_json_parser_string_escape(flatcc_json_parser_t *ctx, const char *buf, const char *end, flatcc_json_parser_escape_buffer_t code)
 {
     char c, v;
-    unsigned short u, x;
+    uint32_t u, u2;
 
     if (end - buf < 2 || buf[0] != '\\') {
         code[0] = 0;
@@ -204,81 +323,33 @@ const char *flatcc_json_parser_string_escape(flatcc_json_parser_t *ctx, const ch
             code[0] = 0;
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
         }
-        u = 0;
-        c = buf[2];
-        if (c >= '0' && c <= '9') {
-            x = c - '0';
-            u = x << 12;
-        } else {
-            /* Lower case. */
-            c |= 0x20;
-            if (c >= 'a' && c <= 'f') {
-                x = c - 'a' + 10;
-                u |= x << 12;
-            } else {
+        if (decode_hex32(buf + 2, &u)) {
+            code[0] = 0;
+            return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
+        };
+        /* If a high UTF-16 surrogate half pair was detected */
+        if (u >= 0xdc00 && u <= 0xdfff && 
+                /* and there is space for a matching low half pair */
+                end - buf >= 12 &&
+                /* and there is a second escape following immediately */
+                buf[6] == '\\' && buf[7] == 'u' &&
+                /* and it is valid hex */
+                decode_hex32(buf + 8, &u2) == 0 &&
+                /* and it is a low UTF-16 surrogate pair */
+                u2 >= 0xd800 && u2 <= 0xdbff) {
+            /* then decode the pair into a single 4 byte utf-8 sequence. */
+            if (decode_utf16_surrogate_pair(u, u2, code)) {
                 code[0] = 0;
                 return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
             }
+            return buf + 12;
+            /*  
+             *  Otherwise decode unmatched surrogate pairs as is any
+             *  other UTF-8. Some systems might depend on these surviving.
+             *  Leave ignored errors for the next parse step.
+             */
         }
-        c = buf[3];
-        if (c >= '0' && c <= '9') {
-            x = c - '0';
-            u |= x << 8;
-        } else {
-            /* Lower case. */
-            c |= 0x20;
-            if (c >= 'a' && c <= 'f') {
-                x = c - 'a' + 10;
-                u |= x << 8;
-            } else {
-                code[0] = 0;
-                return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
-            }
-        }
-        c = buf[4];
-        if (c >= '0' && c <= '9') {
-            x = c - '0';
-            u |= x << 4;
-        } else {
-            /* Lower case. */
-            c |= 0x20;
-            if (c >= 'a' && c <= 'f') {
-                x = c - 'a' + 10;
-                u |= x << 4;
-            } else {
-                code[0] = 0;
-                return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
-            }
-        }
-        c = buf[5];
-        if (c >= '0' && c <= '9') {
-            x = c - '0';
-            u |= x;
-        } else {
-            /* Lower case. */
-            c |= 0x20;
-            if (c >= 'a' && c <= 'f') {
-                x = c - 'a' + 10;
-                u |= x;
-            } else {
-                code[0] = 0;
-                return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
-            }
-        }
-        if (u <= 0x7f) {
-            code[0] = 1;
-            code[1] = (char)u;
-        } else if (u <= 0x7ff) {
-            code[0] = 2;
-            code[1] = (char)(0xc0 | (u >> 6));
-            code[2] = (char)(0x80 | (u & 0x3f));
-        } else {
-            code[0] = 3;
-            code[1] = (char)(0xe0 | (u >> 12));
-            code[2] = (char)(0x80 | ((u >> 6) & 0x3f));
-            code[3] = (char)(0x80 | (u & 0x3f));
-            /* We do not report failure on invalid unicode range. */
-        }
+        decode_unicode_char(u, code);
         return buf + 6;
     case 't':
         code[0] = 1;
@@ -570,7 +641,7 @@ const char *flatcc_json_parser_generic_json(flatcc_json_parser_t *ctx, const cha
     char stack[FLATCC_JSON_PARSE_GENERIC_MAX_NEST];
     char *sp, *spend;
     const char *k;
-    char code[4];
+    flatcc_json_parser_escape_buffer_t code;
     int more = 0;
 
     sp = stack;
