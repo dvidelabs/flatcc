@@ -249,7 +249,7 @@ static int decode_unicode_char(uint32_t u, char *code)
 
 static inline uint32_t combine_utf16_surrogate_pair(uint32_t high, uint32_t low)
 {
-    return (low - 0xd800) * 0x400 + (high - 0xdc00) + 0x10000;
+    return (high - 0xd800) * 0x400 + (low - 0xdc00) + 0x10000;
 }
 
 static inline int decode_utf16_surrogate_pair(uint32_t high, uint32_t low, char *code)
@@ -328,7 +328,7 @@ const char *flatcc_json_parser_string_escape(flatcc_json_parser_t *ctx, const ch
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
         };
         /* If a high UTF-16 surrogate half pair was detected */
-        if (u >= 0xdc00 && u <= 0xdfff && 
+        if (u >= 0xd800 && u <= 0xdbff && 
                 /* and there is space for a matching low half pair */
                 end - buf >= 12 &&
                 /* and there is a second escape following immediately */
@@ -336,7 +336,7 @@ const char *flatcc_json_parser_string_escape(flatcc_json_parser_t *ctx, const ch
                 /* and it is valid hex */
                 decode_hex32(buf + 8, &u2) == 0 &&
                 /* and it is a low UTF-16 surrogate pair */
-                u2 >= 0xd800 && u2 <= 0xdbff) {
+                u2 >= 0xdc00 && u2 <= 0xdfff) {
             /* then decode the pair into a single 4 byte utf-8 sequence. */
             if (decode_utf16_surrogate_pair(u, u2, code)) {
                 code[0] = 0;
