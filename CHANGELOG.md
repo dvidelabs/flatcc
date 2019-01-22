@@ -18,8 +18,6 @@
 - JSON parser: combine valid UTF-16 surrogate pairs such as "\uD834\uDD1E"
   (U+1D11E) into single 4 byte UTF-8 sequence as per spec. Unmatched half
   pairs are intentionally decoded into invalid UTF-8 as before.
-  Combined code points above U+10FFFF now yields an error instead of two
-  separate UTF-8 encoded half-pairs.
 
 ## [0.5.2]
 
