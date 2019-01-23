@@ -154,7 +154,7 @@ descend:
     return buf;
 }
 
-static int decode_hex32(const char *buf, uint32_t *result)
+static int decode_hex4(const char *buf, uint32_t *result)
 {
     uint32_t u, x;
     char c;
@@ -323,7 +323,7 @@ const char *flatcc_json_parser_string_escape(flatcc_json_parser_t *ctx, const ch
             code[0] = 0;
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
         }
-        if (decode_hex32(buf + 2, &u)) {
+        if (decode_hex4(buf + 2, &u)) {
             code[0] = 0;
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
         };
@@ -334,7 +334,7 @@ const char *flatcc_json_parser_string_escape(flatcc_json_parser_t *ctx, const ch
                 /* and there is a second escape following immediately */
                 buf[6] == '\\' && buf[7] == 'u' &&
                 /* and it is valid hex */
-                decode_hex32(buf + 8, &u2) == 0 &&
+                decode_hex4(buf + 8, &u2) == 0 &&
                 /* and it is a low UTF-16 surrogate pair */
                 u2 >= 0xdc00 && u2 <= 0xdfff) {
             /* then decode the pair into a single 4 byte utf-8 sequence. */
