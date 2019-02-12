@@ -1155,6 +1155,119 @@ int test_string(flatcc_builder_t *B)
     return 0;
 }
 
+int test_sort_find_by_intfield(flatcc_builder_t *B)
+{
+    size_t pos;
+    ns(Monster_table_t) mon;
+    ns(Monster_vec_t) monsters;
+    ns(Monster_mutable_vec_t) mutable_monsters;
+    void *buffer;
+    size_t size;
+    int ret = -1;
+
+    flatcc_builder_reset(B);
+    ns(Monster_start_as_root(B));
+    ns(Monster_intkey_add(B, 5));
+    ns(Monster_name_create_str(B, "MyMonster"));
+
+    ns(Monster_testarrayoftables_start(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_intkey_add(B, 4));
+    ns(Monster_name_create_str(B, "TwoFace"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_intkey_add(B, 3));
+    ns(Monster_name_create_str(B, "Joker"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_intkey_add(B, 2));
+    ns(Monster_name_create_str(B, "Gulliver"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_intkey_add(B, 1));
+    ns(Monster_name_create_str(B, "Alice"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_push_start(B));
+    ns(Monster_intkey_add(B, 0));
+    ns(Monster_name_create_str(B, "Gulliver"));
+    ns(Monster_testarrayoftables_push_end(B));
+
+    ns(Monster_testarrayoftables_end(B));
+
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+
+    hexdump("unsorted monster buffer", buffer, size, stderr);
+    mon = ns(Monster_as_root(buffer));
+    monsters = ns(Monster_testarrayoftables(mon));
+    assert(monsters);
+    mutable_monsters = (ns(Monster_mutable_vec_t))monsters;
+    ns(Monster_vec_sort_by_intkey(mutable_monsters));
+
+    hexdump("sorted monster buffer", buffer, size, stderr);
+
+    if (ns(Monster_vec_len(monsters)) != 5) {
+        printf("Sorted monster vector has wrong length\n");
+        goto done;
+    }
+    if (strcmp(ns(Monster_name(ns(Monster_vec_at(monsters, 0)))), "Gulliver")) {
+        printf("sort isn't working at elem 0\n");
+        goto done;
+    }
+    if (strcmp(ns(Monster_name(ns(Monster_vec_at(monsters, 1)))), "Alice")) {
+        printf("sort isn't working at elem 1\n");
+        goto done;
+    }
+    if (strcmp(ns(Monster_name(ns(Monster_vec_at(monsters, 2)))), "Gulliver")) {
+        printf("sort isn't working at elem 2\n");
+        goto done;
+    }
+    if (strcmp(ns(Monster_name(ns(Monster_vec_at(monsters, 3)))), "Joker")) {
+        printf("sort isn't working at elem 3\n");
+        goto done;
+    }
+    if (strcmp(ns(Monster_name(ns(Monster_vec_at(monsters, 4)))), "TwoFace")) {
+        printf("sort isn't working at elem 4\n");
+        goto done;
+    }
+    /*
+     * The heap sort isn't stable, but it should keep all elements
+     * unique. Note that we could still have identical objects if we
+     * actually stored the same object twice in DAG structure.
+     */
+    if (ns(Monster_vec_at(monsters, 1)) == ns(Monster_vec_at(monsters, 2))) {
+        printf("Two identical sort keys should not be identical objects (in this case)\n");
+        goto done;
+    }
+
+    /*
+     * The search, unlike sort, is stable and should return the first
+     * index of repeated keys.
+     */
+    if (4 != (pos = ns(Monster_vec_find_by_intkey(monsters, 4)))) {
+        printf("4 not found\n");
+        printf("got %d\n", (int)pos);
+        goto done;
+    }
+    if (1 != (pos = ns(Monster_vec_find_by_intkey(monsters, 1)))) {
+        printf("1 not found\n");
+        printf("got %d\n", (int)pos);
+        goto done;
+    }
+
+    ret = 0;
+
+done:
+    flatcc_builder_aligned_free(buffer);
+    return ret;
+}
+
 int test_sort_find(flatcc_builder_t *B)
 {
     size_t pos;
@@ -2739,6 +2852,12 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_sort_find(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_sort_find_by_intfield(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
