@@ -1153,7 +1153,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                         nsc, snt.text, n, s, tname_ns, tname);
                 if (out->opts->cgen_sort) {
                     fprintf(out->fp,
-                        "__%sdefine_sort_by_scalar_field(%s, %.*s, %s%s, %s_t)\n",
+                        "__%sdefine_struct_sort_by_scalar_field(%s, %.*s, %s%s, %s_t)\n",
                         nsc, snt.text, n, s, tname_ns, tname, snt.text);
                 }
                 if (!already_has_key) {
@@ -1196,7 +1196,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                             nsc, snt.text, n, s, snref.text);
                     if (out->opts->cgen_sort) {
                         fprintf(out->fp,
-                            "__%sdefine_sort_by_scalar_field(%s, %.*s, %s_enum_t, %s_t)\n",
+                            "__%sdefine_struct_sort_by_scalar_field(%s, %.*s, %s_enum_t, %s_t)\n",
                             nsc, snt.text, n, s, snref.text, snt.text);
                     }
                     if (!already_has_key) {
@@ -1489,8 +1489,8 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                         nsc, snt.text, n, s, tname_ns, tname);
                 if (out->opts->cgen_sort) {
                     fprintf(out->fp,
-                        "__%sdefine_sort_by_scalar_field(%s, %.*s, %s%s, %suoffset_t)\n",
-                        nsc, snt.text, n, s, tname_ns, tname, nsc);
+                        "__%sdefine_table_sort_by_scalar_field(%s, %.*s, %s%s)\n",
+                        nsc, snt.text, n, s, tname_ns, tname);
                 }
                 if (!already_has_key) {
                     fprintf(out->fp,
@@ -1596,8 +1596,8 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                             nsc, snt.text, n, s, snref.text);
                     if (out->opts->cgen_sort) {
                         fprintf(out->fp,
-                                "__%sdefine_sort_by_scalar_field(%s, %.*s, %s_enum_t, %suoffset_t)\n",
-                                nsc, snt.text, n, s, snref.text, nsc);
+                                "__%sdefine_table_sort_by_scalar_field(%s, %.*s, %s_enum_t)\n",
+                                nsc, snt.text, n, s, snref.text);
                     }
                     if (!already_has_key) {
                         fprintf(out->fp,

@@ -77,8 +77,8 @@ int gen_sort(fb_output_t *out)
         "#define __%sstring_diff(x, y) __%sstring_n_cmp((x), (const char *)(y), %sstring_len(y))\n",
         out->nsc, out->nsc, out->nsc, out->nsc);
     fprintf(out->fp,
-        "#define __%sscalar_swap(vec, a, b, TE) { TE x__tmp = vec[b]; vec[b] = vec[a]; vec[a] = x__tmp; }\n"
-        "#define __%sstring_swap(vec, a, b, TE)\\\n"
+        "#define __%svalue_swap(vec, a, b, TE) { TE x__tmp = vec[b]; vec[b] = vec[a]; vec[a] = x__tmp; }\n"
+        "#define __%suoffset_swap(vec, a, b, TE)\\\n"
         "{ TE ta__tmp, tb__tmp, d__tmp;\\\n"
         "  d__tmp = (TE)((a - b) * sizeof(vec[0]));\\\n"
         "  ta__tmp =  __flatbuffers_uoffset_read_from_pe(vec + b) - d__tmp;\\\n"
@@ -87,12 +87,28 @@ int gen_sort(fb_output_t *out)
         "  __flatbuffers_uoffset_write_to_pe(vec + b, tb__tmp); }\n",
         out->nsc, out->nsc);
     fprintf(out->fp,
-        "#define __%sdefine_sort_by_scalar_field(N, NK, TK, TE)\\\n"
-        "  __%sdefine_sort_by_field(N, NK, TK, TE, __%sscalar_diff, __%sscalar_swap)\n",
+            "#define __%sscalar_swap(vec, a, b, TE) __%svalue_swap(vec, a, b, TE)\n",
+        out->nsc, out->nsc);
+    fprintf(out->fp,
+            "#define __%sstring_swap(vec, a, b, TE) __%suoffset_swap(vec, a, b, TE)\n",
+        out->nsc, out->nsc);
+    fprintf(out->fp,
+            "#define __%sstruct_swap(vec, a, b, TE) __%svalue_swap(vec, a, b, TE)\n",
+        out->nsc, out->nsc);
+    fprintf(out->fp,
+            "#define __%stable_swap(vec, a, b, TE) __%suoffset_swap(vec, a, b, TE)\n",
+        out->nsc, out->nsc);
+    fprintf(out->fp,
+        "#define __%sdefine_struct_sort_by_scalar_field(N, NK, TK, TE)\\\n"
+        "  __%sdefine_sort_by_field(N, NK, TK, TE, __%sscalar_diff, __%sstruct_swap)\n",
         out->nsc, out->nsc, out->nsc, out->nsc);
     fprintf(out->fp,
+        "#define __%sdefine_table_sort_by_scalar_field(N, NK, TK)\\\n"
+        "  __%sdefine_sort_by_field(N, NK, TK, %suoffset_t, __%sscalar_diff, __%stable_swap)\n",
+        out->nsc, out->nsc, out->nsc, out->nsc, out->nsc);
+    fprintf(out->fp,
         "#define __%sdefine_sort_by_string_field(N, NK)\\\n"
-        "  __%sdefine_sort_by_field(N, NK, %sstring_t, %suoffset_t, __%sstring_diff, __%sstring_swap)\n",
+        "  __%sdefine_sort_by_field(N, NK, %sstring_t, %suoffset_t, __%sstring_diff, __%suoffset_swap)\n",
         out->nsc, out->nsc, out->nsc, out->nsc, out->nsc, out->nsc);
     fprintf(out->fp,
         "#define __%sdefine_scalar_sort(N, T) __%sdefine_sort(N, T, T, __%sscalar_diff, __%sscalar_swap)\n",
