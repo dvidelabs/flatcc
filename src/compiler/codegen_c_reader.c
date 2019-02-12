@@ -1538,7 +1538,7 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                     nsc, snt.text, n, s);
                 if (out->opts->cgen_sort) {
                     fprintf(out->fp,
-                        "__%sdefine_sort_by_string_field(%s, %.*s)\n",
+                        "__%sdefine_table_sort_by_string_field(%s, %.*s)\n",
                         nsc, snt.text, n, s);
                 }
                 if (!already_has_key) {

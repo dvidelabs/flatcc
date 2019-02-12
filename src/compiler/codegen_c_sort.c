@@ -107,8 +107,8 @@ int gen_sort(fb_output_t *out)
         "  __%sdefine_sort_by_field(N, NK, TK, %suoffset_t, __%sscalar_diff, __%stable_swap)\n",
         out->nsc, out->nsc, out->nsc, out->nsc, out->nsc);
     fprintf(out->fp,
-        "#define __%sdefine_sort_by_string_field(N, NK)\\\n"
-        "  __%sdefine_sort_by_field(N, NK, %sstring_t, %suoffset_t, __%sstring_diff, __%suoffset_swap)\n",
+        "#define __%sdefine_table_sort_by_string_field(N, NK)\\\n"
+        "  __%sdefine_sort_by_field(N, NK, %sstring_t, %suoffset_t, __%sstring_diff, __%stable_swap)\n",
         out->nsc, out->nsc, out->nsc, out->nsc, out->nsc, out->nsc);
     fprintf(out->fp,
         "#define __%sdefine_scalar_sort(N, T) __%sdefine_sort(N, T, T, __%sscalar_diff, __%sscalar_swap)\n",

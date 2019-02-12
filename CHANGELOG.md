@@ -18,6 +18,8 @@
 - JSON parser: combine valid UTF-16 surrogate pairs such as "\uD834\uDD1E"
   (U+1D11E) into single 4 byte UTF-8 sequence as per spec. Unmatched half
   pairs are intentionally decoded into invalid UTF-8 as before.
+- Fix sorting tables by scalar keys. Sorting by integer key could lead to
+  undefined behavior (#104).
 
 ## [0.5.2]
 
