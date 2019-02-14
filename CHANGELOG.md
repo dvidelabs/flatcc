@@ -20,6 +20,8 @@
   pairs are intentionally decoded into invalid UTF-8 as before.
 - Fix sorting tables by scalar keys. Sorting by integer key could lead to
   undefined behavior (#104).
+- Add `FLATCC_FLATCC_INSTALL_LIB` configuration to CMake to change the
+  default <project>/lib path, for example `cmake -DFLATCC_INSTALL_LIB=lib64`.
 
 ## [0.5.2]
 

@@ -23,6 +23,7 @@ or printing in less than 2 us for a 10 field mixed type message.
 
 
 <!-- vim-markdown-toc GFM -->
+
 * [Online Forums](#online-forums)
 * [Project Details](#project-details)
 * [Poll on Meson Build](#poll-on-meson-build)
@@ -2086,6 +2087,9 @@ Install targes may be built with:
 
 However, this is not well tested and should be seen as a starting point.
 The normal scripts/build.sh places files in bin and lib of the source tree.
+
+By default lib files a built into the `lib` subdirectory of the project. This
+can be changed, for example like `-DFLATCC_INSTALL_LIB=lib64`.
 
 
 ### Unix Files

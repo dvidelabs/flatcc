@@ -146,11 +146,19 @@ if (FLATCC_FAST_DOUBLE)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DGRISU3_PARSE_ALLOW_ERROR -DFLATCC_USE_GRISU3=1")
 endif()
 
+if (NOT DEFINED FLATCC_INSTALL_LIB)
+    set(lib_dir lib)
+else()
+    set(lib_dir ${FLATCC_INSTALL_LIB})
+endif()
 
 # The folder of this directory, as apposed to CMAKE_BINARY_DIR
 # which would usually be the build/Release and build/Debug paths
 set (dist_dir "${PROJECT_SOURCE_DIR}")
 # set (dist_dir "${CMAKE_BINARY_DIR}")
+
+message(STATUS "dist install dir ${dist_dir}")
+message(STATUS "lib install dir ${dist_dir}/${lib_dir}")
 
 # Note: for compiling generated C code, warnings of unused functions
 # and constants should be turned off - those are plentiful. They are
@@ -243,7 +251,7 @@ if (GCC_VERSION)
 endif()
 message(STATUS "Configured C_FLAGS: ${CMAKE_C_FLAGS}")
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/${lib_dir})
 
 set(CMAKE_DEBUG_POSTFIX "_d")
 
@@ -284,8 +292,8 @@ endif()
 
 set_target_properties(${dist_targets}
     PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${dist_dir}/lib"
-    LIBRARY_OUTPUT_DIRECTORY "${dist_dir}/lib"
+    ARCHIVE_OUTPUT_DIRECTORY "${dist_dir}/${lib_dir}"
+    LIBRARY_OUTPUT_DIRECTORY "${dist_dir}/${lib_dir}"
     RUNTIME_OUTPUT_DIRECTORY "${dist_dir}/bin"
 )
 
