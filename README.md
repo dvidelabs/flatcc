@@ -13,18 +13,18 @@ versions._
 # FlatCC FlatBuffers in C for C
 
 `flatcc` has no external dependencies except for build and compiler
-tools, and the C runtime library. With concurrent Ninja builds, a small
-client project can build flatcc with libraries, generate schema code,
-link the project and execute a test case in less than 2 seconds (4 incl.
-flatcc clone), rebuild in less than 0.2 seconds and produce binaries
-between 15K and 60K, read small buffers in 30ns, build FlatBuffers in
-about 600ns, and with a larger executable handle optional json parsing
-or printing in less than 2 us for a 10 field mixed type message.
+tools, and the C runtime library. With concurrent Ninja builds, a small client
+project can build flatcc with libraries, generate schema code, link the project
+and execute a test case in a few seconds, produce binaries between 15K and 60K,
+read small buffers in 30ns, build FlatBuffers in about 600ns, and with a larger
+executable also handle optional json parsing or printing in less than 2 us for a
+10 field mixed type message.
 
 
 <!-- vim-markdown-toc GFM -->
 
 * [Online Forums](#online-forums)
+* [Introduction](#introduction)
 * [Project Details](#project-details)
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
@@ -87,6 +87,41 @@ or printing in less than 2 us for a 10 field mixed type message.
 
 - [Google Groups - FlatBuffers](https://groups.google.com/forum/#!forum/flatbuffers)
 - [Gitter - FlatBuffers](https://gitter.im/google/flatbuffers)
+
+
+## Introduction
+
+This project builds flatcc, a compiler that generates FlatBuffers code for
+C given a FlatBuffer schema file. This introduction also creates a separate test
+project with the traditional monster example, here in a C version.
+
+For this introduction assume a Unix like system although that is not a general
+requirement - see also [#building]. You will need git, cmake, bash,
+a C compiler, and either the ninja build system, or make.
+
+    git clone https://github.com/dvidelabs/flatcc.git
+    cd flatcc
+    # scripts/initbuild.sh ninja
+    scripts/initbuild.sh make
+    scripts/setup.sh -a ../mymonster
+    ls bin
+    ls lib
+    cd ../mymonster
+    ls src
+    scripts/build.sh
+    ls generated
+
+`scripts/initbuild.sh` is optional and chooses the build backend, which defaults
+to ninja.
+
+The setup script builds flatcc using CMake, then creates a test project
+directory with the monster example, and a build script which is just a small
+shell script. The headers and libraries are symbolically linked into the test
+project. You do not need CMake to build your own projects once flatcc is
+compiled.
+
+To create another test project named foobar, call `scripts/setup.sh -s -x
+../foobar`. This will avoid rebuilding the flatcc project from scratch.
 
 
 ## Project Details
