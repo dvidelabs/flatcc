@@ -96,8 +96,8 @@ C given a FlatBuffer schema file. This introduction also creates a separate test
 project with the traditional monster example, here in a C version.
 
 For now assume a Unix like system although that is not a general requirement -
-see also [#building]. You will need git, cmake, bash, a C compiler, and either
-the ninja build system, or make.
+see also [Building](#building). You will need git, cmake, bash, a C compiler,
+and either the ninja build system, or make.
 
     git clone https://github.com/dvidelabs/flatcc.git
     cd flatcc
