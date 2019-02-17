@@ -22,6 +22,7 @@
   undefined behavior (#104).
 - Add `FLATCC_FLATCC_INSTALL_LIB` configuration to CMake to change the
   default <project>/lib path, for example `cmake -DFLATCC_INSTALL_LIB=lib64`.
+- Fix return code in `flatcc_parse_file` library function.
 
 ## [0.5.2]
 
