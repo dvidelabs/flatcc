@@ -420,8 +420,8 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
                 goto done;
             }
         }
+        ret = 0;
     }
-    ret = 0;
 
 done:
     /* Parser owns buffer so don't free it here. */
