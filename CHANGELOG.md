@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.5.3-pre]
+## [0.5.3]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments
   are always ordered by field id when id attributes are being used, for
   example `MyGame_Example_Monster_create()` in `monster_test_fbs` (#81).
