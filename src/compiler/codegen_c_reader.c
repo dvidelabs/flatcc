@@ -205,10 +205,10 @@ static void gen_union(fb_output_t *out)
         "static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\\\n"
         "__## NS ## field_present(ID, t__tmp)\\\n"
         "static inline T ## _union_t N ## _ ## NK ## _union(N ## _table_t t__tmp)\\\n"
-        "{ T ## _union_t u__tmp = { 0, 0 }; u__tmp.type = N ## _ ## NK ## _type(t__tmp);\\\n"
-        "  if (u__tmp.type == 0) return u__tmp; u__tmp.value = N ## _ ## NK (t__tmp); return u__tmp; }\\\n"
+        "{ T ## _union_t u__tmp = { 0, 0 }; u__tmp.type = N ## _ ## NK ## _type_get(t__tmp);\\\n"
+        "  if (u__tmp.type == 0) return u__tmp; u__tmp.value = N ## _ ## NK ## _get(t__tmp); return u__tmp; }\\\n"
         "static inline NS ## string_t N ## _ ## NK ## _as_string(N ## _table_t t__tmp)\\\n"
-        "{ return NS ## string_cast_from_generic(N ## _ ## NK(t__tmp)); }\\\n"
+        "{ return NS ## string_cast_from_generic(N ## _ ## NK ## _get(t__tmp)); }\\\n"
         "\n");
     fprintf(out->fp,
         "#define __%sdefine_union_vector_ops(NS, T)\\\n"
@@ -239,7 +239,8 @@ static void gen_union(fb_output_t *out)
         "__## NS ## define_vector_field(ID - 1, N, NK ## _type, T ## _vec_t, r)\\\n"
         "__## NS ## define_vector_field(ID, N, NK, flatbuffers_generic_vec_t, r)\\\n"
         "static inline T ## _union_vec_t N ## _ ## NK ## _union(N ## _table_t t__tmp)\\\n"
-        "{ T ## _union_vec_t uv__tmp; uv__tmp.type = N ## _ ## NK ## _type(t__tmp); uv__tmp.value = N ## _ ## NK(t__tmp);\\\n"
+        "{ T ## _union_vec_t uv__tmp; uv__tmp.type = N ## _ ## NK ## _type_get(t__tmp);\\\n"
+        "  uv__tmp.value = N ## _ ## NK(t__tmp);\\\n"
         "  assert(NS ## vec_len(uv__tmp.type) == NS ## vec_len(uv__tmp.value)\\\n"
         "  && \"union vector type length mismatch\"); return uv__tmp; }\n",
         nsc);
@@ -1137,7 +1138,6 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
             fprintf(out->fp,
                 "__%sdefine_struct_scalar_field(%s, %.*s, %s%s, %s%s)\n",
                 nsc, snt.text, n, s, nsc, tname_prefix, tname_ns, tname);
-            break;
             if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                 fprintf(out->fp,
                         "__%sdefine_scan_by_scalar_field(%s, %.*s, %s%s)\n",
@@ -1153,7 +1153,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                         nsc, snt.text, n, s, tname_ns, tname);
                 if (out->opts->cgen_sort) {
                     fprintf(out->fp,
-                        "__%sdefine_sort_by_scalar_field(%s, %.*s, %s%s, %s_t)\n",
+                        "__%sdefine_struct_sort_by_scalar_field(%s, %.*s, %s%s, %s_t)\n",
                         nsc, snt.text, n, s, tname_ns, tname, snt.text);
                 }
                 if (!already_has_key) {
@@ -1196,7 +1196,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                             nsc, snt.text, n, s, snref.text);
                     if (out->opts->cgen_sort) {
                         fprintf(out->fp,
-                            "__%sdefine_sort_by_scalar_field(%s, %.*s, %s_enum_t, %s_t)\n",
+                            "__%sdefine_struct_sort_by_scalar_field(%s, %.*s, %s_enum_t, %s_t)\n",
                             nsc, snt.text, n, s, snref.text, snt.text);
                     }
                     if (!already_has_key) {
@@ -1489,8 +1489,8 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                         nsc, snt.text, n, s, tname_ns, tname);
                 if (out->opts->cgen_sort) {
                     fprintf(out->fp,
-                        "__%sdefine_sort_by_scalar_field(%s, %.*s, %s%s, %suoffset_t)\n",
-                        nsc, snt.text, n, s, tname_ns, tname, nsc);
+                        "__%sdefine_table_sort_by_scalar_field(%s, %.*s, %s%s)\n",
+                        nsc, snt.text, n, s, tname_ns, tname);
                 }
                 if (!already_has_key) {
                     fprintf(out->fp,
@@ -1538,7 +1538,7 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                     nsc, snt.text, n, s);
                 if (out->opts->cgen_sort) {
                     fprintf(out->fp,
-                        "__%sdefine_sort_by_string_field(%s, %.*s)\n",
+                        "__%sdefine_table_sort_by_string_field(%s, %.*s)\n",
                         nsc, snt.text, n, s);
                 }
                 if (!already_has_key) {
@@ -1596,8 +1596,8 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                             nsc, snt.text, n, s, snref.text);
                     if (out->opts->cgen_sort) {
                         fprintf(out->fp,
-                                "__%sdefine_sort_by_scalar_field(%s, %.*s, %s_enum_t, %suoffset_t)\n",
-                                nsc, snt.text, n, s, snref.text, nsc);
+                                "__%sdefine_table_sort_by_scalar_field(%s, %.*s, %s_enum_t)\n",
+                                nsc, snt.text, n, s, snref.text);
                     }
                     if (!already_has_key) {
                         fprintf(out->fp,

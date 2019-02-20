@@ -1,76 +1,78 @@
 OS-X & Ubuntu: [![Build Status](https://travis-ci.org/dvidelabs/flatcc.svg?branch=master)](https://travis-ci.org/dvidelabs/flatcc)
 Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/dvidelabs/flatcc?branch=master&svg=true)](https://ci.appveyor.com/project/dvidelabs/flatcc)
 
-_NOTE: 0.5.0 changed the union interface, and low-level union accessor names
-were cleaned up in 0.5.1._
+_BREAKING: 0.5.3 changes behavour of builder create calls so arguments
+are always ordered by field id when id attributes are being used, for
+example `MyGame_Example_Monster_create()` in `monster_test.fbs`
+([#81](https://github.com/dvidelabs/flatcc/issues/81))._
 
 _The JSON parser may change the interface for parsing union vectors in a
 future release which requires code generation to match library
 versions._
 
-
 # FlatCC FlatBuffers in C for C
 
 `flatcc` has no external dependencies except for build and compiler
-tools, and the C runtime library. With concurrent Ninja builds, a small
-client project can build flatcc with libraries, generate schema code,
-link the project and execute a test case in less than 2 seconds (4 incl.
-flatcc clone), rebuild in less than 0.2 seconds and produce binaries
-between 15K and 60K, read small buffers in 30ns, build FlatBuffers in
-about 600ns, and with a larger executable handle optional json parsing
-or printing in less than 2 us for a 10 field mixed type message.
+tools, and the C runtime library. With concurrent Ninja builds, a small client
+project can build flatcc with libraries, generate schema code, link the project
+and execute a test case in a few seconds, produce binaries between 15K and 60K,
+read small buffers in 30ns, build FlatBuffers in about 600ns, and with a larger
+executable also handle optional json parsing or printing in less than 2 us for a
+10 field mixed type message.
 
 
 <!-- vim-markdown-toc GFM -->
+
 * [Online Forums](#online-forums)
+* [Introduction](#introduction)
 * [Project Details](#project-details)
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
-    * [Main features supported as of 0.5.1](#main-features-supported-as-of-051)
-    * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
-    * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
-    * [Portability](#portability)
+  * [Main features supported as of 0.5.3](#main-features-supported-as-of-053)
+  * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
+  * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
+  * [Portability](#portability)
 * [Time / Space / Usability Tradeoff](#time--space--usability-tradeoff)
 * [Generated Files](#generated-files)
-    * [Use of Macros in Generated Code](#use-of-macros-in-generated-code)
-    * [Extracting Documentation](#extracting-documentation)
+  * [Use of Macros in Generated Code](#use-of-macros-in-generated-code)
+  * [Extracting Documentation](#extracting-documentation)
 * [Using flatcc](#using-flatcc)
 * [Quickstart](#quickstart)
-    * [Reading a Buffer](#reading-a-buffer)
-    * [Compiling for Read-Only](#compiling-for-read-only)
-    * [Building a Buffer](#building-a-buffer)
-    * [Verifying a Buffer](#verifying-a-buffer)
-    * [Potential Name Conflicts](#potential-name-conflicts)
-    * [Debugging a Buffer](#debugging-a-buffer)
+  * [Reading a Buffer](#reading-a-buffer)
+  * [Compiling for Read-Only](#compiling-for-read-only)
+  * [Building a Buffer](#building-a-buffer)
+  * [Verifying a Buffer](#verifying-a-buffer)
+  * [Potential Name Conflicts](#potential-name-conflicts)
+  * [Debugging a Buffer](#debugging-a-buffer)
 * [File and Type Identifiers](#file-and-type-identifiers)
-    * [File Identifiers](#file-identifiers)
-    * [Type Identifiers](#type-identifiers)
+  * [File Identifiers](#file-identifiers)
+  * [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
-    * [Base64 Encoding](#base64-encoding)
-    * [Generic Parsing and Printing.](#generic-parsing-and-printing)
-    * [Performance Notes](#performance-notes)
+  * [Base64 Encoding](#base64-encoding)
+  * [Generic Parsing and Printing.](#generic-parsing-and-printing)
+  * [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
 * [Required Fields and Duplicate Fields](#required-fields-and-duplicate-fields)
 * [Fast Buffers](#fast-buffers)
 * [Types](#types)
 * [Unions](#unions)
-    * [Union Scope Resolution](#union-scope-resolution)
+  * [Union Scope Resolution](#union-scope-resolution)
 * [Endianness](#endianness)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
 * [Searching and Sorting](#searching-and-sorting)
 * [Null Values](#null-values)
 * [Portability Layer](#portability-layer)
 * [Building](#building)
-    * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
-    * [Windows Build (MSVC)](#windows-build-msvc)
-    * [Docker](#docker)
-    * [Cross-compilation](#cross-compilation)
-    * [Custom Allocation](#custom-allocation)
-    * [Shared Libraries](#shared-libraries)
+  * [Unix Build (OS-X, Linux, related)](#unix-build-os-x-linux-related)
+  * [Windows Build (MSVC)](#windows-build-msvc)
+  * [Docker](#docker)
+  * [Cross-compilation](#cross-compilation)
+  * [Custom Allocation](#custom-allocation)
+  * [Shared Libraries](#shared-libraries)
 * [Distribution](#distribution)
-    * [Unix Files](#unix-files)
-    * [Windows Files](#windows-files)
+  * [Unix Files](#unix-files)
+  * [Windows Files](#windows-files)
 * [Running Tests on Unix](#running-tests-on-unix)
 * [Running Tests on Windows](#running-tests-on-windows)
 * [Configuration](#configuration)
@@ -85,6 +87,41 @@ or printing in less than 2 us for a 10 field mixed type message.
 
 - [Google Groups - FlatBuffers](https://groups.google.com/forum/#!forum/flatbuffers)
 - [Gitter - FlatBuffers](https://gitter.im/google/flatbuffers)
+
+
+## Introduction
+
+This project builds flatcc, a compiler that generates FlatBuffers code for
+C given a FlatBuffer schema file. This introduction also creates a separate test
+project with the traditional monster example, here in a C version.
+
+For now assume a Unix like system although that is not a general requirement -
+see also [Building](#building). You will need git, cmake, bash, a C compiler,
+and either the ninja build system, or make.
+
+    git clone https://github.com/dvidelabs/flatcc.git
+    cd flatcc
+    # scripts/initbuild.sh ninja
+    scripts/initbuild.sh make
+    scripts/setup.sh -a ../mymonster
+    ls bin
+    ls lib
+    cd ../mymonster
+    ls src
+    scripts/build.sh
+    ls generated
+
+`scripts/initbuild.sh` is optional and chooses the build backend, which defaults
+to ninja.
+
+The setup script builds flatcc using CMake, then creates a test project
+directory with the monster example, and a build script which is just a small
+shell script. The headers and libraries are symbolically linked into the test
+project. You do not need CMake to build your own projects once flatcc is
+compiled.
+
+To create another test project named foobar, call `scripts/setup.sh -s -x
+../foobar`. This will avoid rebuilding the flatcc project from scratch.
 
 
 ## Project Details
@@ -252,13 +289,20 @@ fi
 
 ## Status
 
-Release 0.5.2 (ongoing) introduces optional `_get` suffix to
-reader methods. By using `flatcc -g` only `_get` methods are
-valid. This removes potential name conficts for some field
-names. 0.5.2 also introduces the long awaited clone operation
-for tables and vectors. A C++ smoketest was added to reduce the
-number void pointer assignment errors that kept sneaking in.
-The runtime library now needs an extra file `refmap.c`.
+Release 0.5.3 inlcudes various bug fixes (see changelog) and one
+breaking but likely low impact change: BREAKING: 0.5.3 changes behavour
+of builder create calls so arguments are always ordered by field id when
+id attributes are being used, for example
+`MyGame_Example_Monster_create()` in `monster_test.fbs`
+([#81](https://github.com/dvidelabs/flatcc/issues/81)). Fixes undefined
+behavior when sorting tables by a numeric key field.
+
+Release 0.5.2 introduces optional `_get` suffix to reader methods. By
+using `flatcc -g` only `_get` methods are valid. This removes potential
+name conficts for some field names. 0.5.2 also introduces the long
+awaited clone operation for tables and vectors. A C++ smoketest was
+added to reduce the number void pointer assignment errors that kept
+sneaking in. The runtime library now needs an extra file `refmap.c`.
 
 Release 0.5.1 fixes a buffer overrun in the JSON printer and improves
 the portable libraries <stdalign.h> compatibility with C++ and the
@@ -274,7 +318,7 @@ low-level union interface so the terms { type, value } are used
 consistently over { type, member } and { types, members }.
 
 
-### Main features supported as of 0.5.1
+### Main features supported as of 0.5.3
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -308,7 +352,7 @@ different target platforms.
 
 The ci-more branch tests additional compilers:
 
-- Ubuntu Trusty gcc 4.4, 4.6-4.9, 5, 6, 7 and clang 3.6, 3.8 
+- Ubuntu Trusty gcc 4.4, 4.6-4.9, 5, 6, 7 and clang 3.6, 3.8
 - OS-X current clang / gcc
 - Windows MSVC 2010, 2013, 2015, 2015 Win64, 2017, 2017 Win64
 - C++11/C++14 user code on the above platforms.
@@ -337,6 +381,7 @@ uses C99 style code to better follow the C++ version.
   cleanly with C++ 14 using flatcc generated JSON parsers, as of flatcc
   0.5.1.
 - FreeRTOS when using custom memory allocation methods.
+- Arduino (at least reading buffers)
 - IBM XLC on AIX big endian Power PC has been tested for release 0.4.0
   but is not part of regular release tests.
 
@@ -400,8 +445,7 @@ nature. Verification has not been benchmarked, but would presumably add
 less than 50% read overhead unless only a fraction of a large buffer is to
 be read.
 
-See also [benchmark](https://github.com/dvidelabs/flatcc#benchmark)
-below.
+See also [Benchmarks].
 
 The client C code can avoid almost any kind of allocation to build
 buffers as a builder stack provides an extensible arena before
@@ -661,8 +705,8 @@ first. All generated files use the input basename and will land in
 working directory or the path set by (-o).
 
 Files can be generated to stdout using (--stdout). C headers will be
-ordered and outfileenated, but otherwise identical to the separate file
-output. Each include statement is guarded so this will not lead to
+ordered and concatenated, but are otherwise identical to the separate
+file output. Each include statement is guarded so this will not lead to
 missing include files.
 
 The generated code, especially with all combined with --stdout, may
@@ -821,6 +865,10 @@ The include path or source path is likely different. Some files in
 flag includes additional files to support compilers lacking c11
 features.
 
+NOTE: on some clang/gcc platforms it may be necessary to use -std=gnu99 or
+-std=gnu11 if the linker is unable find `posix_memalign`, see also comments in
+[paligned_alloc.h].
+
 
 ### Building a Buffer
 
@@ -973,7 +1021,7 @@ Flatbuffers can optionally leave out the identifier, here "MONS". Use a
 null pointer as identifier argument to ignore any existing identifiers
 and allow for missing identifiers.
 
-Nested flatbbuffers are always verified with a null identifier, but it
+Nested flatbuffers are always verified with a null identifier, but it
 may be checked later when accessing the buffer.
 
 The verifier does NOT verify that two datastructures are not
@@ -1088,7 +1136,7 @@ The JSON parser and printer can also be used to create and display
 buffers. The parser will use the builder API correctly or issue a syntax
 error or an error on required field missing. This can rule out some
 uncertainty about using the api correctly. The [test_json.c] file and
-[test_json_parser.c] have 
+[test_json_parser.c] have
 test functions that can be adapted for custom tests.
 
 For advanced debugging the [hexdump.h] file can be used to dump the buffer
@@ -1537,7 +1585,7 @@ or `myschema_builder.h` all these dependencies are handled correctly.
 
 Note: `libflatcc.a` can only parse a single schema when the schema is
 given as a memory buffer, but can handle the above when given a
-filename. It is possible to outfileename schema files, but a `namespace;`
+filename. It is possible to concatenate schema files, but a `namespace;`
 declaration must be inserted as a separator to revert to global
 namespace at the start of each included file. This can lead to subtle
 errors because if one parent schema includes two child schema `a.fbs`
@@ -1698,7 +1746,7 @@ separate test focusing on mixed type unions that also has union vectors.
 ### Union Scope Resolution
 
 Googles `monster_test.fbs` schema has the union (details left out):
-    
+
 	namespace MyGame.Example2;
 	table Monster{}
 
@@ -2077,6 +2125,9 @@ Install targes may be built with:
 However, this is not well tested and should be seen as a starting point.
 The normal scripts/build.sh places files in bin and lib of the source tree.
 
+By default lib files a built into the `lib` subdirectory of the project. This
+can be changed, for example like `-DFLATCC_INSTALL_LIB=lib64`.
+
 
 ### Unix Files
 
@@ -2235,6 +2286,7 @@ See [Benchmarks]
 [Benchmarks]: https://github.com/dvidelabs/flatcc/blob/master/doc/benchmarks.md
 [monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
 [monster_test.fbs]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.fbs
+[paligned_alloc.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/portable/paligned_alloc.h
 [test_json.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json.c
 [test_json_parser.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json_parser.c
 [flatcc_builder.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_builder.h

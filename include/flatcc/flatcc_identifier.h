@@ -88,13 +88,13 @@ static inline flatbuffers_thash_t flatbuffers_type_hash_from_string(const char *
     const uint8_t *p = (const uint8_t *)identifier;
 
     if (!p[0]) return h;
-    h += p[0];
+    h += ((flatbuffers_thash_t)p[0]);
     if (!p[1]) return h;
-    h += p[1] << 8;
+    h += ((flatbuffers_thash_t)p[1]) << 8;
     if (!p[2]) return h;
-    h += p[2] << 16;
+    h += ((flatbuffers_thash_t)p[2]) << 16;
     /* No need to test for termination here. */
-    h += p[3] << 24;
+    h += ((flatbuffers_thash_t)p[3]) << 24;
     return h;
 }
 

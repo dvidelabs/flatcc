@@ -35,5 +35,9 @@ add_dependencies(test_generated cgen_test)
 # https://cmake.org/Bug/view.php?id=14963#c37230
 # https://github.com/ninja-build/ninja/issues/760
 if(${CMAKE_MAKE_PROGRAM} MATCHES make)
-add_test(test_generated ${CMAKE_MAKE_PROGRAM} test_generated)
+# this is now also broken for make - the system include path is not
+# visible so build fails on <assert.h> not found in the custom build
+# stage where CMAKE_C_COMPILER uses a compiler call that has this
+# behavior
+#add_test(test_generated ${CMAKE_MAKE_PROGRAM} test_generated)
 endif(${CMAKE_MAKE_PROGRAM} MATCHES make)

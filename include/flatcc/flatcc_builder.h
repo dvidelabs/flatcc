@@ -615,16 +615,16 @@ void flatcc_builder_set_vtable_clustering(flatcc_builder_t *B, int enable);
  * refmap.
  *
  * A clone or pick operation may use this map when present,
- * depending on the data type. If the a hit is found, the stored
- * reference will be used instead of performing a new clone a
+ * depending on the data type. If a hit is found, the stored
+ * reference will be used instead of performing a new clone or
  * pick operation. It is also possible to manually populate the
  * refmap. Note that the builder does not have a concept of
  * clone or pick - these are higher level recursive operations
- * to add data from one buffer to another - but such code
- * may rely on the builder to provide the current refmap during
- * recursive operations. For this reason, the builder makes NO
- * calls to the refmap interface on its own - it just stores
- * the current refmap so recursive operations can fint it.
+ * to add data from one buffer to another - but such code may
+ * rely on the builder to provide the current refmap during
+ * recursive operations. For this reason, the builder makes no
+ * calls to the refmap interface on its own - it just stores the
+ * current refmap such that recursive operations can find it.
  *
  * Refmaps MUST be reset, replaced or disabled if a source
  * pointer may be reused for different purposes - for example if
@@ -632,7 +632,7 @@ void flatcc_builder_set_vtable_clustering(flatcc_builder_t *B, int enable);
  * and performing a clone into a buffer under construction.
  * Refmaps may also be replaced if the same object is to be
  * cloned several times keeping the internal DAG structure
- * intact, but every new clone should be a separate object.
+ * intact with every new clone being an independent object.
  *
  * Refmaps must also be replaced or disabled prior to starting a
  * nested buffer and after stopping it, or when cloning a object
@@ -644,7 +644,7 @@ void flatcc_builder_set_vtable_clustering(flatcc_builder_t *B, int enable);
  * for pushing refmaps, but often user codes recursive stack
  * will work just as well.
  *
- * It is entirely optional to used refmaps when cloning - they
+ * It is entirely optional to use refmaps when cloning - they
  * preserve DAG structure and may speed up operations or slow
  * them down, depending on the source material.
  *
@@ -662,11 +662,11 @@ void flatcc_builder_set_vtable_clustering(flatcc_builder_t *B, int enable);
  * present but other operations must be done direcly on the
  * refmap.
  *
- * The refmap operations are valid on a null refmap which will
- * find nothing and insert nothing.
+ * The builder wrapped refmap operations are valid on a null
+ * refmap which will find nothing and insert nothing.
  *
  * The builder will reset the refmap during a builder reset and
- * clear the refmap during a builder clear operatoin. If the
+ * clear the refmap during a builder clear operation. If the
  * refmap goes out of scope before that happens it is important
  * to call set_refmap with null and manually clear the refmap.
  */
