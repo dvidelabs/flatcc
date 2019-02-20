@@ -14,8 +14,7 @@
  * 
  * The JSON can be pretty printed with an external tool, for example:
  *
- *     cat monster_test_schema.json | \
- *       python -m json.tool > pretty_monster_test_schema.json
+ *     cat monster_test_schema.json | jq '.'
  */
 
 void print_type(reflection_Type_table_t T)

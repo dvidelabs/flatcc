@@ -32,7 +32,7 @@
 #if PDIAGNOSTIC_AWARE_CLANG
 #pragma clang diagnostic ignored "-Wunused-function"
 #elif PDIAGNOSTIC_AWARE_GCC
-#pragma GCC diagnostic ignored "-Wunused-function" */
+#pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 #endif
 #undef PDIAGNOSTIC_IGNORE_UNUSED_FUNCTION

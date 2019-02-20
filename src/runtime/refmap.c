@@ -42,8 +42,8 @@ void flatcc_refmap_clear(flatcc_refmap_t *refmap)
 {
     if (refmap->table && refmap->table != refmap->min_table) {
         _flatcc_refmap_free(refmap->table);
-        flatcc_refmap_init(refmap);
     }
+    flatcc_refmap_init(refmap);
 }
 
 static inline size_t _flatcc_refmap_hash(const void *src)

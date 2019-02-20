@@ -65,6 +65,7 @@ struct fb_parser {
     int failed;
 
     unsigned char *tmp_field_marker;
+    fb_symbol_t **tmp_field_index;
     int nesting_level;
 
     int has_schema;

@@ -1,5 +1,29 @@
 # Change Log
 
+## [0.5.3]
+- BREAKING: 0.5.3 changes behavour of builder create calls so arguments
+  are always ordered by field id when id attributes are being used, for
+  example `MyGame_Example_Monster_create()` in `monster_test_fbs` (#81).
+- Fix `refmap_clear` so that the refmap is always ready for reuse.
+- Remove C++ from CMake toolchain when not building tests (#94).
+- Add missing `_get` suffix in `flatbuffers_common_reader.h` needed when
+  used with flatcc -g option (#96).
+- Remove stray break statement that prevented generation of search
+  methods for scalar table fields with the key attribute set (#97).
+- Fix return value when creating a struct field fails which is unlikely
+  to happen, and hence has low impact (#98).
+- Fix file identifier string to type hash cast as implicit cast was not safe on
+  all platforms.
+- Fix reallocation bug when cloning vectors of non-scalar content (#102).
+- JSON parser: combine valid UTF-16 surrogate pairs such as "\uD834\uDD1E"
+  (U+1D11E) into single 4 byte UTF-8 sequence as per spec. Unmatched half
+  pairs are intentionally decoded into invalid UTF-8 as before.
+- Fix sorting tables by scalar keys. Sorting by integer key could lead to
+  undefined behavior (#104).
+- Add `FLATCC_FLATCC_INSTALL_LIB` configuration to CMake to change the
+  default <project>/lib path, for example `cmake -DFLATCC_INSTALL_LIB=lib64`.
+- Fix return code in `flatcc_parse_file` library function.
+
 ## [0.5.2]
 
 - Handle union vectors in binary schema generation (.bfbs).
@@ -108,7 +132,7 @@
   union vectors without hitting strict aliasing rules, for example as
   argument to `flatcc_builder_union_vector_push`. Expected impact: low
   or none. The physical struct layout remains unchanged.
-- BREAKING: `flatbuffers_generic_table_[vec_]t` has been renamed to 
+- BREAKING: `flatbuffers_generic_table_[vec_]t` has been renamed to
   `flatbuffers_generic_[vec_]t`.
 - BREAKING: The verifiers runtime library interface has changed argument
   order from `align, size` to `size, align` in order to be consistent
@@ -256,8 +280,8 @@ In more detail:
   vtables entirely in native format and reduces hash collisions and only
   converts when emitting the vtable to a buffer location.
 - Fix structs created with parameter list resulting in double endian
-  conversion back to native. 
-- Fix string swap used in sort due to endian sensitive diff math. 
+  conversion back to native.
+- Fix string swap used in sort due to endian sensitive diff math.
 - Disable direct vector access test case when running on non-native
   endian platform.
 - Update JSON printer test to handle `FLATBUFFERS_PROTOCOL_IS_BE`.

@@ -410,16 +410,30 @@ operations which is either an scalar, enum, or a reference returned by
 another create or end call. Note that unlike the C++ interface, unions
 only take a single argument that is also accepted by the `add` operation
 of a union field. Deprecated fields are not included in the argument
-list. If the attribute `original_order` is set on a table, the `create`
-arguments are stored in the original order, otherwise the arguments
-maintain their order, but they are updated with largest alignment first.
-Because unions have both a type field of byte size, and an offset, these
-are always stored last when `original_order` is disabled.
+list.
 
-NOTE: the `create` and `create_as_root` operations are not guaranteed
-available when the number of fields is sufficiently large because it
-might break some compilers, but currently there are no such
-restrictions.
+As of v0.5.3 the arguments are given in field id order which is usually
+the same as the schema listed order, except with id attributes are
+given explicitly. Using id order ensures version stability. Note that
+since deprecated fields are omitted, deprecated fields can still break
+existing code.
+
+BREAKING: Prior to flatcc v0.5.3 the create call would use the schema order
+also when fields have id attributes specifying a different order. This
+could break code across versions and did not match the C++ behavior.
+It was also document that the `original_order` attribute affected create
+argument order, but that was incorrect. 
+
+NOTE: If the `original_order` attribute is set on a table, the `create`
+implementation adds fields to the table in schema listed order,
+otherwise it adds fields in order of decreasing size to reduce alignment
+overhead. Generally there should be no need to use the `original_order`
+attribute. This doesn't affect the call argument order although that
+was incorrectly document prior to v 0.5.3.
+
+NOTE: the `create` and `create_as_root` operations are not guaranteed to
+be available when the number of fields is sufficiently large because it
+might break some compilers. Currently there are no such restrictions.
 
 Scalars and enums do not store the value if it it matches the default
 value which is by default 0 and otherwise defined in the schema. To
