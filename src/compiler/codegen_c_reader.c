@@ -188,12 +188,12 @@ static void gen_union(fb_output_t *out)
         "} %smutable_union_vec_t;\n",
         nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
-        "%smutable_union_t static inline %smutable_union_cast(%sunion_t u__tmp)\\\n"
+        "static inline %smutable_union_t %smutable_union_cast(%sunion_t u__tmp)\\\n"
         "{ %smutable_union_t mu = { u__tmp.type, (%smutable_generic_t)u__tmp.value };\\\n"
         "  return mu; }\n",
         nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
-        "%smutable_union_vec_t static inline %smutable_union_vec_cast(%sunion_vec_t uv__tmp)\\\n"
+        "static inline %smutable_union_vec_t %smutable_union_vec_cast(%sunion_vec_t uv__tmp)\\\n"
         "{ %smutable_union_vec_t muv =\\\n"
         "  { (%sunion_type_t *)uv__tmp.type, (%suoffset_t *)uv__tmp.value }; return muv; }\n",
         nsc, nsc, nsc, nsc, nsc, nsc);
