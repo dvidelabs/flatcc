@@ -477,9 +477,12 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "{ N ## _t *_p; __%smemoize_begin(B, p); _p = N ## _start(B); if (!_p) return 0;\\\n"
         "  N ## _copy(_p, p); __%smemoize_end(B, p, N ##_end_pe(B)); }\\\n"
         "__%sbuild_vector(NS, N, N ## _t, S, A)\\\n"
-        "__%sbuild_struct_root(NS, N, A, FID, TFID)\n"
+        "__%sbuild_struct_root(NS, N, A, FID, TFID)\\\n"
         "\n",
         nsc, nsc, nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+        "#define __%sstruct_clear_field(p) memset((p), 0, sizeof(*(p)))\n",
+        nsc);
 
     fprintf(out->fp,
         "#define __%sbuild_table(NS, N, K)\\\n"
@@ -1012,8 +1015,8 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
             fb_compound_name(member->type.ct, &snref);
             if (member->type.ct->symbol.kind == fb_is_struct) {
                 if (member->metadata_flags & fb_f_deprecated) {
-                    fprintf(out->fp, "memset(p->__deprecated%i, 0, sizeof(*p->__deprecated%i))",
-                            deprecated_index, deprecated_index);
+                    fprintf(out->fp, "__%sstruct_clear_field(p->__deprecated%i)",
+                            nsc, deprecated_index);
                     deprecated_index++;
                     index += get_total_struct_field_count(member->type.ct);
                     continue;
@@ -1030,7 +1033,9 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
                 continue;
             }
             if (member->metadata_flags & fb_f_deprecated) {
-                fprintf(out->fp, "p->__deprecated%i = 0", deprecated_index++);
+                fprintf(out->fp, "__%sstruct_clear_field(p->__deprecated%i)",
+                        nsc, deprecated_index);
+                ++deprecated_index;
                 ++index;
                 continue;
             }
@@ -1066,7 +1071,9 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
         case vt_scalar_type:
             tprefix = scalar_type_prefix(member->type.st);
             if (member->metadata_flags & fb_f_deprecated) {
-                fprintf(out->fp, "p->__deprecated%i = 0", deprecated_index++);
+                fprintf(out->fp, "__%sstruct_clear_field(p->__deprecated%i)",
+                        nsc, deprecated_index);
+                ++deprecated_index;
                 ++index;
                 continue;
             }
