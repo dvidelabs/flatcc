@@ -256,7 +256,7 @@ static void gen_union(fb_output_t *out)
         "#define __%sdefine_union(NS, T)\\\n"
         "typedef NS ## union_t T ## _union_t;\\\n"
         "typedef NS ## mutable_union_t T ## _mutable_union_t;\\\n"
-        "T ## _mutable_union_t static inline T ## _mutable_union_cast(T ## _union_t u__tmp)\\\n"
+        "static inline T ## _mutable_union_t T ## _mutable_union_cast(T ## _union_t u__tmp)\\\n"
         "{ return NS ## mutable_union_cast(u__tmp); }\\\n"
         "__## NS ## define_union_vector(NS, T)\n",
         nsc);
