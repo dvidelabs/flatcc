@@ -16,6 +16,7 @@
 - Add recursive table and union `_sort` operation in `_reader.h` for
   types that contain a sorted vector, either directly or indirectly.
   NOTE: shared vectors in a DAG will be sorted multiple times.
+- Allow attributes to be declared multiple times, including known attributes.
 
 ## [0.5.3]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments

@@ -1756,7 +1756,13 @@ int fb_build_schema(fb_parser_t *P)
      */
     for (a = (fb_attribute_t *)S->attributes; a; a = (fb_attribute_t *)a->name.link) {
         if ((old_name = define_fb_name(&S->root_schema->attribute_index, &a->name))) {
+            /*
+             * Allow attributes to be defined multiple times, including
+             * known attributes.
+             */
+#if 0
             error_name(P, &a->name, "attribute already defined");
+#endif
         }
     }
     install_known_attributes(P);
