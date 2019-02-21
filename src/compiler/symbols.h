@@ -237,6 +237,7 @@ struct fb_compound_type {
     fb_schema_t *schema;
     fb_symbol_t *members;
     fb_member_t *ordered_members;
+    fb_member_t *primary_key;
     fb_metadata_t *metadata;
     fb_doc_t *doc;
     fb_value_t type;
@@ -255,7 +256,7 @@ struct fb_compound_type {
     fb_compound_type_t *order;
     /*
      * Use by code generators. Only valid during export and may hold
-     * garbage from a prevous export.
+     * garbage from a previous export.
      */
     size_t export_index;
 };
@@ -273,6 +274,8 @@ enum fb_known_attributes {
     fb_attr_hash = 9,
     fb_attr_base64 = 10,
     fb_attr_base64url = 11,
+    fb_attr_primary_key = 12,
+    fb_attr_sorted = 13,
     KNOWN_ATTR_COUNT
 };
 
@@ -288,7 +291,9 @@ enum fb_known_attribute_flags {
     fb_f_required = 1 << fb_attr_required,
     fb_f_hash = 1 << fb_attr_hash,
     fb_f_base64 = 1 << fb_attr_base64,
-    fb_f_base64url = 1 << fb_attr_base64url
+    fb_f_base64url = 1 << fb_attr_base64url,
+    fb_f_primary_key = 1 << fb_attr_primary_key,
+    fb_f_sorted = 1 << fb_attr_sorted,
 };
 
 struct fb_attribute {

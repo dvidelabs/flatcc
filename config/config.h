@@ -250,6 +250,19 @@
 #endif
 
 /*
+ * flatc does not have a primary_key field attribute but it is useful
+ * when having multiple keys. Without a primary_key the field with the
+ * lowest id becomes the default, or primary, key. This key has a
+ * simpler find syntax and is also used by default when sorting.
+ * When there is only one keyed field on a table it is better to use
+ * the key attribute for compatibility reasons. It will automatically
+ * become primary.
+ */
+#ifndef FLATCC_ALLOW_PRIMARY_KEY
+#define FLATCC_ALLOW_PRIMARY_KEY 1
+#endif
+
+/*
  * flatcc has scan functions which are equivalent to find except they
  * don't require arrays to be sorted by field and have O(N) complexity.
  * It makes sense to generate these functions by default for all fields,

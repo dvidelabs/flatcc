@@ -23,6 +23,7 @@ set (SOURCES
     codegen_c_sort.c
     codegen_c_builder.c
     codegen_c_verifier.c
+    codegen_c_sorter.c
     codegen_c_json_parser.c
     codegen_c_json_printer.c
     # needed for building binary schema

@@ -1,5 +1,22 @@
 # Change Log
 
+## [0.6.0-pre]
+
+- BREAKING: if there are multiple table fields with a key attribute, the
+  default key is now the field with the smaller id rather than the first
+  listed in case these differ (which is not often the case).
+- The attribute `primary_key` has been added to choose a specific keyed
+  field as the default key field for finding and sorting instead of the
+  field with the smallest id.
+- Add mutable types: `mutable_table_t`, `mutable_union_t`, `mutable_union_vec_t`
+  and casts: `mutable_union_cast`, `mutable_union_vec_cast`.
+- Disallow key attribute on deprecated fields.
+- Add 'sorted' attribute for scalar, string, table and struct vectors.
+  Tables and structs must have a key field defined.
+- Add recursive table and union `_sort` operation in `_reader.h` for
+  types that contain a sorted vector, either directly or indirectly.
+  NOTE: shared vectors in a DAG will be sorted multiple times.
+
 ## [0.5.3]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments
   are always ordered by field id when id attributes are being used, for

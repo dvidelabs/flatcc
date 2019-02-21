@@ -143,10 +143,21 @@ table Stat {
   count:ushort;
 }
 
+// `sorted` attribute new to flatcc 0.6.0, not supported by flatc 1.8.
+// tables with direct or indirect vector content marked as sorted
+// will get a mutable sort operation that recursively sorts all
+// such vectors. 'sorted` is only valid for non-union vectors.
+//
+// attribute "sorted";
+//
 table Alt {
   prefix: TestJSONPrefix;
   movie:Fantasy.Movie;
   manyany: [Any];
+  multik: [MultipleKeys] (sorted);
+  rapunzels:[Fantasy.Rapunzel] (sorted);
+  names:[string] (sorted);
+  samples:[float32] (sorted);
 }
 
 table TestJSONPrefix {
@@ -194,6 +205,21 @@ table TestBase64
     data:[ubyte] (base64);
     urldata:[ubyte] (base64url);
     nested:[ubyte] (nested_flatbuffer: "Monster", base64);
+}
+
+// 'primary_key' attribute new to flatcc 0.6.0, not supported by flatc 1.8.
+// Allow multiple keys and allow one to be the default find and sort key
+// even if not listed first. A table with a single key field behaves the
+// same as a table with a single primary_key field, so use key for
+// compatiblity in that case.
+// 
+// attribute "primary_key";
+//
+table MultipleKeys
+{
+    hello: string;
+    world: string (key);
+    foobar: int64 (primary_key);
 }
 
 table Monster {
@@ -272,7 +298,8 @@ table Attacker {
 }
 
 struct Rapunzel {
-    hair_length: uint16;
+    hair_length: uint16 (key);
+    travel_points: int (deprecated);
 }
 
 struct BookReader {

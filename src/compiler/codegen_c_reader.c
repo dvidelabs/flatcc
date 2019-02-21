@@ -178,6 +178,26 @@ static void gen_union(fb_output_t *out)
         "} %sunion_vec_t;\n",
         nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
+        "typedef struct %smutable_union {\n"
+        "    %sunion_type_t type;\n"
+        "    %smutable_generic_t value;\n"
+        "} %smutable_union_t;\n"
+        "typedef struct %smutable_union_vec {\n"
+        "    %sunion_type_t *type;\n"
+        "    %suoffset_t *value;\n"
+        "} %smutable_union_vec_t;\n",
+        nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+        "%smutable_union_t static inline %smutable_union_cast(%sunion_t u__tmp)\\\n"
+        "{ %smutable_union_t mu = { u__tmp.type, (%smutable_generic_t)u__tmp.value };\\\n"
+        "  return mu; }\n",
+        nsc, nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
+        "%smutable_union_vec_t static inline %smutable_union_vec_cast(%sunion_vec_t uv__tmp)\\\n"
+        "{ %smutable_union_vec_t muv =\\\n"
+        "  { (%sunion_type_t *)uv__tmp.type, (%suoffset_t *)uv__tmp.value }; return muv; }\n",
+        nsc, nsc, nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
         "#define __%sunion_type_field(ID, t)\\\n"
         "{\\\n"
         "    __%sread_vt(ID, offset__tmp, t)\\\n"
@@ -227,11 +247,17 @@ static void gen_union(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sdefine_union_vector(NS, T)\\\n"
         "typedef NS ## union_vec_t T ## _union_vec_t;\\\n"
+        "typedef NS ## mutable_union_vec_t T ## _mutable_union_vec_t;\\\n"
+        "T ## _mutable_union_vec_t static inline T ## _mutable_union_vec_cast(T ## _union_vec_t u__tmp)\\\n"
+        "{ return NS ## mutable_union_vec_cast(u__tmp); }\\\n"
         "__## NS ## define_union_vector_ops(NS, T)\n",
         nsc);
     fprintf(out->fp,
         "#define __%sdefine_union(NS, T)\\\n"
         "typedef NS ## union_t T ## _union_t;\\\n"
+        "typedef NS ## mutable_union_t T ## _mutable_union_t;\\\n"
+        "T ## _mutable_union_t static inline T ## _mutable_union_cast(T ## _union_t u__tmp)\\\n"
+        "{ return NS ## mutable_union_cast(u__tmp); }\\\n"
         "__## NS ## define_union_vector(NS, T)\n",
         nsc);
     fprintf(out->fp,
@@ -628,6 +654,7 @@ static void gen_helpers(fb_output_t *out)
             "__%soffset_vec_at(%sstring_t, vec, i, sizeof(vec[0]))\n",
             nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp, "typedef const void *%sgeneric_t;\n", nsc);
+    fprintf(out->fp, "typedef void *%smutable_generic_t;\n", nsc);
     fprintf(out->fp,
         "static inline %sstring_t %sstring_cast_from_generic(const %sgeneric_t p)\n"
         "{ return p ? ((const char *)p) + __%suoffset__size() : 0; }\n",
@@ -647,6 +674,19 @@ static void gen_helpers(fb_output_t *out)
     gen_scan(out);
     if (out->opts->cgen_sort) {
         gen_sort(out);
+        fprintf(out->fp,
+            "#define __%ssort_table_vector_field(N, NK, T, t)\\\n"
+            "{ T ## _mutable_vec_t v__tmp = (T ## _mutable_vec_t) N ## _ ## NK ## _get(t);\\\n"
+            "  if (v__tmp) T ## _vec_sort(v__tmp); }\n",
+            nsc);
+        fprintf(out->fp,
+            "#define __%ssort_table_field(N, NK, T, t)\\\n"
+            "{ T ## _sort((T ## _mutable_table_t)N ## _ ## NK ## _get(t)); }\n",
+            nsc);
+        fprintf(out->fp,
+            "#define __%ssort_union_field(N, NK, T, t)\\\n"
+            "{ T ## _sort(T ## _mutable_union_cast(N ## _ ## NK ## _union(t))); }\n",
+            nsc);
     } else {
         fprintf(out->fp, "/* sort disabled */\n");
     }
@@ -941,6 +981,8 @@ static void gen_forward_decl(fb_output_t *out, fb_compound_type_t *ct)
     } else {
         fprintf(out->fp, "typedef const struct %s_table *%s_table_t;\n",
                 snt.text, snt.text);
+        fprintf(out->fp, "typedef struct %s_table *%s_mutable_table_t;\n",
+                snt.text, snt.text);
         fprintf(out->fp, "typedef const %suoffset_t *%s_vec_t;\n", nsc, snt.text);
         fprintf(out->fp, "typedef %suoffset_t *%s_mutable_vec_t;\n", nsc, snt.text);
     }
@@ -983,7 +1025,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
     unsigned pad_index = 0, deprecated_index = 0, pad;
     const char *kind;
     int do_pad = out->opts->cgen_pad;
-    int current_key_processed, already_has_key;
+    int is_primary_key, current_key_processed;
     const char *nsc = out->nsc;
 
     fb_scoped_name_t snt;
@@ -1040,10 +1082,10 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
          * shouldn't really matter since not field is accessed then.
          */
         fprintf(out->fp, "struct %s {\n", snt.text);
-        already_has_key = 0;
         for (sym = ct->members; sym; sym = sym->link) {
             current_key_processed = 0;
             member = (fb_member_t *)sym;
+            is_primary_key = ct->primary_key == member;
             print_doc(out, "    ", member->doc);
             symbol_name(sym, &n, &s);
             align = offset == 0 ? ct->align : member->align;
@@ -1126,6 +1168,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
     /* Create accessors which respect endianness and which return 0 on null struct access. */
     for (sym = ct->members; sym; sym = sym->link) {
         member = (fb_member_t *)sym;
+        is_primary_key = ct->primary_key == member;
         if (member->metadata_flags & fb_f_deprecated) {
             continue;
         }
@@ -1144,8 +1187,8 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                         nsc, snt.text, n, s, tname_ns, tname);
             }
             if (member->metadata_flags & fb_f_key) {
-                if (already_has_key) {
-                    fprintf(out->fp, "/* Note: this is not the first field with a key on this struct. */\n");
+                if (!is_primary_key) {
+                    fprintf(out->fp, "/* Note: this is not the primary key field on this struct. */\n");
                 }
                 fprintf(out->fp,     "/* Note: find only works on vectors sorted by this field. */\n");
                 fprintf(out->fp,
@@ -1156,7 +1199,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                         "__%sdefine_struct_sort_by_scalar_field(%s, %.*s, %s%s, %s_t)\n",
                         nsc, snt.text, n, s, tname_ns, tname, snt.text);
                 }
-                if (!already_has_key) {
+                if (is_primary_key) {
                     fprintf(out->fp,
                         "__%sdefine_default_find_by_scalar_field(%s, %.*s, %s%s)\n",
                         nsc, snt.text, n, s, tname_ns, tname);
@@ -1168,7 +1211,6 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                             "#define %s_vec_sort %s_vec_sort_by_%.*s\n",
                             snt.text, snt.text, n, s);
                     }
-                    already_has_key = 1;
                 }
                 current_key_processed = 1;
             }
@@ -1187,8 +1229,8 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                             nsc, snt.text, n, s, snref.text);
                 }
                 if (member->metadata_flags & fb_f_key) {
-                    if (already_has_key) {
-                        fprintf(out->fp, "/* Note: this is not the first field with a key on this table. */\n");
+                    if (!is_primary_key) {
+                        fprintf(out->fp, "/* Note: this is not the primary key of this table. */\n");
                     }
                     fprintf(out->fp,     "/* Note: find only works on vectors sorted by this field. */\n");
                     fprintf(out->fp,
@@ -1199,7 +1241,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                             "__%sdefine_struct_sort_by_scalar_field(%s, %.*s, %s_enum_t, %s_t)\n",
                             nsc, snt.text, n, s, snref.text, snt.text);
                     }
-                    if (!already_has_key) {
+                    if (is_primary_key) {
                         fprintf(out->fp,
                             "__%sdefine_default_find_by_scalar_field(%s, %.*s, %s_enum_t)\n",
                             nsc, snt.text, n, s, snref.text);
@@ -1211,7 +1253,6 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                                 "#define %s_vec_sort %s_vec_sort_by_%.*s\n",
                                 snt.text, snt.text, n, s);
                         }
-                        already_has_key = 1;
                     }
                     current_key_processed = 1;
                 }
@@ -1235,7 +1276,6 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
              * If the first key already exists, but was for an unsupported
              * type, we do not map the next possible key to generic find.
              */
-            already_has_key = 1;
         }
     }
     fprintf(out->fp, "\n");
@@ -1410,7 +1450,7 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
     fb_symbol_t *sym;
     const char *s, *tname, *tname_ns, *tname_prefix;
     int n, r;
-    int already_has_key, current_key_processed;
+    int is_primary_key, current_key_processed;
     const char *nsc = out->nsc;
     fb_scoped_name_t snt;
     fb_scoped_name_t snref;
@@ -1446,11 +1486,11 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             nsc, snt.text);
     fprintf(out->fp, "\n");
 
-    already_has_key = 0;
     for (sym = ct->members; sym; sym = sym->link) {
         current_key_processed = 0;
         member = (fb_member_t *)sym;
         present_id = member->id;
+        is_primary_key = ct->primary_key == member;
         print_doc(out, "", member->doc);
         /*
          * In flatc, there can at most one key field, and it should be
@@ -1480,8 +1520,8 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                         nsc, snt.text, n, s, tname_ns, tname);
             }
             if (member->metadata_flags & fb_f_key) {
-                if (already_has_key) {
-                    fprintf(out->fp, "/* Note: this is not the first field with a key on this table. */\n");
+                if (!is_primary_key) {
+                    fprintf(out->fp, "/* Note: this is not the primary key of this table. */\n");
                 }
                 fprintf(out->fp,     "/* Note: find only works on vectors sorted by this field. */\n");
                 fprintf(out->fp,
@@ -1492,7 +1532,7 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                         "__%sdefine_table_sort_by_scalar_field(%s, %.*s, %s%s)\n",
                         nsc, snt.text, n, s, tname_ns, tname);
                 }
-                if (!already_has_key) {
+                if (is_primary_key) {
                     fprintf(out->fp,
                         "__%sdefine_default_find_by_scalar_field(%s, %.*s, %s%s)\n",
                         nsc, snt.text, n, s, tname_ns, tname);
@@ -1504,7 +1544,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                             "#define %s_vec_sort %s_vec_sort_by_%.*s\n",
                             snt.text, snt.text, n, s);
                     }
-                    already_has_key = 1;
                 }
                 current_key_processed = 1;
             }
@@ -1530,8 +1569,8 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                     nsc, snt.text, n, s);
             }
             if (member->metadata_flags & fb_f_key) {
-                if (already_has_key) {
-                    fprintf(out->fp, "/* Note: this is not the first field with a key on this table. */\n");
+                if (!is_primary_key) {
+                    fprintf(out->fp, "/* Note: this is not the primary key of this table. */\n");
                 }
                 fprintf(out->fp,
                     "__%sdefine_find_by_string_field(%s, %.*s)\n",
@@ -1541,7 +1580,7 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                         "__%sdefine_table_sort_by_string_field(%s, %.*s)\n",
                         nsc, snt.text, n, s);
                 }
-                if (!already_has_key) {
+                if (is_primary_key) {
                     fprintf(out->fp,
                         "__%sdefine_default_find_by_string_field(%s, %.*s)\n",
                         nsc, snt.text, n, s);
@@ -1553,7 +1592,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                             "#define %s_vec_sort %s_vec_sort_by_%.*s\n",
                             snt.text, snt.text, n, s);
                     }
-                    already_has_key = 1;
                 }
                 current_key_processed = 1;
             }
@@ -1587,8 +1625,8 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                             nsc, snt.text, n, s, snref.text);
                 }
                 if (member->metadata_flags & fb_f_key) {
-                    if (already_has_key) {
-                        fprintf(out->fp, "/* Note: this is not the first field with a key on this table. */\n");
+                    if (!is_primary_key) {
+                        fprintf(out->fp, "/* Note: this is not the primary key of this table. */\n");
                     }
                     fprintf(out->fp,     "/* Note: find only works on vectors sorted by this field. */\n");
                     fprintf(out->fp,
@@ -1599,7 +1637,7 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                                 "__%sdefine_table_sort_by_scalar_field(%s, %.*s, %s_enum_t)\n",
                                 nsc, snt.text, n, s, snref.text);
                     }
-                    if (!already_has_key) {
+                    if (is_primary_key) {
                         fprintf(out->fp,
                                 "__%sdefine_default_find_by_scalar_field(%s, %.*s, %s_enum_t)\n",
                                 nsc, snt.text, n, s, snref.text);
@@ -1611,7 +1649,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                                     "#define %s_vec_sort %s_vec_sort_by_%.*s\n",
                                     snt.text, snt.text, n, s);
                         }
-                        already_has_key = 1;
                     }
                     current_key_processed = 1;
                 }
@@ -1664,7 +1701,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
              * If the first key already exists, but was for an unsupported
              * type, we do not map the next possible key to generic find.
              */
-            already_has_key = 1;
         }
     }
 }
@@ -1732,6 +1768,11 @@ int fb_gen_c_reader(fb_output_t *out)
         }
     }
     fprintf(out->fp, "\n");
+
+    if (out->opts->cgen_sort) {
+        fb_gen_c_sorter(out);
+    }
+
     gen_footer(out);
     return 0;
 }

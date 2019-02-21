@@ -25,6 +25,8 @@ static const char *fb_known_attribute_names[] = {
     "hash",
     "base64",
     "base64url",
+    "primary_key",
+    "sorted",
 };
 
 static const int fb_known_attribute_types[] = {
@@ -38,6 +40,8 @@ static const int fb_known_attribute_types[] = {
     vt_missing,
     vt_missing,
     vt_string,
+    vt_missing,
+    vt_missing,
     vt_missing,
     vt_missing,
 };
@@ -644,7 +648,7 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
     fb_member_t *member;
     fb_metadata_t *knowns[KNOWN_ATTR_COUNT], *m;
     uint16_t allow_flags;
-    int key_count = 0;
+    int key_count = 0, primary_count = 0, key_ok = 0;
 
     if (ct->type.type) {
         error_sym(P, &ct->symbol, "internal error: struct cannot have a type");
@@ -668,11 +672,15 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
             error_sym(P, sym, "internal error: field type expected");
             return -1;
         }
+        key_ok = 1;
         member = (fb_member_t *)sym;
         allow_flags = 0;
         /* Notice the difference between fb_f_ and fb_attr_ (flag vs index). */
         if (P->opts.allow_struct_field_key) {
             allow_flags |= fb_f_key;
+            if (P->opts.allow_primary_key) {
+                allow_flags |= fb_f_primary_key;
+            }
         }
         if (P->opts.allow_struct_field_deprecate) {
             allow_flags |= fb_f_deprecated;
@@ -695,13 +703,9 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
                         member->type.type = vt_invalid;
                         return -1;
                     }
-                    if (member->metadata_flags & fb_f_key) {
-                        if (!P->opts.allow_enum_key) {
-                            error_sym(P, sym, "key attribute now allowed for this kind of field");
-                            member->type.type = vt_invalid;
-                            return -1;
-                        }
-                        key_count++;
+                    if (!P->opts.allow_enum_key) {
+                        key_ok = 0;
+                        break;
                     }
                 } else {
                     error_sym_2(P, sym, "struct fields can only be scalars and structs, but has type", type_sym);
@@ -709,21 +713,57 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
                     return -1;
                 }
             } else {
-                if (member->metadata_flags & fb_f_key) {
-                    error_sym(P, sym, "key attribute now allowed for this kind of field");
-                    member->type.type = vt_invalid;
-                    return -1;
-                }
+                key_ok = 0;
             }
             break;
         case vt_scalar_type:
-            if (member->metadata_flags & fb_f_key) {
-                key_count++;
-            }
             break;
         default:
             error_sym(P, sym, "struct member member can only be of struct or scalar type");
             return -1;
+        }
+        if (!key_ok) {
+            if (member->metadata_flags & fb_f_key) {
+                member->type.type = vt_invalid;
+                error_sym(P, sym, "key attribute now allowed for this kind of field");
+                return -1;
+            }
+            if (member->metadata_flags & fb_f_primary_key) {
+                member->type.type = vt_invalid;
+                error_sym(P, sym, "primary_key attribute now allowed for this kind of field");
+                return -1;
+            }
+        }
+        if (member->metadata_flags & fb_f_deprecated) {
+            if (member->metadata_flags & fb_f_key) {
+                error_sym(P, sym, "key attribute not allowed for deprecated struct member");
+                return -1;
+            } else if (member->metadata_flags & fb_f_primary_key) {
+                error_sym(P, sym, "primary_key attribute not allowed for deprecated struct member");
+                return -1;
+            }
+        }
+        if (member->metadata_flags & fb_f_key) {
+            if (member->metadata_flags & fb_f_primary_key) {
+                error_sym(P, sym, "primary_key attribute conflicts with key attribute");
+                member->type.type = vt_invalid;
+                return -1;
+            }
+            key_count++;
+            if (!ct->primary_key) {
+                /* First key is primary key if no primary key is given explicitly. */
+                ct->primary_key = member;
+            }
+        } else if (member->metadata_flags & fb_f_primary_key) {
+            if (primary_count++) {
+                error_sym(P, sym, "at most one struct member can have a primary_key attribute");
+                member->type.type = vt_invalid;
+                return -1;
+            } 
+            key_count++;
+            /* Allow backends to treat primary key as an ordinary key. */
+            member->metadata_flags |= fb_f_key;
+            ct->primary_key = member;
         }
         if (member->value.type) {
             error_sym(P, sym, "struct member member cannot have a default value");
@@ -732,6 +772,10 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
     }
     if (key_count) {
         ct->symbol.flags |= fb_indexed;
+    }
+    /* Set primary key flag for backends even if chosen by default. */
+    if (ct->primary_key) {
+        ct->primary_key->metadata_flags |= fb_f_primary_key;
     }
     if (key_count > 1 && !P->opts.allow_multiple_key_fields) {
         error_sym(P, &ct->symbol, "table has multiple key fields, but at most one is permitted");
@@ -848,10 +892,11 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
     uint64_t count = 0;
     int need_id = 0, id_failed = 0;
     uint64_t max_id = 0;
-    int key_ok, key_count = 0;
-    int is_union_vector;
+    int key_ok, key_count = 0, primary_count = 0;
+    int is_union_vector, is_vector;
     uint64_t i, j;
     int max_id_errors = 10;
+    int allow_flags = 0;
 
     /*
      * This just tracks the presence of a `normal_field` or a hidden
@@ -873,6 +918,8 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
     for (sym = ct->members; sym; sym = sym->link) {
         key_ok = 0;
         type_sym = 0;
+        is_vector = 0;
+        is_union_vector = 0;
         if ((old = define_fb_symbol(&ct->index, sym))) {
             error_sym_2(P, sym, "table member already defined here", old);
             continue;
@@ -888,9 +935,14 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         if (member->type.type == vt_scalar_type || member->type.type == vt_vector_type) {
             member->type.st = map_scalar_token_type(member->type.t);
         }
-        member->metadata_flags = process_metadata(P, member->metadata,
+        allow_flags = 
                 fb_f_id | fb_f_nested_flatbuffer | fb_f_deprecated | fb_f_key |
-                fb_f_required | fb_f_hash | fb_f_base64 | fb_f_base64url, knowns);
+                fb_f_required | fb_f_hash | fb_f_base64 | fb_f_base64url | fb_f_sorted;
+
+        if (P->opts.allow_primary_key) {
+            allow_flags |= fb_f_primary_key;
+        }
+        member->metadata_flags = process_metadata(P, member->metadata, allow_flags, knowns);
         if ((m = knowns[fb_attr_nested_flatbuffer])) {
             define_nested_table(P, ct->scope, member, m);
         }
@@ -952,6 +1004,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             member->align = (uint16_t)member->size;
             break;
         case vt_vector_type:
+            is_vector = 1;
             member->size = sizeof_scalar_type(member->type.st);
             member->align =(uint16_t) member->size;
             if (member->value.type) {
@@ -970,6 +1023,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             }
             break;
         case vt_vector_string_type:
+            is_vector = 1;
             /* `size` or `align` not defined - these are implicit uoffset types. */
             if (member->value.type) {
                 error_sym(P, sym, "string vectors cannot have an initializer");
@@ -1087,6 +1141,8 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                 member->type.type = vt_invalid;
                 continue;
             }
+            is_vector = 1;
+            is_union_vector = type_sym->kind == fb_is_union;
             if (member->value.type) {
                 error_sym(P, sym, "non-scalar field cannot have an initializer");
                 member->type.type = vt_invalid;
@@ -1147,7 +1203,6 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                 field_marker[member->id] = normal_field;
             }
             if (!id_failed && type_sym && type_sym->kind == fb_is_union) {
-                is_union_vector = member->type.type == vt_vector_type_ref;
                 if (member->id <= 1) {
                     error_tok(P, m->ident, is_union_vector ?
                             "id attribute value should be larger to accomdate hidden union vector type field" :
@@ -1168,11 +1223,61 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                 }
             }
         }
+        if (member->metadata_flags & fb_f_deprecated) {
+            if (member->metadata_flags & fb_f_key) {
+                error_sym(P, sym, "key attribute not allowed for deprecated field");
+                return -1;
+            } else if (member->metadata_flags & fb_f_primary_key) {
+                error_sym(P, sym, "primary_key attribute not allowed for deprecated field");
+                return -1;
+            }
+        }
         if (member->metadata_flags & fb_f_key) {
             ++key_count;
             if (!key_ok) {
                 error_sym(P, sym, "key attribute not allowed for this kind of field");
+                member->type.type = vt_invalid;
+            } else if (member->metadata_flags & fb_f_primary_key) {
+                error_sym(P, sym, "primary_key attribute conflicts with key attribute");
+                member->type.type = vt_invalid;
+            } else if (!ct->primary_key || 
+                    (primary_count == 0 && ct->primary_key->id > member->id)) {
+                /*
+                 * Set key field with lowest id as default primary key
+                 * unless a key field also has a primary attribute.
+                 */
+                ct->primary_key = member;
             }
+        } else if (member->metadata_flags & fb_f_primary_key) {
+            if (member->metadata_flags & fb_f_primary_key) {
+                if (primary_count++) {
+                    error_sym(P, sym, "at most one field can have a primary_key attribute");
+                    member->type.type = vt_invalid;
+                    continue;
+                } else {
+                    ct->primary_key = member;
+                }
+            }
+            key_count++;
+            /* Allow backends to treat primary key as an ordinary key. */
+            member->metadata_flags |= fb_f_key;
+        }
+        if (member->metadata_flags & fb_f_sorted) {
+            if (is_union_vector) {
+                error_sym(P, sym, "sorted attribute not allowed for union vectors");
+                member->type.type = vt_invalid;
+                return -1;
+            } else if (!is_vector) {
+                error_sym(P, sym, "sorted attribute only allowed for vectors");
+                member->type.type = vt_invalid;
+                return -1;
+            }
+            /*
+             * A subsequent call to validate_table_attr will verify that a
+             * sorted vector of tables or structs have a defined field
+             * key. This cannot be done before all types have been
+             * processed.
+             */
         }
     }
     if (!id_failed) {
@@ -1225,6 +1330,10 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
     if (key_count) {
         ct->symbol.flags |= fb_indexed;
     }
+    /* Set primary key flag for backends even if chosen by default. */
+    if (ct->primary_key) {
+        ct->primary_key->metadata_flags |= fb_f_primary_key;
+    }
     if (key_count > 1 && !P->opts.allow_multiple_key_fields) {
         error_sym(P, &ct->symbol, "table has multiple key fields, but at most one is permitted");
         ret = -1;
@@ -1233,6 +1342,43 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         ret = -1;
     }
     return ret;
+}
+
+/*
+ * Post processing of process_table because some information is only
+ * available when all types have been processed.
+ */
+static int validate_table_attr(fb_parser_t *P, fb_compound_type_t *ct)
+{
+    fb_symbol_t *sym;
+    fb_member_t *member;
+
+    for (sym = ct->members; sym; sym = sym->link) {
+        member = (fb_member_t *)sym;
+        if (member->metadata_flags & fb_f_deprecated) {
+            continue;
+        }
+
+        if (member->type.type == vt_vector_compound_type_ref &&
+                member->metadata_flags & fb_f_sorted) {
+            switch (member->type.ct->symbol.kind) {
+            case fb_is_table:
+                if (!member->type.ct->primary_key) {
+                    error_sym(P, sym, "sorted table vector only valid when table has a key field");
+                    return -1;
+                }
+            case fb_is_struct:
+                if (!member->type.ct->primary_key) {
+                    error_sym(P, sym, "sorted struct vector only valid when struct has a key field");
+                    return -1;
+                }
+            /* Other cases already handled in process_table. */
+            default:
+                continue;
+            }
+        }
+    }
+    return 0;
 }
 
 /*
@@ -1443,11 +1589,11 @@ static int process_enum(fb_parser_t *P, fb_compound_type_t *ct)
                 /* Handle implicit NONE specially. */
                 member->type.type = vt_missing;
             } else if (member->type.type == vt_string_type) {
-				member->size = 0;
+                member->size = 0;
             } else if (member->type.type != vt_type_ref) {
                 if (member->type.type != vt_invalid) {
                     error_sym(P, sym, "union member type must be string or a reference to a table or a struct");
-                	member->type.type = vt_invalid;
+                    member->type.type = vt_invalid;
                 }
                 continue;
             } else {
@@ -1710,21 +1856,21 @@ int fb_build_schema(fb_parser_t *P)
             }
         }
     }
-    revert_order(&P->schema.ordered_structs);
-//TODO: old
-    /*
     for (sym = P->schema.symbols; sym; sym = sym->link) {
         switch (sym->kind) {
         case fb_is_table:
             ct = (fb_compound_type_t *)sym;
-            if (ct->metadata_flags & fb_f_original_order) {
-                ct->ordered_members = original_order_members(P, (fb_member_t *)ct->members);
-            } else {
-                ct->ordered_members = align_order_members(P, (fb_member_t *)ct->members);
+            /*
+             * Some table attributes depend on attributes on members and
+             * therefore can only be validated after procesing.
+             */
+            if (ct->type.type != vt_invalid && validate_table_attr(P, ct)) {
+                ct->type.type = vt_invalid;
+                continue;
             }
         }
     }
-    */
+    revert_order(&P->schema.ordered_structs);
     if (!S->root_type.name) {
         if (P->opts.require_root_type) {
             error(P, "root type not declared");
