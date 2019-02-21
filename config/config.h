@@ -94,6 +94,27 @@
 #endif
 
 /*
+ * Allow FlatBuffer schema reserved keywords
+ * to be used as field identifiers. This can
+ * be confusing, but also important for use with
+ * JSON where the field names are visible
+ * externally.
+ */
+#ifndef FLATCC_ALLOW_KW_FIELDS
+#define FLATCC_ALLOW_KW_FIELDS 1
+#endif
+
+/*
+ * Applies to the members of an enum. These
+ * names a visible in JSON. Using reserved
+ * names prevent them from being used in
+ * field default values.
+ */
+#ifndef FLATCC_ALLOW_KW_ENUMS
+#define FLATCC_ALLOW_KW_ENUMS 1
+#endif
+
+/*
  * Artificial limit on grammar attributes to prevent abuse.
  */
 #ifndef FLATCC_ATTR_MAX

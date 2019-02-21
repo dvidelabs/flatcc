@@ -17,6 +17,10 @@
   types that contain a sorted vector, either directly or indirectly.
   NOTE: shared vectors in a DAG will be sorted multiple times.
 - Allow attributes to be declared multiple times, including known attributes.
+- Allow table and struct field names to be reserved names such as 'namespace'
+  or 'table'. This can be disabled in `config/config.h`.
+  Separately do the same for enum member. This change was motivated by
+  JSON fields that can have names such as "table" or "namespace".
 
 ## [0.5.3]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments

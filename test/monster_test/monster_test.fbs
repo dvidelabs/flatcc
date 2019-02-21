@@ -15,6 +15,28 @@ table Monster {}  // Test having same name as below, but in different namespace.
 
 table Strange {}
 
+// Test schema reserved keywords as identifier
+// Can be disabled in config/config.h
+// It is still a good idea to use a namespace
+// to avoid conflicts with host language names
+// especially for enums and structs.
+// Reserved names can be important in some JSON
+// related use cases.
+table S2 {
+    namespace : int;
+    table : int;
+    struct : int;
+    union : int;
+    int : int;
+}
+
+// Enums fields can also be reserved, and these are also visible in
+// JSON, but they cannot be used as table field defaults because
+// type expressions do interpret keywords as keywords. For the same
+// reason it is of no use to allow reserved names as type names
+// such as table names.
+enum foo:int { x, y, table }
+
 namespace MyGame.Example;
 
 // Note: parent namespace resolution only works without namespace prefix

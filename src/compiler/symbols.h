@@ -70,6 +70,7 @@ enum {
     tok_kw_rpc_service,
     tok_kw_file_extension,
     tok_kw_file_identifier,
+    LEX_TOK_KW_END,
     /* Pseudo keywords. */
     tok_kw_doc_comment
 };
