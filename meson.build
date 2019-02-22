@@ -79,6 +79,7 @@ flatcc_src = [
     'src/compiler/codegen_c_json_printer.c',
     'src/compiler/codegen_c_reader.c',
     'src/compiler/codegen_c_sort.c',
+    'src/compiler/codegen_c_sorter.c',
     'src/compiler/codegen_c_verifier.c',
     'src/compiler/codegen_schema.c',
     'src/compiler/coerce.c',
