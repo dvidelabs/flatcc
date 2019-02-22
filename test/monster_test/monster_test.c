@@ -1950,6 +1950,83 @@ done:
     return ret;
 }
 
+#define STR(s) nsc(string_create_str(B, s))
+
+int test_recursive_sort(flatcc_builder_t *B)
+{
+    nsc(string_ref_t) name;
+
+    void *buffer = 0;
+    size_t size = 0;
+    size_t n;
+    int ret = -1;
+    ns(Alt_table_t) alt;
+    ns(Any_union_t) any;
+    ns(Monster_table_t) monster;
+    ns(MultipleKeys_vec_t) mkvec;
+    ns(MultipleKeys_table_t) mk;
+    int index;
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+
+    name = STR("Keyed Monster");
+    ns(Alt_start(B));
+    ns(Alt_multik_start(B));
+    ns(Alt_multik_push_create(B, STR("hi"), STR("there"), 42));
+    ns(Alt_multik_push_create(B, STR("hello"), STR("anyone"), 10));
+    ns(Alt_multik_push_create(B, STR("hello"), STR("anyone"), 4));
+    ns(Alt_multik_push_create(B, STR("good day"), STR("sir"), 1004));
+    ns(Alt_multik_end(B));
+    ns(Monster_test_add)(B, ns(Any_as_Alt(ns(Alt_end(B)))));
+    ns(Monster_name_add)(B, name);
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+    monster = ns(Monster_as_root)(buffer);
+    ns(Monster_sort)((ns(Monster_mutable_table_t))monster);
+    any = ns(Monster_test_union(monster));
+    if (any.type != ns(Any_Alt)) {
+        printf("Any type no Alt as expected\n");
+        goto done;
+    }
+    alt = any.value;
+    mkvec = ns(Alt_multik(alt));
+    index = ns(MultipleKeys_vec_len(mkvec));
+    if (index != 4) {
+        printf("unexpected multik vec len, got %d\n", index);
+        goto done;
+    }
+    mk = ns(MultipleKeys_vec_at(mkvec, 0));
+    if (ns(MultipleKeys_foobar(mk) != 4)) {
+        printf("multik elem 0 not sorted, but it really should be\n");
+    }
+    mk = ns(MultipleKeys_vec_at(mkvec, 1));
+    if (ns(MultipleKeys_foobar(mk) != 10)) {
+        printf("multik elem 1 not sorted, but it really should be\n");
+    }
+    mk = ns(MultipleKeys_vec_at(mkvec, 2));
+    if (ns(MultipleKeys_foobar(mk) != 42)) {
+        printf("multik elem 2 not sorted, but it really should be\n");
+    }
+    mk = ns(MultipleKeys_vec_at(mkvec, 3));
+    if (ns(MultipleKeys_foobar(mk) != 1004)) {
+        printf("multik elem 3 not sorted, but it really should be\n");
+    }
+
+    hexdump("MultiKeyed buffer", buffer, size, stderr);
+    if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
+        printf("Multikeyed Monster buffer failed to verify, got: %s\n", flatcc_verify_error_string(ret));
+        goto done;
+    }
+
+    ret = 0;
+done:
+    flatcc_builder_aligned_free(buffer);
+    return ret;
+}
+
 int test_mixed_type_union(flatcc_builder_t *B)
 {
     void *buffer;
@@ -2787,6 +2864,12 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_mixed_type_union(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_recursive_sort(B)) {
         printf("TEST FAILED\n");
         return -1;
     }

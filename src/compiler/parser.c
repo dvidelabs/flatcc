@@ -409,6 +409,37 @@ static inline fb_token_t *match(fb_parser_t *P, long id, char *msg) {
     return t;
 }
 
+/*
+ * When a keyword should also be accepted as an identifier. 
+ * This is useful for JSON where field naems are visible.
+ * Since field names are not referenced within the schema,
+ * this is generally safe. Enums can also be resererved but
+ * they can then not be used as default values. Table names
+ * and other type names should not be remapped as they can then
+ * not by used as a type name for other fields.
+ */
+#if FLATCC_ALLOW_KW_FIELDS
+static inline void remap_field_ident(fb_parser_t *P)
+{
+    if (P->token->id >= LEX_TOK_KW_BASE && P->token->id < LEX_TOK_KW_END) {
+        P->token->id = LEX_TOK_ID;
+    }
+}
+#else
+static inline void remap_field_ident(fb_parser_t *P) { (void)P; }
+#endif
+
+#if FLATCC_ALLOW_KW_ENUMS
+static inline void remap_enum_ident(fb_parser_t *P)
+{
+    if (P->token->id >= LEX_TOK_KW_BASE && P->token->id < LEX_TOK_KW_END) {
+        P->token->id = LEX_TOK_ID;
+    }
+}
+#else
+static inline void remap_enum_ident(fb_parser_t *P) { (void)P; }
+#endif
+
 static fb_token_t *advance(fb_parser_t *P, long id, const char *msg, fb_token_t *peer)
 {
     /*
@@ -738,6 +769,8 @@ static fb_metadata_t *parse_metadata(fb_parser_t *P)
 static void parse_field(fb_parser_t *P, fb_member_t *fld)
 {
     fb_token_t *t;
+
+    remap_field_ident(P);
     if (!(t = match(P, LEX_TOK_ID, "field expected identifier"))) {
         goto fail;
     }
@@ -821,6 +854,7 @@ static void parse_enum_decl(fb_parser_t *P, fb_compound_type_t *ct)
         goto fail;
     }
     for (;;) {
+        remap_enum_ident(P);
         if (!(t = match(P, LEX_TOK_ID,
                 "member identifier expected"))) {
             goto fail;

@@ -1,10 +1,6 @@
 OS-X & Ubuntu: [![Build Status](https://travis-ci.org/dvidelabs/flatcc.svg?branch=master)](https://travis-ci.org/dvidelabs/flatcc)
 Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/dvidelabs/flatcc?branch=master&svg=true)](https://ci.appveyor.com/project/dvidelabs/flatcc)
 
-_BREAKING: 0.5.3 changes behavour of builder create calls so arguments
-are always ordered by field id when id attributes are being used, for
-example `MyGame_Example_Monster_create()` in `monster_test.fbs`
-([#81](https://github.com/dvidelabs/flatcc/issues/81))._
 
 _The JSON parser may change the interface for parsing union vectors in a
 future release which requires code generation to match library
@@ -288,6 +284,13 @@ fi
 ```
 
 ## Status
+
+Release 0.6.0 (not released) introduces a "primary" attribute to be used
+together with a key attribute to chose default key for finding and
+sorting. If primary is absent, the key with the lowest id becomes
+primary. Tables and vectors can now be sorted recursively on primary
+keys. BREAKING: previously the first listed, not the lowest id, would be
+the primary key.
 
 Release 0.5.3 inlcudes various bug fixes (see changelog) and one
 breaking but likely low impact change: BREAKING: 0.5.3 changes behavour
@@ -1871,6 +1874,39 @@ transparently by providing `<table_name>_vec_sort_by_<field_name>` and
 The first field maps to `<table_name>_vec_sort` and
 `<table_name>_vec_find`. Obviously the chosen find method must match
 the chosen sort method. The find operation is O(logN).
+
+As of v0.6.0 the default key used for find and and sort without the `by_name`
+suffix is the field with the smaller id instead of the first listed in the
+schema which is often but not always the same thing.
+
+v0.6.0 also introduces the `primary_key` attribute that can be used instead of
+the `key` attribute on at most one field. The two attributes are mutually
+exclusive. This can be used if a key field with a higher id should be the
+default key. There is no difference when only one field has a `key` or
+`primary_key` attribute, so in that case choose `key` for compatiblity.
+Googles flatc compiler does not recognize the `primary_key` attribute.
+
+As of v0.6.0 a 'sorted' attribute has been introduced together with the sort
+operations `<table_name>_sort` and `<union_name>_sort`. If a table or a union,
+directly or indirectly, contains a vector with the 'sorted' attribute, then the
+sort operation is made available. The sort will recursively visit all children
+with vectors marked sorted. The sort operatoin will use the default (primary)
+key. A table or union must first be cast to mutable, for example
+`ns(Monster_sort((ns(Monster_mutable_table_t))monster)`. The actual vector
+sort operations are the same as before, they are just called automatically.
+The `sorted` attribute can only be set on vectors that are not unions. The
+vector can be of scalar, string, struct, or table type. `sorted` is only valid
+for a struct or table vector if the struct or table has a field with a `key`
+or `primary_key` attribute. NOTE: A FlatBuffer can reference the same object
+multiple times. The sort operation will be repeated if this is the case.
+Sometimes that is OK, but if it is a concern, remove the `sorted` attribute
+and sort the vector manually. Note that sharing can also happen via a shared
+containing object. The sort operations are generated in `_reader.h` files
+and only for objects directly or indirectly affected by the `sorted` attribute.
+Unions have a new mutable case operator for use with sorting unions:
+`ns(Any_sort(ns(Any_mutable_cast)(my_any_union))`. Usually unions will be
+sorted via a containing table which performs this cast automatically. See also
+`test_recursive_sort` in [monster_test.c].
 
 As of v0.4.1 `<table_name>_vec_scan_by_<field_name>` and the default
 `<table_name>_vec_scan` are also provided, similar to `find`, but as a

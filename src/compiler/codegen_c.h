@@ -360,6 +360,9 @@ int __flatcc_fb_gen_c_builder(fb_output_t *out);
 int __flatcc_fb_gen_c_verifier(fb_output_t *out);
 #define fb_gen_c_verifier __flatcc_fb_gen_c_verifier
 
+int __flatcc_fb_gen_c_sorter(fb_output_t *out);
+#define fb_gen_c_sorter __flatcc_fb_gen_c_sorter
+
 int __flatcc_fb_gen_c_json_parser(fb_output_t *out);
 #define fb_gen_c_json_parser __flatcc_fb_gen_c_json_parser
 
