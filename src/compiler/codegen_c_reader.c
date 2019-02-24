@@ -675,7 +675,7 @@ static void gen_helpers(fb_output_t *out)
     if (out->opts->cgen_sort) {
         gen_sort(out);
         fprintf(out->fp,
-            "#define __%ssort_table_vector_field(N, NK, T, t)\\\n"
+            "#define __%ssort_vector_field(N, NK, T, t)\\\n"
             "{ T ## _mutable_vec_t v__tmp = (T ## _mutable_vec_t) N ## _ ## NK ## _get(t);\\\n"
             "  if (v__tmp) T ## _vec_sort(v__tmp); }\n",
             nsc);
@@ -686,6 +686,18 @@ static void gen_helpers(fb_output_t *out)
         fprintf(out->fp,
             "#define __%ssort_union_field(N, NK, T, t)\\\n"
             "{ T ## _sort(T ## _mutable_union_cast(N ## _ ## NK ## _union(t))); }\n",
+            nsc);
+        fprintf(out->fp,
+            "#define __%ssort_table_vector_field_elements(N, NK, T, t)\\\n"
+            "{ T ## _vec_t v__tmp = N ## _ ## NK ## _get(t); size_t i__tmp, n__tmp;\\\n"
+            "  n__tmp = T ## _vec_len(v__tmp); for (i__tmp = 0; i__tmp < n__tmp; ++i__tmp) {\\\n"
+            "  T ## _sort((T ## _mutable_table_t)T ## _vec_at(v__tmp, i__tmp)); }}\n",
+            nsc);
+        fprintf(out->fp,
+            "#define __%ssort_union_vector_field_elements(N, NK, T, t)\\\n"
+            "{ T ## _union_vec_t v__tmp = N ## _ ## NK ## _union(t); size_t i__tmp, n__tmp;\\\n"
+            "  n__tmp = T ## _union_vec_len(v__tmp); for (i__tmp = 0; i__tmp < n__tmp; ++i__tmp) {\\\n"
+            "  T ## _sort(T ## _mutable_union_cast(T ## _union_vec_at(v__tmp, i__tmp))); }}\n",
             nsc);
     } else {
         fprintf(out->fp, "/* sort disabled */\n");
