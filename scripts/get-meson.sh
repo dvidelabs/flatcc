@@ -1,7 +1,12 @@
 #!/bin/sh
 
+if (meson -v 2>/dev/null >/dev/null); then
+    echo meson
+    exit 0
+fi
+
 # only used with new installation
-# 0.44.0 is last version working with Python 3.4
+# 0.44.0 is working with Python 3.4
 INSTALL_VER=${VER:-0.44.0}
 INSTALL_DIR=${INSTALL_DIR:-$(pwd)/meson}
 INSTALL_URL=https://github.com/mesonbuild/meson.git
