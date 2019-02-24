@@ -85,24 +85,42 @@ static int gen_table_sorter(fb_output_t *out, fb_compound_type_t *ct)
         if (member->metadata_flags & fb_f_deprecated) {
             continue;
         }
+        symbol_name(sym, &n, &s);
         switch (member->type.type) {
         case vt_compound_type_ref:
             fb_compound_name(member->type.ct, &snref);
-            symbol_name(sym, &n, &s);
             switch (member->type.ct->symbol.kind) {
             case fb_is_table:
-                if (member->type.ct->export_index & sortable) {
-                    fprintf(out->fp,
-                            "    __%ssort_table_field(%s, %.*s, %s, t);\n",
-                            nsc, snt.text, n, s, snref.text);
-                }
+                if (!(member->type.ct->export_index & sortable)) continue;
+                fprintf(out->fp,
+                        "    __%ssort_table_field(%s, %.*s, %s, t);\n",
+                        nsc, snt.text, n, s, snref.text);
                 break;
             case fb_is_union:
-                if (member->type.ct->export_index & sortable) {
-                    fprintf(out->fp,
-                            "    __%ssort_union_field(%s, %.*s, %s, t);\n",
-                            nsc, snt.text, n, s, snref.text);
-                }
+                if (!(member->type.ct->export_index & sortable)) continue;
+                fprintf(out->fp,
+                        "    __%ssort_union_field(%s, %.*s, %s, t);\n",
+                        nsc, snt.text, n, s, snref.text);
+                break;
+            default:
+                continue;
+            }
+            break;
+        case vt_vector_compound_type_ref:
+            fb_compound_name(member->type.ct, &snref);
+            switch (member->type.ct->symbol.kind) {
+            case fb_is_table:
+                if (!(member->type.ct->export_index & sortable)) continue;
+                fprintf(out->fp,
+                        "    __%ssort_table_vector_field_elements(%s, %.*s, %s, t);\n",
+                        nsc, snt.text, n, s, snref.text);
+                break;
+            case fb_is_union:
+                /* Although union vectors cannot be sorted, their content can be. */
+                if (!(member->type.ct->export_index & sortable)) continue;
+                fprintf(out->fp,
+                        "    __%ssort_union_vector_field_elements(%s, %.*s, %s, t);\n",
+                        nsc, snt.text, n, s, snref.text);
                 break;
             default:
                 continue;
@@ -119,12 +137,12 @@ static int gen_table_sorter(fb_output_t *out, fb_compound_type_t *ct)
         case vt_vector_type:
             tname_prefix = scalar_type_prefix(member->type.st);
             fprintf(out->fp,
-                    "    __%ssort_table_vector_field(%s, %.*s, %s%s, t)\n",
+                    "    __%ssort_vector_field(%s, %.*s, %s%s, t)\n",
                     nsc, snt.text, n, s, nsc, tname_prefix);
             break;
         case vt_vector_string_type:
             fprintf(out->fp,
-                    "    __%ssort_table_vector_field(%s, %.*s, %s%s, t)\n",
+                    "    __%ssort_vector_field(%s, %.*s, %s%s, t)\n",
                     nsc, snt.text, n, s, nsc, "string");
             break;
         case vt_vector_compound_type_ref:
@@ -137,9 +155,10 @@ static int gen_table_sorter(fb_output_t *out, fb_compound_type_t *ct)
             case fb_is_table:
             case fb_is_struct:
                 fprintf(out->fp,
-                        "    __%ssort_table_vector_field(%s, %.*s, %s, t)\n",
+                        "    __%ssort_vector_field(%s, %.*s, %s, t)\n",
                         nsc, snt.text, n, s, snref.text);
                 break;
+            /* Union vectors cannot be sorted. */
             default:
                 break;
             }
