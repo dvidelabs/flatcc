@@ -1,5 +1,5 @@
 project('flatcc', 'c', 'cpp', # cpp only used for test cases
-    version : '0.5.2',
+    version : '0.6.0-pre',
     license : 'Apache-2.0',
     default_options : ['c_std=c11', 'cpp_std=c++11', 'default_library=static'],
     meson_version : '>=0.41.0')
