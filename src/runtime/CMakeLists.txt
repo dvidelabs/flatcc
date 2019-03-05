@@ -12,5 +12,5 @@ add_library(flatccrt
 )
 
 if (FLATCC_INSTALL)
-    install(TARGETS flatccrt DESTINATION lib)
+    install(TARGETS flatccrt DESTINATION ${lib_dir})
 endif()
