@@ -1367,11 +1367,13 @@ static int validate_table_attr(fb_parser_t *P, fb_compound_type_t *ct)
                     error_sym(P, sym, "sorted table vector only valid when table has a key field");
                     return -1;
                 }
+                break;
             case fb_is_struct:
                 if (!member->type.ct->primary_key) {
                     error_sym(P, sym, "sorted struct vector only valid when struct has a key field");
                     return -1;
                 }
+                break;
             /* Other cases already handled in process_table. */
             default:
                 continue;

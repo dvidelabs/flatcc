@@ -23,6 +23,7 @@
   JSON fields that can have names such as "table" or "namespace".
 - Use `FLATCC_INSTALL_LIB` for install targets in addition to ordinary builds
   (#109).
+- Add missing case break in flatcc compiler - no impact on behavior (#110).
 
 ## [0.5.3]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments
