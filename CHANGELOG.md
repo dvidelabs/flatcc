@@ -21,6 +21,8 @@
   or 'table'. This can be disabled in `config/config.h`.
   Separately do the same for enum member. This change was motivated by
   JSON fields that can have names such as "table" or "namespace".
+- Use `FLATCC_INSTALL_LIB` for install targets in addition to ordinary builds
+  (#109).
 
 ## [0.5.3]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments
@@ -42,7 +44,7 @@
   pairs are intentionally decoded into invalid UTF-8 as before.
 - Fix sorting tables by scalar keys. Sorting by integer key could lead to
   undefined behavior (#104).
-- Add `FLATCC_FLATCC_INSTALL_LIB` configuration to CMake to change the
+- Add `FLATCC_INSTALL_LIB` configuration to CMake to change the
   default <project>/lib path, for example `cmake -DFLATCC_INSTALL_LIB=lib64`.
 - Fix return code in `flatcc_parse_file` library function.
 
