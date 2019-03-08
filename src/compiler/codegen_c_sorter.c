@@ -287,6 +287,25 @@ static int mark_member_sortable(fb_compound_type_t *ct)
     return !!(ct->export_index & sortable);
 }
 
+static void init_sortable(fb_compound_type_t *ct)
+{
+    fb_symbol_t *sym;
+    fb_member_t *member;
+
+    for (sym = ct->members; sym; sym = sym->link) {
+        member = (fb_member_t *)sym;
+        switch (member->type.type) {
+        case vt_compound_type_ref:
+        case vt_vector_compound_type_ref:
+            member->type.ct->export_index = 0;
+            break;
+        default:
+            continue;
+        }
+    }
+    ct->export_index = 0;
+}
+
 /*
  * Use fix-point iteration to implement a breadth first
  * search for tables and unions that can be sorted. The
@@ -305,7 +324,8 @@ static int mark_sortable(fb_output_t *out)
         switch (sym->kind) {
         case fb_is_table:
         case fb_is_union:
-            ((fb_compound_type_t *)sym)->export_index = 0;
+            init_sortable((fb_compound_type_t *)sym);
+            break;
         }
     }
     /* Perform fix-point iteration search. */
