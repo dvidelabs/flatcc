@@ -84,8 +84,8 @@ static void gen_find(fb_output_t *out)
      */
     fprintf(out->fp,
         "#include <string.h>\n"
-        "static size_t %snot_found = (size_t)-1;\n"
-        "static size_t %send = (size_t)-1;\n"
+        "static const size_t %snot_found = (size_t)-1;\n"
+        "static const size_t %send = (size_t)-1;\n"
         "#define __%sidentity(n) (n)\n"
         "#define __%smin(a, b) ((a) < (b) ? (a) : (b))\n",
         nsc, nsc, nsc, nsc);

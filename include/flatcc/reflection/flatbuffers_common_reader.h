@@ -219,8 +219,8 @@ static inline T ## _union_vec_t N ## _ ## NK ## _union(N ## _table_t t__tmp)\
   assert(NS ## vec_len(uv__tmp.type) == NS ## vec_len(uv__tmp.value)\
   && "union vector type length mismatch"); return uv__tmp; }
 #include <string.h>
-static size_t flatbuffers_not_found = (size_t)-1;
-static size_t flatbuffers_end = (size_t)-1;
+static const size_t flatbuffers_not_found = (size_t)-1;
+static const size_t flatbuffers_end = (size_t)-1;
 #define __flatbuffers_identity(n) (n)
 #define __flatbuffers_min(a, b) ((a) < (b) ? (a) : (b))
 /* Subtraction doesn't work for unsigned types. */
