@@ -1326,6 +1326,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             field_index[j]->link = field_index[i];
             j = i;
         }
+        field_index[max_id]->link = NULL;
     }
     if (key_count) {
         ct->symbol.flags |= fb_indexed;
