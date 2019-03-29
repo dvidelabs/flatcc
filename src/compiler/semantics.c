@@ -1321,7 +1321,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             j = 1; /* Adjust for union type. */
         }
         ct->members = field_index[j];
-        for (i = j + 1; i < max_id; ++i) {
+        for (i = j + 1; i <= max_id; ++i) {
             if (field_index[i] == 0) ++i; /* Adjust for union type. */
             field_index[j]->link = field_index[i];
             j = i;
