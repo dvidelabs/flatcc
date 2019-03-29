@@ -26,6 +26,7 @@
 - Add missing case break in flatcc compiler - no impact on behavior (#110).
 - Make `flatbuffers_not_found` and `flatbuffers_end` constant values both
   because it is more correct, and to silence warnings on some systems.
+- Fix flatcc endless loop with our of order field id's (#112).
 
 ## [0.5.3]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments
