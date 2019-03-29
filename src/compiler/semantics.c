@@ -1305,7 +1305,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         /* Size efficient ordering. */ 
         ct->ordered_members = align_order_members(P, (fb_member_t *)ct->members);
     }
-    if (!id_failed && count > 0) {
+    if (!id_failed && need_id && count > 0) {
         field_index = P->tmp_field_index;
         memset(field_index, 0, sizeof(field_index[0]) * (size_t)P->opts.vt_max_count);
         /*
@@ -1326,6 +1326,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             field_index[j]->link = field_index[i];
             j = i;
         }
+        field_index[max_id]->link = 0;
     }
     if (key_count) {
         ct->symbol.flags |= fb_indexed;
