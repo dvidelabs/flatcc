@@ -775,14 +775,14 @@ it is an adapted extract of the [monster_test.c] file.
 First we compile the schema read-only with common (-c) support header and we
 add the recursion because [monster_test.fbs] includes other files.
 
-    flatcc -cr test/monster_test/monster_test.fbs
+    flatcc -cr --reader test/monster_test/monster_test.fbs
 
 For simplicity we assume you build an example project in the project
 root folder, but in praxis you would want to change some paths, for
 example:
 
     mkdir -p build/example
-    flatcc -cr -o build/example test/monster_test/monster_test.fbs
+    flatcc -cr --reader -o build/example test/monster_test/monster_test.fbs
     cd build/example
 
 We get:
