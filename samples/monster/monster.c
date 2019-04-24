@@ -29,10 +29,10 @@
 // these references.
 int create_monster_bottom_up(flatcc_builder_t *B, int flexible)
 {
-    ns(Weapon_ref_t) weapon_one_name = flatbuffers_string_create_str(B, "Sword");
+    flatbuffers_string_ref_t weapon_one_name = flatbuffers_string_create_str(B, "Sword");
     uint16_t weapon_one_damage = 3;
 
-    ns(Weapon_ref_t) weapon_two_name = flatbuffers_string_create_str(B, "Axe");
+    flatbuffers_string_ref_t weapon_two_name = flatbuffers_string_create_str(B, "Axe");
     uint16_t weapon_two_damage = 5;
 
     // Use the `MyGame_Sample_Weapon_create` shortcut to create Weapons
