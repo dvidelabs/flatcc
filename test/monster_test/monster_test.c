@@ -1838,58 +1838,62 @@ int verify_union_vector(void *buffer, size_t size)
 
     if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
         printf("Monster buffer with union vector failed to verify, got: %s\n", flatcc_verify_error_string(ret));
-        return -1;
+        goto failed;
     }
 
     mon = ns(Monster_as_root(buffer));
     if (ns(Monster_test_type(mon)) != ns(Any_Alt)) {
         printf("test field does not have Alt type");
-        goto done;
+        goto failed;
     }
     alt = ns(Monster_test(mon));
-    if (!alt || ns(Alt_manyany_is_present(alt))) {
+    if (!alt || !ns(Alt_manyany_is_present(alt))) {
         printf("manyany union vector should be present.\n");
-        goto done;
+        goto failed;
     }
     anyvec_type = ns(Alt_manyany_type(alt));
     anyvec = ns(Alt_manyany(alt));
     n = ns(Any_vec_len(anyvec_type));
     if (n != 1) {
         printf("manyany union vector has wrong length.\n");
-        goto done;
+        goto failed;
     }
     if (nsc(union_type_vec_at(anyvec_type, 0)) != ns(Any_TestSimpleTableWithEnum)) {
         printf("manyany union vector has wrong element type.\n");
-        goto done;
+        goto failed;
     }
     kermit = flatbuffers_generic_vec_at(anyvec, 0);
     if (!kermit) {
         printf("Kermit is lost.\n");
-        goto done;
+        goto failed;
     }
     color = ns(TestSimpleTableWithEnum_color(kermit));
     if (color != ns(Color_Green)) {
         printf("Kermit has wrong color: %i.\n", (int)color);
-        goto done;
+        goto failed;
     }
     anyvec_union = ns(Alt_manyany_union(alt));
     if (ns(Any_union_vec_len(anyvec_union)) != 1) {
         printf("manyany union vector has wrong length from a different perspective.\n");
-        goto done;
+        goto failed;
     }
     anyelem = ns(Any_union_vec_at(anyvec_union, 0));
     if (anyelem.type != nsc(union_type_vec_at(anyvec_type, 0))) {
         printf("Kermit is now different.\n");
-        goto done;
+        goto failed;
     }
     if (anyelem.value != kermit) {
         printf("Kermit is incoherent.\n");
-        goto done;
+        goto failed;
     }
     ret = 0;
 
 done:
     return ret;
+
+failed:
+    ret = -1;
+    goto done;
 }
 
 int test_union_vector(flatcc_builder_t *B)
@@ -1925,20 +1929,20 @@ int test_union_vector(flatcc_builder_t *B)
 
     if (verify_union_vector(buffer, size)) {
         printf("Union vector Monster didn't verify.\n");
-        goto done;
+        goto failed;
     }
     flatcc_builder_reset(B);
     refmap_old = flatcc_builder_set_refmap(B, &refmap);
     if (!ns(Monster_clone_as_root(B, ns(Monster_as_root(buffer))))) {
         printf("Cloned union vector Monster didn't actually clone.\n");
-        goto done;
+        goto failed;
     };
     flatcc_builder_set_refmap(B, refmap_old);
     cloned_buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
 
     if (verify_union_vector(buffer, size)) {
         printf("Cloned union vector Monster didn't verify.\n");
-        goto done;
+        goto failed;
     }
 
     ret = 0;
@@ -1948,6 +1952,10 @@ done:
     flatcc_builder_aligned_free(buffer);
     flatcc_builder_aligned_free(cloned_buffer);
     return ret;
+
+failed:
+    ret = -1;
+    goto done;
 }
 
 #define STR(s) nsc(string_create_str(B, s))
