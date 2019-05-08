@@ -2,19 +2,20 @@
 
 
 <!-- vim-markdown-toc GFM -->
+
 * [Overview](#overview)
 * [Memory Blocks](#memory-blocks)
 * [Example](#example)
 * [Primitives](#primitives)
-    * [Numerics](#numerics)
-    * [Boolean](#boolean)
-    * [Format Internal Types](#format-internal-types)
-    * [Scalars](#scalars)
-    * [Structs](#structs)
+  * [Numerics](#numerics)
+  * [Boolean](#boolean)
+  * [Format Internal Types](#format-internal-types)
+  * [Scalars](#scalars)
+  * [Structs](#structs)
 * [Internals](#internals)
 * [Type Hashes](#type-hashes)
-    * [Conflicts](#conflicts)
-    * [Type Hash Variants](#type-hash-variants)
+  * [Conflicts](#conflicts)
+  * [Type Hash Variants](#type-hash-variants)
 * [Unions](#unions)
 * [Alignment](#alignment)
 * [Default Values and Deprecated Values](#default-values-and-deprecated-values)
@@ -24,14 +25,14 @@
 * [Verification](#verification)
 * [Risks](#risks)
 * [Nested FlatBuffers](#nested-flatbuffers)
+* [Fixed Size Arrays](#fixed-size-arrays)
 * [Big Endian FlatBuffers](#big-endian-flatbuffers)
 * [StructBuffers](#structbuffers)
 * [StreamBuffers](#streambuffers)
 * [Bidirectional Buffers](#bidirectional-buffers)
 * [Possible Future Features](#possible-future-features)
-    * [Force Align](#force-align)
-    * [Fixed Length Vectors](#fixed-length-vectors)
-    * [Mixins](#mixins)
+  * [Force Align](#force-align)
+  * [Mixins](#mixins)
 
 <!-- vim-markdown-toc -->
 
@@ -402,7 +403,7 @@ boundaries.
 A vector can also hold unions, but it is not supported by all
 implementations. A union vector is in reality two separate vectors: a
 type vector and an offset vector in place of a single unions type and
-value fields in table. See unions. 
+value fields in table. See unions.
 
 
 ## Type Hashes
@@ -905,6 +906,122 @@ extract parts of FlatBuffer data. Extracting a table would require
 chasing pointers and could potentially explode due to shared sub-graphs,
 if not handled carefully.
 
+## Fixed Size Arrays
+
+This feature can be seen as equivalent to repeating a field of the same type
+multiple times in struct.
+
+Fixed size arrays has been introduced mid 2019 but limited to struct fields of
+scalar type of non-zero length.
+
+A fixed size array is somewhat like a vector of fixed length containing inline
+fixed size elements and no size prefix and they are stored inline
+structs. An element can be a struct or a scalar including enums.
+
+An array should not be mistaken for vector as vectors are independent objects
+while arrays are not.
+
+It is not expected that this feature will be supported for table fields or
+unions directly but it is possible via a struct wrapper.
+
+The binary format of a fixed size vector of length `n` and type `t` can
+be precisely emulated by created a struct that holds exactly `n` fields
+of type `t`, `n >= 0`. This means that a fixed size array does not
+store any length information in a header and that it is stored inline in
+in structs. Alignment follows the rules of structs rules with arrays having the
+same alignment as their elements and also supports the `force_align` attribute.
+
+Current implementations only support arrays of non-zero length. The maxium
+length is limited by the maximum struct size and / or an implementation imposed
+length limit. Flatcc accepts any array that will fit in struct with a maximum
+size of 2^16-1 by default but can be compiled with a different setting.
+
+Assuming the schema compiler computes the correct alignment for the overall
+struct, there is no additonal work in verifying a buffer containing a fixed size
+array because structs are verified based on the outermost structs size and
+alignment without having to inspect its content.
+
+Flatcc currently does not support fixed size arrays containing structs or enums
+but these might be added later. Note that since structs can be empty, it would
+imply that arrays can also be empty even if not zero-length.
+
+If 0-length arrays are supported, the alignment must still respect the alignment
+of the element type.
+
+Careful: speculative support for fixed length strings which might never be
+supported and with details subject to likely change: A new type `char` is used
+to create fixed length utf8 or ASCII strings that are always zero terminated and
+zeropadded. A [char:4] takes up 5 bytes including a zero termination byte and
+may hold any valid zero terminated ASCII or UTF-8 string of that length. While
+`[char:1]` is a valid type, `char` is not.
+
+_Note: the syntax `[string:4]` has been proposed to mean a string of 4
+characters, but it actually means a fixed size vector of 4 offsets to
+variable length strings which is not supported._
+
+
+The following example
+
+    struct Basics {
+        int a;
+        int b;
+    }
+
+    struct MyStruct {
+        x: int;
+        z: [short:3];
+        y: float;
+        w: [Basics:2];
+        name: [char:4];
+    }
+
+    // NOT VALID - use a struct wrapper:
+    table MyTable {
+        t: [ubyte:2];
+        m: [MyStruct:2];
+    }
+
+
+can replace MyStruct with the binary equivalent (but different
+codegeneration):
+
+    struct MyStructEquivalent {
+        x: int;
+        z1: short;
+        z2: short;
+        z3: short;
+        y: float;
+        wa1: int;
+        wa2: int;
+        name1: ubyte;
+        name2: ubyte;
+        name3: ubyte;
+        name4: ubyte;
+        wname_zterm: ubyte;
+        x2: int;
+        z21: short;
+        z22: short;
+        z23: short;
+        y2: float;
+        wa21: int;
+        wa22: int;
+        name21: ubyte;
+        name22: ubyte;
+        name23: ubyte;
+        name24: ubyte;
+        wname2_zterm: ubyte;
+    }
+
+    struct tEquivalent {
+        t1: ubyte;
+        t2: ubyte;
+    }
+
+    table MyTableEquivalent {
+        t: tEquivalent;
+        m: MyStructEquivalent;
+    }
+
 
 ## Big Endian FlatBuffers
 
@@ -1074,100 +1191,6 @@ implemented differently. Be warned.
 `force_align` attribute supported on fields of structs, scalars and
 and vectors of fixed size elements.
 
-### Fixed Length Vectors
-
-A fixed length vector is a vector of fixed length containing inline
-fixed size elements and no size prefix and they are stored inline
-in tables and structs. An element can be a struct or a scalar including
-enums.
-
-The binary format of a fixed size vector of length `n` and type `t` can
-be precisely emulated by created a struct that holds exactly `n` fields
-of type `t`, `n >= 0`. This means that a fixed length vector does not
-store any length information in a header and that it is stored inline in
-tables similar to structs. Alignment follows the rules of structs
-and also supports the `force_align` attribute.
-
-It is not valid to ever change the size of a fixed length vector when
-staying compliant with schema evolution.
-
-A fixed length vector cannot hold offsets because fixed length vectors
-are essentially structs with alternative accessors.
-
-Unions of fixed length vectors are not valid unless wrapped in a struct.
-
-Careful: subject to likely change: A new type `char` is used to
-create fixed length utf8 or ASCII strings that are always zero
-terminated and zeropadded. A [char:4] takes up 5 bytes including a zero
-termination byte and may hold any valid zero terminated ASCII or UTF-8
-string of that length. While `[char:1]` is a valid type, `char` is not.
-
-_Note: the syntax `[string:4]` has been proposed to mean a string of 4
-characters, but it actually means a fixed size vector of 4 offsets to
-variable length strings which is not supported._
-
-
-The following example
-
-    struct Basics {
-        int a;
-        int b;
-    }
-
-    struct MyStruct {
-        x: int;
-        z: [short:3];
-        y: float;
-        w: [Basics:2];
-        name: [char:4];
-    }
-    
-    table MyTable {
-        t: [ubyte:2];
-        m: [MyStruct:2];
-    }
-
-
-can replace MyStruct with the binary equivalent (but different
-codegeneration):
-
-    struct MyStructEquivalent {
-        x: int;
-        z1: short;
-        z2: short;
-        z3: short;
-        y: float;
-        wa1: int;
-        wa2: int;
-        name1: ubyte;
-        name2: ubyte;
-        name3: ubyte;
-        name4: ubyte;
-        wname_zterm: ubyte;
-        x2: int;
-        z21: short;
-        z22: short;
-        z23: short;
-        y2: float;
-        wa21: int;
-        wa22: int;
-        name21: ubyte;
-        name22: ubyte;
-        name23: ubyte;
-        name24: ubyte;
-        wname2_zterm: ubyte;
-    }
-
-    struct tEquivalent {
-        t1: ubyte; 
-        t2: ubyte; 
-    }
-
-    table MyTableEquivalent {
-        t: tEquivalent;
-        m: MyStructEquivalent;
-    }
-
 
 ### Mixins
 
@@ -1221,7 +1244,7 @@ Example:
     }
 
     root_type Main;
-        
+
 
 Here the table NPC and Rock will appear with read accessors is if they have the fields:
 
@@ -1256,7 +1279,7 @@ Here the table NPC and Rock will appear with read accessors is if they have the 
     root_type Main;
 
 or in JSON:
-    
+
     {
         "npc1": {
             "npcid": 1,
