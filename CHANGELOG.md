@@ -27,6 +27,7 @@
 - Make `flatbuffers_not_found` and `flatbuffers_end` constant values both
   because it is more correct, and to silence warnings on some systems.
 - Fix flatcc endless loop with our of order field id's (#112).
+- Add support for scalar fixed size arrays in struct fields.
 
 ## [0.5.3]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments

@@ -296,6 +296,13 @@ static int gen_json_printer_struct(fb_output_t *out, fb_compound_type_t *ct)
                     "    flatcc_json_printer_%s_struct_field(ctx, %d, p, %"PRIu64", \"%.*s\", %ld);\n",
                     tp, index, (uint64_t)member->offset, (int)sym->ident->len, sym->ident->text, sym->ident->len);
             break;
+        case vt_fixed_array_type:
+            tp = scalar_type_prefix(member->type.st);
+            fprintf(
+                    out->fp,
+                    "    flatcc_json_printer_%s_array_struct_field(ctx, %d, p, %"PRIu64", \"%.*s\", %ld, %d);\n",
+                    tp, index, (uint64_t)member->offset, (int)sym->ident->len, sym->ident->text, sym->ident->len, member->type.len);
+            break;
         case vt_compound_type_ref:
             fb_compound_name(member->type.ct, &snref);
             switch (member->type.ct->symbol.kind) {

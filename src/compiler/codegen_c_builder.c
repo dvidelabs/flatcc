@@ -412,6 +412,17 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "#define __%sto_pe(P, N) (*(P) = N ## _cast_to_pe(*P), (P))\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
+        "#define __%sdefine_fixed_array_primitives(NS, N, T)\\\n"
+        "static inline T *N ## _array_copy(T *p, const T *p2, size_t n)\\\n"
+        "{ memcpy(p, p2, n * sizeof(T)); return p; }\\\n"
+        "static inline T *N ## _array_copy_from_pe(T *p, const T *p2, size_t n)\\\n"
+        "{ size_t i; if (NS ## is_native_pe()) memcpy(p, p2, n * sizeof(T)); else\\\n"
+        "  for (i = 0; i < n; ++i) N ## _copy_from_pe(&p[i], &p2[i]); return p; }\\\n"
+        "static inline T *N ## _array_copy_to_pe(T *p, const T *p2, size_t n)\\\n"
+        "{ size_t i; if (NS ## is_native_pe()) memcpy(p, p2, n * sizeof(T)); else\\\n"
+        "  for (i = 0; i < n; ++i) N ## _copy_to_pe(&p[i], &p2[i]); return p; }\n",
+        nsc);
+    fprintf(out->fp,
         "#define __%sdefine_scalar_primitives(NS, N, T)\\\n"
         "static inline T *N ## _from_pe(T *p) { return __ ## NS ## from_pe(p, N); }\\\n"
         "static inline T *N ## _to_pe(T *p) { return __ ## NS ## to_pe(p, N); }\\\n"
@@ -427,6 +438,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "{ *p = N ## _cast_to_pe(v0); return p; }\n"
         "#define __%sbuild_scalar(NS, N, T)\\\n"
         "__ ## NS ## define_scalar_primitives(NS, N, T)\\\n"
+        "__ ## NS ## define_fixed_array_primitives(NS, N, T)\\\n"
         "__ ## NS ## build_vector(NS, N, T, sizeof(T), sizeof(T))\n",
         nsc, nsc);
 
@@ -886,21 +898,23 @@ static int get_total_struct_field_count(fb_compound_type_t *ct)
     fb_member_t *member;
     fb_symbol_t *sym;
     int count = 0;
+
     for (sym = ct->members; sym; sym = sym->link) {
         member = (fb_member_t *)sym;
         if (member->metadata_flags & fb_f_deprecated) {
             continue;
         }
-        /* Fall through comments needed to silence gcc 7 warnings. */
         switch (member->type.type) {
         case vt_compound_type_ref:
             if (member->type.ct->symbol.kind == fb_is_struct) {
                 count += get_total_struct_field_count(member->type.ct);
                 continue;
             }
-            /* Fall through */
+            ++count;
+            break;
         default:
             ++count;
+            break;
         }
     }
     return count;
@@ -953,6 +967,12 @@ static int gen_builder_struct_args(fb_output_t *out, fb_compound_type_t *ct, int
             fb_compound_name(member->type.ct, &snref);
             fprintf(out->fp, "%s_enum_t v%i", snref.text, index++);
             break;
+        case vt_fixed_array_type:
+            gen_comma(out, index, len, is_macro);
+            tname_ns = scalar_type_ns(member->type.st, nsc);
+            tname = scalar_type_name(member->type.st);
+            fprintf(out->fp, "const %s%s v%i[%i]", tname_ns, tname, index++, (int)member->type.len);
+            break;
         case vt_scalar_type:
             gen_comma(out, index, len, is_macro);
             tname_ns = scalar_type_ns(member->type.st, nsc);
@@ -982,12 +1002,13 @@ static int gen_builder_struct_call_list(fb_output_t *out, fb_compound_type_t *ct
 enum { no_conversion, convert_from_pe, convert_to_pe };
 
 /* Note: returned index is not correct when using from_ptr since it doesn't track arguments, but it shouldn't matter. */
-static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t *ct, int index, int arg_count, int conversion, int from_ptr)
+static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t *ct, int index, int arg_count,
+        int conversion, int from_ptr)
 {
     const char *nsc = out->nsc;
     fb_member_t *member;
     fb_symbol_t *sym;
-    int n;
+    int n, len;
     const char *s;
     int deprecated_index = 0;
     const char *kind, *tprefix;
@@ -1068,6 +1089,47 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
             }
             ++index;
             continue;
+        case vt_fixed_array_type:
+            tprefix = scalar_type_prefix(member->type.st);
+            len = member->type.len;
+            if (member->metadata_flags & fb_f_deprecated) {
+                fprintf(out->fp, "__%sstruct_clear_field(p->__deprecated%i)",
+                        nsc, deprecated_index);
+                ++deprecated_index;
+                ++index;
+                continue;
+            }
+            switch (member->size == 1 ? no_conversion : conversion) {
+            case convert_from_pe:
+                if (from_ptr) {
+                    fprintf(out->fp, "%s%s_array_copy_from_pe(p->%.*s, p2->%.*s, %d)",
+                            nsc, tprefix, n, s, n, s, len);
+                } else {
+                    fprintf(out->fp, "%s%s_array_copy_from_pe(p->%.*s, v%i, %d)",
+                            nsc, tprefix, n, s, index, len);
+                }
+                break;
+            case convert_to_pe:
+                if (from_ptr) {
+                    fprintf(out->fp, "%s%s_array_copy_to_pe(p->%.*s, p2->%.*s, %d)",
+                            nsc, tprefix, n, s, n, s, len);
+                } else {
+                    fprintf(out->fp, "%s%s_array_copy_to_pe(p->%.*s, v%i, %d)",
+                            nsc, tprefix, n, s, index, len);
+                }
+                break;
+            default:
+                if (from_ptr) {
+                    fprintf(out->fp, "%s%s_array_copy(p->%.*s, p2->%.*s, %d)",
+                            nsc, tprefix, n, s, n, s, len);
+                } else {
+                    fprintf(out->fp, "%s%s_array_copy(p->%.*s, v%i, %d)",
+                            nsc, tprefix, n, s, index, len);
+                }
+                break;
+            }
+            ++index;
+            break;
         case vt_scalar_type:
             tprefix = scalar_type_prefix(member->type.st);
             if (member->metadata_flags & fb_f_deprecated) {
@@ -1323,7 +1385,7 @@ static int gen_builder_table_args(fb_output_t *out, fb_compound_type_t *ct, int 
             fprintf(out->fp, "%sstring_vec_ref_t v%llu", nsc, llu(member->id));
             break;
         default:
-            gen_panic(out, "internal error: unexpected struct member type");
+            gen_panic(out, "internal error: unexpected table member type");
             continue;
         }
     }

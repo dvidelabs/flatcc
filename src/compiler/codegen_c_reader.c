@@ -770,6 +770,21 @@ static void gen_helpers(fb_output_t *out)
         fprintf(out->fp, "__%sdefine_string_sort()\n", nsc);
     }
     fprintf(out->fp,
+        "#define __%sdefine_struct_scalar_fixed_array_field(N, NK, TK, T, L)\\\n"
+        "static inline T N ## _ ## NK ## _get(N ## _struct_t t__tmp, size_t i__tmp)\\\n"
+        "{ if (!t__tmp || i__tmp > (L - 1)) return 0;\\\n"
+        "  return __%sread_scalar(TK, &(t__tmp->NK[i__tmp])); }\\\n"
+        "static inline const T *N ## _ ## NK ## _get_ptr(N ## _struct_t t__tmp)\\\n"
+        "{ return t__tmp ? (t__tmp->NK) : 0; }\\\n"
+        "static inline size_t N ## _ ## NK ## _get_len() { return L; }",
+        nsc, nsc);
+    if (!out->opts->cgen_no_conflicts) {
+        fprintf(out->fp,
+            "\\\nstatic inline T N ## _ ## NK (N ## _struct_t t__tmp, size_t i__tmp)\\\n"
+            "{ return N ## _ ## NK ## _get(t__tmp, i__tmp); }");
+    }
+    fprintf(out->fp, "\n");;
+    fprintf(out->fp,
         "#define __%sdefine_struct_scalar_field(N, NK, TK, T)\\\n"
         "static inline T N ## _ ## NK ## _get(N ## _struct_t t__tmp)\\\n"
         "{ return t__tmp ? __%sread_scalar(TK, &(t__tmp->NK)) : 0; }\\\n"
@@ -1032,7 +1047,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
     unsigned align;
     size_t offset = 0;
     const char *tname, *tname_ns, *tname_prefix;
-    int n;
+    int n, len;
     const char *s;
     unsigned pad_index = 0, deprecated_index = 0, pad;
     const char *kind;
@@ -1118,6 +1133,17 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                 continue;
             }
             switch (member->type.type) {
+            case vt_fixed_array_type:
+                tname_ns = scalar_type_ns(member->type.st, nsc);
+                tname = scalar_type_name(member->type.st);
+                len = member->type.len;
+                if (do_pad) {
+                    fprintf(out->fp, "    %s%s ", tname_ns, tname);
+                } else {
+                    fprintf(out->fp, "    alignas(%u) %s%s ", align, tname_ns, tname);
+                }
+                fprintf(out->fp, "%.*s[%d];\n", n, s, len);
+                break;
             case vt_scalar_type:
                 tname_ns = scalar_type_ns(member->type.st, nsc);
                 tname = scalar_type_name(member->type.st);
@@ -1126,6 +1152,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                 } else {
                     fprintf(out->fp, "    alignas(%u) %s%s ", align, tname_ns, tname);
                 }
+                fprintf(out->fp, "%.*s;\n", n, s);
                 break;
             case vt_compound_type_ref:
                 assert(member->type.ct->symbol.kind == fb_is_struct || member->type.ct->symbol.kind == fb_is_enum);
@@ -1136,13 +1163,14 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                 } else {
                     fprintf(out->fp, "    alignas(%u) %s_%st ", align, snref.text, kind);
                 }
+                fprintf(out->fp, "%.*s;\n", n, s);
                 break;
             default:
                 fprintf(out->fp, "    %s ", __FLATCC_ERROR_TYPE);
+                fprintf(out->fp, "%.*s;\n", n, s);
                 gen_panic(out, "internal error: unexpected type during code generation");
                 break;
             }
-            fprintf(out->fp, "%.*s;\n", n, s);
             offset = (unsigned)(member->offset + member->size);
         }
         if (do_pad && (pad = (unsigned)(ct->size - offset))) {
@@ -1186,6 +1214,14 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
         }
         symbol_name(&member->symbol, &n, &s);
         switch (member->type.type) {
+        case vt_fixed_array_type:
+            tname_ns = scalar_type_ns(member->type.st, nsc);
+            tname = scalar_type_name(member->type.st);
+            tname_prefix = scalar_type_prefix(member->type.st);
+            fprintf(out->fp,
+                "__%sdefine_struct_scalar_fixed_array_field(%s, %.*s, %s%s, %s%s, %d)\n",
+                nsc, snt.text, n, s, nsc, tname_prefix, tname_ns, tname, member->type.len);
+            break;
         case vt_scalar_type:
             tname_ns = scalar_type_ns(member->type.st, nsc);
             tname = scalar_type_name(member->type.st);

@@ -165,6 +165,11 @@ table Stat {
   count:ushort;
 }
 
+struct FooBar {
+    foo : [float:0x10];
+    bar : [int:10];
+}
+
 // `sorted` attribute new to flatcc 0.6.0, not supported by flatc 1.8.
 // tables with direct or indirect vector content marked as sorted
 // will get a mutable sort operation that recursively sorts all
@@ -180,6 +185,7 @@ table Alt {
   rapunzels:[Fantasy.Rapunzel] (sorted);
   names:[string] (sorted);
   samples:[float32] (sorted);
+  fixed_array: FooBar;
 }
 
 table TestJSONPrefix {

@@ -502,6 +502,47 @@ int union_vector_tests()
     END_TEST();
 }
 
+int fixed_array_tests()
+{
+    BEGIN_TEST(Alt);
+    /* Fixed array */
+
+    TEST(   "{ \"fixed_array\": { \"foo\": [ 1.0, 2.0, 0, 0, 0, 0, 0,"
+            " 0, 0, 0, 0, 0, 0, 0, 0, 16.0],"
+            " \"bar\": [ 100, 0, 0, 0, 0, 0, 0, 0, 0, 1000] }}",
+            "{\"fixed_array\":{\"foo\":[1,2,0,0,0,0,0,"
+            "0,0,0,0,0,0,0,0,16],"
+            "\"bar\":[100,0,0,0,0,0,0,0,0,1000]}}");
+
+    TEST_FLAGS(flatcc_json_parser_f_skip_array_overflow, 0,
+            "{ \"fixed_array\": { \"foo\": [ 1.0, 2.0, 0, 0, 0, 0, 0,"
+            " 0, 0, 0, 0, 0, 0, 0, 0, 16.0, 99],"
+            " \"bar\": [ 100, 0, 0, 0, 0, 0, 0, 0, 0, 1000, 99] }}",
+            "{\"fixed_array\":{\"foo\":[1,2,0,0,0,0,0,"
+            "0,0,0,0,0,0,0,0,16],"
+            "\"bar\":[100,0,0,0,0,0,0,0,0,1000]}}");
+
+    TEST_FLAGS(flatcc_json_parser_f_pad_array_underflow, 0,
+            "{ \"fixed_array\": { \"foo\": [ 1.0, 2.0 ],"
+            " \"bar\": [ 100 ] }}",
+            "{\"fixed_array\":{\"foo\":[1,2,0,0,0,0,0,"
+            "0,0,0,0,0,0,0,0,0],"
+            "\"bar\":[100,0,0,0,0,0,0,0,0,0]}}");
+
+    TEST_ERROR(
+            "{ \"fixed_array\": { \"foo\": [ 1.0, 2.0, 0, 0, 0, 0, 0,"
+            " 0, 0, 0, 0, 0, 0, 0, 0, 16.0, 99],"
+            " \"bar\": [ 100, 0, 0, 0, 0, 0, 0, 0, 0, 1000, 99] }}",
+            flatcc_json_parser_error_array_overflow);
+
+    TEST_ERROR(
+            "{ \"fixed_array\": { \"foo\": [ 1.0, 2.0 ],"
+            " \"bar\": [ 100 ] }}",
+            flatcc_json_parser_error_array_underflow);
+
+    END_TEST();
+}
+
 /*
  * Here we cover some border cases around unions and flag
  * enumerations, and nested buffers.
@@ -517,6 +558,7 @@ int main()
     ret |= edge_case_tests();
     ret |= error_case_tests();
     ret |= union_vector_tests();
+    ret |= fixed_array_tests();
     ret |= base64_tests();
     ret |= mixed_type_union_tests();
 

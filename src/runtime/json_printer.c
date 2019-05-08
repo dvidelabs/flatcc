@@ -451,6 +451,37 @@ void flatcc_json_printer_ ## TN ## _struct_field(flatcc_json_printer_t *ctx,\
     ctx->p += print_ ## TN (x, ctx->p);                                     \
 }
 
+#define __define_print_scalar_array_struct_field(TN, T)                     \
+void flatcc_json_printer_ ## TN ## _array_struct_field(                     \
+        flatcc_json_printer_t *ctx,                                         \
+        int index, const void *p, size_t offset,                            \
+        const char *name, int len, size_t count)                            \
+{                                                                           \
+    p = (void *)((size_t)p + offset);                                       \
+    if (index) {                                                            \
+        print_char(',');                                                    \
+    }                                                                       \
+    print_name(ctx, name, len);                                             \
+    print_start('[');                                                       \
+    if (count) {                                                            \
+        print_nl();                                                         \
+        ctx->p += print_ ## TN (                                            \
+                flatbuffers_ ## TN ## _read_from_pe(p),                     \
+                ctx->p);                                                    \
+        p = (void *)((size_t)p + sizeof(T));                                \
+        --count;                                                            \
+    }                                                                       \
+    while (count--) {                                                       \
+        print_char(',');                                                    \
+        print_nl();                                                         \
+        ctx->p += print_ ## TN (                                            \
+                flatbuffers_ ## TN ## _read_from_pe(p),                     \
+                ctx->p);                                                    \
+        p = (void *)((size_t)p + sizeof(T));                                \
+    }                                                                       \
+    print_end(']');                                                         \
+}
+
 #define __define_print_enum_struct_field(TN, T)                             \
 void flatcc_json_printer_ ## TN ## _enum_struct_field(                      \
         flatcc_json_printer_t *ctx,                                         \
@@ -692,6 +723,18 @@ __define_print_scalar_struct_field(int64, int64_t)
 __define_print_scalar_struct_field(bool, flatbuffers_bool_t)
 __define_print_scalar_struct_field(float, float)
 __define_print_scalar_struct_field(double, double)
+
+__define_print_scalar_array_struct_field(uint8, uint8_t)
+__define_print_scalar_array_struct_field(uint16, uint16_t)
+__define_print_scalar_array_struct_field(uint32, uint32_t)
+__define_print_scalar_array_struct_field(uint64, uint64_t)
+__define_print_scalar_array_struct_field(int8, int8_t)
+__define_print_scalar_array_struct_field(int16, int16_t)
+__define_print_scalar_array_struct_field(int32, int32_t)
+__define_print_scalar_array_struct_field(int64, int64_t)
+__define_print_scalar_array_struct_field(bool, flatbuffers_bool_t)
+__define_print_scalar_array_struct_field(float, float)
+__define_print_scalar_array_struct_field(double, double)
 
 __define_print_enum_struct_field(uint8, uint8_t)
 __define_print_enum_struct_field(uint16, uint16_t)

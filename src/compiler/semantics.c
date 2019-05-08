@@ -520,6 +520,8 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
         }
         member = (fb_member_t *)sym;
         switch (member->type.type) {
+        case vt_fixed_array_type:
+            /* -fallthrough */
         case vt_scalar_type:
             t = member->type.t;
             member->type.st = map_scalar_token_type(t);
@@ -529,7 +531,7 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
                 return -1;
             }
             member->align = (uint16_t)size;
-            member->size = size;
+            member->size = size * member->type.len;
             break;
         case vt_compound_type_ref:
             /* Enums might not be valid, but then it would be detected earlier. */
@@ -716,10 +718,21 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
                 key_ok = 0;
             }
             break;
+        case vt_fixed_array_string_type:
+            error_sym(P, sym, "fixed size arrays cannot have string elements");
+            member->type.type = vt_invalid;
+            return -1;
+        case vt_fixed_array_type_ref:
+            error_sym(P, sym, "fixed size arrays with symbolic names not supported");
+            member->type.type = vt_invalid;
+            return -1;
+        case vt_fixed_array_type:
+            key_ok = 0;
+            break;
         case vt_scalar_type:
             break;
         default:
-            error_sym(P, sym, "struct member member can only be of struct or scalar type");
+            error_sym(P, sym, "struct member member can only be of struct scalar, or fixed size scalar array type");
             return -1;
         }
         if (!key_ok) {
@@ -845,8 +858,7 @@ static fb_member_t *align_order_members(fb_parser_t *P, fb_member_t *members)
             break;
         case vt_invalid:
             /* Just to have some sane behavior. */
-            // TODO: old
-            //return original_order_members(P, members);
+            return original_order_members(P, members);
         default:
             k = next->align;
             break;
@@ -1013,6 +1025,12 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                 continue;
             }
             break;
+        case vt_fixed_array_type_ref:
+        case vt_fixed_array_string_type:
+        case vt_fixed_array_type:
+            error_sym(P, sym, "fixed size arrays can only be used with structs");
+            member->type.type = vt_invalid;
+            return -1;
         case vt_string_type:
             /* `size` or `align` not defined - these are implicit uoffset types. */
             key_ok = P->opts.allow_string_key;

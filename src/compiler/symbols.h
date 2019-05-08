@@ -116,7 +116,10 @@ enum fb_value_type {
     vt_type_ref,
     vt_name_ref,
     vt_compound_type_ref,
-    vt_vector_compound_type_ref
+    vt_vector_compound_type_ref,
+    vt_fixed_array_type,
+    vt_fixed_array_type_ref,
+    vt_fixed_array_string_type
 };
 
 struct fb_string {
@@ -138,6 +141,7 @@ struct fb_value {
         fb_ref_t *ref;
     };
     unsigned short type;
+    uint32_t len;
 };
 
 enum fb_kind {

@@ -668,13 +668,63 @@ static void parse_value(fb_parser_t *P, fb_value_t *v, int flags, const char *er
     next(P);
 }
 
+static void parse_fixed_array_size(fb_parser_t *P, fb_token_t *ttype, fb_value_t *v)
+{
+    const char *error_msg = "fixed size array length expected to be an unsigned integer";
+    fb_value_t vsize;
+    fb_token_t *tlen = P->token;
+
+    parse_value(P, &vsize, 0, error_msg);
+    if (vsize.type != vt_uint) {
+        error_tok(P, tlen, error_msg);
+        v->type = vt_invalid;
+        return;
+    }
+    if (v->type == vt_invalid) return;
+    switch (v->type) {
+    case vt_vector_type:
+        v->type = vt_fixed_array_type;
+        break;
+    case vt_vector_type_ref:
+        v->type = vt_fixed_array_type_ref;
+        break;
+    case vt_vector_string_type:
+        v->type = vt_fixed_array_string_type;
+        break;
+    case vt_invalid:
+        return;
+    default:
+        error_tok(P, ttype, "invalid fixed size array type");
+        v->type = vt_invalid;
+        return;
+    }
+    if (vsize.u == 0) {
+        error_tok(P, tlen, "fixed size array length cannot be 0");
+        v->type = vt_invalid;
+        return;
+    }
+    /* 
+     * This allows for safe 64-bit multiplication by elements no
+     * larger than 2^32-1 and also fits into the value len field.
+     * without extra size cost.
+     */
+    if (vsize.u > UINT32_MAX) {
+        error_tok(P, tlen, "fixed size array length overflow");
+        v->type = vt_invalid;
+        return;
+    }
+    v->len = vsize.u;
+}
+
 /* ':' must already be matched */
 static void parse_type(fb_parser_t *P, fb_value_t *v)
 {
     fb_token_t *t = 0;
+    fb_token_t *ttype = 0;
     fb_token_t *t0 = P->token;
     int vector = 0;
 
+    v->len = 1;
     v->type = vt_invalid;
     while ((t = optional(P, '['))) {
         ++vector;
@@ -682,6 +732,7 @@ static void parse_type(fb_parser_t *P, fb_value_t *v)
     if (vector > 1) {
         error_tok(P, t0, "vector type can only be one-dimensional");
     }
+    ttype = P->token;
     switch (P->token->id) {
     case tok_kw_int:
     case tok_kw_bool:
@@ -721,8 +772,11 @@ static void parse_type(fb_parser_t *P, fb_value_t *v)
         error_tok(P, t, "vector type cannot be empty");
         break;
     default:
-        error_tok(P, t, "invalid type specifier");
+        error_tok(P, ttype, "invalid type specifier");
         break;
+    }
+    if (vector && optional(P, ':')) {
+        parse_fixed_array_size(P, ttype, v);
     }
     while (optional(P, ']') && vector--) {
     }

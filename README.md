@@ -46,6 +46,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
   * [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
   * [Base64 Encoding](#base64-encoding)
+  * [Fixed Size Arrays](#fixed-size-arrays)
   * [Generic Parsing and Printing.](#generic-parsing-and-printing)
   * [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
@@ -54,6 +55,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [Types](#types)
 * [Unions](#unions)
   * [Union Scope Resolution](#union-scope-resolution)
+* [Fixed Size Arrays](#fixed-size-arrays-1)
 * [Endianness](#endianness)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
 * [Searching and Sorting](#searching-and-sorting)
@@ -290,7 +292,8 @@ together with a key attribute to chose default key for finding and
 sorting. If primary is absent, the key with the lowest id becomes
 primary. Tables and vectors can now be sorted recursively on primary
 keys. BREAKING: previously the first listed, not the lowest id, would be
-the primary key.
+the primary key. Also introduces fixed size scalar arrays in struct fields
+(struct and enum elements are not supported).
 
 Release 0.5.3 inlcudes various bug fixes (see changelog) and one
 breaking but likely low impact change: BREAKING: 0.5.3 changes behavour
@@ -1445,7 +1448,6 @@ vector field named `manyany` which is a vector of `Any` unions in the
         "manyany": [{"name": "Joe"}, null]
     }
 
-
 ### Base64 Encoding
 
 As of v0.5.0 it is possible to encode and decode a vector of type
@@ -1481,6 +1483,13 @@ possible, but it is recognized that a `(force_align: n)` attribute on
 `[ubyte]` vectors could be useful, but it can also be handled via nested
 flatbuffers which also align data.
 
+### Fixed Size Arrays
+
+Fixed size scalar arrays introduced in 0.6.0 are parsed like ordinary
+vectors but the element count must match exactly to avoid an array
+overflow or underflow error. Two runtime flags allow the parser to zero
+pad missing elements and to skip extra elements without raising an arror.
+Base64 encoding is not supported for fixed size arrays.
 
 ### Generic Parsing and Printing.
 
@@ -1778,6 +1787,32 @@ monster type to an Any union field, and `MyGame.Example.Any.Monster2`, or just
 `Monster2` when assigning the second monster type. C uses the usual enum
 namespace prefixed symbols like `MyGame_Example_Any_Monster2`.
 
+## Fixed Size Arrays
+
+Fixed Size Arrays is a late feature to the FlatBuffers format introduced in
+flatc and flatcc mid 2019. Currently only scalars arrays are supported, and only
+as struct fields. To use fixed size arrays as a table field wrap it in a struct
+first. It would make sense to support struct elements and enum elements, but
+that has not been implemented. Char arrays are more controversial due to
+verification and zero termination and are also not supported. Arrays are aligned
+to the size of the first field and are equivalent to repeating elements within
+the struct.
+
+The schema syntax is:
+
+```
+struct MyStruct {
+    my_array : [float:10];
+}
+```
+
+See `test_fixed_array` in [monster_test.c] for an example of how to work with
+these arrays.
+
+Flatcc opts to allow arbitrary length fixed size arrays but limit the entire
+struct to 2^16-1 bytes. Tables cannot hold larger structs, and the C language
+does not guarantee support for larger structs. Other implementations might have
+different limits on maximum array size. Arrays of 0 length are not permitted.
 
 ## Endianness
 

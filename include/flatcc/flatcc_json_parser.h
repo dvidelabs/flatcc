@@ -27,6 +27,8 @@ enum flatcc_json_parser_flags {
     flatcc_json_parser_f_skip_unknown = 1,
     flatcc_json_parser_f_force_add = 2,
     flatcc_json_parser_f_with_size = 4,
+    flatcc_json_parser_f_skip_array_overflow = 8,
+    flatcc_json_parser_f_pad_array_underflow = 16
 };
 
 #define FLATCC_JSON_PARSE_ERROR_MAP(XX)                                     \
@@ -63,6 +65,8 @@ enum flatcc_json_parser_flags {
     XX(union_vector_length,     "union vector length mismatch")             \
     XX(base64,                  "invalid base64 content")                   \
     XX(base64url,               "invalid base64url content")                \
+    XX(array_underflow,         "fixed size array underflow")               \
+    XX(array_overflow,          "fixed size array overflow")                \
     XX(runtime,                 "runtime error")                            \
     XX(not_supported,           "not supported")
 

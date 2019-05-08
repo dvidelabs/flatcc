@@ -1958,6 +1958,122 @@ failed:
     goto done;
 }
 
+int test_fixed_size_array(flatcc_builder_t *B)
+{
+    void *buffer = 0;
+    size_t size;
+    int ret = -1;
+
+    ns(FooBar_t) *foobar;
+
+    ns(Monster_table_t) mon;
+    ns(Alt_table_t) alt;
+    ns(FooBar_struct_t) fa;
+    ns(FooBar_t) fa2;
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+    ns(Monster_name_create_str(B, "Monolith"));
+    ns(Monster_test_Alt_start(B));
+    foobar = ns(Alt_fixed_array_start(B));
+    foobar->foo[0] = 1.0f;
+    foobar->foo[1] = 2.0f;
+    foobar->foo[15] = 16.0f;
+    foobar->bar[0] = 100;
+    foobar->bar[9] = 1000;
+    ns(Alt_fixed_array_end(B));
+    ns(Monster_test_Alt_end(B));
+
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+
+    if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
+        printf("Monster buffer with fixed size arrays failed to verify, got: %s\n", flatcc_verify_error_string(ret));
+        return -1;
+    }
+    
+    mon = ns(Monster_as_root(buffer));
+    if (ns(Monster_test_type(mon)) != ns(Any_Alt)) {
+        printf("test field does not have Alt type");
+        goto failed;
+    }
+
+    alt = ns(Monster_test(mon));
+    if (!alt || !ns(Alt_fixed_array_is_present(alt))) {
+        printf("fixed array should be present.\n");
+        goto failed;
+    }
+
+    fa = ns(Alt_fixed_array(alt));
+
+    if (ns(FooBar_foo(fa, 0)) != 1.0f || ns(FooBar_bar(fa, 9) != 1000)) {
+        printf("Monster buffer with fixed size arrays has wrong content\n");
+        goto failed;
+    }
+
+    if (ns(FooBar_foo_get(fa, 0)) != 1.0f || ns(FooBar_bar_get(fa, 9) != 1000)) {
+        printf("Monster buffer with fixed size arrays has wrong content\n");
+        goto failed;
+    }
+    if (ns(FooBar_foo_get(fa, 16)) != 0.0f || ns(FooBar_bar_get(fa, 10) != 0)) {
+        printf("Monster buffer with fixed size arrays has bad bounds check\n");
+        goto failed;
+    }
+    if (ns(FooBar_foo_get_len()) != 16 || ns(FooBar_bar_get_len()) != 10) {
+        printf("Fixed size array length not correct\n");
+        goto failed;
+    }
+
+    /*
+     * Note: use ns(FooBar_foo_get_ptr(fa) to get a raw pointer to the
+     * array is not endian safe. Since this is a struct array field,
+     * fa->foo would also provide the raw pointer.
+     */
+    if (flatbuffers_is_native_pe()) {
+        if (ns(FooBar_foo_get_ptr(fa))[1] != 2.0f) {
+            printf("Monster buffer with fixed size arrays get_ptr has wrong content\n");
+            goto failed;
+        }
+    }
+        
+    ns(FooBar_copy_from_pe(&fa2, fa));
+    if (fa2.foo[0] != 1.0f || fa2.foo[1] != 2.0f || fa2.foo[15] != 16.0f ||
+            fa2.bar[0] != 100 || fa2.bar[9] != 1000) {
+        printf("Monster buffer with copied fixed size arrays has wrong content\n");
+        goto failed;
+    }
+    if (fa2.foo[2] != 0.0f || fa2.foo[14] != 0.0f || fa2.bar[1] != 0 || fa2.bar[8] != 0) {
+        printf("Monster buffer with copied fixed size arrays has not been zero padded\n");
+        goto failed;
+    }
+
+    /*
+     * In-place conversion - a nop on little endian platforms.
+     * Cast needed to remove const
+     */
+    ns(FooBar_from_pe)((ns(FooBar_t) *)fa);
+    if (fa->foo[0] != 1.0f || fa->foo[1] != 2.0f || fa->foo[15] != 16.0f ||
+            fa->bar[0] != 100 || fa->bar[9] != 1000) {
+        printf("Monster buffer with in-place converted fixed size arrays has wrong content\n");
+        goto failed;
+    }
+    if (fa->foo[2] != 0.0f || fa->foo[14] != 0.0f || fa->bar[1] != 0 || fa->bar[8] != 0) {
+        printf("Monster buffer with in-place converted fixed size arrays has not been zero padded\n");
+        goto failed;
+    }
+    ret = 0;
+
+done:
+    flatcc_builder_aligned_free(buffer);
+    return ret;
+
+failed:
+    ret = -1;
+    goto done;
+}
+
 #define STR(s) nsc(string_create_str(B, s))
 
 int test_recursive_sort(flatcc_builder_t *B)
@@ -2882,6 +2998,13 @@ int main(int argc, char *argv[])
         return -1;
     }
 #endif
+#if 1
+    if (test_fixed_size_array(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+
 #ifdef FLATBUFFERS_BENCHMARK
     time_monster(B);
     time_struct_buffer(B);
