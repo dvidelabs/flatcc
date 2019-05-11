@@ -506,6 +506,13 @@ void flatcc_json_printer_ ## TN ## _array_struct_field(                     \
         int index, const void *p, size_t offset,                            \
         const char *name, int len, size_t count);
 
+#define __define_print_enum_array_struct_field_proto(TN, T)                 \
+void flatcc_json_printer_ ## TN ## _enum_array_struct_field(                \
+        flatcc_json_printer_t *ctx,                                         \
+        int index, const void *p, size_t offset,                            \
+        const char *name, int len, size_t count,                            \
+        flatcc_json_printer_ ## TN ##_enum_f *pf);
+
 #define __define_print_enum_struct_field_proto(TN, T)                       \
 void flatcc_json_printer_ ## TN ## _enum_struct_field(                      \
         flatcc_json_printer_t *ctx,                                         \
@@ -576,6 +583,16 @@ __define_print_scalar_array_struct_field_proto(int64, int64_t)
 __define_print_scalar_array_struct_field_proto(bool, flatbuffers_bool_t)
 __define_print_scalar_array_struct_field_proto(float, float)
 __define_print_scalar_array_struct_field_proto(double, double)
+
+__define_print_enum_array_struct_field_proto(uint8, uint8_t)
+__define_print_enum_array_struct_field_proto(uint16, uint16_t)
+__define_print_enum_array_struct_field_proto(uint32, uint32_t)
+__define_print_enum_array_struct_field_proto(uint64, uint64_t)
+__define_print_enum_array_struct_field_proto(int8, int8_t)
+__define_print_enum_array_struct_field_proto(int16, int16_t)
+__define_print_enum_array_struct_field_proto(int32, int32_t)
+__define_print_enum_array_struct_field_proto(int64, int64_t)
+__define_print_enum_array_struct_field_proto(bool, flatbuffers_bool_t)
 
 __define_print_enum_struct_field_proto(uint8, uint8_t)
 __define_print_enum_struct_field_proto(uint16, uint16_t)
@@ -652,6 +669,12 @@ void flatcc_json_printer_enum_flag(flatcc_json_printer_t *ctx, int index, const 
 void flatcc_json_printer_embedded_struct_field(flatcc_json_printer_t *ctx,
         int index, const void *p, size_t offset,
         const char *name, int len,
+        flatcc_json_printer_struct_f pf);
+
+void flatcc_json_printer_embedded_struct_array_field(flatcc_json_printer_t *ctx,
+        int index, const void *p, size_t offset,
+        const char *name, int len,
+        size_t size, size_t count,
         flatcc_json_printer_struct_f pf);
 
 void flatcc_json_printer_struct_field(flatcc_json_printer_t *ctx,

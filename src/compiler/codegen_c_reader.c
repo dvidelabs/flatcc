@@ -772,10 +772,10 @@ static void gen_helpers(fb_output_t *out)
     fprintf(out->fp,
         "#define __%sdefine_struct_scalar_fixed_array_field(N, NK, TK, T, L)\\\n"
         "static inline T N ## _ ## NK ## _get(N ## _struct_t t__tmp, size_t i__tmp)\\\n"
-        "{ if (!t__tmp || i__tmp > (L - 1)) return 0;\\\n"
+        "{ if (!t__tmp || i__tmp >= L) return 0;\\\n"
         "  return __%sread_scalar(TK, &(t__tmp->NK[i__tmp])); }\\\n"
         "static inline const T *N ## _ ## NK ## _get_ptr(N ## _struct_t t__tmp)\\\n"
-        "{ return t__tmp ? (t__tmp->NK) : 0; }\\\n"
+        "{ return t__tmp ? t__tmp->NK : 0; }\\\n"
         "static inline size_t N ## _ ## NK ## _get_len() { return L; }",
         nsc, nsc);
     if (!out->opts->cgen_no_conflicts) {
@@ -784,6 +784,20 @@ static void gen_helpers(fb_output_t *out)
             "{ return N ## _ ## NK ## _get(t__tmp, i__tmp); }");
     }
     fprintf(out->fp, "\n");;
+    fprintf(out->fp,
+        "#define __%sdefine_struct_struct_fixed_array_field(N, NK, T, L)\\\n"
+        "static inline T N ## _ ## NK ## _get(N ## _struct_t t__tmp, size_t i__tmp)\\\n"
+        "{ if (!t__tmp || i__tmp >= L) return 0; return t__tmp->NK + i__tmp; }"
+        "static inline T N ## _ ## NK ## _get_ptr(N ## _struct_t t__tmp)\\\n"
+        "{ return t__tmp ? t__tmp->NK : 0; }\\\n"
+        "static inline size_t N ## _ ## NK ## _get_len() { return L; }",
+        nsc);
+    if (!out->opts->cgen_no_conflicts) {
+        fprintf(out->fp,
+            "\\\nstatic inline T N ## _ ## NK(N ## _struct_t t__tmp, size_t i__tmp)\\\n"
+            "{ if (!t__tmp || i__tmp >= L) return 0; return t__tmp->NK + i__tmp; }");
+    }
+    fprintf(out->fp, "\n");
     fprintf(out->fp,
         "#define __%sdefine_struct_scalar_field(N, NK, TK, T)\\\n"
         "static inline T N ## _ ## NK ## _get(N ## _struct_t t__tmp)\\\n"
@@ -1154,6 +1168,18 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                 }
                 fprintf(out->fp, "%.*s;\n", n, s);
                 break;
+            case vt_fixed_array_compound_type_ref:
+                assert(member->type.ct->symbol.kind == fb_is_struct || member->type.ct->symbol.kind == fb_is_enum);
+                kind = member->type.ct->symbol.kind == fb_is_struct ? "" : "enum_";
+                fb_compound_name(member->type.ct, &snref);
+                len = member->type.len;
+                if (do_pad) {
+                    fprintf(out->fp, "    %s_%st ", snref.text, kind);
+                } else {
+                    fprintf(out->fp, "    alignas(%u) %s_%st ", align, snref.text, kind);
+                }
+                fprintf(out->fp, "%.*s[%d];\n", n, s, len);
+                break;
             case vt_compound_type_ref:
                 assert(member->type.ct->symbol.kind == fb_is_struct || member->type.ct->symbol.kind == fb_is_enum);
                 kind = member->type.ct->symbol.kind == fb_is_struct ? "" : "enum_";
@@ -1263,11 +1289,26 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                 current_key_processed = 1;
             }
             break;
+        case vt_fixed_array_compound_type_ref:
+            fb_compound_name(member->type.ct, &snref);
+            switch (member->type.ct->symbol.kind) {
+            case fb_is_enum:
+                fprintf(out->fp,
+                    "__%sdefine_struct_scalar_fixed_array_field(%s, %.*s, %s, %s_enum_t, %d)\n",
+                    nsc, snt.text, n, s, snref.text, snref.text, member->type.len);
+                break;
+            case fb_is_struct:
+                fprintf(out->fp,
+                    "__%sdefine_struct_struct_fixed_array_field(%s, %.*s, %s_struct_t, %d)\n",
+                    nsc, snt.text, n, s, snref.text, member->type.len);
+                break;
+            }
+            break;
+
         case vt_compound_type_ref:
             fb_compound_name(member->type.ct, &snref);
             switch (member->type.ct->symbol.kind) {
             case fb_is_enum:
-                tname_prefix = scalar_type_prefix(member->type.ct->type.st);
                 fprintf(out->fp,
                     "__%sdefine_struct_scalar_field(%s, %.*s, %s, %s_enum_t)\n",
                     nsc, snt.text, n, s, snref.text, snref.text);

@@ -119,7 +119,8 @@ enum fb_value_type {
     vt_vector_compound_type_ref,
     vt_fixed_array_type,
     vt_fixed_array_type_ref,
-    vt_fixed_array_string_type
+    vt_fixed_array_string_type,
+    vt_fixed_array_compound_type_ref
 };
 
 struct fb_string {

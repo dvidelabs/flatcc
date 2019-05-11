@@ -417,6 +417,7 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     int is_base64url = 0;
     int is_nested = 0;
     int is_array = 0;
+    int is_struct_array = 0;
     size_t array_len = 0;
     int st = 0;
     const char *tname_prefix = "n/a", *tname = "n/a"; /* suppress compiler warnigns */
@@ -435,6 +436,7 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     }
 
     switch (member->type.type) {
+    case vt_fixed_array_compound_type_ref:
     case vt_vector_compound_type_ref:
     case vt_compound_type_ref:
         fb_compound_name(member->type.ct, &snref);
@@ -460,8 +462,8 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
         st = member->type.st;
         break;
     case vt_fixed_array_type:
-        is_array = 1;
         is_scalar = 1;
+        is_array = 1;
         array_len = member->type.len;
         st = member->type.st;
         break;
@@ -469,6 +471,14 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
         is_scalar = 1;
         st = member->type.st;
         break;
+    }
+    if (member->type.type == vt_fixed_array_compound_type_ref) {
+        assert(is_struct_container);
+        is_array = 1;
+        array_len = member->type.len;
+        if (is_struct) {
+            is_struct_array = 1;
+        }
     }
     if (is_base64 || is_base64url) {
         /* Even if it is nested, parse it as a regular base64 or base64url encoded vector. */
@@ -527,9 +537,16 @@ repeat_nested:
         }
     }
     if (is_array) {
-        println(out, "size_t count = %d;", array_len);
-        println(out, "%s *base = (%s *)((size_t)struct_base + %"PRIu64");",
-                tname, tname, (uint64_t)member->offset);
+        if (is_scalar) {
+            println(out, "size_t count = %d;", array_len);
+            println(out, "%s *base = (%s *)((size_t)struct_base + %"PRIu64");",
+                    tname, tname, (uint64_t)member->offset);
+        }
+        else {
+            println(out, "size_t count = %d;", array_len);
+            println(out, "void *base = (void *)((size_t)struct_base + %"PRIu64");",
+                    (uint64_t)member->offset);
+        }
     }
     if (is_array || is_vector) {
         println(out, "buf = flatcc_json_parser_array_start(ctx, buf, end, &more);");
@@ -559,9 +576,11 @@ repeat_nested:
     if (is_vector && !is_offset) {
         println(out, "if (!(pval = flatcc_builder_extend_vector(ctx->ctx, 1))) goto failed;");
     }
-    if (is_struct_container && !is_array) {
-        /* `struct_base` is given as argument to struct parsers. */
-        println(out, "pval = (void *)((size_t)struct_base + %"PRIu64");", (uint64_t)member->offset);
+    if (is_struct_container) {
+        if (!is_array) {
+            /* `struct_base` is given as argument to struct parsers. */
+            println(out, "pval = (void *)((size_t)struct_base + %"PRIu64");", (uint64_t)member->offset);
+        }
     } else if (is_struct && !is_vector) {
         /* Same logic as scalars in tables, but scalars must be tested for default. */
         println(out,
@@ -617,7 +636,8 @@ repeat_nested:
         if (is_array) {
             println(out, "if (count) {"); indent();
             println(out, "%s%s_write_to_pe(base, val);", out->nsc, tname_prefix);
-            println(out, "--count, ++base;");
+            println(out, "--count;");
+            println(out, "++base;");
             unindent(); println(out, "} else if (!(ctx->flags & flatcc_json_parser_f_skip_array_overflow)) {"); indent();
             println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_overflow);");
             unindent(); println(out, "}");
@@ -628,7 +648,17 @@ repeat_nested:
             unindent(); println(out, "}");
         }
     } else if (is_struct) {
+        if (is_array) {
+            println(out, "if (count) {"); indent();
+            println(out, "buf = %s_parse_json_struct_inline(ctx, buf, end, base);", snref.text);
+            println(out, "--count;");
+            println(out, "base = (void *)((size_t)base + %"PRIu64");", member->type.ct->size);
+            unindent(); println(out, "} else if (!(ctx->flags & flatcc_json_parser_f_skip_array_overflow)) {"); indent();
+            println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_overflow);");
+            unindent(); println(out, "}");
+        } else {
             println(out, "buf = %s_parse_json_struct_inline(ctx, buf, end, pval);", snref.text);
+        }
     } else if (is_string) {
         println(out, "buf = flatcc_json_parser_build_string(ctx, buf, end, &ref);");
     } else if (is_base64 || is_base64url) {
@@ -684,7 +714,11 @@ repeat_nested:
         println(out, "if (!(ctx->flags & flatcc_json_parser_f_pad_array_underflow)) {"); indent();
         println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_underflow);");
         unindent(); println(out, "}");
-        println(out, "memset(base, 0, count * sizeof(*base));");
+        if (is_scalar) {
+            println(out, "memset(base, 0, count * sizeof(*base));");
+        } else {
+            println(out, "memset(base, 0, count * %"PRIu64");", (uint64_t)member->type.ct->size);
+        }
         unindent(); println(out, "}");
     }
     if (is_nested == 1) {

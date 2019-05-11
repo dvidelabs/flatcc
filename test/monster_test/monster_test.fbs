@@ -165,9 +165,12 @@ table Stat {
   count:ushort;
 }
 
+// fixed size arrays new to flatcc 0.6.0
 struct FooBar {
-    foo : [float:0x10];
-    bar : [int:10];
+    foo:[float:0x10];
+    bar:[int:10];
+    col:[Color:3];
+    tests:[Test:2];
 }
 
 // `sorted` attribute new to flatcc 0.6.0, not supported by flatc 1.8.

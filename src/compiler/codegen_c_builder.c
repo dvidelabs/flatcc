@@ -905,6 +905,7 @@ static int get_total_struct_field_count(fb_compound_type_t *ct)
             continue;
         }
         switch (member->type.type) {
+        /* struct arrays count as 1 but struct fields are expanded */
         case vt_compound_type_ref:
             if (member->type.ct->symbol.kind == fb_is_struct) {
                 count += get_total_struct_field_count(member->type.ct);
@@ -958,6 +959,15 @@ static int gen_builder_struct_args(fb_output_t *out, fb_compound_type_t *ct, int
             continue;
         }
         switch (member->type.type) {
+        case vt_fixed_array_compound_type_ref:
+            gen_comma(out, index, len, is_macro);
+            fb_compound_name(member->type.ct, &snref);
+            if (member->type.ct->symbol.kind == fb_is_struct) {
+                fprintf(out->fp, "const %s_t v%i[%i]", snref.text, index++, (int)member->type.len);
+            } else {
+                fprintf(out->fp, "%s_enum_t v%i[%i]", snref.text, index++, (int)member->type.len);
+            }
+            break;
         case vt_compound_type_ref:
             if (member->type.ct->symbol.kind == fb_is_struct) {
                 index = gen_builder_struct_args(out, member->type.ct, index, len, is_macro);
@@ -1032,6 +1042,25 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
             }
         }
         switch (member->type.type) {
+        case vt_fixed_array_compound_type_ref:
+            len = member->type.len;
+            fb_compound_name(member->type.ct, &snref);
+            if (member->metadata_flags & fb_f_deprecated) {
+                fprintf(out->fp, "__%sstruct_clear_field(p->__deprecated%i)",
+                        nsc, deprecated_index);
+                ++deprecated_index;
+                ++index;
+                continue;
+            }
+            if (from_ptr) {
+                fprintf(out->fp, "%s_array_copy%s(p->%.*s, p2->%.*s, %d)",
+                        snref.text, kind, n, s, n, s, len);
+            } else {
+                fprintf(out->fp, "%s_array_copy%s(p->%.*s, v%i, %d)",
+                        snref.text, kind, n, s, index, len);
+            }
+            ++index;
+            continue;
         case vt_compound_type_ref:
             fb_compound_name(member->type.ct, &snref);
             if (member->type.ct->symbol.kind == fb_is_struct) {
@@ -1099,34 +1128,12 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
                 ++index;
                 continue;
             }
-            switch (member->size == 1 ? no_conversion : conversion) {
-            case convert_from_pe:
-                if (from_ptr) {
-                    fprintf(out->fp, "%s%s_array_copy_from_pe(p->%.*s, p2->%.*s, %d)",
-                            nsc, tprefix, n, s, n, s, len);
-                } else {
-                    fprintf(out->fp, "%s%s_array_copy_from_pe(p->%.*s, v%i, %d)",
-                            nsc, tprefix, n, s, index, len);
-                }
-                break;
-            case convert_to_pe:
-                if (from_ptr) {
-                    fprintf(out->fp, "%s%s_array_copy_to_pe(p->%.*s, p2->%.*s, %d)",
-                            nsc, tprefix, n, s, n, s, len);
-                } else {
-                    fprintf(out->fp, "%s%s_array_copy_to_pe(p->%.*s, v%i, %d)",
-                            nsc, tprefix, n, s, index, len);
-                }
-                break;
-            default:
-                if (from_ptr) {
-                    fprintf(out->fp, "%s%s_array_copy(p->%.*s, p2->%.*s, %d)",
-                            nsc, tprefix, n, s, n, s, len);
-                } else {
-                    fprintf(out->fp, "%s%s_array_copy(p->%.*s, v%i, %d)",
-                            nsc, tprefix, n, s, index, len);
-                }
-                break;
+            if (from_ptr) {
+                fprintf(out->fp, "%s%s_array_copy%s(p->%.*s, p2->%.*s, %d)",
+                        nsc, tprefix, kind, n, s, n, s, len);
+            } else {
+                fprintf(out->fp, "%s%s_array_copy%s(p->%.*s, v%i, %d)",
+                        nsc, tprefix, kind, n, s, index, len);
             }
             ++index;
             break;
@@ -1237,6 +1244,11 @@ static void gen_builder_struct(fb_output_t *out, fb_compound_type_t *ct)
     fprintf(out->fp, "return p; }\n");
     fprintf(out->fp, "__%sbuild_struct(%s, %s, %llu, %u, %s_identifier, %s_type_identifier)\n",
             nsc, nsc, snt.text, llu(ct->size), ct->align, snt.text, snt.text);
+
+    if (ct->size > 0) {
+        fprintf(out->fp, "__%sdefine_fixed_array_primitives(%s, %s, %s_t)\n",
+                nsc, nsc, snt.text, snt.text);
+    }
 }
 
 static int get_create_table_arg_count(fb_compound_type_t *ct)

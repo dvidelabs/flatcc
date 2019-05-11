@@ -1,32 +1,34 @@
 # Builder Interface Reference
 
 <!-- vim-markdown-toc GFM -->
+
 * [Introduction](#introduction)
 * [Size Prefixed Buffers](#size-prefixed-buffers)
 * [Namespaces](#namespaces)
 * [Error Codes](#error-codes)
 * [Endianess](#endianess)
-    * [Deprecated](#deprecated)
+  * [Deprecated](#deprecated)
 * [Buffers](#buffers)
 * [Tables](#tables)
-    * [Adding Fields](#adding-fields)
-    * [Nested Tables](#nested-tables)
+  * [Adding Fields](#adding-fields)
+  * [Nested Tables](#nested-tables)
 * [Packing tables](#packing-tables)
 * [Strings](#strings)
 * [Structs](#structs)
+  * [Fixed Size Arrays in Structs](#fixed-size-arrays-in-structs)
 * [Nested Buffers](#nested-buffers)
 * [Scalars and Enums](#scalars-and-enums)
 * [Vectors](#vectors)
 * [Unions](#unions)
-    * [Union Vectors](#union-vectors)
-    * [Unions of Strings and Structs](#unions-of-strings-and-structs)
+  * [Union Vectors](#union-vectors)
+  * [Unions of Strings and Structs](#unions-of-strings-and-structs)
 * [Error Handling](#error-handling)
 * [Type System Overview](#type-system-overview)
 * [Cloning](#cloning)
 * [Picking](#picking)
 * [Sorting Vectors](#sorting-vectors)
-    * [Dangers of Sorting](#dangers-of-sorting)
-    * [Scanning](#scanning)
+  * [Dangers of Sorting](#dangers-of-sorting)
+  * [Scanning](#scanning)
 * [Example of different interface type users](#example-of-different-interface-type-users)
 * [Special Emitters](#special-emitters)
 
@@ -422,7 +424,7 @@ BREAKING: Prior to flatcc v0.5.3 the create call would use the schema order
 also when fields have id attributes specifying a different order. This
 could break code across versions and did not match the C++ behavior.
 It was also document that the `original_order` attribute affected create
-argument order, but that was incorrect. 
+argument order, but that was incorrect.
 
 NOTE: If the `original_order` attribute is set on a table, the `create`
 implementation adds fields to the table in schema listed order,
@@ -872,6 +874,66 @@ When `Monster_playground` is declared as nested:
 Be aware that `Vec3_t` is for native updates while `Vec3_struct_t` is a const
 pointer to an endian encoded struct used in the reader interface, and actually
 also as source type in the clone operation.
+
+### Fixed Size Arrays in Structs
+
+As of flatcc 0.6.0 it is possible to have fixed size arrays as structs members.
+A fixed size array is equivalent to having a struct field repeated one or more
+times. The schema syntax is `name : [type:count];` similar to an ordinary struct
+field `name : type;`. The type is any type that can ba valid struct field type
+including enums and nested structs. The size cannot be 0 and the overall size is
+limited by the maximum struct size the array is contained within which is
+typically 65535 (2^16-1).
+
+For example, given the schema:
+
+    struct MyStruct {
+      counters:[int:3];
+    }
+    table MyTable {
+      mystruct:MyStruct;
+    }
+
+The table can be created with:
+
+    ns(MyStruct_t) *x;
+    ns(MyTable_start_as_root(B));
+    x = ns(MyTable_mystruct_start(B));
+    x->counters[0] = 1;
+    x->counters[1] = 2;
+    x->counters[2] = 3;
+    ns(MyTable_mystruct_end(B));
+    ns(MyTable_end_as_root(B));
+
+Or with assignment:
+
+    int data[3] = { 1, 2, 3 };
+    ns(MyStruct_t) *x;
+    ns(MyTable_start_as_root(B));
+    x = ns(MyTable_mystruct_start(B));
+    ns(MyStruct_assign(x, data);
+    ns(MyTable_mystruct_end(B));
+    ns(MyTable_end_as_root(B));
+
+To read a struct the pointer to the struct is retrieved first
+
+    int sum;
+    int i;
+    ns(MyTable_table_t) t;
+    ns(MyStruct_struct_t) x;
+
+    t = ns(MyTable_as_root(buf));
+    x = ns(MyTable_mystruct_get());
+    for (sum = 0, i = 0; i < ns(MyStruct_counters_get_len()); ++i) {
+      sum += ns(MyStruct_counters_get(x, 0)) +
+    }
+
+The `_get` suffix can be ommitted in the above if the flatcc `-g` has not
+supplied to reduce the risk of name conflicts, exept of `_get_len`.
+
+Note that it is not possible to have fixed size vectors as part of a table but
+it is possible to wrap such data in a struct, and it is also possible to have
+vectors of structs that contain fixed size arrays.
 
 
 ## Nested Buffers
@@ -1456,7 +1518,7 @@ table and assigns it with the correct type to the field
 `Monster_myvariant_type` and `Monster_myvariant.
 
 
-## Cloning 
+## Cloning
 
 As of flatcc v0.5.2 it is also possible to clone tables, unions,
 vectors of tables, vectors of strings, and vectors of unions.

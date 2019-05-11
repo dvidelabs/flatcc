@@ -533,13 +533,15 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
             member->align = (uint16_t)size;
             member->size = size * member->type.len;
             break;
+        case vt_fixed_array_compound_type_ref:
+            /* -fallthrough */
         case vt_compound_type_ref:
             /* Enums might not be valid, but then it would be detected earlier. */
             if (member->type.ct->symbol.kind == fb_is_enum) {
                 type = member->type.ct;
                 size = type->size;
                 member->align = (uint16_t)size;
-                member->size = size;
+                member->size = member->type.len * type->size;
                 break;
             } else if (member->type.ct->symbol.kind == fb_is_struct) {
                 type = member->type.ct;
@@ -559,7 +561,7 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
                     }
                 }
                 member->align = type->align;
-                member->size = type->size;
+                member->size = member->type.len * type->size;
                 break;
             } else {
                 error_sym(P, sym, "unexpected compound type for field");
@@ -689,6 +691,9 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
         }
         member->metadata_flags = process_metadata(P, member->metadata, allow_flags, knowns);
         switch (member->type.type) {
+        case vt_fixed_array_type_ref:
+            key_ok = 0;
+            /* -fallthrough */
         case vt_type_ref:
             type_sym = lookup_type_reference(P, ct->scope, member->type.ref);
             if (!type_sym) {
@@ -697,11 +702,12 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
                 continue;
             }
             member->type.ct = (fb_compound_type_t*)type_sym;
-            member->type.type = vt_compound_type_ref;
+            member->type.type = member->type.type == vt_fixed_array_type_ref ?
+                vt_fixed_array_compound_type_ref : vt_compound_type_ref;
             if (type_sym->kind != fb_is_struct) {
                 if (P->opts.allow_enum_struct_field) {
                     if (type_sym->kind != fb_is_enum) {
-                        error_sym_2(P, sym, "struct fields can only be scalars, structs, and enums, but has type", type_sym);
+                        error_sym_2(P, sym, "struct fields can only be scalars, structs, and enums, or arrays of these, but has type", type_sym);
                         member->type.type = vt_invalid;
                         return -1;
                     }
@@ -710,7 +716,7 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
                         break;
                     }
                 } else {
-                    error_sym_2(P, sym, "struct fields can only be scalars and structs, but has type", type_sym);
+                    error_sym_2(P, sym, "struct fields can only be scalars and structs, or arrays of these, but has type", type_sym);
                     member->type.type = vt_invalid;
                     return -1;
                 }
@@ -720,10 +726,6 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
             break;
         case vt_fixed_array_string_type:
             error_sym(P, sym, "fixed size arrays cannot have string elements");
-            member->type.type = vt_invalid;
-            return -1;
-        case vt_fixed_array_type_ref:
-            error_sym(P, sym, "fixed size arrays with symbolic names not supported");
             member->type.type = vt_invalid;
             return -1;
         case vt_fixed_array_type:
