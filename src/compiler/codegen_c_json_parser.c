@@ -417,7 +417,6 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     int is_base64url = 0;
     int is_nested = 0;
     int is_array = 0;
-    int is_struct_array = 0;
     size_t array_len = 0;
     int st = 0;
     const char *tname_prefix = "n/a", *tname = "n/a"; /* suppress compiler warnigns */
@@ -476,9 +475,6 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
         assert(is_struct_container);
         is_array = 1;
         array_len = member->type.len;
-        if (is_struct) {
-            is_struct_array = 1;
-        }
     }
     if (is_base64 || is_base64url) {
         /* Even if it is nested, parse it as a regular base64 or base64url encoded vector. */
