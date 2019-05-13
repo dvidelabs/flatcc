@@ -266,6 +266,11 @@ FlatCC supports that a struct can be the root object of a FlatBuffer, but
 most implementations likely won't support this. Structs as root are very
 resource efficient.
 
+FlatCC supports empty structs. These can be useful as a union type or as a table
+field where only presence is of interest but content is not. Empty structs are
+difficult to handle in portable C. Structs that contain empty structs as members
+are not guaranteed to compile with FlatCC generated C code.
+
 
 ## Internals
 
@@ -911,49 +916,47 @@ if not handled carefully.
 This feature can be seen as equivalent to repeating a field of the same type
 multiple times in struct.
 
-Fixed size arrays has been introduced mid 2019 but limited to struct fields of
-scalar type of non-zero length.
+Fixed size array struct fields has been introduced mid 2019.
 
 A fixed size array is somewhat like a vector of fixed length containing inline
-fixed size elements and no size prefix and they are stored inline
-structs. An element can be a struct or a scalar including enums.
+fixed size elements with no stored size header. The element type can be scalars,
+enums and structs but not other fixed size errors (without wrapping them in a
+struct).
 
 An array should not be mistaken for vector as vectors are independent objects
-while arrays are not.
-
-It is not expected that this feature will be supported for table fields or
-unions directly but it is possible via a struct wrapper.
+while arrays are not. Vectors cannot be fixed size. An array can store fixed
+size arrays inline by wrapping them in a struct and the same applies to unions.
 
 The binary format of a fixed size vector of length `n` and type `t` can
 be precisely emulated by created a struct that holds exactly `n` fields
-of type `t`, `n >= 0`. This means that a fixed size array does not
-store any length information in a header and that it is stored inline in
-in structs. Alignment follows the rules of structs rules with arrays having the
-same alignment as their elements and also supports the `force_align` attribute.
+of type `t`, `n > 0`. This means that a fixed size array does not
+store any length information in a header and that it is stored inline within
+a struct. Alignment follows the structs alignment rules with arrays having the
+same alignment as their elements and not their entire size.
 
-Current implementations only support arrays of non-zero length. The maxium
-length is limited by the maximum struct size and / or an implementation imposed
-length limit. Flatcc accepts any array that will fit in struct with a maximum
-size of 2^16-1 by default but can be compiled with a different setting.
+The maximum length is limited by the maximum struct size and / or an
+implementation imposed length limit. Flatcc accepts any array that will fit in
+struct with a maximum size of 2^16-1 by default but can be compiled with a
+different setting. Googles flatc implementation currently enforces a maximum
+element count of 2^16-1.
 
 Assuming the schema compiler computes the correct alignment for the overall
 struct, there is no additonal work in verifying a buffer containing a fixed size
 array because structs are verified based on the outermost structs size and
 alignment without having to inspect its content.
 
-Flatcc currently does not support fixed size arrays containing structs or enums
-but these might be added later. Note that since structs can be empty, it would
-imply that arrays can also be empty even if not zero-length.
+Fixed size arrays are not permitted to be 0-length, but if they were to be defined
+they would enforce alignment according their element alignment and therfore
+could affect the placement of successor elemement and affect the containing
+struct size and alignment. It is not convenient to work with zero-size elements
+in C which is one reason 0-length elements are not supported.
 
-If 0-length arrays are supported, the alignment must still respect the alignment
-of the element type.
-
-Careful: speculative support for fixed length strings which might never be
-supported and with details subject to likely change: A new type `char` is used
-to create fixed length utf8 or ASCII strings that are always zero terminated and
-zeropadded. A [char:4] takes up 5 bytes including a zero termination byte and
-may hold any valid zero terminated ASCII or UTF-8 string of that length. While
-`[char:1]` is a valid type, `char` is not.
+The following example contains speculative support for fixed length strings
+which might never be supported and with details subject to likely change: A new
+type `char` is used to create fixed length utf8 or ASCII strings that are always
+zero terminated and zeropadded. A [char:4] takes up 5 bytes including a zero
+termination byte and may hold any valid zero terminated ASCII or UTF-8 string of
+that length. While `[char:1]` is a valid type, `char` is not.
 
 _Note: the syntax `[string:4]` has been proposed to mean a string of 4
 characters, but it actually means a fixed size vector of 4 offsets to
