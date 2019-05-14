@@ -572,6 +572,12 @@ __define_print_scalar_struct_field_proto(bool, flatbuffers_bool_t)
 __define_print_scalar_struct_field_proto(float, float)
 __define_print_scalar_struct_field_proto(double, double)
 
+/*
+ * char arrays are special as there are no char fields
+ * without arrays and because they are printed as strings.
+ */
+__define_print_scalar_array_struct_field_proto(char, char)
+
 __define_print_scalar_array_struct_field_proto(uint8, uint8_t)
 __define_print_scalar_array_struct_field_proto(uint16, uint16_t)
 __define_print_scalar_array_struct_field_proto(uint32, uint32_t)

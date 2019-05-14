@@ -68,6 +68,9 @@ static inline const char *scalar_type_prefix(fb_scalar_type_t scalar_type)
     case fb_ushort:
         tname = "uint16";
         break;
+    case fb_char:
+        tname = "char";
+        break;
     case fb_ubyte:
         tname = "uint8";
         break;
@@ -112,6 +115,9 @@ static inline const char *scalar_type_name(fb_scalar_type_t scalar_type)
         break;
     case fb_ushort:
         tname = "uint16_t";
+        break;
+    case fb_char:
+        tname = "char";
         break;
     case fb_ubyte:
         tname = "uint8_t";
@@ -158,6 +164,9 @@ static inline const char *scalar_vector_type_name(fb_scalar_type_t scalar_type)
     case fb_ushort:
         tname = "uint16_vec_t";
         break;
+    case fb_char:
+        tname = "char_vec_t";
+        break;
     case fb_ubyte:
         tname = "uint8_vec_t";
         break;
@@ -203,6 +212,9 @@ static inline const char *scalar_cast(fb_scalar_type_t scalar_type)
         break;
     case fb_ushort:
         cast = "UINT16_C";
+        break;
+    case fb_char:
+        cast = "char";
         break;
     case fb_ubyte:
         cast = "UINT8_C";
@@ -275,6 +287,9 @@ static inline const char *scalar_suffix(fb_scalar_type_t scalar_type)
         break;
     case fb_ushort:
         suffix = "U";
+        break;
+    case fb_char:
+        suffix = "";
         break;
     case fb_ubyte:
         suffix = "U";

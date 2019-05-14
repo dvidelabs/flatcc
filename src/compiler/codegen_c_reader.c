@@ -725,6 +725,7 @@ static void gen_helpers(fb_output_t *out)
             nsc, nsc, nsc);
     fprintf(out->fp,
             "__%sdefine_scalar_vector(%sbool, %sbool_t)\n"
+            "__%sdefine_scalar_vector(%schar, char)\n"
             "__%sdefine_scalar_vector(%suint8, uint8_t)\n"
             "__%sdefine_scalar_vector(%sint8, int8_t)\n"
             "__%sdefine_scalar_vector(%suint16, uint16_t)\n"
@@ -736,8 +737,8 @@ static void gen_helpers(fb_output_t *out)
             "__%sdefine_scalar_vector(%sfloat, float)\n"
             "__%sdefine_scalar_vector(%sdouble, double)\n"
             "__%sdefine_scalar_vector(%sunion_type, %sunion_type_t)\n",
-            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
-            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc,
+            nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "static inline size_t %sstring_vec_find(%sstring_vec_t vec, const char *s)\n"
             "__%sfind_by_string_field(__%sidentity, vec, %sstring_vec_at, %sstring_vec_len, s)\n"
@@ -1247,6 +1248,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
             fprintf(out->fp,
                 "__%sdefine_struct_scalar_fixed_array_field(%s, %.*s, %s%s, %s%s, %d)\n",
                 nsc, snt.text, n, s, nsc, tname_prefix, tname_ns, tname, member->type.len);
+            /* TODO: if member->type.st == fb_char add string specific methods. */
             break;
         case vt_scalar_type:
             tname_ns = scalar_type_ns(member->type.st, nsc);

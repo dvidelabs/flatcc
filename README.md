@@ -293,7 +293,8 @@ sorting. If primary is absent, the key with the lowest id becomes
 primary. Tables and vectors can now be sorted recursively on primary
 keys. BREAKING: previously the first listed, not the lowest id, would be
 the primary key. Also introduces fixed size scalar arrays in struct fields
-(struct and enum elements are not supported).
+(struct and enum elements are not supported). Structs support fixed
+size array fields, including char arrays.
 
 Release 0.5.3 inlcudes various bug fixes (see changelog) and one
 breaking but likely low impact change: BREAKING: 0.5.3 changes behavour
@@ -1485,11 +1486,20 @@ flatbuffers which also align data.
 
 ### Fixed Size Arrays
 
-Fixed size scalar arrays introduced in 0.6.0 are parsed like ordinary
-vectors but the element count must match exactly to avoid an array
-overflow or underflow error. Two runtime flags allow the parser to zero
-pad missing elements and to skip extra elements without raising an arror.
-Base64 encoding is not supported for fixed size arrays.
+Fixed size arrays introduced in 0.6.0 allow for structs containing arrays
+of fixed length scalars, structs and chars. Arrays are parsed like vectors
+for of similar type but are zero padded if shorter than expected and fails
+if longer than expected. The flag `reject_array_underflow` will error if an
+array is shorter than expected instead of zero padding. The flag
+`skip_array_overflow` will allow overlong arrays and simply drop extra elements.
+
+Char arrays are parsed like strings and zero padded if short than expected, but
+they are not zero terminated. A string like "hello" will exactly fit into a
+field of type `[char:5]`. Trailing zero characters are not printed, but embedded
+zero characters are. This allows for loss-less roundtrips without having to zero
+pad strings. Note that other arrays are always printed in full. If the flag
+`skip_array_overflow` is set, a string might be truncated in the middle of a
+multi-byte character. This is not checked nor enforced by the verifier.
 
 ### Generic Parsing and Printing.
 

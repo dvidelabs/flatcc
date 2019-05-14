@@ -733,7 +733,7 @@ static void parse_type(fb_parser_t *P, fb_value_t *v)
         error_tok(P, t0, "vector type can only be one-dimensional");
     }
     ttype = P->token;
-    switch (P->token->id) {
+    switch (ttype->id) {
     case tok_kw_int:
     case tok_kw_bool:
     case tok_kw_byte:
@@ -741,6 +741,7 @@ static void parse_type(fb_parser_t *P, fb_value_t *v)
     case tok_kw_uint:
     case tok_kw_float:
     case tok_kw_short:
+    case tok_kw_char:
     case tok_kw_ubyte:
     case tok_kw_ulong:
     case tok_kw_ushort:
@@ -786,6 +787,12 @@ static void parse_type(fb_parser_t *P, fb_value_t *v)
     if ((t = optional(P, ']'))) {
         error_tok_2(P, t, "extra ']' not matching", t0);
         while (optional(P, ']')) {
+        }
+    }
+    if (ttype->id == tok_kw_char && v->type != vt_invalid) {
+        if (v->type != vt_fixed_array_type) {
+            error_tok(P, ttype, "char can only be used as a fixed size array type [char:<n>]");
+            v->type = vt_invalid;
         }
     }
 }

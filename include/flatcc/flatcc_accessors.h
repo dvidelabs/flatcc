@@ -79,6 +79,7 @@ __flatcc_define_integer_accessors(NS ## TN, T, W, E)
 __flatcc_define_real_accessors(NS ## TN, T, W, E)
 
 #define __flatcc_define_basic_scalar_accessors(NS, E)                       \
+__flatcc_define_basic_integer_accessors(NS, char, char, 8, E)               \
 __flatcc_define_basic_integer_accessors(NS, uint8, uint8_t, 8, E)           \
 __flatcc_define_basic_integer_accessors(NS, uint16, uint16_t, 16, E)        \
 __flatcc_define_basic_integer_accessors(NS, uint32, uint32_t, 32, E)        \

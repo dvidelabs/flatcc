@@ -171,6 +171,7 @@ struct FooBar {
     bar:[int:10];
     col:[Color:3];
     tests:[Test:2];
+    text:[char:5];
 }
 
 // `sorted` attribute new to flatcc 0.6.0, not supported by flatc 1.8.

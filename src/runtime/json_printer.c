@@ -194,9 +194,36 @@ static inline void print(flatcc_json_printer_t *ctx, const char *s, size_t n)
     }
 }
 
+static void print_escape(flatcc_json_printer_t *ctx, unsigned char c)
+{
+    unsigned char x;
+
+    print_char('\\');
+    switch (c) {
+    case '"': print_char('\"'); break;
+    case '\\': print_char('\\'); break;
+    case '\t' : print_char('t'); break;
+    case '\f' : print_char('f'); break;
+    case '\r' : print_char('r'); break;
+    case '\n' : print_char('n'); break;
+    case '\b' : print_char('b'); break;
+    default:
+        print_char('u');
+        print_char('0');
+        print_char('0');
+        x = c >> 4;
+        x += x < 10 ? '0' : 'a' - 10;
+        print_char(x);
+        x = c & 15;
+        x += x < 10 ? '0' : 'a' - 10;
+        print_char(x);
+        break;
+    }
+}
+
 /*
  * Even though we know the the string length, we need to scan for escape
- * characters. There may be embedded zeroes. Beause FlatBuffer strings
+ * characters. There may be embedded zeroes. Because FlatBuffer strings
  * are always zero terminated, we assume and optimize for this.
  *
  * We enforce \u00xx for control characters, but not for invalid
@@ -209,45 +236,56 @@ static void print_string(flatcc_json_printer_t *ctx, const char *s, size_t n)
 {
     const char *p = s;
     /* Unsigned is important. */
-    unsigned char c, x;
+    unsigned char c;
     size_t k;
 
     print_char('\"');
     for (;;) {
-        /*
-         */
         c = *p;
         while (c >= 0x20 && c != '\"' && c != '\\') {
             c = *++p;
         }
         k = p - s;
+        /* Even if k == 0, print ensures buffer flush. */
         print(ctx, s, k);
         n -= k;
-        if (n == 0) {
-            break;
-        }
+        if (n == 0) break;
         s += k;
-        print_char('\\');
-        switch (c) {
-        case '"': print_char('\"'); break;
-        case '\\': print_char('\\'); break;
-        case '\t' : print_char('t'); break;
-        case '\f' : print_char('f'); break;
-        case '\r' : print_char('r'); break;
-        case '\n' : print_char('n'); break;
-        case '\b' : print_char('b'); break;
-        default:
-            print_char('u');
-            print_char('0');
-            print_char('0');
-            x = c >> 4;
-            x += x < 10 ? '0' : 'a' - 10;
-            print_char(x);
-            x = c & 15;
-            x += x < 10 ? '0' : 'a' - 10;
-            print_char(x);
-            break;
+        print_escape(ctx, c);
+        ++p;
+        --n;
+        ++s;
+    }
+    print_char('\"');
+}
+
+/*
+ * Similar to print_string, but null termination is not guaranteed, and
+ * trailing nulls are stripped.
+ */
+static void print_char_array(flatcc_json_printer_t *ctx, const char *s, size_t n)
+{
+    const char *p = s;
+    /* Unsigned is important. */
+    unsigned char c;
+    size_t k;
+
+    while (n > 0 && s[n - 1] == '\0') --n;
+
+    print_char('\"');
+    for (;;) {
+        while (n) {
+            c = *p;
+            if (c < 0x20 || c == '\"' || c == '\\') break;
+            ++p;
+            --n;
         }
+        k = p - s;
+        /* Even if k == 0, print ensures buffer flush. */
+        print(ctx, s, k);
+        if (n == 0) break;
+        s += k;
+        print_escape(ctx, c);
         ++p;
         --n;
         ++s;
@@ -449,6 +487,19 @@ void flatcc_json_printer_ ## TN ## _struct_field(flatcc_json_printer_t *ctx,\
     }                                                                       \
     print_name(ctx, name, len);                                             \
     ctx->p += print_ ## TN (x, ctx->p);                                     \
+}
+
+void flatcc_json_printer_char_array_struct_field(
+        flatcc_json_printer_t *ctx,
+        int index, const void *p, size_t offset,
+        const char *name, int len, size_t count)
+{                                                                           
+    p = (void *)((size_t)p + offset);
+    if (index) {
+        print_char(',');
+    }
+    print_name(ctx, name, len);
+    print_char_array(ctx, p, count);
 }
 
 #define __define_print_scalar_array_struct_field(TN, T)                     \

@@ -37,6 +37,7 @@ enum {
     tok_kw_base = LEX_TOK_KW_BASE,
     tok_kw_bool,
     tok_kw_byte,
+    tok_kw_char,
     tok_kw_enum,
     tok_kw_float32,
     tok_kw_float64,
@@ -96,9 +97,19 @@ enum fb_scalar_type {
     fb_byte,
     fb_double,
     fb_float,
+    fb_char,
 };
 
 typedef enum fb_scalar_type fb_scalar_type_t;
+
+static inline size_t sizeof_scalar_type(fb_scalar_type_t st)
+{
+    static const int scalar_type_size[] = {
+        0, 8, 4, 2, 1, 1, 8, 4, 2, 1, 8, 4, 1
+    };
+
+    return scalar_type_size[st];
+}
 
 enum fb_value_type {
     vt_missing = 0,

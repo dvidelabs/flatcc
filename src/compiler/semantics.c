@@ -61,6 +61,8 @@ static fb_scalar_type_t map_scalar_token_type(fb_token_t *t)
     case tok_kw_uint8:
     case tok_kw_ubyte:
         return fb_ubyte;
+    case tok_kw_char:
+        return fb_char;
     case tok_kw_bool:
         return fb_bool;
     case tok_kw_int64:

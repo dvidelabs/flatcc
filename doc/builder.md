@@ -889,6 +889,8 @@ For example, given the schema:
 
     struct MyStruct {
       counters:[int:3];
+      // char is only valid as a fixed size array type
+      name:[char:6];
     }
     table MyTable {
       mystruct:MyStruct;
@@ -902,16 +904,26 @@ The table can be created with:
     x->counters[0] = 1;
     x->counters[1] = 2;
     x->counters[2] = 3;
+    strncpy(x->name, "Kermit", sizeof(x->name));
     ns(MyTable_mystruct_end(B));
     ns(MyTable_end_as_root(B));
 
-Or with assignment:
+Note that char arrays are not zero terminated but they are zero padded, so
+strncpy is exactly the right operation to use when assigning to char arrays,
+at least when they do not contain embedded nulls which is valid.
+Char arrays are expected to be ASCII or UTF-8, but an application may use
+other encodings if this is clear to all users.
+
+With assignment:
 
     int data[3] = { 1, 2, 3 };
     ns(MyStruct_t) *x;
     ns(MyTable_start_as_root(B));
     x = ns(MyTable_mystruct_start(B));
-    ns(MyStruct_assign(x, data);
+    // Careful: the name argument does not use strncpy internally
+    // so the source must be at least the expected length
+    // like other array arguments. Strings can have embedded nulls.
+    ns(MyStruct_assign(x, data, "Kermit");
     ns(MyTable_mystruct_end(B));
     ns(MyTable_end_as_root(B));
 
@@ -919,6 +931,7 @@ To read a struct the pointer to the struct is retrieved first
 
     int sum;
     int i;
+    const char *name;
     ns(MyTable_table_t) t;
     ns(MyStruct_struct_t) x;
 
@@ -926,10 +939,21 @@ To read a struct the pointer to the struct is retrieved first
     x = ns(MyTable_mystruct_get());
     for (sum = 0, i = 0; i < ns(MyStruct_counters_get_len()); ++i) {
       sum += ns(MyStruct_counters_get(x, 0)) +
+      // char arrays are endian neutral, so we can use pointer access.
+      name = ns(MyStruct_name_get_ptr(x);
+      printf("Added counters from %.*s", strnlen(name,
+          ns(MyStruct_name_get_len())));
+      // char arrays can be accessed like other arrays:
+      // ns(MyStruct_name_get(x, i);
     }
 
+An alternative to `strnlen` is strip trailing zeroes which will allow for
+char arrays embedded zeroes, but there is no direct support for this. The JSON
+printer uses this approach to shorten the printed char array string.
+
 The `_get` suffix can be ommitted in the above if the flatcc `-g` has not
-supplied to reduce the risk of name conflicts, exept of `_get_len`.
+supplied to reduce the risk of name conflicts, but not for `_get_len` and
+`_get_ptr`.
 
 Note that it is not possible to have fixed size vectors as part of a table but
 it is possible to wrap such data in a struct, and it is also possible to have

@@ -417,6 +417,7 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     int is_base64url = 0;
     int is_nested = 0;
     int is_array = 0;
+    int is_char_array = 0;
     size_t array_len = 0;
     int st = 0;
     const char *tname_prefix = "n/a", *tname = "n/a"; /* suppress compiler warnigns */
@@ -497,7 +498,11 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
         is_union_vector = 1;
         is_vector = 0;
     }
-
+    if (is_array && is_scalar && st == fb_char) {
+        is_array = 0;
+        is_scalar = 0;
+        is_char_array = 1;
+    }
     if (is_nested == 1) {
         println(out, "if (buf != end && *buf == '[') { /* begin nested */"); indent();
     }
@@ -544,6 +549,11 @@ repeat_nested:
                     (uint64_t)member->offset);
         }
     }
+    if (is_char_array) {
+        println(out, "char *base = (char *)((size_t)struct_base + %"PRIu64");",
+                    (uint64_t)member->offset);
+        println(out, "buf = flatcc_json_parser_char_array(ctx, buf, end, base, %d);", array_len);
+    }
     if (is_array || is_vector) {
         println(out, "buf = flatcc_json_parser_array_start(ctx, buf, end, &more);");
         /* Note that we reuse `more` which is safe because it is updated at the end of the main loop. */
@@ -573,7 +583,7 @@ repeat_nested:
         println(out, "if (!(pval = flatcc_builder_extend_vector(ctx->ctx, 1))) goto failed;");
     }
     if (is_struct_container) {
-        if (!is_array) {
+        if (!is_array && !is_char_array) {
             /* `struct_base` is given as argument to struct parsers. */
             println(out, "pval = (void *)((size_t)struct_base + %"PRIu64");", (uint64_t)member->offset);
         }
@@ -684,7 +694,7 @@ repeat_nested:
             println(out, "buf = flatcc_json_parser_union_type(ctx, buf, end, %"PRIu64", %"PRIu64", h_unions, symbolic_parsers, %s_parse_json_union);",
                 (uint64_t)member->export_index, member->id, snref.text);
         }
-    } else if (!is_vector) {
+    } else if (!is_vector && !is_char_array) {
         gen_panic(out, "internal error: unexpected type for trie member\n");
         return -1;
     }
@@ -707,7 +717,7 @@ repeat_nested:
         println(out, "buf = flatcc_json_parser_array_end(ctx, buf, end, &more);");
         unindent(); println(out, "}");
         println(out, "if (count) {"); indent();
-        println(out, "if (!(ctx->flags & flatcc_json_parser_f_pad_array_underflow)) {"); indent();
+        println(out, "if (ctx->flags & flatcc_json_parser_f_reject_array_underflow) {"); indent();
         println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_underflow);");
         unindent(); println(out, "}");
         if (is_scalar) {

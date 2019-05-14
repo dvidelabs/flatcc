@@ -28,7 +28,7 @@ enum flatcc_json_parser_flags {
     flatcc_json_parser_f_force_add = 2,
     flatcc_json_parser_f_with_size = 4,
     flatcc_json_parser_f_skip_array_overflow = 8,
-    flatcc_json_parser_f_pad_array_underflow = 16
+    flatcc_json_parser_f_reject_array_underflow = 16
 };
 
 #define FLATCC_JSON_PARSE_ERROR_MAP(XX)                                     \
@@ -163,6 +163,17 @@ static inline const char *flatcc_json_parser_string_end(flatcc_json_parser_t *ct
     }
     return ++buf;
 }
+
+/*
+ * Parse a string as a fixed size char array as `s` with length `n`.
+ * and raise errors according to overflow/underflow runtime flags. Zero
+ * and truncate as needed. A trailing zero is not inserted if the input
+ * is at least the same length as the char array.
+ * 
+ * Runtime flags: `skip_array_overflow`, `pad_array_underflow`.
+ */
+const char *flatcc_json_parser_char_array(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, char *s, size_t n);
 
 /*
  * Creates a string. Returns *ref == 0 on unrecoverable error or

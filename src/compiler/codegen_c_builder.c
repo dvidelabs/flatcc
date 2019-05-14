@@ -792,6 +792,8 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "\n",
         nsc, nsc, nsc);
 
+    fprintf(out->fp, "#define __%schar_formal_args , char v0\n", nsc);
+    fprintf(out->fp, "#define __%schar_call_args , v0\n", nsc);
     fprintf(out->fp, "#define __%suint8_formal_args , uint8_t v0\n", nsc);
     fprintf(out->fp, "#define __%suint8_call_args , v0\n", nsc);
     fprintf(out->fp, "#define __%sint8_formal_args , int8_t v0\n", nsc);
@@ -815,6 +817,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
     fprintf(out->fp, "#define __%sdouble_formal_args , double v0\n", nsc);
     fprintf(out->fp, "#define __%sdouble_call_args , v0\n", nsc);
     fprintf(out->fp, "\n");
+    fprintf(out->fp, "__%sbuild_scalar(%s, %schar, char)\n", nsc, nsc, nsc);
     fprintf(out->fp, "__%sbuild_scalar(%s, %suint8, uint8_t)\n", nsc, nsc, nsc);
     fprintf(out->fp, "__%sbuild_scalar(%s, %sint8, int8_t)\n", nsc, nsc, nsc);
     fprintf(out->fp, "__%sbuild_scalar(%s, %sbool, %sbool_t)\n", nsc, nsc, nsc, nsc);

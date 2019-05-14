@@ -1960,6 +1960,7 @@ failed:
 
 int verify_fixed_size_array(const void *buffer, size_t size)
 {
+    const char *text;
     ns(Monster_table_t) mon;
     ns(Alt_table_t) alt;
     ns(FooBar_struct_t) fa;
@@ -2010,10 +2011,19 @@ int verify_fixed_size_array(const void *buffer, size_t size)
         return -1;
     }
     if (ns(Test_a_get(t0)) != 0 || ns(Test_b_get(t0)) != 4) {
-        printf("Monster buffer with fixed size struct arrays has wrong first element member content");
+        printf("Monster buffer with fixed size struct arrays has wrong first element member content\n");
+        return -1;
     }
     if (ns(Test_a_get(t1)) != 1 || ns(Test_b_get(t1)) != 2) {
-        printf("Monster buffer with fixed size struct arrays has wrong second element member content");
+        printf("Monster buffer with fixed size struct arrays has wrong second element member content\n");
+        return -1;
+    }
+
+    /* Endian safe because char arrays are endian neutral. */
+    text = ns(FooBar_text_get_ptr(fa));
+    if (strncmp(text, "hello", ns(FooBar_text_get_len())) != 0) {
+        printf("Monster buffer with fixed size array field has wrong text\n");
+        return -1;
     }
 
     /*
@@ -2083,6 +2093,8 @@ int test_fixed_size_array(flatcc_builder_t *B)
     foobar->tests[0].b = 4;
     foobar->tests[1].a = 1;
     foobar->tests[1].b = 2;
+    strncpy(foobar->text, "hello, world", ns(FooBar_text_get_len()));
+    // or strncopy(foobar->text, "hello, world", sizeof(foobar->text));
     ns(Alt_fixed_array_end(B));
     ns(Monster_test_Alt_end(B));
 
@@ -2099,7 +2111,7 @@ int test_fixed_size_array(flatcc_builder_t *B)
     ns(Monster_name_create_str(B, "Monolith"));
     ns(Monster_test_Alt_start(B));
     foobar = ns(Alt_fixed_array_start(B));
-    ns(FooBar_assign)(foobar, foo_input, bar_input, col_input, tests_input);
+    ns(FooBar_assign)(foobar, foo_input, bar_input, col_input, tests_input, "hello");
     ns(Alt_fixed_array_end(B));
     ns(Monster_test_Alt_end(B));
 

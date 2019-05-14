@@ -83,6 +83,8 @@ int fb_coerce_scalar_type(fb_parser_t *P, fb_symbol_t *sym, fb_scalar_type_t st,
             return -1;
         }
         return 0;
+    case fb_char:
+        /* Although C treats char as signed by default, flatcc treats it as unsigned. */
     case fb_ubyte:
         if (value->type != vt_uint) {
             error_sym(P, sym, "8-bit unsigned byte type only accepts unsigned integers");
