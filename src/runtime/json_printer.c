@@ -267,7 +267,7 @@ static void print_char_array(flatcc_json_printer_t *ctx, const char *s, size_t n
 {
     const char *p = s;
     /* Unsigned is important. */
-    unsigned char c;
+    unsigned char c = 0;
     size_t k;
 
     while (n > 0 && s[n - 1] == '\0') --n;
