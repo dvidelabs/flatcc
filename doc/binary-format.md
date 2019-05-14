@@ -12,6 +12,7 @@
   * [Format Internal Types](#format-internal-types)
   * [Scalars](#scalars)
   * [Structs](#structs)
+  * [Fixed Size Arrays](#fixed-size-arrays)
 * [Internals](#internals)
 * [Type Hashes](#type-hashes)
   * [Conflicts](#conflicts)
@@ -25,7 +26,7 @@
 * [Verification](#verification)
 * [Risks](#risks)
 * [Nested FlatBuffers](#nested-flatbuffers)
-* [Fixed Size Arrays](#fixed-size-arrays)
+* [Fixed Size Arrays](#fixed-size-arrays-1)
 * [Big Endian FlatBuffers](#big-endian-flatbuffers)
 * [StructBuffers](#structbuffers)
 * [StreamBuffers](#streambuffers)
@@ -243,15 +244,13 @@ Another special case is enumerations of type boolean which may not be
 widely supported, but possible. The binary format is not concerned with
 this distinction because a boolean is just an integer at this level.
 
-
 ### Structs
 
-A struct is a fixed sized block of a fixed number of fields in a
-specific order defined by a schema. A field is either a scalar or
-another struct. A struct cannot contain fields that contain itself
-directly or indirectly. A struct is self-contained and has no
-references. A struct can be empty (note that this does not map cleanly
-to C structs).
+A struct is a fixed sized block of a fixed number of fields in a specific order
+defined by a schema. A field is either a scalar, another struct or a fixed size
+array of these, or a fixed size char array. A struct cannot contain fields that
+contain itself directly or indirectly. A struct is self-contained and has no
+references. A struct cannot be empty.
 
 A schema cannot change the layout of a struct without breaking binary
 compatibility, unlike tables.
@@ -266,10 +265,13 @@ FlatCC supports that a struct can be the root object of a FlatBuffer, but
 most implementations likely won't support this. Structs as root are very
 resource efficient.
 
-FlatCC supports empty structs. These can be useful as a union type or as a table
-field where only presence is of interest but content is not. Empty structs are
-difficult to handle in portable C. Structs that contain empty structs as members
-are not guaranteed to compile with FlatCC generated C code.
+### Fixed Size Arrays
+
+These only exists within structs are are identical to stacking multiple
+non-array fields of the same type after each other in a compact notation with
+similar alignment rules. Additionally arrays can be of char type to have a kind
+of fixed size string. The char type is not used outside of char arrays. A fixed
+size array can contain a struct that contains one more fixed size arrays.
 
 
 ## Internals
@@ -1318,7 +1320,7 @@ the example above.
 Mixins also places some constraints on the involved types. It is not
 possible to mix in the same type twice because names would conflict and
 it would no longer be possible to do trivially cast a table or struct
-to one of its kinds. An empty table or struct could be mixed in to
+to one of its kinds. An empty table could be mixed in to
 provide type information but such a type can also only be added once.
 
 Mixing in types introduces the risk of name conflicts. It is not valid
