@@ -945,25 +945,19 @@ struct, there is no additonal work in verifying a buffer containing a fixed size
 array because structs are verified based on the outermost structs size and
 alignment without having to inspect its content.
 
-Fixed size arrays are not permitted to be 0-length, but if they were to be defined
-they would enforce alignment according their element alignment and therfore
-could affect the placement of successor elemement and affect the containing
-struct size and alignment. It is not convenient to work with zero-size elements
-in C which is one reason 0-length elements are not supported.
-
-The following example contains speculative support for fixed length strings
-which might never be supported and with details subject to likely change: A new
-type `char` is used to create fixed length utf8 or ASCII strings that are always
-zero terminated and zeropadded. A [char:4] takes up 5 bytes including a zero
-termination byte and may hold any valid zero terminated ASCII or UTF-8 string of
-that length. While `[char:1]` is a valid type, `char` is not.
-
-_Note: the syntax `[string:4]` has been proposed to mean a string of 4
-characters, but it actually means a fixed size vector of 4 offsets to
-variable length strings which is not supported._
+Fixed size arrays also support char arrays. The `char` type is similar to the
+`ubyte` or `uint8` type but a char can only exist as a char array like
+`x:[char:10]`. Chars cannot exist as a standalone struct or table field, and
+also not as a vector element. Char arrays are like strings, but they contain no
+length information and no zero terminator. They are expected to be endian
+neutral and to contain ASCII or UTF-8 encoded text zero padded up the array
+size. Text can contain embedded nulls and other control characters. In JSON form
+the text is printed with embedded null characters but stripped from trailing
+null characters and a parser will padd the missing null characters.
 
 
-The following example
+The following example uses fixed size arrays. The example is followed by the
+equivalent representation without such arrays.
 
     struct Basics {
         int a;
@@ -984,9 +978,7 @@ The following example
         m: [MyStruct:2];
     }
 
-
-can replace MyStruct with the binary equivalent (but different
-codegeneration):
+Equivalent representation:
 
     struct MyStructEquivalent {
         x: int;
@@ -1193,7 +1185,6 @@ implemented differently. Be warned.
 
 `force_align` attribute supported on fields of structs, scalars and
 and vectors of fixed size elements.
-
 
 ### Mixins
 
