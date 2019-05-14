@@ -1006,8 +1006,8 @@ static void gen_forward_decl(fb_output_t *out, fb_compound_type_t *ct)
     fb_compound_name(ct, &snt);
     if (ct->symbol.kind == fb_is_struct) {
         if (ct->size == 0) {
-            fprintf(out->fp, "typedef void %s_t; /* empty struct */\n",
-                    snt.text);
+            gen_panic(out, "internal error: unexpected empty struct");
+            return;
         } else {
             fprintf(out->fp, "typedef struct %s %s_t;\n",
                     snt.text, snt.text);
@@ -1083,26 +1083,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
     fb_compound_name(ct, &snt);
     print_doc(out, "", ct->doc);
     if (ct->size == 0) {
-        /*
-         * This implies that sizeof(typename) is not valid, where
-         * non-std gcc extension might return 0, or 1 of an empty
-         * struct. All copy_from/to etc. operations on this type
-         * just returns a pointer without using sizeof.
-         *
-         * We ought to define size as a define so it can be used in a
-         * switch, but that does not mesth with flatcc_accessors.h
-         * macros, so we use an inline function. Users would normally
-         * use sizeof which will break for empty which is ok, and
-         * internal operations can use size() where generic behavior is
-         * required.
-         */
-        fprintf(out->fp, "/* empty struct already typedef'ed as void since this not permitted in std. C: struct %s {}; */\n", snt.text);
-        fprintf(out->fp,
-                "static inline const %s_t *%s__const_ptr_add(const %s_t *p, size_t i) { return p; }\n", snt.text, snt.text, snt.text);
-        fprintf(out->fp,
-                "static inline %s_t *%s__ptr_add(%s_t *p, size_t i) { return p; }\n", snt.text, snt.text, snt.text);
-        fprintf(out->fp,
-                "static inline %s_struct_t %s_vec_at(%s_vec_t vec, size_t i) { return vec; }\n", snt.text, snt.text, snt.text);
+        gen_panic(out, "internal error: unexpected empty struct");
     } else {
         if (do_pad) {
             fprintf(out->fp, "#pragma pack(1)\n");
@@ -1119,9 +1100,6 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
          * this problem. It shouldn't strictly be necessary to add padding
          * fields, but compilers might not support padding above 16 bytes,
          * so we do that as a precaution with an optional compiler flag.
-         *
-         * It is unclear how to align empty structs without padding but it
-         * shouldn't really matter since not field is accessed then.
          */
         fprintf(out->fp, "struct %s {\n", snt.text);
         for (sym = ct->members; sym; sym = sym->link) {

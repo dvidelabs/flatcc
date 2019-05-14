@@ -610,6 +610,11 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
     /* Add trailing padding if necessary. */
     ct->size = fb_align(ct->size, ct->align);
 
+    if (ct->size == 0) {
+        error_sym(P, &ct->symbol, "struct cannot be empty");
+        return -1;
+    }
+
     ct->symbol.flags |= fb_circular_closed;
     ct->symbol.flags &= ~fb_circular_open;
     ct->order = P->schema.ordered_structs;

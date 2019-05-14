@@ -294,7 +294,8 @@ primary. Tables and vectors can now be sorted recursively on primary
 keys. BREAKING: previously the first listed, not the lowest id, would be
 the primary key. Also introduces fixed size scalar arrays in struct fields
 (struct and enum elements are not supported). Structs support fixed
-size array fields, including char arrays.
+size array fields, including char arrays. Empty structs never fully worked
+and are no longer supported, they are also no longer supported by flatc.
 
 Release 0.5.3 inlcudes various bug fixes (see changelog) and one
 breaking but likely low impact change: BREAKING: 0.5.3 changes behavour

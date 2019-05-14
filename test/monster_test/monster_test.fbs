@@ -3,7 +3,7 @@
 include "attributes.fbs";
 include "include_test1.fbs";
 
-struct InGlobalNamespace {}
+struct InGlobalNamespace { unused: byte; }
 
 namespace MyGame;
 
@@ -112,9 +112,6 @@ union Any {
 
 struct Test { a:short; b:byte; }
 
-struct emptystruct {}
-table emptytable {}
-table with_emptystruct { empty: emptystruct; }
 enum notemptyenum:int { x}
 
 table TestSimpleTableWithEnum (csharp_partial) {

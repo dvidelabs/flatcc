@@ -307,154 +307,6 @@ done:
     return ret;
 }
 
-/*
- * C standard does not provide support for empty structs,
- * but they do exist in FlatBuffers. We can use most operations
- * but we cannot declare an instance of not can we take the size of.
- * The mytype_size() funciton is provided and returns 0 for empty
- * structs.
- *
- * GCC provides support for empty structs, but it isn't portable,
- * and compilers may define sizeof such structs differently.
- */
-
-int verify_table_with_emptystruct(void *buffer)
-{
-    ns(with_emptystruct_table_t) withempty;
-    const ns(emptystruct_t *) empty;
-
-    withempty = ns(with_emptystruct_as_root(buffer));
-    if (!withempty) {
-        printf("table with emptystruct not available\n");
-        return -1;
-    }
-    empty = ns(with_emptystruct_empty)(withempty);
-    if (!empty) {
-        printf("empty member not available\n");
-        return -1;
-    }
-    // sizeof empty won't compile since it is a void.
-    //if (sizeof(*empty)) {
-    if (ns(emptystruct__size())) {
-        printf("empty isn't really empty\n");
-        return -1;
-    }
-    return 0;
-}
-
-int test_table_with_emptystruct(flatcc_builder_t *B)
-{
-    int ret;
-    ns(emptystruct_t) *empty = 0; /* empty structs cannot instantiated. */
-    void *buffer;
-    size_t size;
-
-    flatcc_builder_reset(B);
-
-    ns(with_emptystruct_create_as_root)(B, empty);
-
-    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
-
-    /*
-     * We should expect an empty table with a vtable holding
-     * a single entry pointing to the end of the table.
-     * We could also drop the entry from the vtable, but then what
-     * would be the point of having an empty struct at all? Here
-     * we can use it as a cheap presence flag.
-     */
-    hexdump("table with empty struct", buffer, size, stderr);
-    ret = verify_table_with_emptystruct(buffer);
-    flatcc_builder_aligned_free(buffer);
-
-    return ret;
-}
-
-int test_typed_table_with_emptystruct(flatcc_builder_t *B)
-{
-    int ret = 0;
-    ns(emptystruct_t) *empty = 0; /* empty structs cannot instantiated. */
-    void *buffer;
-    size_t size;
-
-    flatcc_builder_reset(B);
-
-    ns(with_emptystruct_create_as_typed_root(B, empty));
-
-    buffer = flatcc_builder_get_direct_buffer(B, &size);
-
-    /*
-     * We should expect an empty table with a vtable holding
-     * a single entry pointing to the end of the table.
-     * We could also drop the entry from the vtable, but then what
-     * would be the point of having an empty struct at all? Here
-     * we can use it as a cheap presence flag.
-     */
-    hexdump("typed table with empty struct", buffer, size, stderr);
-    if (flatcc_verify_ok != ns(with_emptystruct_verify_as_root_with_identifier(buffer, size, ns(with_emptystruct_type_identifier)))) {
-        printf("explicit verify_as_root failed\n");
-        return -1;
-    }
-    if (flatcc_verify_ok != ns(with_emptystruct_verify_as_typed_root(buffer, size))) {
-        printf("typed verify_as_root failed\n");
-        return -1;
-    }
-    if (flatcc_verify_ok != ns(with_emptystruct_verify_as_root_with_type_hash(buffer, size, ns(with_emptystruct_type_hash)))) {
-        printf("verify_as_root_with_type_hash failed\n");
-        return -1;
-    }
-#if 0
-    flatcc_builder_reset(B);
-    ns(with_emptystruct_start_as_typed_root(B));
-    ns(with_emptystruct_end_as_typed_root(B));
-    buffer = flatcc_builder_get_direct_buffer(B, &size);
-#endif
-    if (!buffer) {
-        printf("failed to create buffer\n");
-        return -1;
-    }
-    if (!flatbuffers_has_type_hash(buffer, ns(with_emptystruct_type_hash))) {
-        printf("has_type failed\n");
-        return -1;
-    }
-    if (!flatbuffers_has_type_hash(buffer, 0)) {
-        printf("null type failed\n");
-        return -1;
-    }
-    if (flatbuffers_has_type_hash(buffer, 1)) {
-        printf("wrong has type unexpected succeeed\n");
-        return -1;
-    }
-    if (!flatbuffers_has_identifier(buffer, 0)) {
-        printf("has identifier failed for null id\n");
-        return -1;
-    }
-    if (!flatbuffers_has_identifier(buffer, "\xb6\x37\xdd\xb0")) {
-        printf("has identifier failed for explicit string\n");
-        return -1;
-    }
-    if (ns(with_emptystruct_as_root(buffer))) {
-        printf("as_root unexpctedly succeeded\n");
-        return -1;
-    }
-    if (ns(with_emptystruct_as_root_with_type_hash(buffer, 1))) {
-        printf("with wrong type unexptedly succeeded\n");
-        return -1;
-    }
-    if (!ns(with_emptystruct_as_root_with_identifier(buffer, ns(with_emptystruct_type_identifier)))) {
-        printf("as_root_with_identifier failed to match type_identifier\n");
-        return -1;
-    }
-    if (!ns(with_emptystruct_as_typed_root(buffer))) {
-        printf("as_typed_root_failed\n");
-        return -1;
-    }
-    if (!ns(with_emptystruct_as_root_with_type_hash(buffer, 0))) {
-        printf("with ignored type failed\n");
-        return -1;
-    }
-    return ret;
-}
-
 int verify_monster(void *buffer)
 {
     ns(Monster_table_t) monster, mon, mon2;
@@ -2900,12 +2752,6 @@ int main(int argc, char *argv[])
     printf("running debug monster test\n");
 #endif
 #if 1
-    if (test_table_with_emptystruct(B)) {
-        printf("TEST FAILED\n");
-        return -1;
-    }
-#endif
-#if 1
     if (test_enums(B)) {
         printf("TEST FAILED\n");
         return -1;
@@ -2943,12 +2789,6 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_typed_empty_monster(B)) {
-        printf("TEST FAILED\n");
-        return -1;
-    }
-#endif
-#if 1
-    if (test_typed_table_with_emptystruct(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
