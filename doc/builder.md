@@ -932,6 +932,7 @@ To read a struct the pointer to the struct is retrieved first
     int sum;
     int i;
     const char *name;
+    size_t name_len;
     ns(MyTable_table_t) t;
     ns(MyStruct_struct_t) x;
 
@@ -941,8 +942,8 @@ To read a struct the pointer to the struct is retrieved first
       sum += ns(MyStruct_counters_get(x, 0)) +
       // char arrays are endian neutral, so we can use pointer access.
       name = ns(MyStruct_name_get_ptr(x);
-      printf("Added counters from %.*s", strnlen(name,
-          ns(MyStruct_name_get_len())));
+      name_len = strnlen(name, ns(MyStruct_name_get_len()));
+      printf("Added counters from %.*s", name_len, name);
       // char arrays can be accessed like other arrays:
       // ns(MyStruct_name_get(x, i);
     }
