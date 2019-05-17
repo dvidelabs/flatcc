@@ -994,17 +994,11 @@ Equivalent representation:
         name2: ubyte;
         name3: ubyte;
         name4: ubyte;
-        x2: int;
-        z21: short;
-        z22: short;
-        z23: short;
-        y2: float;
-        wa21: int;
-        wa22: int;
-        name21: ubyte;
-        name22: ubyte;
-        name23: ubyte;
-        name24: ubyte;
+    }
+
+    struct MyStructArrayEquivalent {
+        s1: MyStructEquivalent;
+        s2: MyStructEquivalent;
     }
 
     struct tEquivalent {
@@ -1014,7 +1008,7 @@ Equivalent representation:
 
     table MyTableEquivalent {
         t: tEquivalent;
-        m: MyStructEquivalent;
+        m: MyStructArrayEquivalent;
     }
 
 
