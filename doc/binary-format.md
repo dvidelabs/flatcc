@@ -994,7 +994,6 @@ Equivalent representation:
         name2: ubyte;
         name3: ubyte;
         name4: ubyte;
-        wname_zterm: ubyte;
         x2: int;
         z21: short;
         z22: short;
@@ -1006,7 +1005,6 @@ Equivalent representation:
         name22: ubyte;
         name23: ubyte;
         name24: ubyte;
-        wname2_zterm: ubyte;
     }
 
     struct tEquivalent {
@@ -1018,6 +1016,26 @@ Equivalent representation:
         t: tEquivalent;
         m: MyStructEquivalent;
     }
+
+
+Note that forced zero-termination can be obtained by adding a trailing ubyte
+field since unitialized struct fields should be zeroed:
+
+    struct Text {
+        str: [char:255];
+        zterm: ubyte;
+    }
+
+Likewise a length prefix field could be added if the applications involved know
+how to interpret such a field:
+
+    struct Text {
+        len: ubyte;
+        str: [char:254];
+        zterm: ubyte;
+    }
+
+The above is just an example and not part of the format as such.
 
 
 ## Big Endian FlatBuffers
