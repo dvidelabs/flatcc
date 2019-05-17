@@ -1019,7 +1019,7 @@ Equivalent representation:
 
 
 Note that forced zero-termination can be obtained by adding a trailing ubyte
-field since unitialized struct fields should be zeroed:
+field since uninitialized struct fields should be zeroed:
 
     struct Text {
         str: [char:255];
