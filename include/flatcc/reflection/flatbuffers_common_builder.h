@@ -333,6 +333,15 @@ __flatbuffers_build_offset_vector(NS, NS ## string)
 #define __flatbuffers_from_pe(P, N) (*(P) = N ## _cast_from_pe(*P), (P))
 #define __flatbuffers_copy_to_pe(P, P2, N) (*(P) = N ## _cast_to_pe(*P2), (P))
 #define __flatbuffers_to_pe(P, N) (*(P) = N ## _cast_to_pe(*P), (P))
+#define __flatbuffers_define_fixed_array_primitives(NS, N, T)\
+static inline T *N ## _array_copy(T *p, const T *p2, size_t n)\
+{ memcpy(p, p2, n * sizeof(T)); return p; }\
+static inline T *N ## _array_copy_from_pe(T *p, const T *p2, size_t n)\
+{ size_t i; if (NS ## is_native_pe()) memcpy(p, p2, n * sizeof(T)); else\
+  for (i = 0; i < n; ++i) N ## _copy_from_pe(&p[i], &p2[i]); return p; }\
+static inline T *N ## _array_copy_to_pe(T *p, const T *p2, size_t n)\
+{ size_t i; if (NS ## is_native_pe()) memcpy(p, p2, n * sizeof(T)); else\
+  for (i = 0; i < n; ++i) N ## _copy_to_pe(&p[i], &p2[i]); return p; }
 #define __flatbuffers_define_scalar_primitives(NS, N, T)\
 static inline T *N ## _from_pe(T *p) { return __ ## NS ## from_pe(p, N); }\
 static inline T *N ## _to_pe(T *p) { return __ ## NS ## to_pe(p, N); }\
@@ -348,6 +357,7 @@ static inline T *N ## _assign_to_pe(T *p, T v0)\
 { *p = N ## _cast_to_pe(v0); return p; }
 #define __flatbuffers_build_scalar(NS, N, T)\
 __ ## NS ## define_scalar_primitives(NS, N, T)\
+__ ## NS ## define_fixed_array_primitives(NS, N, T)\
 __ ## NS ## build_vector(NS, N, T, sizeof(T), sizeof(T))
 /* Depends on generated copy_to/from_pe functions, and the type. */
 #define __flatbuffers_define_struct_primitives(NS, N)\
@@ -617,6 +627,8 @@ static inline NU ## _union_ref_t *N ## _ ## M ## _push_slice(NS ## builder_t *B,
 __flatbuffers_build_offset_vector_field(ID, NS, N, NS ## string, TT)\
 __flatbuffers_build_string_vector_ops(NS, N)
 
+#define __flatbuffers_char_formal_args , char v0
+#define __flatbuffers_char_call_args , v0
 #define __flatbuffers_uint8_formal_args , uint8_t v0
 #define __flatbuffers_uint8_call_args , v0
 #define __flatbuffers_int8_formal_args , int8_t v0
@@ -640,6 +652,7 @@ __flatbuffers_build_string_vector_ops(NS, N)
 #define __flatbuffers_double_formal_args , double v0
 #define __flatbuffers_double_call_args , v0
 
+__flatbuffers_build_scalar(flatbuffers_, flatbuffers_char, char)
 __flatbuffers_build_scalar(flatbuffers_, flatbuffers_uint8, uint8_t)
 __flatbuffers_build_scalar(flatbuffers_, flatbuffers_int8, int8_t)
 __flatbuffers_build_scalar(flatbuffers_, flatbuffers_bool, flatbuffers_bool_t)

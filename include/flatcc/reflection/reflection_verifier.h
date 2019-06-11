@@ -23,6 +23,7 @@ static int reflection_Type_verify_table(flatcc_table_verifier_descriptor_t *td)
     if ((ret = flatcc_verify_field(td, 0, 1, 1) /* base_type */)) return ret;
     if ((ret = flatcc_verify_field(td, 1, 1, 1) /* element */)) return ret;
     if ((ret = flatcc_verify_field(td, 2, 4, 4) /* index */)) return ret;
+    if ((ret = flatcc_verify_field(td, 3, 2, 2) /* fixed_length */)) return ret;
     return flatcc_verify_ok;
 }
 

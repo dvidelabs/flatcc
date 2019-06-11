@@ -461,6 +461,7 @@ __flatbuffers_define_scalar_sort(N, T)
 __flatcc_define_integer_accessors(N, T, W, flatbuffers_endian)\
 __flatbuffers_define_scalar_vector(N, T)
 __flatbuffers_define_scalar_vector(flatbuffers_bool, flatbuffers_bool_t)
+__flatbuffers_define_scalar_vector(flatbuffers_char, char)
 __flatbuffers_define_scalar_vector(flatbuffers_uint8, uint8_t)
 __flatbuffers_define_scalar_vector(flatbuffers_int8, int8_t)
 __flatbuffers_define_scalar_vector(flatbuffers_uint16, uint16_t)
@@ -493,6 +494,22 @@ __flatbuffers_rscan_by_string_field(begin, __flatbuffers_min(end, flatbuffers_st
 static inline size_t flatbuffers_string_vec_rscan_ex_n(flatbuffers_string_vec_t vec, size_t begin, size_t end, const char *s, size_t n)
 __flatbuffers_rscan_by_string_n_field(begin, __flatbuffers_min(end, flatbuffers_string_vec_len(vec)), __flatbuffers_identity, vec, flatbuffers_string_vec_at, flatbuffers_string_vec_len, s, n)
 __flatbuffers_define_string_sort()
+#define __flatbuffers_define_struct_scalar_fixed_array_field(N, NK, TK, T, L)\
+static inline T N ## _ ## NK ## _get(N ## _struct_t t__tmp, size_t i__tmp)\
+{ if (!t__tmp || i__tmp >= L) return 0;\
+  return __flatbuffers_read_scalar(TK, &(t__tmp->NK[i__tmp])); }\
+static inline const T *N ## _ ## NK ## _get_ptr(N ## _struct_t t__tmp)\
+{ return t__tmp ? t__tmp->NK : 0; }\
+static inline size_t N ## _ ## NK ## _get_len() { return L; }\
+static inline T N ## _ ## NK (N ## _struct_t t__tmp, size_t i__tmp)\
+{ return N ## _ ## NK ## _get(t__tmp, i__tmp); }
+#define __flatbuffers_define_struct_struct_fixed_array_field(N, NK, T, L)\
+static inline T N ## _ ## NK ## _get(N ## _struct_t t__tmp, size_t i__tmp)\
+{ if (!t__tmp || i__tmp >= L) return 0; return t__tmp->NK + i__tmp; }static inline T N ## _ ## NK ## _get_ptr(N ## _struct_t t__tmp)\
+{ return t__tmp ? t__tmp->NK : 0; }\
+static inline size_t N ## _ ## NK ## _get_len() { return L; }\
+static inline T N ## _ ## NK(N ## _struct_t t__tmp, size_t i__tmp)\
+{ if (!t__tmp || i__tmp >= L) return 0; return t__tmp->NK + i__tmp; }
 #define __flatbuffers_define_struct_scalar_field(N, NK, TK, T)\
 static inline T N ## _ ## NK ## _get(N ## _struct_t t__tmp)\
 { return t__tmp ? __flatbuffers_read_scalar(TK, &(t__tmp->NK)) : 0; }\

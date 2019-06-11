@@ -28,7 +28,8 @@
   because it is more correct, and to silence warnings on some systems.
 - Fix flatcc endless loop with our of order field id's (#112).
 - Add support for fixed size arrays as struct member fields, including
-  fixed size char arrays.
+  fixed size char arrays. NOTE: bfbs schema uses byte arrays instead of
+  char arrays since Googles flatc tool does not have char arrays.
 - Fix `aligned_free` when used with `FLATCC_USE_GENERIC_ALIGNED_ALLOC` (#118)
 - Fix potential buffer overrun when parsing JSON containing surrogate pairs
   with a resulting UTF-8 code point of length 4 (bug introduced in 0.5.3).

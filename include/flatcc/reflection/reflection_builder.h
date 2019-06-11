@@ -22,7 +22,7 @@ __flatbuffers_build_scalar(flatbuffers_, reflection_BaseType, reflection_BaseTyp
 static const flatbuffers_voffset_t __reflection_Type_required[] = { 0 };
 typedef flatbuffers_ref_t reflection_Type_ref_t;
 static reflection_Type_ref_t reflection_Type_clone(flatbuffers_builder_t *B, reflection_Type_table_t t);
-__flatbuffers_build_table(flatbuffers_, reflection_Type, 3)
+__flatbuffers_build_table(flatbuffers_, reflection_Type, 4)
 
 static const flatbuffers_voffset_t __reflection_KeyValue_required[] = { 0, 0 };
 typedef flatbuffers_ref_t reflection_KeyValue_ref_t;
@@ -54,8 +54,8 @@ typedef flatbuffers_ref_t reflection_Schema_ref_t;
 static reflection_Schema_ref_t reflection_Schema_clone(flatbuffers_builder_t *B, reflection_Schema_table_t t);
 __flatbuffers_build_table(flatbuffers_, reflection_Schema, 5)
 
-#define __reflection_Type_formal_args , reflection_BaseType_enum_t v0, reflection_BaseType_enum_t v1, int32_t v2
-#define __reflection_Type_call_args , v0, v1, v2
+#define __reflection_Type_formal_args , reflection_BaseType_enum_t v0, reflection_BaseType_enum_t v1, int32_t v2, uint16_t v3
+#define __reflection_Type_call_args , v0, v1, v2, v3
 static inline reflection_Type_ref_t reflection_Type_create(flatbuffers_builder_t *B __reflection_Type_formal_args);
 __flatbuffers_build_table_prolog(flatbuffers_, reflection_Type, reflection_Type_identifier, reflection_Type_type_identifier)
 
@@ -102,11 +102,13 @@ __flatbuffers_build_table_prolog(flatbuffers_, reflection_Schema, reflection_Sch
 __flatbuffers_build_scalar_field(0, flatbuffers_, reflection_Type_base_type, reflection_BaseType, reflection_BaseType_enum_t, 1, 1, INT8_C(0), reflection_Type)
 __flatbuffers_build_scalar_field(1, flatbuffers_, reflection_Type_element, reflection_BaseType, reflection_BaseType_enum_t, 1, 1, INT8_C(0), reflection_Type)
 __flatbuffers_build_scalar_field(2, flatbuffers_, reflection_Type_index, flatbuffers_int32, int32_t, 4, 4, INT32_C(-1), reflection_Type)
+__flatbuffers_build_scalar_field(3, flatbuffers_, reflection_Type_fixed_length, flatbuffers_uint16, uint16_t, 2, 2, UINT16_C(0), reflection_Type)
 
 static inline reflection_Type_ref_t reflection_Type_create(flatbuffers_builder_t *B __reflection_Type_formal_args)
 {
     if (reflection_Type_start(B)
         || reflection_Type_index_add(B, v2)
+        || reflection_Type_fixed_length_add(B, v3)
         || reflection_Type_base_type_add(B, v0)
         || reflection_Type_element_add(B, v1)) {
         return 0;
@@ -119,6 +121,7 @@ static reflection_Type_ref_t reflection_Type_clone(flatbuffers_builder_t *B, ref
     __flatbuffers_memoize_begin(B, t);
     if (reflection_Type_start(B)
         || reflection_Type_index_pick(B, t)
+        || reflection_Type_fixed_length_pick(B, t)
         || reflection_Type_base_type_pick(B, t)
         || reflection_Type_element_pick(B, t)) {
         return 0;

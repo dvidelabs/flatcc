@@ -100,6 +100,7 @@ __flatbuffers_define_integer_type(reflection_BaseType, reflection_BaseType_enum_
 #define reflection_BaseType_Vector ((reflection_BaseType_enum_t)INT8_C(14))
 #define reflection_BaseType_Obj ((reflection_BaseType_enum_t)INT8_C(15))
 #define reflection_BaseType_Union ((reflection_BaseType_enum_t)INT8_C(16))
+#define reflection_BaseType_Array ((reflection_BaseType_enum_t)INT8_C(17))
 
 static inline const char *reflection_BaseType_name(reflection_BaseType_enum_t value)
 {
@@ -121,6 +122,7 @@ static inline const char *reflection_BaseType_name(reflection_BaseType_enum_t va
     case reflection_BaseType_Vector: return "Vector";
     case reflection_BaseType_Obj: return "Obj";
     case reflection_BaseType_Union: return "Union";
+    case reflection_BaseType_Array: return "Array";
     default: return "";
     }
 }
@@ -145,6 +147,7 @@ static inline int reflection_BaseType_is_known_value(reflection_BaseType_enum_t 
     case reflection_BaseType_Vector: return 1;
     case reflection_BaseType_Obj: return 1;
     case reflection_BaseType_Union: return 1;
+    case reflection_BaseType_Array: return 1;
     default: return 0;
     }
 }
@@ -162,6 +165,7 @@ __flatbuffers_table_as_root(reflection_Type)
 __flatbuffers_define_scalar_field(0, reflection_Type, base_type, reflection_BaseType, reflection_BaseType_enum_t, INT8_C(0))
 __flatbuffers_define_scalar_field(1, reflection_Type, element, reflection_BaseType, reflection_BaseType_enum_t, INT8_C(0))
 __flatbuffers_define_scalar_field(2, reflection_Type, index, flatbuffers_int32, int32_t, INT32_C(-1))
+__flatbuffers_define_scalar_field(3, reflection_Type, fixed_length, flatbuffers_uint16, uint16_t, UINT16_C(0))
 
 struct reflection_KeyValue_table { uint8_t unused__; };
 
