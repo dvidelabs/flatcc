@@ -12,7 +12,6 @@
   * [Format Internal Types](#format-internal-types)
   * [Scalars](#scalars)
   * [Structs](#structs)
-  * [Fixed Size Arrays](#fixed-size-arrays)
 * [Internals](#internals)
 * [Type Hashes](#type-hashes)
   * [Conflicts](#conflicts)
@@ -26,7 +25,7 @@
 * [Verification](#verification)
 * [Risks](#risks)
 * [Nested FlatBuffers](#nested-flatbuffers)
-* [Fixed Size Arrays](#fixed-size-arrays-1)
+* [Fixed Length Arrays](#fixed-length-arrays)
 * [Big Endian FlatBuffers](#big-endian-flatbuffers)
 * [StructBuffers](#structbuffers)
 * [StreamBuffers](#streambuffers)
@@ -246,9 +245,9 @@ this distinction because a boolean is just an integer at this level.
 
 ### Structs
 
-A struct is a fixed sized block of a fixed number of fields in a specific order
-defined by a schema. A field is either a scalar, another struct or a fixed size
-array of these, or a fixed size char array. A struct cannot contain fields that
+A struct is a fixed lengthd block of a fixed number of fields in a specific order
+defined by a schema. A field is either a scalar, another struct or a fixed length
+array of these, or a fixed length char array. A struct cannot contain fields that
 contain itself directly or indirectly. A struct is self-contained and has no
 references. A struct cannot be empty.
 
@@ -265,13 +264,13 @@ FlatCC supports that a struct can be the root object of a FlatBuffer, but
 most implementations likely won't support this. Structs as root are very
 resource efficient.
 
-### Fixed Size Arrays
-
-These only exists within structs are are identical to stacking multiple
-non-array fields of the same type after each other in a compact notation with
-similar alignment rules. Additionally arrays can be of char type to have a kind
-of fixed size string. The char type is not used outside of char arrays. A fixed
-size array can contain a struct that contains one more fixed size arrays.
+Structs cannot have vectors but they can have fixed length array fields. which
+are equivalent to stacking multiple non-array fields of the same type after each
+other in a compact notation with similar alignment rules. Additionally arrays
+can be of char type to have a kind of fixed length string. The char type is not
+used outside of char arrays. A fixed length array can contain a struct that
+contains one more fixed length arrays. If the char array type is not support, it
+can be assumed to be a byte array.
 
 
 ## Internals
@@ -441,8 +440,9 @@ table:
     #define MyGame_Sample_Monster_type_hash ((flatbuffers_thash_t)0xd5be61b)
     #define MyGame_Sample_Monster_type_identifier "\x1b\xe6\x5b\x0d"
 
-But we can also [compute
-one online](https://www.tools4noobs.com/online_tools/hash/) for our example buffer:
+But we can also
+[compute one online](https://www.tools4noobs.com/online_tools/hash/)
+for our example buffer:
 
         fnv1a32("Eclectic.FooBar") = 0a604f58
 
@@ -800,9 +800,9 @@ much simpler while staying safe.
 
 A verifier does __not__ enforce that:
 
-- structs and other table fields are aligned relative to table start because tables are only
-  aligned to their soffset field. This means a table cannot be copied
-  naively into a new buffer even if it has no offset fields.
+- structs and other table fields are aligned relative to table start because
+  tables are only aligned to their soffset field. This means a table cannot be
+  copied naively into a new buffer even if it has no offset fields.
 - the order of individual fields within a table. Even if a schema says
   something about ordering this should be considered advisory. A
   verifier may additionally check for ordering for specific
@@ -913,25 +913,25 @@ extract parts of FlatBuffer data. Extracting a table would require
 chasing pointers and could potentially explode due to shared sub-graphs,
 if not handled carefully.
 
-## Fixed Size Arrays
+## Fixed Length Arrays
 
 This feature can be seen as equivalent to repeating a field of the same type
 multiple times in struct.
 
-Fixed size array struct fields has been introduced mid 2019.
+Fixed length array struct fields has been introduced mid 2019.
 
-A fixed size array is somewhat like a vector of fixed length containing inline
-fixed size elements with no stored size header. The element type can be scalars,
-enums and structs but not other fixed size errors (without wrapping them in a
-struct).
+A fixed length array is somewhat like a vector of fixed length containing inline
+fixed length elements with no stored size header. The element type can be
+scalars, enums and structs but not other fixed length errors (without wrapping
+them in a struct).
 
 An array should not be mistaken for vector as vectors are independent objects
-while arrays are not. Vectors cannot be fixed size. An array can store fixed
+while arrays are not. Vectors cannot be fixed length. An array can store fixed
 size arrays inline by wrapping them in a struct and the same applies to unions.
 
-The binary format of a fixed size vector of length `n` and type `t` can
+The binary format of a fixed length vector of length `n` and type `t` can
 be precisely emulated by created a struct that holds exactly `n` fields
-of type `t`, `n > 0`. This means that a fixed size array does not
+of type `t`, `n > 0`. This means that a fixed length array does not
 store any length information in a header and that it is stored inline within
 a struct. Alignment follows the structs alignment rules with arrays having the
 same alignment as their elements and not their entire size.
@@ -943,11 +943,11 @@ different setting. Googles flatc implementation currently enforces a maximum
 element count of 2^16-1.
 
 Assuming the schema compiler computes the correct alignment for the overall
-struct, there is no additonal work in verifying a buffer containing a fixed size
-array because structs are verified based on the outermost structs size and
-alignment without having to inspect its content.
+struct, there is no additonal work in verifying a buffer containing a fixed
+length array because structs are verified based on the outermost structs size
+and alignment without having to inspect its content.
 
-Fixed size arrays also support char arrays. The `char` type is similar to the
+Fixed lenght arrays also support char arrays. The `char` type is similar to the
 `ubyte` or `uint8` type but a char can only exist as a char array like
 `x:[char:10]`. Chars cannot exist as a standalone struct or table field, and
 also not as a vector element. Char arrays are like strings, but they contain no
@@ -958,7 +958,7 @@ the text is printed with embedded null characters but stripped from trailing
 null characters and a parser will padd the missing null characters.
 
 
-The following example uses fixed size arrays. The example is followed by the
+The following example uses fixed length arrays. The example is followed by the
 equivalent representation without such arrays.
 
     struct Basics {
@@ -1198,7 +1198,7 @@ implemented differently. Be warned.
 ### Force Align
 
 `force_align` attribute supported on fields of structs, scalars and
-and vectors of fixed size elements.
+and vectors of fixed length elements.
 
 ### Mixins
 
