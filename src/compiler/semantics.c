@@ -523,7 +523,7 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
         member = (fb_member_t *)sym;
         switch (member->type.type) {
         case vt_fixed_array_type:
-            /* -fallthrough */
+            /* fall through */
         case vt_scalar_type:
             t = member->type.t;
             member->type.st = map_scalar_token_type(t);
@@ -536,7 +536,7 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
             member->size = size * member->type.len;
             break;
         case vt_fixed_array_compound_type_ref:
-            /* -fallthrough */
+            /* fall through */
         case vt_compound_type_ref:
             /* Enums might not be valid, but then it would be detected earlier. */
             if (member->type.ct->symbol.kind == fb_is_enum) {
@@ -700,7 +700,7 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
         switch (member->type.type) {
         case vt_fixed_array_type_ref:
             key_ok = 0;
-            /* -fallthrough */
+            /* fall through */
         case vt_type_ref:
             type_sym = lookup_type_reference(P, ct->scope, member->type.ref);
             if (!type_sym) {
