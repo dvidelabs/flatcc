@@ -30,12 +30,14 @@
 - Add support for fixed size arrays as struct member fields, including
   fixed size char arrays. NOTE: bfbs schema uses byte arrays instead of
   char arrays since Googles flatc tool does not have char arrays.
-- Fix `aligned_free` when used with `FLATCC_USE_GENERIC_ALIGNED_ALLOC` (#118)
+- Fix `aligned_free` when used with `FLATCC_USE_GENERIC_ALIGNED_ALLOC` (#118).
 - Fix potential buffer overrun when parsing JSON containing surrogate pairs
   with a resulting UTF-8 code point of length 4 (bug introduced in 0.5.3).
 - BREAKING: empty structs are no longer supported. They were fully supported
   and Googles flatc compiler also no longer support them.
 - Fix incorrect sprintf arg when printing NaN with the grisu3 algorithm (#119).
+- Fix GCC 9 regression on fallthrough comment syntax and silence
+  false positive GCC 9 strncpy and printf related warnings (#120).
 
 ## [0.5.3]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments
