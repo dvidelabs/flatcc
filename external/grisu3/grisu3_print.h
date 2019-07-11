@@ -45,7 +45,7 @@
 extern "C" {
 #endif
 
-#include <stdio.h> /* sprintf */
+#include <stdio.h> /* sprintf, only needed for fallback printing */
 #include <assert.h> /* assert */
 
 #include "grisu3_math.h"
@@ -181,6 +181,25 @@ static int grisu3_i_to_str(int val, char *str)
     return (int)(s - begin);
 }
 
+static int grisu3_print_nan(uint64_t v, char *dst)
+{
+    static char hexdigits[16] = "0123456789ABCDEF";
+    int i = 0;
+
+    dst[0] = 'N';
+    dst[1] = 'a';
+    dst[2] = 'N';
+    dst[3] = '(';
+    dst[20] = ')';
+    dst[21] = '\0';
+    dst += 4;
+    for (i = 15; i >= 0; --i) {
+        dst[i] = hexdigits[v & 0x0F];
+        v >>= 4;
+    }
+    return 21;
+}
+
 static int grisu3_print_double(double v, char *dst)
 {
     int d_exp, len, success, decimals, i;
@@ -189,7 +208,7 @@ static int grisu3_print_double(double v, char *dst)
     assert(dst);
 
     /* Prehandle NaNs */
-    if ((u64 << 1) > 0xFFE0000000000000ULL) return sprintf(dst, "NaN(%08X%08X)", (uint32_t)(u64 >> 32), (uint32_t)u64);
+    if ((u64 << 1) > 0xFFE0000000000000ULL) return grisu3_print_nan(u64, dst);
     /* Prehandle negative values. */
     if ((u64 & GRISU3_D64_SIGN) != 0) { *s2++ = '-'; v = -v; u64 ^= GRISU3_D64_SIGN; }
     /* Prehandle zero. */
