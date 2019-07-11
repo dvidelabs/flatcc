@@ -35,6 +35,7 @@
   with a resulting UTF-8 code point of length 4 (bug introduced in 0.5.3).
 - BREAKING: empty structs are no longer supported. They were fully supported
   and Googles flatc compiler also no longer support them.
+- Fix incorrect sprintf arg when printing NaN with the grisu3 algorithm (#119).
 
 ## [0.5.3]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments
