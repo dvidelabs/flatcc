@@ -193,6 +193,20 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     else()
         message(STATUS "Setting GNU C compiler options with c11 and Posix")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
+        if (GCC_VERSION VERSION_GREATER_EQUAL 8.0)
+            # Disable some GCC checks:
+            #
+            # -Wstringop-truncation:
+            # strncpy into char arrays in FlatBuffer structs, these are
+            # zero-paddded but not zero terminated
+            #
+            # -Wno-format-overflow:
+            # GCC 9 warns on mistakenly assumed NULL string when 
+            # printing from a required FlatBuffer string field.
+            #
+            message(STATUS "Disabling GNU C compiler warnings: -Wstringop-truncation -Wno-format-overflow")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-stringop-truncation -Wno-format-overflow")
+        endif()
         if (FLATCC_GNU_POSIX_MEMALIGN)
             # -std=c11 prevents detection of posix_memalign and aligned_alloc might be missing
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DPORTABLE_POSIX_MEMALIGN=1")
