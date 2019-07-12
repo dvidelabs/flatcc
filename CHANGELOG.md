@@ -36,8 +36,11 @@
 - BREAKING: empty structs are no longer supported. They were fully supported
   and Googles flatc compiler also no longer support them.
 - Fix incorrect sprintf arg when printing NaN with the grisu3 algorithm (#119).
-- Fix GCC 9 regression on fallthrough comment syntax and silence
-  false positive GCC 9 strncpy and printf related warnings (#120).
+- Fix gcc 9 regression on `-fallthrough` comment syntax (#120).
+- Silence false positive gcc 9 warning on strncpy truncation
+  (-Wstringop-truncation) (#120).
+- Silence false positive gcc 9 warning on printf null string
+  (-Wno-format-overflow) (#120).
 
 ## [0.5.3]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments
