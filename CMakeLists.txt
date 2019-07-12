@@ -195,10 +195,11 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
         if (GCC_VERSION VERSION_GREATER_EQUAL 8.0)
             # Disable some GCC checks:
+            # (warnings exist since 8.0, but are more aggressive in 9.0)
             #
             # -Wstringop-truncation:
-            # strncpy into char arrays in FlatBuffer structs, these are
-            # zero-paddded but not zero terminated
+            # GCC 9 warns on truncated strncpy into char arrays in FlatBuffer
+            # structs, but these are valid as zero-paddded, not zero terminated.
             #
             # -Wno-format-overflow:
             # GCC 9 warns on mistakenly assumed NULL string when 
