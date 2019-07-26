@@ -41,6 +41,9 @@
   (-Wstringop-truncation) (#120).
 - Silence false positive gcc 9 warning on printf null string
   (-Wno-format-overflow) (#120).
+- Silence GCC `-Wstrict-prototypes` warnings that incorrectly complain about
+  function definitions with empty instead of void arguments. Only for runtime
+  source (#122).
 
 ## [0.5.3]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments
