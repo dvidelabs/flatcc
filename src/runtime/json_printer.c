@@ -194,9 +194,36 @@ static inline void print(flatcc_json_printer_t *ctx, const char *s, size_t n)
     }
 }
 
+static void print_escape(flatcc_json_printer_t *ctx, unsigned char c)
+{
+    unsigned char x;
+
+    print_char('\\');
+    switch (c) {
+    case '"': print_char('\"'); break;
+    case '\\': print_char('\\'); break;
+    case '\t' : print_char('t'); break;
+    case '\f' : print_char('f'); break;
+    case '\r' : print_char('r'); break;
+    case '\n' : print_char('n'); break;
+    case '\b' : print_char('b'); break;
+    default:
+        print_char('u');
+        print_char('0');
+        print_char('0');
+        x = c >> 4;
+        x += x < 10 ? '0' : 'a' - 10;
+        print_char(x);
+        x = c & 15;
+        x += x < 10 ? '0' : 'a' - 10;
+        print_char(x);
+        break;
+    }
+}
+
 /*
  * Even though we know the the string length, we need to scan for escape
- * characters. There may be embedded zeroes. Beause FlatBuffer strings
+ * characters. There may be embedded zeroes. Because FlatBuffer strings
  * are always zero terminated, we assume and optimize for this.
  *
  * We enforce \u00xx for control characters, but not for invalid
@@ -209,45 +236,56 @@ static void print_string(flatcc_json_printer_t *ctx, const char *s, size_t n)
 {
     const char *p = s;
     /* Unsigned is important. */
-    unsigned char c, x;
+    unsigned char c;
     size_t k;
 
     print_char('\"');
     for (;;) {
-        /*
-         */
         c = *p;
         while (c >= 0x20 && c != '\"' && c != '\\') {
             c = *++p;
         }
         k = p - s;
+        /* Even if k == 0, print ensures buffer flush. */
         print(ctx, s, k);
         n -= k;
-        if (n == 0) {
-            break;
-        }
+        if (n == 0) break;
         s += k;
-        print_char('\\');
-        switch (c) {
-        case '"': print_char('\"'); break;
-        case '\\': print_char('\\'); break;
-        case '\t' : print_char('t'); break;
-        case '\f' : print_char('f'); break;
-        case '\r' : print_char('r'); break;
-        case '\n' : print_char('n'); break;
-        case '\b' : print_char('b'); break;
-        default:
-            print_char('u');
-            print_char('0');
-            print_char('0');
-            x = c >> 4;
-            x += x < 10 ? '0' : 'a' - 10;
-            print_char(x);
-            x = c & 15;
-            x += x < 10 ? '0' : 'a' - 10;
-            print_char(x);
-            break;
+        print_escape(ctx, c);
+        ++p;
+        --n;
+        ++s;
+    }
+    print_char('\"');
+}
+
+/*
+ * Similar to print_string, but null termination is not guaranteed, and
+ * trailing nulls are stripped.
+ */
+static void print_char_array(flatcc_json_printer_t *ctx, const char *s, size_t n)
+{
+    const char *p = s;
+    /* Unsigned is important. */
+    unsigned char c = 0;
+    size_t k;
+
+    while (n > 0 && s[n - 1] == '\0') --n;
+
+    print_char('\"');
+    for (;;) {
+        while (n) {
+            c = *p;
+            if (c < 0x20 || c == '\"' || c == '\\') break;
+            ++p;
+            --n;
         }
+        k = p - s;
+        /* Even if k == 0, print ensures buffer flush. */
+        print(ctx, s, k);
+        if (n == 0) break;
+        s += k;
+        print_escape(ctx, c);
         ++p;
         --n;
         ++s;
@@ -449,6 +487,90 @@ void flatcc_json_printer_ ## TN ## _struct_field(flatcc_json_printer_t *ctx,\
     }                                                                       \
     print_name(ctx, name, len);                                             \
     ctx->p += print_ ## TN (x, ctx->p);                                     \
+}
+
+void flatcc_json_printer_char_array_struct_field(
+        flatcc_json_printer_t *ctx,
+        int index, const void *p, size_t offset,
+        const char *name, int len, size_t count)
+{                                                                           
+    p = (void *)((size_t)p + offset);
+    if (index) {
+        print_char(',');
+    }
+    print_name(ctx, name, len);
+    print_char_array(ctx, p, count);
+}
+
+#define __define_print_scalar_array_struct_field(TN, T)                     \
+void flatcc_json_printer_ ## TN ## _array_struct_field(                     \
+        flatcc_json_printer_t *ctx,                                         \
+        int index, const void *p, size_t offset,                            \
+        const char *name, int len, size_t count)                            \
+{                                                                           \
+    p = (void *)((size_t)p + offset);                                       \
+    if (index) {                                                            \
+        print_char(',');                                                    \
+    }                                                                       \
+    print_name(ctx, name, len);                                             \
+    print_start('[');                                                       \
+    if (count) {                                                            \
+        print_nl();                                                         \
+        ctx->p += print_ ## TN (                                            \
+                flatbuffers_ ## TN ## _read_from_pe(p),                     \
+                ctx->p);                                                    \
+        p = (void *)((size_t)p + sizeof(T));                                \
+        --count;                                                            \
+    }                                                                       \
+    while (count--) {                                                       \
+        print_char(',');                                                    \
+        print_nl();                                                         \
+        ctx->p += print_ ## TN (                                            \
+                flatbuffers_ ## TN ## _read_from_pe(p),                     \
+                ctx->p);                                                    \
+        p = (void *)((size_t)p + sizeof(T));                                \
+    }                                                                       \
+    print_end(']');                                                         \
+}
+
+#define __define_print_enum_array_struct_field(TN, T)                       \
+void flatcc_json_printer_ ## TN ## _enum_array_struct_field(                \
+        flatcc_json_printer_t *ctx,                                         \
+        int index, const void *p, size_t offset,                            \
+        const char *name, int len, size_t count,                            \
+        flatcc_json_printer_ ## TN ##_enum_f *pf)                           \
+{                                                                           \
+    T x;                                                                    \
+                                                                            \
+    p = (void *)((size_t)p + offset);                                       \
+    if (index) {                                                            \
+        print_char(',');                                                    \
+    }                                                                       \
+    print_name(ctx, name, len);                                             \
+    print_start('[');                                                       \
+    if (count) {                                                            \
+        print_nl();                                                         \
+        x = flatbuffers_ ## TN ## _read_from_pe(p);                         \
+        if (ctx->noenum) {                                                  \
+            ctx->p += print_ ## TN (x, ctx->p);                             \
+        } else {                                                            \
+            pf(ctx, x);                                                     \
+        }                                                                   \
+        p = (void *)((size_t)p + sizeof(T));                                \
+        --count;                                                            \
+    }                                                                       \
+    while (count--) {                                                       \
+        print_char(',');                                                    \
+        print_nl();                                                         \
+        x = flatbuffers_ ## TN ## _read_from_pe(p);                         \
+        if (ctx->noenum) {                                                  \
+            ctx->p += print_ ## TN (x, ctx->p);                             \
+        } else {                                                            \
+            pf(ctx, x);                                                     \
+        }                                                                   \
+        p = (void *)((size_t)p + sizeof(T));                                \
+    }                                                                       \
+    print_end(']');                                                         \
 }
 
 #define __define_print_enum_struct_field(TN, T)                             \
@@ -692,6 +814,28 @@ __define_print_scalar_struct_field(int64, int64_t)
 __define_print_scalar_struct_field(bool, flatbuffers_bool_t)
 __define_print_scalar_struct_field(float, float)
 __define_print_scalar_struct_field(double, double)
+
+__define_print_scalar_array_struct_field(uint8, uint8_t)
+__define_print_scalar_array_struct_field(uint16, uint16_t)
+__define_print_scalar_array_struct_field(uint32, uint32_t)
+__define_print_scalar_array_struct_field(uint64, uint64_t)
+__define_print_scalar_array_struct_field(int8, int8_t)
+__define_print_scalar_array_struct_field(int16, int16_t)
+__define_print_scalar_array_struct_field(int32, int32_t)
+__define_print_scalar_array_struct_field(int64, int64_t)
+__define_print_scalar_array_struct_field(bool, flatbuffers_bool_t)
+__define_print_scalar_array_struct_field(float, float)
+__define_print_scalar_array_struct_field(double, double)
+
+__define_print_enum_array_struct_field(uint8, uint8_t)
+__define_print_enum_array_struct_field(uint16, uint16_t)
+__define_print_enum_array_struct_field(uint32, uint32_t)
+__define_print_enum_array_struct_field(uint64, uint64_t)
+__define_print_enum_array_struct_field(int8, int8_t)
+__define_print_enum_array_struct_field(int16, int16_t)
+__define_print_enum_array_struct_field(int32, int32_t)
+__define_print_enum_array_struct_field(int64, int64_t)
+__define_print_enum_array_struct_field(bool, flatbuffers_bool_t)
 
 __define_print_enum_struct_field(uint8, uint8_t)
 __define_print_enum_struct_field(uint16, uint16_t)
@@ -986,6 +1130,29 @@ void flatcc_json_printer_embedded_struct_field(flatcc_json_printer_t *ctx,
     print_start('{');
     pf(ctx, (uint8_t *)p + offset);
     print_end('}');
+}
+
+void flatcc_json_printer_embedded_struct_array_field(flatcc_json_printer_t *ctx,
+        int index, const void *p, size_t offset, 
+        const char *name, int len, 
+        size_t size, size_t count,
+        flatcc_json_printer_struct_f pf)
+{
+    size_t i;
+    if (index) {
+        print_char(',');
+    }
+    print_name(ctx, name, len);
+    print_start('[');
+    for (i = 0; i < count; ++i) {
+        if (i > 0) {
+            print_char(',');
+        }
+        print_start('{');                                                   \
+        pf(ctx, (uint8_t *)p + offset + i * size);
+        print_end('}');
+    }
+    print_end(']');
 }
 
 void flatcc_json_printer_struct_field(flatcc_json_printer_t *ctx,

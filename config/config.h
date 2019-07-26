@@ -94,6 +94,27 @@
 #endif
 
 /*
+ * Allow FlatBuffer schema reserved keywords
+ * to be used as field identifiers. This can
+ * be confusing, but also important for use with
+ * JSON where the field names are visible
+ * externally.
+ */
+#ifndef FLATCC_ALLOW_KW_FIELDS
+#define FLATCC_ALLOW_KW_FIELDS 1
+#endif
+
+/*
+ * Applies to the members of an enum. These
+ * names a visible in JSON. Using reserved
+ * names prevent them from being used in
+ * field default values.
+ */
+#ifndef FLATCC_ALLOW_KW_ENUMS
+#define FLATCC_ALLOW_KW_ENUMS 1
+#endif
+
+/*
  * Artificial limit on grammar attributes to prevent abuse.
  */
 #ifndef FLATCC_ATTR_MAX
@@ -247,6 +268,19 @@
  */
 #ifndef FLATCC_ALLOW_MULTIPLE_KEY_FIELDS
 #define FLATCC_ALLOW_MULTIPLE_KEY_FIELDS 1
+#endif
+
+/*
+ * flatc does not have a primary_key field attribute but it is useful
+ * when having multiple keys. Without a primary_key the field with the
+ * lowest id becomes the default, or primary, key. This key has a
+ * simpler find syntax and is also used by default when sorting.
+ * When there is only one keyed field on a table it is better to use
+ * the key attribute for compatibility reasons. It will automatically
+ * become primary.
+ */
+#ifndef FLATCC_ALLOW_PRIMARY_KEY
+#define FLATCC_ALLOW_PRIMARY_KEY 1
 #endif
 
 /*

@@ -23,6 +23,7 @@ set (SOURCES
     codegen_c_sort.c
     codegen_c_builder.c
     codegen_c_verifier.c
+    codegen_c_sorter.c
     codegen_c_json_parser.c
     codegen_c_json_printer.c
     # needed for building binary schema
@@ -38,5 +39,5 @@ endif(FLATCC_REFLECTION)
 add_library(flatcc ${SOURCES})
 
 if (FLATCC_INSTALL)
-    install(TARGETS flatcc DESTINATION lib)
+    install(TARGETS flatcc DESTINATION ${lib_dir})
 endif()

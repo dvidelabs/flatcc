@@ -5,7 +5,7 @@ SCHEMA=${SCHEMA:-$1}
 PREFIX=${PREFIX:-$2}
 OUTDIR=${OUTDIR:-$3}
 OUTDIR=${OUTDIR:-'.'}
-INCLUDE=${INLCUDE:-$HOME/include}
+INCLUDE=${INCLUDE:-$HOME/include}
 FLATCC=${FLATCC:-$HOME/bin/flatcc}
 
 if [ "x$SCHEMA" = "x" ]; then

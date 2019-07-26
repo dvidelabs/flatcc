@@ -18,6 +18,7 @@ LEX_KW_TABLE_BEGIN
     lex_kw(int, '3', 'i', 'n', 't')
     lex_kw(bool, '4', 'b', 'o', 'l')
     lex_kw(byte, '4', 'b', 'y', 'e')
+    lex_kw(char, '4', 'c', 'h', 'r')
     lex_kw(enum, '4', 'e', 'n', 'm')
     lex_kw(int8, '4', 'i', 'n', '8')
     lex_kw(long, '4', 'l', 'o', 'g')

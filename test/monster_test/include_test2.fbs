@@ -6,6 +6,6 @@ namespace MyGame.OtherNameSpace;
 
 enum FromInclude:long { IncludeVal, Foo = 17 }
 
-struct Unused {}
+struct Unused { unused: byte; }
 
 

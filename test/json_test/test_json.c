@@ -136,6 +136,9 @@ failed:
 #define TEST_FLAGS(fparse, fprint, x, y) \
     ret |= test_json(scope, (x), (y), 0, (fparse), (fprint), __LINE__);
 
+#define TEST_ERROR_FLAGS(fparse, fprint, x, err) \
+    ret |= test_json(scope, (x), 0, err, (fparse), (fprint), __LINE__);
+
 int edge_case_tests()
 {
     BEGIN_TEST(Monster);
@@ -502,6 +505,75 @@ int union_vector_tests()
     END_TEST();
 }
 
+int fixed_array_tests()
+{
+    BEGIN_TEST(Alt);
+    /* Fixed array */
+
+#if UQ
+    TEST(   "{ \"fixed_array\": { \"foo\": [ 1.0, 2.0, 0, 0, 0, 0, 0,"
+            " 0, 0, 0, 0, 0, 0, 0, 0, 16.0], col:[\"Blue Red\", Green, Red],"
+            "tests:[ {b:4}, {a:1, b:2}],"
+            " \"bar\": [ 100, 0, 0, 0, 0, 0, 0, 0, 0, 1000],"
+            " \"text\":\"hello\"}}",
+            "{\"fixed_array\":{\"foo\":[1,2,0,0,0,0,0,"
+            "0,0,0,0,0,0,0,0,16],"
+            "\"bar\":[100,0,0,0,0,0,0,0,0,1000],"
+            "\"col\":[\"Red Blue\",\"Green\",\"Red\"],"
+            "\"tests\":[{\"a\":0,\"b\":4},{\"a\":1,\"b\":2}],"
+            "\"text\":\"hello\"}}");
+#else
+    TEST(   "{ \"fixed_array\": { \"foo\": [ 1.0, 2.0, 0, 0, 0, 0, 0,"
+            " 0, 0, 0, 0, 0, 0, 0, 0, 16.0], \"col\":[\"Blue Red\", \"Green\", \"Red\"],"
+            "\"tests\":[ {\"b\":4}, {\"a\":1, \"b\":2}],"
+            " \"bar\": [ 100, 0, 0, 0, 0, 0, 0, 0, 0, 1000],"
+            " \"text\":\"hello\"}}",
+            "{\"fixed_array\":{\"foo\":[1,2,0,0,0,0,0,"
+            "0,0,0,0,0,0,0,0,16],"
+            "\"bar\":[100,0,0,0,0,0,0,0,0,1000],"
+            "\"col\":[\"Red Blue\",\"Green\",\"Red\"],"
+            "\"tests\":[{\"a\":0,\"b\":4},{\"a\":1,\"b\":2}],"
+            "\"text\":\"hello\"}}");
+#endif
+
+    TEST_FLAGS(flatcc_json_parser_f_skip_array_overflow, 0,
+            "{ \"fixed_array\": { \"foo\": [ 1.0, 2.0, 0, 0, 0, 0, 0,"
+            " 0, 0, 0, 0, 0, 0, 0, 0, 16.0, 99],"
+            " \"bar\": [ 100, 0, 0, 0, 0, 0, 0, 0, 0, 1000, 99],"
+            " \"text\":\"hello, world\"}}",
+            "{\"fixed_array\":{\"foo\":[1,2,0,0,0,0,0,"
+            "0,0,0,0,0,0,0,0,16],"
+            "\"bar\":[100,0,0,0,0,0,0,0,0,1000],"
+            "\"col\":[0,0,0],"
+            "\"tests\":[{\"a\":0,\"b\":0},{\"a\":0,\"b\":0}],"
+            "\"text\":\"hello\"}}");
+
+    TEST(   "{ \"fixed_array\": { \"foo\": [ 1.0, 2.0 ],"
+            " \"bar\": [ 100 ], \"text\": \"K\\x00A\\x00\" }}",
+            "{\"fixed_array\":{\"foo\":[1,2,0,0,0,0,0,"
+            "0,0,0,0,0,0,0,0,0],"
+            "\"bar\":[100,0,0,0,0,0,0,0,0,0],"
+            "\"col\":[0,0,0],"
+            "\"tests\":[{\"a\":0,\"b\":0},{\"a\":0,\"b\":0}],"
+            "\"text\":\"K\\u0000A\"}}");
+
+    TEST_ERROR_FLAGS(flatcc_json_parser_f_reject_array_underflow, 0,
+            "{ \"fixed_array\": { \"foo\": [ 1.0, 2.0 ] }}",
+            flatcc_json_parser_error_array_underflow);
+
+    TEST_ERROR_FLAGS(flatcc_json_parser_f_reject_array_underflow, 0,
+            "{ \"fixed_array\": { \"text\": \"K\\x00A\\x00\" }}",
+            flatcc_json_parser_error_array_underflow);
+
+    TEST_ERROR(
+            "{ \"fixed_array\": { \"foo\": [ 1.0, 2.0, 0, 0, 0, 0, 0,"
+            " 0, 0, 0, 0, 0, 0, 0, 0, 16.0, 99],"
+            " \"bar\": [ 100, 0, 0, 0, 0, 0, 0, 0, 0, 1000, 99] }}",
+            flatcc_json_parser_error_array_overflow);
+
+    END_TEST();
+}
+
 /*
  * Here we cover some border cases around unions and flag
  * enumerations, and nested buffers.
@@ -517,6 +589,7 @@ int main()
     ret |= edge_case_tests();
     ret |= error_case_tests();
     ret |= union_vector_tests();
+    ret |= fixed_array_tests();
     ret |= base64_tests();
     ret |= mixed_type_union_tests();
 

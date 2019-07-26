@@ -838,6 +838,53 @@ base64_failed:
             urlsafe ? flatcc_json_parser_error_base64url : flatcc_json_parser_error_base64);
 }
 
+const char *flatcc_json_parser_char_array(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, char *s, size_t n)
+{
+    flatcc_json_parser_escape_buffer_t code;
+    const char *mark;
+    size_t k = 0;
+
+    buf = flatcc_json_parser_string_start(ctx, buf, end);
+    if (buf != end)
+    while (*buf != '\"') {
+        buf = flatcc_json_parser_string_part(ctx, (mark = buf), end);
+        if (buf == end) return end;
+        k = buf - mark;
+        if (k > n) {
+            if (!(ctx->flags & flatcc_json_parser_f_skip_array_overflow)) {
+                return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_overflow);
+            } 
+            k = n; /* Might truncate UTF-8. */
+        }
+        memcpy(s, mark, k);
+        s += k;
+        n -= k;
+        if (*buf == '\"') break;
+        buf = flatcc_json_parser_string_escape(ctx, buf, end, code);
+        if (buf == end) return end;
+        k = (size_t)code[0];
+        mark = code + 1;
+        if (k > n) {
+            if (!(ctx->flags & flatcc_json_parser_f_skip_array_overflow)) {
+                return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_overflow);
+            } 
+            k = n; /* Might truncate UTF-8. */
+        }
+        memcpy(s, mark, k);
+        s += k;
+        n -= k;
+    }
+    if (n != 0) {
+        if (ctx->flags & flatcc_json_parser_f_reject_array_underflow) {
+            return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_underflow);
+        }
+        memset(s, 0, n - k);
+    }
+    return flatcc_json_parser_string_end(ctx, buf, end);
+}
+
+
 /* String Creation - depends on flatcc builder. */
 
 const char *flatcc_json_parser_build_string(flatcc_json_parser_t *ctx,

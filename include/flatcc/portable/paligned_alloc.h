@@ -65,7 +65,7 @@ extern "C" {
 /* https://forum.kde.org/viewtopic.php?p=66274 */
 #if (defined _GNU_SOURCE) || ((_XOPEN_SOURCE + 0) >= 600) || (_POSIX_C_SOURCE + 0) >= 200112L 
 #define PORTABLE_POSIX_MEMALIGN 1
-#elif (__clang__)
+#elif defined (__clang__)
 #define PORTABLE_POSIX_MEMALIGN 1
 #else
 #define PORTABLE_POSIX_MEMALIGN 0

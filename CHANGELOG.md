@@ -1,5 +1,47 @@
 # Change Log
 
+## [0.6.0-pre]
+
+- BREAKING: if there are multiple table fields with a key attribute, the
+  default key is now the field with the smaller id rather than the first
+  listed in case these differ (which is not often the case).
+- The attribute `primary_key` has been added to choose a specific keyed
+  field as the default key field for finding and sorting instead of the
+  field with the smallest id.
+- Add mutable types: `mutable_table_t`, `mutable_union_t`, `mutable_union_vec_t`
+  and casts: `mutable_union_cast`, `mutable_union_vec_cast`.
+- Disallow key attribute on deprecated fields.
+- Add 'sorted' attribute for scalar, string, table and struct vectors.
+  Tables and structs must have a key field defined.
+- Add recursive table and union `_sort` operation in `_reader.h` for
+  types that contain a sorted vector, either directly or indirectly.
+  NOTE: shared vectors in a DAG will be sorted multiple times.
+- Allow attributes to be declared multiple times, including known attributes.
+- Allow table and struct field names to be reserved names such as 'namespace'
+  or 'table'. This can be disabled in `config/config.h`.
+  Separately do the same for enum member. This change was motivated by
+  JSON fields that can have names such as "table" or "namespace".
+- Use `FLATCC_INSTALL_LIB` for install targets in addition to ordinary builds
+  (#109).
+- Add missing case break in flatcc compiler - no impact on behavior (#110).
+- Make `flatbuffers_not_found` and `flatbuffers_end` constant values both
+  because it is more correct, and to silence warnings on some systems.
+- Fix flatcc endless loop with our of order field id's (#112).
+- Add support for fixed size arrays as struct member fields, including
+  fixed size char arrays. NOTE: bfbs schema uses byte arrays instead of
+  char arrays since Googles flatc tool does not have char arrays.
+- Fix `aligned_free` when used with `FLATCC_USE_GENERIC_ALIGNED_ALLOC` (#118).
+- Fix potential buffer overrun when parsing JSON containing surrogate pairs
+  with a resulting UTF-8 code point of length 4 (bug introduced in 0.5.3).
+- BREAKING: empty structs are no longer supported. They were fully supported
+  and Googles flatc compiler also no longer support them.
+- Fix incorrect sprintf arg when printing NaN with the grisu3 algorithm (#119).
+- Fix gcc 9 regression on `-fallthrough` comment syntax (#120).
+- Silence false positive gcc 9 warning on strncpy truncation
+  (-Wstringop-truncation) (#120).
+- Silence false positive gcc 9 warning on printf null string
+  (-Wno-format-overflow) (#120).
+
 ## [0.5.3]
 - BREAKING: 0.5.3 changes behavour of builder create calls so arguments
   are always ordered by field id when id attributes are being used, for
@@ -20,7 +62,7 @@
   pairs are intentionally decoded into invalid UTF-8 as before.
 - Fix sorting tables by scalar keys. Sorting by integer key could lead to
   undefined behavior (#104).
-- Add `FLATCC_FLATCC_INSTALL_LIB` configuration to CMake to change the
+- Add `FLATCC_INSTALL_LIB` configuration to CMake to change the
   default <project>/lib path, for example `cmake -DFLATCC_INSTALL_LIB=lib64`.
 - Fix return code in `flatcc_parse_file` library function.
 

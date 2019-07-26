@@ -17,6 +17,7 @@ static reflection_Type_ref_t export_type(flatcc_builder_t *B, fb_value_t type)
     reflection_BaseType_enum_t base_type = BaseType(None);
     reflection_BaseType_enum_t element = BaseType(None);
     reflection_BaseType_enum_t primitive = BaseType(None);
+    uint16_t fixed_length = 0;
 
     switch (type.type) {
     case vt_scalar_type:
@@ -71,6 +72,36 @@ static reflection_Type_ref_t export_type(flatcc_builder_t *B, fb_value_t type)
             break;
         }
         break;
+    case vt_fixed_array_type:
+        st = type.st;
+        base_type = BaseType(Array);
+        fixed_length = (uint16_t)type.len;
+        break;
+    case vt_fixed_array_string_type:
+        break;
+        element = BaseType(Byte);
+        base_type = BaseType(Array);
+        fixed_length = (uint16_t)type.len;
+        break;
+    case vt_fixed_array_compound_type_ref:
+        index = (int32_t)type.ct->export_index;
+        switch (type.ct->symbol.kind) {
+        case fb_is_enum:
+            st = type.ct->type.st;
+            break;
+        case fb_is_struct:
+        case fb_is_table:
+            element = BaseType(Obj);
+            break;
+        case fb_is_union:
+            element = BaseType(Union);
+            break;
+        default:
+            break;
+        }
+        base_type = BaseType(Array);
+        fixed_length = (uint16_t)type.len;
+        break;
     default:
         break;
     }
@@ -88,17 +119,19 @@ static reflection_Type_ref_t export_type(flatcc_builder_t *B, fb_value_t type)
     case fb_byte: primitive = BaseType(Byte); break;
     case fb_double: primitive = BaseType(Double); break;
     case fb_float: primitive = BaseType(Float); break;
+    /* TODO: Googles flatc tool does not have char arrays so we use Byte as element type */
+    case fb_char: primitive = BaseType(Byte); break;
     default: break;
     }
 
     if (base_type == BaseType(None)) {
         base_type = primitive;
-    } else if (base_type == BaseType(Vector)) {
+    } else if (base_type == BaseType(Vector) || base_type == BaseType(Array)) {
         if (element == BaseType(None)) {
             element = primitive;
         }
     }
-    return reflection_Type_create(B, base_type, element, index);
+    return reflection_Type_create(B, base_type, element, index, fixed_length);
 }
 
 static void export_attributes(flatcc_builder_t *B, fb_metadata_t *m)
@@ -144,10 +177,10 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
             reflection_Field_name_end(B);
             switch(member->type.type) {
             case vt_compound_type_ref:
-                reflection_Field_type_create(B, BaseType(UType), BaseType(None), -1);
+                reflection_Field_type_create(B, BaseType(UType), BaseType(None), -1, 0);
                 break;
             case vt_vector_compound_type_ref:
-                reflection_Field_type_create(B, BaseType(Vector), BaseType(UType), -1);
+                reflection_Field_type_create(B, BaseType(Vector), BaseType(UType), -1, 0);
                 break;
             }
             reflection_Field_offset_add(B, (uint16_t)(member->id - 1 + 2) * sizeof(flatbuffers_voffset_t));

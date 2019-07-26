@@ -167,6 +167,9 @@ message(STATUS "lib install dir ${dist_dir}/${lib_dir}")
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     # Clang or AppleClang
     message(STATUS "Setting Clang compiler options")
+    # We don't add -Wstrict-prototypes to gcc because it breaks
+    # code by failing on function definitions as well.
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -Wextra")
     # Fix broken C++ alignas - either will do
@@ -193,6 +196,21 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     else()
         message(STATUS "Setting GNU C compiler options with c11 and Posix")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
+        if (GCC_VERSION VERSION_GREATER_EQUAL 8.0)
+            # Disable some GCC checks:
+            # (warnings exist since 8.0, but are more aggressive in 9.0)
+            #
+            # -Wstringop-truncation:
+            # GCC 9 warns on truncated strncpy into char arrays in FlatBuffer
+            # structs, but these are valid as zero-paddded, not zero terminated.
+            #
+            # -Wno-format-overflow:
+            # GCC 9 warns on mistakenly assumed NULL string when 
+            # printing from a required FlatBuffer string field.
+            #
+            message(STATUS "Disabling GNU C compiler warnings: -Wstringop-truncation -Wno-format-overflow")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-stringop-truncation -Wno-format-overflow")
+        endif()
         if (FLATCC_GNU_POSIX_MEMALIGN)
             # -std=c11 prevents detection of posix_memalign and aligned_alloc might be missing
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DPORTABLE_POSIX_MEMALIGN=1")

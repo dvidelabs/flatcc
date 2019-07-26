@@ -3,7 +3,7 @@
 include "attributes.fbs";
 include "include_test1.fbs";
 
-struct InGlobalNamespace {}
+struct InGlobalNamespace { unused: byte; }
 
 namespace MyGame;
 
@@ -14,6 +14,28 @@ namespace MyGame.Example2;
 table Monster {}  // Test having same name as below, but in different namespace.
 
 table Strange {}
+
+// Test schema reserved keywords as identifier
+// Can be disabled in config/config.h
+// It is still a good idea to use a namespace
+// to avoid conflicts with host language names
+// especially for enums and structs.
+// Reserved names can be important in some JSON
+// related use cases.
+table S2 {
+    namespace : int;
+    table : int;
+    struct : int;
+    union : int;
+    int : int;
+}
+
+// Enums fields can also be reserved, and these are also visible in
+// JSON, but they cannot be used as table field defaults because
+// type expressions do interpret keywords as keywords. For the same
+// reason it is of no use to allow reserved names as type names
+// such as table names.
+enum foo:int { x, y, table }
 
 namespace MyGame.Example;
 
@@ -90,9 +112,6 @@ union Any {
 
 struct Test { a:short; b:byte; }
 
-struct emptystruct {}
-table emptytable {}
-table with_emptystruct { empty: emptystruct; }
 enum notemptyenum:int { x}
 
 table TestSimpleTableWithEnum (csharp_partial) {
@@ -143,10 +162,31 @@ table Stat {
   count:ushort;
 }
 
+// fixed size arrays new to flatcc 0.6.0
+struct FooBar {
+    foo:[float:0x10];
+    bar:[int:10];
+    col:[Color:3];
+    tests:[Test:2];
+    text:[char:5];
+}
+
+// `sorted` attribute new to flatcc 0.6.0, not supported by flatc 1.8.
+// tables with direct or indirect vector content marked as sorted
+// will get a mutable sort operation that recursively sorts all
+// such vectors. 'sorted` is only valid for non-union vectors.
+//
+// attribute "sorted";
+//
 table Alt {
   prefix: TestJSONPrefix;
   movie:Fantasy.Movie;
   manyany: [Any];
+  multik: [MultipleKeys] (sorted);
+  rapunzels:[Fantasy.Rapunzel] (sorted);
+  names:[string] (sorted);
+  samples:[float32] (sorted);
+  fixed_array: FooBar;
 }
 
 table TestJSONPrefix {
@@ -194,6 +234,21 @@ table TestBase64
     data:[ubyte] (base64);
     urldata:[ubyte] (base64url);
     nested:[ubyte] (nested_flatbuffer: "Monster", base64);
+}
+
+// 'primary_key' attribute new to flatcc 0.6.0, not supported by flatc 1.8.
+// Allow multiple keys and allow one to be the default find and sort key
+// even if not listed first. A table with a single key field behaves the
+// same as a table with a single primary_key field, so use key for
+// compatiblity in that case.
+// 
+// attribute "primary_key";
+//
+table MultipleKeys
+{
+    hello: string;
+    world: string (key);
+    foobar: int64 (primary_key);
 }
 
 table Monster {
@@ -272,7 +327,8 @@ table Attacker {
 }
 
 struct Rapunzel {
-    hair_length: uint16;
+    hair_length: uint16 (key);
+    travel_points: int (deprecated);
 }
 
 struct BookReader {

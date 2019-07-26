@@ -42,6 +42,13 @@ void print_type(reflection_Type_table_t T)
         printf("\"index\":%d", reflection_Type_index(T));
         first = 0;
     }
+    if (reflection_Type_fixed_length_is_present(T)) {
+        if (!first) {
+            printf(",");
+        }
+        printf("\"fixed_length\":%d", reflection_Type_fixed_length(T));
+        first = 0;
+    }
     printf("}");
 }
 

@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #define __flatcc_basic_scalar_accessors_impl(N, T, W, E)                    \
-static inline size_t N ## __size()                                          \
+static inline size_t N ## __size(void)                                      \
 { return sizeof(T); }                                                       \
 static inline T *N ## __ptr_add(T *p, size_t i)                             \
 { return p + i; }                                                           \
@@ -79,6 +79,7 @@ __flatcc_define_integer_accessors(NS ## TN, T, W, E)
 __flatcc_define_real_accessors(NS ## TN, T, W, E)
 
 #define __flatcc_define_basic_scalar_accessors(NS, E)                       \
+__flatcc_define_basic_integer_accessors(NS, char, char, 8, E)               \
 __flatcc_define_basic_integer_accessors(NS, uint8, uint8_t, 8, E)           \
 __flatcc_define_basic_integer_accessors(NS, uint16, uint16_t, 16, E)        \
 __flatcc_define_basic_integer_accessors(NS, uint32, uint32_t, 32, E)        \

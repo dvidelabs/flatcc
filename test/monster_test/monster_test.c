@@ -307,154 +307,6 @@ done:
     return ret;
 }
 
-/*
- * C standard does not provide support for empty structs,
- * but they do exist in FlatBuffers. We can use most operations
- * but we cannot declare an instance of not can we take the size of.
- * The mytype_size() funciton is provided and returns 0 for empty
- * structs.
- *
- * GCC provides support for empty structs, but it isn't portable,
- * and compilers may define sizeof such structs differently.
- */
-
-int verify_table_with_emptystruct(void *buffer)
-{
-    ns(with_emptystruct_table_t) withempty;
-    const ns(emptystruct_t *) empty;
-
-    withempty = ns(with_emptystruct_as_root(buffer));
-    if (!withempty) {
-        printf("table with emptystruct not available\n");
-        return -1;
-    }
-    empty = ns(with_emptystruct_empty)(withempty);
-    if (!empty) {
-        printf("empty member not available\n");
-        return -1;
-    }
-    // sizeof empty won't compile since it is a void.
-    //if (sizeof(*empty)) {
-    if (ns(emptystruct__size())) {
-        printf("empty isn't really empty\n");
-        return -1;
-    }
-    return 0;
-}
-
-int test_table_with_emptystruct(flatcc_builder_t *B)
-{
-    int ret;
-    ns(emptystruct_t) *empty = 0; /* empty structs cannot instantiated. */
-    void *buffer;
-    size_t size;
-
-    flatcc_builder_reset(B);
-
-    ns(with_emptystruct_create_as_root)(B, empty);
-
-    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
-
-    /*
-     * We should expect an empty table with a vtable holding
-     * a single entry pointing to the end of the table.
-     * We could also drop the entry from the vtable, but then what
-     * would be the point of having an empty struct at all? Here
-     * we can use it as a cheap presence flag.
-     */
-    hexdump("table with empty struct", buffer, size, stderr);
-    ret = verify_table_with_emptystruct(buffer);
-    flatcc_builder_aligned_free(buffer);
-
-    return ret;
-}
-
-int test_typed_table_with_emptystruct(flatcc_builder_t *B)
-{
-    int ret = 0;
-    ns(emptystruct_t) *empty = 0; /* empty structs cannot instantiated. */
-    void *buffer;
-    size_t size;
-
-    flatcc_builder_reset(B);
-
-    ns(with_emptystruct_create_as_typed_root(B, empty));
-
-    buffer = flatcc_builder_get_direct_buffer(B, &size);
-
-    /*
-     * We should expect an empty table with a vtable holding
-     * a single entry pointing to the end of the table.
-     * We could also drop the entry from the vtable, but then what
-     * would be the point of having an empty struct at all? Here
-     * we can use it as a cheap presence flag.
-     */
-    hexdump("typed table with empty struct", buffer, size, stderr);
-    if (flatcc_verify_ok != ns(with_emptystruct_verify_as_root_with_identifier(buffer, size, ns(with_emptystruct_type_identifier)))) {
-        printf("explicit verify_as_root failed\n");
-        return -1;
-    }
-    if (flatcc_verify_ok != ns(with_emptystruct_verify_as_typed_root(buffer, size))) {
-        printf("typed verify_as_root failed\n");
-        return -1;
-    }
-    if (flatcc_verify_ok != ns(with_emptystruct_verify_as_root_with_type_hash(buffer, size, ns(with_emptystruct_type_hash)))) {
-        printf("verify_as_root_with_type_hash failed\n");
-        return -1;
-    }
-#if 0
-    flatcc_builder_reset(B);
-    ns(with_emptystruct_start_as_typed_root(B));
-    ns(with_emptystruct_end_as_typed_root(B));
-    buffer = flatcc_builder_get_direct_buffer(B, &size);
-#endif
-    if (!buffer) {
-        printf("failed to create buffer\n");
-        return -1;
-    }
-    if (!flatbuffers_has_type_hash(buffer, ns(with_emptystruct_type_hash))) {
-        printf("has_type failed\n");
-        return -1;
-    }
-    if (!flatbuffers_has_type_hash(buffer, 0)) {
-        printf("null type failed\n");
-        return -1;
-    }
-    if (flatbuffers_has_type_hash(buffer, 1)) {
-        printf("wrong has type unexpected succeeed\n");
-        return -1;
-    }
-    if (!flatbuffers_has_identifier(buffer, 0)) {
-        printf("has identifier failed for null id\n");
-        return -1;
-    }
-    if (!flatbuffers_has_identifier(buffer, "\xb6\x37\xdd\xb0")) {
-        printf("has identifier failed for explicit string\n");
-        return -1;
-    }
-    if (ns(with_emptystruct_as_root(buffer))) {
-        printf("as_root unexpctedly succeeded\n");
-        return -1;
-    }
-    if (ns(with_emptystruct_as_root_with_type_hash(buffer, 1))) {
-        printf("with wrong type unexptedly succeeded\n");
-        return -1;
-    }
-    if (!ns(with_emptystruct_as_root_with_identifier(buffer, ns(with_emptystruct_type_identifier)))) {
-        printf("as_root_with_identifier failed to match type_identifier\n");
-        return -1;
-    }
-    if (!ns(with_emptystruct_as_typed_root(buffer))) {
-        printf("as_typed_root_failed\n");
-        return -1;
-    }
-    if (!ns(with_emptystruct_as_root_with_type_hash(buffer, 0))) {
-        printf("with ignored type failed\n");
-        return -1;
-    }
-    return ret;
-}
-
 int verify_monster(void *buffer)
 {
     ns(Monster_table_t) monster, mon, mon2;
@@ -1838,58 +1690,62 @@ int verify_union_vector(void *buffer, size_t size)
 
     if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
         printf("Monster buffer with union vector failed to verify, got: %s\n", flatcc_verify_error_string(ret));
-        return -1;
+        goto failed;
     }
 
     mon = ns(Monster_as_root(buffer));
     if (ns(Monster_test_type(mon)) != ns(Any_Alt)) {
         printf("test field does not have Alt type");
-        goto done;
+        goto failed;
     }
     alt = ns(Monster_test(mon));
-    if (!alt || ns(Alt_manyany_is_present(alt))) {
+    if (!alt || !ns(Alt_manyany_is_present(alt))) {
         printf("manyany union vector should be present.\n");
-        goto done;
+        goto failed;
     }
     anyvec_type = ns(Alt_manyany_type(alt));
     anyvec = ns(Alt_manyany(alt));
     n = ns(Any_vec_len(anyvec_type));
     if (n != 1) {
         printf("manyany union vector has wrong length.\n");
-        goto done;
+        goto failed;
     }
     if (nsc(union_type_vec_at(anyvec_type, 0)) != ns(Any_TestSimpleTableWithEnum)) {
         printf("manyany union vector has wrong element type.\n");
-        goto done;
+        goto failed;
     }
     kermit = flatbuffers_generic_vec_at(anyvec, 0);
     if (!kermit) {
         printf("Kermit is lost.\n");
-        goto done;
+        goto failed;
     }
     color = ns(TestSimpleTableWithEnum_color(kermit));
     if (color != ns(Color_Green)) {
         printf("Kermit has wrong color: %i.\n", (int)color);
-        goto done;
+        goto failed;
     }
     anyvec_union = ns(Alt_manyany_union(alt));
     if (ns(Any_union_vec_len(anyvec_union)) != 1) {
         printf("manyany union vector has wrong length from a different perspective.\n");
-        goto done;
+        goto failed;
     }
     anyelem = ns(Any_union_vec_at(anyvec_union, 0));
     if (anyelem.type != nsc(union_type_vec_at(anyvec_type, 0))) {
         printf("Kermit is now different.\n");
-        goto done;
+        goto failed;
     }
     if (anyelem.value != kermit) {
         printf("Kermit is incoherent.\n");
-        goto done;
+        goto failed;
     }
     ret = 0;
 
 done:
     return ret;
+
+failed:
+    ret = -1;
+    goto done;
 }
 
 int test_union_vector(flatcc_builder_t *B)
@@ -1925,20 +1781,20 @@ int test_union_vector(flatcc_builder_t *B)
 
     if (verify_union_vector(buffer, size)) {
         printf("Union vector Monster didn't verify.\n");
-        goto done;
+        goto failed;
     }
     flatcc_builder_reset(B);
     refmap_old = flatcc_builder_set_refmap(B, &refmap);
     if (!ns(Monster_clone_as_root(B, ns(Monster_as_root(buffer))))) {
         printf("Cloned union vector Monster didn't actually clone.\n");
-        goto done;
+        goto failed;
     };
     flatcc_builder_set_refmap(B, refmap_old);
     cloned_buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
 
     if (verify_union_vector(buffer, size)) {
         printf("Cloned union vector Monster didn't verify.\n");
-        goto done;
+        goto failed;
     }
 
     ret = 0;
@@ -1947,6 +1803,254 @@ done:
     flatcc_refmap_clear(&refmap);
     flatcc_builder_aligned_free(buffer);
     flatcc_builder_aligned_free(cloned_buffer);
+    return ret;
+
+failed:
+    ret = -1;
+    goto done;
+}
+
+int verify_fixed_size_array(const void *buffer, size_t size)
+{
+    const char *text;
+    ns(Monster_table_t) mon;
+    ns(Alt_table_t) alt;
+    ns(FooBar_struct_t) fa;
+    ns(FooBar_t) fa2;
+    ns(Test_struct_t) t0, t1;
+    int ret;
+
+    if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
+        printf("Monster buffer with fixed size arrays failed to verify, got: %s\n", flatcc_verify_error_string(ret));
+        return -1;
+    }
+    
+    mon = ns(Monster_as_root(buffer));
+    if (ns(Monster_test_type(mon)) != ns(Any_Alt)) {
+        printf("test field does not have Alt type");
+        return -1;
+    }
+
+    alt = ns(Monster_test(mon));
+    if (!alt || !ns(Alt_fixed_array_is_present(alt))) {
+        printf("fixed array should be present.\n");
+        return -1;
+    }
+
+    fa = ns(Alt_fixed_array(alt));
+
+    if (ns(FooBar_foo(fa, 0)) != 1.0f || ns(FooBar_bar(fa, 9) != 1000)) {
+        printf("Monster buffer with fixed size arrays has wrong content\n");
+        return -1;
+    }
+
+    if (ns(FooBar_foo_get(fa, 0)) != 1.0f || ns(FooBar_bar_get(fa, 9) != 1000)) {
+        printf("Monster buffer with fixed size arrays has wrong content\n");
+        return -1;
+    }
+    if (ns(FooBar_foo_get(fa, 16)) != 0.0f || ns(FooBar_bar_get(fa, 10) != 0)) {
+        printf("Monster buffer with fixed size arrays has bad bounds check\n");
+        return -1;
+    }
+    if (ns(FooBar_col_get(fa, 2)) != ns(Color_Red)) {
+        printf("Fixed size enum array content not correct\n");
+        return -1;
+    }
+    t0 = ns(FooBar_tests_get(fa, 0));
+    t1 = ns(FooBar_tests_get(fa, 1));
+    if (!t0 || !t1) {
+        printf("Monster buffer with fixed size struct arrays has missing element\n");
+        return -1;
+    }
+    if (ns(Test_a_get(t0)) != 0 || ns(Test_b_get(t0)) != 4) {
+        printf("Monster buffer with fixed size struct arrays has wrong first element member content\n");
+        return -1;
+    }
+    if (ns(Test_a_get(t1)) != 1 || ns(Test_b_get(t1)) != 2) {
+        printf("Monster buffer with fixed size struct arrays has wrong second element member content\n");
+        return -1;
+    }
+
+    /* Endian safe because char arrays are endian neutral. */
+    text = ns(FooBar_text_get_ptr(fa));
+    if (strncmp(text, "hello", ns(FooBar_text_get_len())) != 0) {
+        printf("Monster buffer with fixed size array field has wrong text\n");
+        return -1;
+    }
+
+    /*
+     * Note: use ns(FooBar_foo_get_ptr(fa) to get a raw pointer to the
+     * array is not endian safe. Since this is a struct array field,
+     * fa->foo would also provide the raw pointer.
+     */
+    if (flatbuffers_is_native_pe()) {
+        if (ns(FooBar_foo_get_ptr(fa))[1] != 2.0f) {
+            printf("Monster buffer with fixed size arrays get_ptr has wrong content\n");
+            return -1;
+        }
+    }
+        
+    ns(FooBar_copy_from_pe(&fa2, fa));
+    if (fa2.foo[0] != 1.0f || fa2.foo[1] != 2.0f || fa2.foo[15] != 16.0f ||
+            fa2.bar[0] != 100 || fa2.bar[9] != 1000) {
+        printf("Monster buffer with copied fixed size arrays has wrong content\n");
+        return -1;
+    }
+    if (fa2.foo[2] != 0.0f || fa2.foo[14] != 0.0f || fa2.bar[1] != 0 || fa2.bar[8] != 0) {
+        printf("Monster buffer with copied fixed size arrays has not been zero padded\n");
+        return -1;
+    }
+
+    /*
+     * In-place conversion - a nop on little endian platforms.
+     * Cast needed to remove const
+     */
+    ns(FooBar_from_pe)((ns(FooBar_t) *)fa);
+    if (fa->foo[0] != 1.0f || fa->foo[1] != 2.0f || fa->foo[15] != 16.0f ||
+            fa->bar[0] != 100 || fa->bar[9] != 1000) {
+        printf("Monster buffer with in-place converted fixed size arrays has wrong content\n");
+        return -1;
+    }
+    if (fa->foo[2] != 0.0f || fa->foo[14] != 0.0f || fa->bar[1] != 0 || fa->bar[8] != 0) {
+        printf("Monster buffer with in-place converted fixed size arrays has not been zero padded\n");
+        return -1;
+    }
+    return 0;
+}
+
+int test_fixed_size_array(flatcc_builder_t *B)
+{
+    void *buffer = 0;
+    size_t size;
+    int ret = -1;
+    float foo_input[16] = { 1.0f, 2.0f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16.0f };
+    int bar_input[10] = { 100, 0, 0, 0, 0, 0, 0, 0, 0, 1000 };
+    ns(Color_enum_t) col_input[3] = { 0, 0, ns(Color_Red) };
+    ns(Test_t) tests_input[2] = {{ 0, 4 }, { 1, 2 }};
+
+    ns(FooBar_t) *foobar;
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+    ns(Monster_name_create_str(B, "Monolith"));
+    ns(Monster_test_Alt_start(B));
+    foobar = ns(Alt_fixed_array_start(B));
+    foobar->foo[0] = 1.0f;
+    foobar->foo[1] = 2.0f;
+    foobar->foo[15] = 16.0f;
+    foobar->bar[0] = 100;
+    foobar->bar[9] = 1000;
+    foobar->col[2] = ns(Color_Red);
+    foobar->tests[0].b = 4;
+    foobar->tests[1].a = 1;
+    foobar->tests[1].b = 2;
+    strncpy(foobar->text, "hello, world", ns(FooBar_text_get_len()));
+    // or strncopy(foobar->text, "hello, world", sizeof(foobar->text));
+    ns(Alt_fixed_array_end(B));
+    ns(Monster_test_Alt_end(B));
+
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+    ret = verify_fixed_size_array(buffer, size);
+    flatcc_builder_aligned_free(buffer);
+    if (ret) return -1;
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+    ns(Monster_name_create_str(B, "Monolith"));
+    ns(Monster_test_Alt_start(B));
+    foobar = ns(Alt_fixed_array_start(B));
+    ns(FooBar_assign)(foobar, foo_input, bar_input, col_input, tests_input, "hello");
+    ns(Alt_fixed_array_end(B));
+    ns(Monster_test_Alt_end(B));
+
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+    ret = verify_fixed_size_array(buffer, size);
+    flatcc_builder_aligned_free(buffer);
+    if (ret) return -1;
+
+    return 0;
+}
+
+#define STR(s) nsc(string_create_str(B, s))
+
+int test_recursive_sort(flatcc_builder_t *B)
+{
+    nsc(string_ref_t) name;
+
+    void *buffer = 0;
+    size_t size = 0;
+    size_t n;
+    int ret = -1;
+    ns(Alt_table_t) alt;
+    ns(Any_union_t) any;
+    ns(Monster_table_t) monster;
+    ns(MultipleKeys_vec_t) mkvec;
+    ns(MultipleKeys_table_t) mk;
+    int index;
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+
+    name = STR("Keyed Monster");
+    ns(Alt_start(B));
+    ns(Alt_multik_start(B));
+    ns(Alt_multik_push_create(B, STR("hi"), STR("there"), 42));
+    ns(Alt_multik_push_create(B, STR("hello"), STR("anyone"), 10));
+    ns(Alt_multik_push_create(B, STR("hello"), STR("anyone"), 4));
+    ns(Alt_multik_push_create(B, STR("good day"), STR("sir"), 1004));
+    ns(Alt_multik_end(B));
+    ns(Monster_test_add)(B, ns(Any_as_Alt(ns(Alt_end(B)))));
+    ns(Monster_name_add)(B, name);
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+    monster = ns(Monster_as_root)(buffer);
+    ns(Monster_sort)((ns(Monster_mutable_table_t))monster);
+    any = ns(Monster_test_union(monster));
+    if (any.type != ns(Any_Alt)) {
+        printf("Any type no Alt as expected\n");
+        goto done;
+    }
+    alt = any.value;
+    mkvec = ns(Alt_multik(alt));
+    index = ns(MultipleKeys_vec_len(mkvec));
+    if (index != 4) {
+        printf("unexpected multik vec len, got %d\n", index);
+        goto done;
+    }
+    mk = ns(MultipleKeys_vec_at(mkvec, 0));
+    if (ns(MultipleKeys_foobar(mk) != 4)) {
+        printf("multik elem 0 not sorted, but it really should be\n");
+    }
+    mk = ns(MultipleKeys_vec_at(mkvec, 1));
+    if (ns(MultipleKeys_foobar(mk) != 10)) {
+        printf("multik elem 1 not sorted, but it really should be\n");
+    }
+    mk = ns(MultipleKeys_vec_at(mkvec, 2));
+    if (ns(MultipleKeys_foobar(mk) != 42)) {
+        printf("multik elem 2 not sorted, but it really should be\n");
+    }
+    mk = ns(MultipleKeys_vec_at(mkvec, 3));
+    if (ns(MultipleKeys_foobar(mk) != 1004)) {
+        printf("multik elem 3 not sorted, but it really should be\n");
+    }
+
+    hexdump("MultiKeyed buffer", buffer, size, stderr);
+    if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
+        printf("Multikeyed Monster buffer failed to verify, got: %s\n", flatcc_verify_error_string(ret));
+        goto done;
+    }
+
+    ret = 0;
+done:
+    flatcc_builder_aligned_free(buffer);
     return ret;
 }
 
@@ -2648,12 +2752,6 @@ int main(int argc, char *argv[])
     printf("running debug monster test\n");
 #endif
 #if 1
-    if (test_table_with_emptystruct(B)) {
-        printf("TEST FAILED\n");
-        return -1;
-    }
-#endif
-#if 1
     if (test_enums(B)) {
         printf("TEST FAILED\n");
         return -1;
@@ -2691,12 +2789,6 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_typed_empty_monster(B)) {
-        printf("TEST FAILED\n");
-        return -1;
-    }
-#endif
-#if 1
-    if (test_typed_table_with_emptystruct(B)) {
         printf("TEST FAILED\n");
         return -1;
     }
@@ -2791,6 +2883,19 @@ int main(int argc, char *argv[])
         return -1;
     }
 #endif
+#if 1
+    if (test_recursive_sort(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_fixed_size_array(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+
 #ifdef FLATBUFFERS_BENCHMARK
     time_monster(B);
     time_struct_buffer(B);

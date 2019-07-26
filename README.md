@@ -1,10 +1,6 @@
 OS-X & Ubuntu: [![Build Status](https://travis-ci.org/dvidelabs/flatcc.svg?branch=master)](https://travis-ci.org/dvidelabs/flatcc)
 Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/dvidelabs/flatcc?branch=master&svg=true)](https://ci.appveyor.com/project/dvidelabs/flatcc)
 
-_BREAKING: 0.5.3 changes behavour of builder create calls so arguments
-are always ordered by field id when id attributes are being used, for
-example `MyGame_Example_Monster_create()` in `monster_test.fbs`
-([#81](https://github.com/dvidelabs/flatcc/issues/81))._
 
 _The JSON parser may change the interface for parsing union vectors in a
 future release which requires code generation to match library
@@ -50,6 +46,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
   * [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
   * [Base64 Encoding](#base64-encoding)
+  * [Fixed Size Arrays](#fixed-size-arrays)
   * [Generic Parsing and Printing.](#generic-parsing-and-printing)
   * [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
@@ -58,6 +55,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [Types](#types)
 * [Unions](#unions)
   * [Union Scope Resolution](#union-scope-resolution)
+* [Fixed Size Arrays](#fixed-size-arrays-1)
 * [Endianness](#endianness)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
 * [Searching and Sorting](#searching-and-sorting)
@@ -288,6 +286,16 @@ fi
 ```
 
 ## Status
+
+Release 0.6.0 (not released) introduces a "primary" attribute to be used
+together with a key attribute to chose default key for finding and
+sorting. If primary is absent, the key with the lowest id becomes
+primary. Tables and vectors can now be sorted recursively on primary
+keys. BREAKING: previously the first listed, not the lowest id, would be
+the primary key. Also introduces fixed size scalar arrays in struct fields
+(struct and enum elements are not supported). Structs support fixed
+size array fields, including char arrays. Empty structs never fully worked
+and are no longer supported, they are also no longer supported by flatc.
 
 Release 0.5.3 inlcudes various bug fixes (see changelog) and one
 breaking but likely low impact change: BREAKING: 0.5.3 changes behavour
@@ -772,14 +780,14 @@ it is an adapted extract of the [monster_test.c] file.
 First we compile the schema read-only with common (-c) support header and we
 add the recursion because [monster_test.fbs] includes other files.
 
-    flatcc -cr test/monster_test/monster_test.fbs
+    flatcc -cr --reader test/monster_test/monster_test.fbs
 
 For simplicity we assume you build an example project in the project
 root folder, but in praxis you would want to change some paths, for
 example:
 
     mkdir -p build/example
-    flatcc -cr -o build/example test/monster_test/monster_test.fbs
+    flatcc -cr --reader -o build/example test/monster_test/monster_test.fbs
     cd build/example
 
 We get:
@@ -1442,7 +1450,6 @@ vector field named `manyany` which is a vector of `Any` unions in the
         "manyany": [{"name": "Joe"}, null]
     }
 
-
 ### Base64 Encoding
 
 As of v0.5.0 it is possible to encode and decode a vector of type
@@ -1478,6 +1485,22 @@ possible, but it is recognized that a `(force_align: n)` attribute on
 `[ubyte]` vectors could be useful, but it can also be handled via nested
 flatbuffers which also align data.
 
+### Fixed Size Arrays
+
+Fixed size arrays introduced in 0.6.0 allow for structs containing arrays
+of fixed length scalars, structs and chars. Arrays are parsed like vectors
+for of similar type but are zero padded if shorter than expected and fails
+if longer than expected. The flag `reject_array_underflow` will error if an
+array is shorter than expected instead of zero padding. The flag
+`skip_array_overflow` will allow overlong arrays and simply drop extra elements.
+
+Char arrays are parsed like strings and zero padded if short than expected, but
+they are not zero terminated. A string like "hello" will exactly fit into a
+field of type `[char:5]`. Trailing zero characters are not printed, but embedded
+zero characters are. This allows for loss-less roundtrips without having to zero
+pad strings. Note that other arrays are always printed in full. If the flag
+`skip_array_overflow` is set, a string might be truncated in the middle of a
+multi-byte character. This is not checked nor enforced by the verifier.
 
 ### Generic Parsing and Printing.
 
@@ -1775,6 +1798,32 @@ monster type to an Any union field, and `MyGame.Example.Any.Monster2`, or just
 `Monster2` when assigning the second monster type. C uses the usual enum
 namespace prefixed symbols like `MyGame_Example_Any_Monster2`.
 
+## Fixed Size Arrays
+
+Fixed Size Arrays is a late feature to the FlatBuffers format introduced in
+flatc and flatcc mid 2019. Currently only scalars arrays are supported, and only
+as struct fields. To use fixed size arrays as a table field wrap it in a struct
+first. It would make sense to support struct elements and enum elements, but
+that has not been implemented. Char arrays are more controversial due to
+verification and zero termination and are also not supported. Arrays are aligned
+to the size of the first field and are equivalent to repeating elements within
+the struct.
+
+The schema syntax is:
+
+```
+struct MyStruct {
+    my_array : [float:10];
+}
+```
+
+See `test_fixed_array` in [monster_test.c] for an example of how to work with
+these arrays.
+
+Flatcc opts to allow arbitrary length fixed size arrays but limit the entire
+struct to 2^16-1 bytes. Tables cannot hold larger structs, and the C language
+does not guarantee support for larger structs. Other implementations might have
+different limits on maximum array size. Arrays of 0 length are not permitted.
 
 ## Endianness
 
@@ -1871,6 +1920,39 @@ transparently by providing `<table_name>_vec_sort_by_<field_name>` and
 The first field maps to `<table_name>_vec_sort` and
 `<table_name>_vec_find`. Obviously the chosen find method must match
 the chosen sort method. The find operation is O(logN).
+
+As of v0.6.0 the default key used for find and and sort without the `by_name`
+suffix is the field with the smaller id instead of the first listed in the
+schema which is often but not always the same thing.
+
+v0.6.0 also introduces the `primary_key` attribute that can be used instead of
+the `key` attribute on at most one field. The two attributes are mutually
+exclusive. This can be used if a key field with a higher id should be the
+default key. There is no difference when only one field has a `key` or
+`primary_key` attribute, so in that case choose `key` for compatiblity.
+Googles flatc compiler does not recognize the `primary_key` attribute.
+
+As of v0.6.0 a 'sorted' attribute has been introduced together with the sort
+operations `<table_name>_sort` and `<union_name>_sort`. If a table or a union,
+directly or indirectly, contains a vector with the 'sorted' attribute, then the
+sort operation is made available. The sort will recursively visit all children
+with vectors marked sorted. The sort operatoin will use the default (primary)
+key. A table or union must first be cast to mutable, for example
+`ns(Monster_sort((ns(Monster_mutable_table_t))monster)`. The actual vector
+sort operations are the same as before, they are just called automatically.
+The `sorted` attribute can only be set on vectors that are not unions. The
+vector can be of scalar, string, struct, or table type. `sorted` is only valid
+for a struct or table vector if the struct or table has a field with a `key`
+or `primary_key` attribute. NOTE: A FlatBuffer can reference the same object
+multiple times. The sort operation will be repeated if this is the case.
+Sometimes that is OK, but if it is a concern, remove the `sorted` attribute
+and sort the vector manually. Note that sharing can also happen via a shared
+containing object. The sort operations are generated in `_reader.h` files
+and only for objects directly or indirectly affected by the `sorted` attribute.
+Unions have a new mutable case operator for use with sorting unions:
+`ns(Any_sort(ns(Any_mutable_cast)(my_any_union))`. Usually unions will be
+sorted via a containing table which performs this cast automatically. See also
+`test_recursive_sort` in [monster_test.c].
 
 As of v0.4.1 `<table_name>_vec_scan_by_<field_name>` and the default
 `<table_name>_vec_scan` are also provided, similar to `find`, but as a

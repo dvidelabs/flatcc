@@ -100,11 +100,14 @@ static inline void *__flatcc_aligned_alloc(size_t alignment, size_t size)
 #ifndef FLATCC_ALIGNED_FREE
 static inline void __flatcc_aligned_free(void *p)
 {
-    char *raw = ((void **)p)[-1];
+    char *raw;
+
+    if (!p) return;
+    raw = ((void **)p)[-1];
 
     FLATCC_FREE(raw);
 }
-#define FLATCC_ALIGNED(p) __flatcc_aligned_free(p)
+#define FLATCC_ALIGNED_FREE(p) __flatcc_aligned_free(p)
 #endif
 
 #endif /* FLATCC_USE_GENERIC_ALIGNED_ALLOC */

@@ -2,19 +2,20 @@
 
 
 <!-- vim-markdown-toc GFM -->
+
 * [Overview](#overview)
 * [Memory Blocks](#memory-blocks)
 * [Example](#example)
 * [Primitives](#primitives)
-    * [Numerics](#numerics)
-    * [Boolean](#boolean)
-    * [Format Internal Types](#format-internal-types)
-    * [Scalars](#scalars)
-    * [Structs](#structs)
+  * [Numerics](#numerics)
+  * [Boolean](#boolean)
+  * [Format Internal Types](#format-internal-types)
+  * [Scalars](#scalars)
+  * [Structs](#structs)
 * [Internals](#internals)
 * [Type Hashes](#type-hashes)
-    * [Conflicts](#conflicts)
-    * [Type Hash Variants](#type-hash-variants)
+  * [Conflicts](#conflicts)
+  * [Type Hash Variants](#type-hash-variants)
 * [Unions](#unions)
 * [Alignment](#alignment)
 * [Default Values and Deprecated Values](#default-values-and-deprecated-values)
@@ -24,14 +25,14 @@
 * [Verification](#verification)
 * [Risks](#risks)
 * [Nested FlatBuffers](#nested-flatbuffers)
+* [Fixed Length Arrays](#fixed-length-arrays)
 * [Big Endian FlatBuffers](#big-endian-flatbuffers)
 * [StructBuffers](#structbuffers)
 * [StreamBuffers](#streambuffers)
 * [Bidirectional Buffers](#bidirectional-buffers)
 * [Possible Future Features](#possible-future-features)
-    * [Force Align](#force-align)
-    * [Fixed Length Vectors](#fixed-length-vectors)
-    * [Mixins](#mixins)
+  * [Force Align](#force-align)
+  * [Mixins](#mixins)
 
 <!-- vim-markdown-toc -->
 
@@ -242,15 +243,13 @@ Another special case is enumerations of type boolean which may not be
 widely supported, but possible. The binary format is not concerned with
 this distinction because a boolean is just an integer at this level.
 
-
 ### Structs
 
-A struct is a fixed sized block of a fixed number of fields in a
-specific order defined by a schema. A field is either a scalar or
-another struct. A struct cannot contain fields that contain itself
-directly or indirectly. A struct is self-contained and has no
-references. A struct can be empty (note that this does not map cleanly
-to C structs).
+A struct is a fixed lengthd block of a fixed number of fields in a specific order
+defined by a schema. A field is either a scalar, another struct or a fixed length
+array of these, or a fixed length char array. A struct cannot contain fields that
+contain itself directly or indirectly. A struct is self-contained and has no
+references. A struct cannot be empty.
 
 A schema cannot change the layout of a struct without breaking binary
 compatibility, unlike tables.
@@ -264,6 +263,14 @@ struct is then an independent memory block like a table.
 FlatCC supports that a struct can be the root object of a FlatBuffer, but
 most implementations likely won't support this. Structs as root are very
 resource efficient.
+
+Structs cannot have vectors but they can have fixed length array fields. which
+are equivalent to stacking multiple non-array fields of the same type after each
+other in a compact notation with similar alignment rules. Additionally arrays
+can be of char type to have a kind of fixed length string. The char type is not
+used outside of char arrays. A fixed length array can contain a struct that
+contains one more fixed length arrays. If the char array type is not support, it
+can be assumed to be a byte array.
 
 
 ## Internals
@@ -402,7 +409,7 @@ boundaries.
 A vector can also hold unions, but it is not supported by all
 implementations. A union vector is in reality two separate vectors: a
 type vector and an offset vector in place of a single unions type and
-value fields in table. See unions. 
+value fields in table. See unions.
 
 
 ## Type Hashes
@@ -433,8 +440,9 @@ table:
     #define MyGame_Sample_Monster_type_hash ((flatbuffers_thash_t)0xd5be61b)
     #define MyGame_Sample_Monster_type_identifier "\x1b\xe6\x5b\x0d"
 
-But we can also [compute
-one online](https://www.tools4noobs.com/online_tools/hash/) for our example buffer:
+But we can also
+[compute one online](https://www.tools4noobs.com/online_tools/hash/)
+for our example buffer:
 
         fnv1a32("Eclectic.FooBar") = 0a604f58
 
@@ -792,9 +800,9 @@ much simpler while staying safe.
 
 A verifier does __not__ enforce that:
 
-- structs and other table fields are aligned relative to table start because tables are only
-  aligned to their soffset field. This means a table cannot be copied
-  naively into a new buffer even if it has no offset fields.
+- structs and other table fields are aligned relative to table start because
+  tables are only aligned to their soffset field. This means a table cannot be
+  copied naively into a new buffer even if it has no offset fields.
 - the order of individual fields within a table. Even if a schema says
   something about ordering this should be considered advisory. A
   verifier may additionally check for ordering for specific
@@ -904,6 +912,124 @@ On the other hand, nested FlatBuffers make it possible to trivially
 extract parts of FlatBuffer data. Extracting a table would require
 chasing pointers and could potentially explode due to shared sub-graphs,
 if not handled carefully.
+
+## Fixed Length Arrays
+
+This feature can be seen as equivalent to repeating a field of the same type
+multiple times in struct.
+
+Fixed length array struct fields has been introduced mid 2019.
+
+A fixed length array is somewhat like a vector of fixed length containing inline
+fixed length elements with no stored size header. The element type can be
+scalars, enums and structs but not other fixed length errors (without wrapping
+them in a struct).
+
+An array should not be mistaken for vector as vectors are independent objects
+while arrays are not. Vectors cannot be fixed length. An array can store fixed
+size arrays inline by wrapping them in a struct and the same applies to unions.
+
+The binary format of a fixed length vector of length `n` and type `t` can
+be precisely emulated by created a struct that holds exactly `n` fields
+of type `t`, `n > 0`. This means that a fixed length array does not
+store any length information in a header and that it is stored inline within
+a struct. Alignment follows the structs alignment rules with arrays having the
+same alignment as their elements and not their entire size.
+
+The maximum length is limited by the maximum struct size and / or an
+implementation imposed length limit. Flatcc accepts any array that will fit in
+struct with a maximum size of 2^16-1 by default but can be compiled with a
+different setting. Googles flatc implementation currently enforces a maximum
+element count of 2^16-1.
+
+Assuming the schema compiler computes the correct alignment for the overall
+struct, there is no additonal work in verifying a buffer containing a fixed
+length array because structs are verified based on the outermost structs size
+and alignment without having to inspect its content.
+
+Fixed lenght arrays also support char arrays. The `char` type is similar to the
+`ubyte` or `uint8` type but a char can only exist as a char array like
+`x:[char:10]`. Chars cannot exist as a standalone struct or table field, and
+also not as a vector element. Char arrays are like strings, but they contain no
+length information and no zero terminator. They are expected to be endian
+neutral and to contain ASCII or UTF-8 encoded text zero padded up the array
+size. Text can contain embedded nulls and other control characters. In JSON form
+the text is printed with embedded null characters but stripped from trailing
+null characters and a parser will padd the missing null characters.
+
+
+The following example uses fixed length arrays. The example is followed by the
+equivalent representation without such arrays.
+
+    struct Basics {
+        int a;
+        int b;
+    }
+
+    struct MyStruct {
+        x: int;
+        z: [short:3];
+        y: float;
+        w: [Basics:2];
+        name: [char:4];
+    }
+
+    // NOT VALID - use a struct wrapper:
+    table MyTable {
+        t: [ubyte:2];
+        m: [MyStruct:2];
+    }
+
+Equivalent representation:
+
+    struct MyStructEquivalent {
+        x: int;
+        z1: short;
+        z2: short;
+        z3: short;
+        y: float;
+        wa1: int;
+        wa2: int;
+        name1: ubyte;
+        name2: ubyte;
+        name3: ubyte;
+        name4: ubyte;
+    }
+
+    struct MyStructArrayEquivalent {
+        s1: MyStructEquivalent;
+        s2: MyStructEquivalent;
+    }
+
+    struct tEquivalent {
+        t1: ubyte;
+        t2: ubyte;
+    }
+
+    table MyTableEquivalent {
+        t: tEquivalent;
+        m: MyStructArrayEquivalent;
+    }
+
+
+Note that forced zero-termination can be obtained by adding a trailing ubyte
+field since uninitialized struct fields should be zeroed:
+
+    struct Text {
+        str: [char:255];
+        zterm: ubyte;
+    }
+
+Likewise a length prefix field could be added if the applications involved know
+how to interpret such a field:
+
+    struct Text {
+        len: ubyte;
+        str: [char:254];
+        zterm: ubyte;
+    }
+
+The above is just an example and not part of the format as such.
 
 
 ## Big Endian FlatBuffers
@@ -1072,102 +1198,7 @@ implemented differently. Be warned.
 ### Force Align
 
 `force_align` attribute supported on fields of structs, scalars and
-and vectors of fixed size elements.
-
-### Fixed Length Vectors
-
-A fixed length vector is a vector of fixed length containing inline
-fixed size elements and no size prefix and they are stored inline
-in tables and structs. An element can be a struct or a scalar including
-enums.
-
-The binary format of a fixed size vector of length `n` and type `t` can
-be precisely emulated by created a struct that holds exactly `n` fields
-of type `t`, `n >= 0`. This means that a fixed length vector does not
-store any length information in a header and that it is stored inline in
-tables similar to structs. Alignment follows the rules of structs
-and also supports the `force_align` attribute.
-
-It is not valid to ever change the size of a fixed length vector when
-staying compliant with schema evolution.
-
-A fixed length vector cannot hold offsets because fixed length vectors
-are essentially structs with alternative accessors.
-
-Unions of fixed length vectors are not valid unless wrapped in a struct.
-
-Careful: subject to likely change: A new type `char` is used to
-create fixed length utf8 or ASCII strings that are always zero
-terminated and zeropadded. A [char:4] takes up 5 bytes including a zero
-termination byte and may hold any valid zero terminated ASCII or UTF-8
-string of that length. While `[char:1]` is a valid type, `char` is not.
-
-_Note: the syntax `[string:4]` has been proposed to mean a string of 4
-characters, but it actually means a fixed size vector of 4 offsets to
-variable length strings which is not supported._
-
-
-The following example
-
-    struct Basics {
-        int a;
-        int b;
-    }
-
-    struct MyStruct {
-        x: int;
-        z: [short:3];
-        y: float;
-        w: [Basics:2];
-        name: [char:4];
-    }
-    
-    table MyTable {
-        t: [ubyte:2];
-        m: [MyStruct:2];
-    }
-
-
-can replace MyStruct with the binary equivalent (but different
-codegeneration):
-
-    struct MyStructEquivalent {
-        x: int;
-        z1: short;
-        z2: short;
-        z3: short;
-        y: float;
-        wa1: int;
-        wa2: int;
-        name1: ubyte;
-        name2: ubyte;
-        name3: ubyte;
-        name4: ubyte;
-        wname_zterm: ubyte;
-        x2: int;
-        z21: short;
-        z22: short;
-        z23: short;
-        y2: float;
-        wa21: int;
-        wa22: int;
-        name21: ubyte;
-        name22: ubyte;
-        name23: ubyte;
-        name24: ubyte;
-        wname2_zterm: ubyte;
-    }
-
-    struct tEquivalent {
-        t1: ubyte; 
-        t2: ubyte; 
-    }
-
-    table MyTableEquivalent {
-        t: tEquivalent;
-        m: MyStructEquivalent;
-    }
-
+and vectors of fixed length elements.
 
 ### Mixins
 
@@ -1221,7 +1252,7 @@ Example:
     }
 
     root_type Main;
-        
+
 
 Here the table NPC and Rock will appear with read accessors is if they have the fields:
 
@@ -1256,7 +1287,7 @@ Here the table NPC and Rock will appear with read accessors is if they have the 
     root_type Main;
 
 or in JSON:
-    
+
     {
         "npc1": {
             "npcid": 1,
@@ -1301,7 +1332,7 @@ the example above.
 Mixins also places some constraints on the involved types. It is not
 possible to mix in the same type twice because names would conflict and
 it would no longer be possible to do trivially cast a table or struct
-to one of its kinds. An empty table or struct could be mixed in to
+to one of its kinds. An empty table could be mixed in to
 provide type information but such a type can also only be added once.
 
 Mixing in types introduces the risk of name conflicts. It is not valid

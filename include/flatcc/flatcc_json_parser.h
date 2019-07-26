@@ -27,6 +27,8 @@ enum flatcc_json_parser_flags {
     flatcc_json_parser_f_skip_unknown = 1,
     flatcc_json_parser_f_force_add = 2,
     flatcc_json_parser_f_with_size = 4,
+    flatcc_json_parser_f_skip_array_overflow = 8,
+    flatcc_json_parser_f_reject_array_underflow = 16
 };
 
 #define FLATCC_JSON_PARSE_ERROR_MAP(XX)                                     \
@@ -63,6 +65,8 @@ enum flatcc_json_parser_flags {
     XX(union_vector_length,     "union vector length mismatch")             \
     XX(base64,                  "invalid base64 content")                   \
     XX(base64url,               "invalid base64url content")                \
+    XX(array_underflow,         "fixed size array underflow")               \
+    XX(array_overflow,          "fixed size array overflow")                \
     XX(runtime,                 "runtime error")                            \
     XX(not_supported,           "not supported")
 
@@ -161,23 +165,35 @@ static inline const char *flatcc_json_parser_string_end(flatcc_json_parser_t *ct
 }
 
 /*
+ * Parse a string as a fixed size char array as `s` with length `n`.
+ * and raise errors according to overflow/underflow runtime flags. Zero
+ * and truncate as needed. A trailing zero is not inserted if the input
+ * is at least the same length as the char array.
+ * 
+ * Runtime flags: `skip_array_overflow`, `pad_array_underflow`.
+ */
+const char *flatcc_json_parser_char_array(flatcc_json_parser_t *ctx,
+        const char *buf, const char *end, char *s, size_t n);
+
+/*
  * Creates a string. Returns *ref == 0 on unrecoverable error or
  * sets *ref to a valid new string reference.
  */
 const char *flatcc_json_parser_build_string(flatcc_json_parser_t *ctx,
         const char *buf, const char *end, flatcc_builder_ref_t *ref);
 
-typedef char flatcc_json_parser_escape_buffer_t[4];
+typedef char flatcc_json_parser_escape_buffer_t[5];
 /*
  * If the buffer does not hold a valid escape sequence, an error is
  * returned with code[0] = 0/
  *
- * Otherwise code[0] the length (1-3) of the remaining
- * characters in the code, transcoded from the escape sequence.
+ * Otherwise code[0] the length (1-4) of the remaining
+ * characters in the code, transcoded from the escape sequence
+ * where a length of 4 only happens with escapaped surrogate pairs.
  *
  * The JSON extension `\xXX` is supported and may produced invalid UTF-8
  * characters such as 0xff. The standard JSON escape `\uXXXX` is not
- * checked for invalid code points and may produce invlalid UTF-8.
+ * checked for invalid code points and may produce invalid UTF-8.
  *
  * Regular characters are expected to valid UTF-8 but they are not checked
  * and may therefore produce invalid UTF-8.

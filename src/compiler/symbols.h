@@ -37,6 +37,7 @@ enum {
     tok_kw_base = LEX_TOK_KW_BASE,
     tok_kw_bool,
     tok_kw_byte,
+    tok_kw_char,
     tok_kw_enum,
     tok_kw_float32,
     tok_kw_float64,
@@ -70,6 +71,7 @@ enum {
     tok_kw_rpc_service,
     tok_kw_file_extension,
     tok_kw_file_identifier,
+    LEX_TOK_KW_END,
     /* Pseudo keywords. */
     tok_kw_doc_comment
 };
@@ -95,9 +97,19 @@ enum fb_scalar_type {
     fb_byte,
     fb_double,
     fb_float,
+    fb_char,
 };
 
 typedef enum fb_scalar_type fb_scalar_type_t;
+
+static inline size_t sizeof_scalar_type(fb_scalar_type_t st)
+{
+    static const int scalar_type_size[] = {
+        0, 8, 4, 2, 1, 1, 8, 4, 2, 1, 8, 4, 1
+    };
+
+    return scalar_type_size[st];
+}
 
 enum fb_value_type {
     vt_missing = 0,
@@ -115,7 +127,11 @@ enum fb_value_type {
     vt_type_ref,
     vt_name_ref,
     vt_compound_type_ref,
-    vt_vector_compound_type_ref
+    vt_vector_compound_type_ref,
+    vt_fixed_array_type,
+    vt_fixed_array_type_ref,
+    vt_fixed_array_string_type,
+    vt_fixed_array_compound_type_ref
 };
 
 struct fb_string {
@@ -137,6 +153,7 @@ struct fb_value {
         fb_ref_t *ref;
     };
     unsigned short type;
+    uint32_t len;
 };
 
 enum fb_kind {
@@ -237,6 +254,7 @@ struct fb_compound_type {
     fb_schema_t *schema;
     fb_symbol_t *members;
     fb_member_t *ordered_members;
+    fb_member_t *primary_key;
     fb_metadata_t *metadata;
     fb_doc_t *doc;
     fb_value_t type;
@@ -255,7 +273,7 @@ struct fb_compound_type {
     fb_compound_type_t *order;
     /*
      * Use by code generators. Only valid during export and may hold
-     * garbage from a prevous export.
+     * garbage from a previous export.
      */
     size_t export_index;
 };
@@ -273,6 +291,8 @@ enum fb_known_attributes {
     fb_attr_hash = 9,
     fb_attr_base64 = 10,
     fb_attr_base64url = 11,
+    fb_attr_primary_key = 12,
+    fb_attr_sorted = 13,
     KNOWN_ATTR_COUNT
 };
 
@@ -288,7 +308,9 @@ enum fb_known_attribute_flags {
     fb_f_required = 1 << fb_attr_required,
     fb_f_hash = 1 << fb_attr_hash,
     fb_f_base64 = 1 << fb_attr_base64,
-    fb_f_base64url = 1 << fb_attr_base64url
+    fb_f_base64url = 1 << fb_attr_base64url,
+    fb_f_primary_key = 1 << fb_attr_primary_key,
+    fb_f_sorted = 1 << fb_attr_sorted,
 };
 
 struct fb_attribute {
