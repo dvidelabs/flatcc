@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #define __flatcc_basic_scalar_accessors_impl(N, T, W, E)                    \
-static inline size_t N ## __size()                                          \
+static inline size_t N ## __size(void)                                      \
 { return sizeof(T); }                                                       \
 static inline T *N ## __ptr_add(T *p, size_t i)                             \
 { return p + i; }                                                           \

@@ -777,7 +777,7 @@ static void gen_helpers(fb_output_t *out)
         "  return __%sread_scalar(TK, &(t__tmp->NK[i__tmp])); }\\\n"
         "static inline const T *N ## _ ## NK ## _get_ptr(N ## _struct_t t__tmp)\\\n"
         "{ return t__tmp ? t__tmp->NK : 0; }\\\n"
-        "static inline size_t N ## _ ## NK ## _get_len() { return L; }",
+        "static inline size_t N ## _ ## NK ## _get_len(void) { return L; }",
         nsc, nsc);
     if (!out->opts->cgen_no_conflicts) {
         fprintf(out->fp,
@@ -791,7 +791,7 @@ static void gen_helpers(fb_output_t *out)
         "{ if (!t__tmp || i__tmp >= L) return 0; return t__tmp->NK + i__tmp; }"
         "static inline T N ## _ ## NK ## _get_ptr(N ## _struct_t t__tmp)\\\n"
         "{ return t__tmp ? t__tmp->NK : 0; }\\\n"
-        "static inline size_t N ## _ ## NK ## _get_len() { return L; }",
+        "static inline size_t N ## _ ## NK ## _get_len(void) { return L; }",
         nsc);
     if (!out->opts->cgen_no_conflicts) {
         fprintf(out->fp,
@@ -1199,7 +1199,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                 snt.text, snt.text, snt.text,
                 nsc);
     }
-    fprintf(out->fp, "static inline size_t %s__size() { return %llu; }\n",
+    fprintf(out->fp, "static inline size_t %s__size(void) { return %llu; }\n",
             snt.text, llu(ct->size));
     fprintf(out->fp,
             "static inline size_t %s_vec_len(%s_vec_t vec)\n"
