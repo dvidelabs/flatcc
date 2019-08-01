@@ -754,17 +754,17 @@ use the call, use a null identifier as argument to:
 
     char *identifier = 0;
 
-    MyTable_verify_as_root_with_identifier(buf, size, identifier)
+    MyTable_verify_as_root_with_identifier(buf, size, identifier);
 
 To read a buffer use:
 
-    MyTable_as_root_with_identifier(buf, 0)
+    MyTable_as_root_with_identifier(buf, 0);
 
 And to build a buffer without and identifier use:
 
-    MyTable_start_as_root_with_identifier(builder, 0)
+    MyTable_start_as_root_with_identifier(builder, 0);
     ...
-    MyTable_end_as_root_with_identifier(builder, 0)
+    MyTable_end_as_root_with_identifier(builder, 0);
 
 Several other `as_root` calls have a `as_root_with_identifier` version,
 including JSON printing.
