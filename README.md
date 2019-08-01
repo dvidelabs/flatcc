@@ -736,7 +736,7 @@ verifying a buffer.
 A buffer can have an unexpected 4-byte identifier at offset 4, or the identifier
 might be absent.
 
-Not all language interfaces support support file identifiers in buffers, and if they do, they might not do so in an older version. Users have reported problems with both Python and Lua interfaces but this is easily resovled.
+Not all language interfaces support support file identifiers in buffers, and if they do, they might not do so in an older version. Users have reported problems with both Python and Lua interfaces but this is easily resolved.
 
 Check the return value of the verifier:
 
