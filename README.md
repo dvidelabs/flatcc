@@ -34,6 +34,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
   * [Use of Macros in Generated Code](#use-of-macros-in-generated-code)
   * [Extracting Documentation](#extracting-documentation)
 * [Using flatcc](#using-flatcc)
+* [Trouble Shooting](#trouble-shooting)
 * [Quickstart](#quickstart)
   * [Reading a Buffer](#reading-a-buffer)
   * [Compiling for Read-Only](#compiling-for-read-only)
@@ -727,6 +728,44 @@ JSON printer and parser can be generated using the --json flag or
 some certain runtime library compile time flags that can optimize out
 printing symbolic enums, but these can also be disabled at runtime.
 
+## Trouble Shooting
+
+Flatcc will be default expect a `file_identifier` in the buffer when reading or
+verifying a buffer.
+
+A buffer can have an unexpected 4-byte identifier at offset 4, or the identifier
+might be absent.
+
+Not all language interfaces support support file identifiers in buffers, and if they do, the may not do so in an older version. Users have reported problems with both Python and Lua interfaces but this is easily resovled.
+
+Check the return value of the verifier:
+
+    int ret;
+    char *s;
+
+    ret = MyTable_verify_as_root(buf, size);
+    if (ret) {
+        s = flatcc_verify_error_string(ret);
+        printf("buffer failed: %s\n", s);
+    }
+
+To verify a buffer a with no identifier, or to ignore a different identifier,
+use the call, use a null identifier as argument to:
+
+    MyTable_verify_as_root_with_identifier(buf, size, 0)
+
+To read a buffer use:
+
+    MyTable_as_root_with_identifier(buf, 0)
+
+And to build a buffer without and identifier use:
+
+    MyTable_start_as_root_with_identifier(builder, 0)
+    ...
+    MyTable_end_as_root_with_identifier(builder, 0)
+
+Several other `as_root` calls have a `as_root_with_identifier` version,
+including JSON printing.
 
 ## Quickstart
 
