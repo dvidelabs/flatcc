@@ -730,7 +730,7 @@ printing symbolic enums, but these can also be disabled at runtime.
 
 ## Trouble Shooting
 
-Flatcc will be default expect a `file_identifier` in the buffer when reading or
+Flatcc will by default expect a `file_identifier` in the buffer when reading or
 verifying a buffer.
 
 A buffer can have an unexpected 4-byte identifier at offset 4, or the identifier
@@ -752,7 +752,9 @@ Check the return value of the verifier:
 To verify a buffer a with no identifier, or to ignore a different identifier,
 use the call, use a null identifier as argument to:
 
-    MyTable_verify_as_root_with_identifier(buf, size, 0)
+    char *identifier = 0;
+
+    MyTable_verify_as_root_with_identifier(buf, size, identifier)
 
 To read a buffer use:
 
