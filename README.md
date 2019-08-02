@@ -750,7 +750,7 @@ Check the return value of the verifier:
     }
 
 To verify a buffer with no identifier, or to ignore a different identifier,
-use the call, use a null identifier as argument to:
+use a null identifier as argument to:
 
     char *identifier = 0;
 
