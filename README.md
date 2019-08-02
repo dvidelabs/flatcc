@@ -749,7 +749,7 @@ Check the return value of the verifier:
         printf("buffer failed: %s\n", s);
     }
 
-To verify a buffer a with no identifier, or to ignore a different identifier,
+To verify a buffer with no identifier, or to ignore a different identifier,
 use the call, use a null identifier as argument to:
 
     char *identifier = 0;
@@ -766,7 +766,7 @@ And to build a buffer without and identifier use:
     ...
     MyTable_end_as_root_with_identifier(builder, 0);
 
-Several other `as_root` calls have a `as_root_with_identifier` version,
+Several other `as_root` calls have an `as_root_with_identifier` version,
 including JSON printing.
 
 ## Quickstart
