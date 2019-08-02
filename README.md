@@ -750,7 +750,7 @@ Check the return value of the verifier:
     }
 
 To verify a buffer with no identifier, or to ignore a different identifier,
-use a null identifier as argument to:
+use the `_with_identifier` version of the verifier with a null identifier:
 
     char *identifier = 0;
 
@@ -760,7 +760,7 @@ To read a buffer use:
 
     MyTable_as_root_with_identifier(buf, 0);
 
-And to build a buffer without and identifier use:
+And to build a buffer without an identifier use:
 
     MyTable_start_as_root_with_identifier(builder, 0);
     ...
