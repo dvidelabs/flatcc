@@ -329,10 +329,10 @@ static inline NS ## string_ref_t NS ## string_slice(NS ## builder_t *B, NS ## st
 __flatbuffers_build_string_ops(NS, NS ## string)\
 __flatbuffers_build_offset_vector(NS, NS ## string)
 
-#define __flatbuffers_copy_from_pe(P, P2, N) (*(P) = N ## _cast_from_pe(*P2), (P))
-#define __flatbuffers_from_pe(P, N) (*(P) = N ## _cast_from_pe(*P), (P))
-#define __flatbuffers_copy_to_pe(P, P2, N) (*(P) = N ## _cast_to_pe(*P2), (P))
-#define __flatbuffers_to_pe(P, N) (*(P) = N ## _cast_to_pe(*P), (P))
+#define __flatbuffers_copy_from_pe(P, P2, N) (*(P) = N ## _read_from_pe(P2), (P))
+#define __flatbuffers_from_pe(P, N) (*(P) = N ## _read_from_pe(P), (P))
+#define __flatbuffers_copy_to_pe(P, P2, N) (N ## _write_to_pe((P), *(P2)), (P))
+#define __flatbuffers_to_pe(P, N) (N ## _write_to_pe((P), *(P)), (P))
 #define __flatbuffers_define_fixed_array_primitives(NS, N, T)\
 static inline T *N ## _array_copy(T *p, const T *p2, size_t n)\
 { memcpy(p, p2, n * sizeof(T)); return p; }\
@@ -352,9 +352,9 @@ static inline T *N ## _copy_to_pe(T *p, const T *p2) \
 { return __ ## NS ## copy_to_pe(p, p2, N); }\
 static inline T *N ## _assign(T *p, const T v0) { *p = v0; return p; }\
 static inline T *N ## _assign_from_pe(T *p, T v0)\
-{ *p = N ## _cast_from_pe(v0); return p; }\
+{ *p = N ## _read_from_pe(&v0); return p; }\
 static inline T *N ## _assign_to_pe(T *p, T v0)\
-{ *p = N ## _cast_to_pe(v0); return p; }
+{ N ## _write_to_pe(p, v0); return p; }
 #define __flatbuffers_build_scalar(NS, N, T)\
 __ ## NS ## define_scalar_primitives(NS, N, T)\
 __ ## NS ## define_fixed_array_primitives(NS, N, T)\

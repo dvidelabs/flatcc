@@ -63,10 +63,10 @@ const uint8_t flatcc_builder_padding_base[512] = { 0 };
 #define voffset_t flatbuffers_voffset_t
 #define utype_t flatbuffers_utype_t
 
-#define store_uoffset __flatbuffers_uoffset_cast_to_pe
-#define store_voffset  __flatbuffers_voffset_cast_to_pe
-#define store_identifier __flatbuffers_uoffset_cast_to_pe
-#define store_utype __flatbuffers_utype_cast_to_pe
+#define write_uoffset __flatbuffers_uoffset_write_to_pe
+#define write_voffset  __flatbuffers_voffset_write_to_pe
+#define write_identifier __flatbuffers_uoffset_write_to_pe
+#define write_utype __flatbuffers_utype_write_to_pe
 
 #define field_size sizeof(uoffset_t)
 #define max_offset_count FLATBUFFERS_COUNT_MAX(field_size)
@@ -724,7 +724,7 @@ flatcc_builder_ref_t flatcc_builder_embed_buffer(flatcc_builder_t *B,
         return 0;
     }
     pad = front_pad(B, (uoffset_t)size + (with_size ? field_size : 0), align);
-    size_field = store_uoffset((uoffset_t)size + pad);
+    write_uoffset(&size_field, (uoffset_t)size + pad);
     init_iov();
     /* Add ubyte vector size header if nested buffer. */
     push_iov_cond(&size_field, field_size, !is_top_buffer(B));
@@ -753,8 +753,8 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
         assert(sizeof(flatcc_builder_identifier_t) == identifier_size);
         assert(sizeof(flatcc_builder_identifier_t) == field_size);
         memcpy(&id_out, identifier, identifier_size);
-        id_out = __flatbuffers_thash_cast_from_le(id_out);
-        id_out = store_identifier(id_out);
+        id_out = __flatbuffers_thash_read_from_le(&id_out);
+        write_identifier(&id_out, id_out);
     }
     id_size = id_out ? identifier_size : 0;
     header_pad = front_pad(B, field_size + id_size + (with_size ? field_size : 0), align);
@@ -767,12 +767,12 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
     push_iov(_pad, header_pad);
     buffer_base = (uoffset_t)B->emit_start - (uoffset_t)iov.len + ((is_nested || with_size) ? field_size : 0);
     if (is_nested) {
-        buffer_size = store_uoffset((uoffset_t)B->buffer_mark - buffer_base);
+        write_uoffset(&buffer_size, (uoffset_t)B->buffer_mark - buffer_base);
     } else {
         /* Also include clustered vtables. */
-        buffer_size = store_uoffset((uoffset_t)B->emit_end - buffer_base);
+        write_uoffset(&buffer_size, (uoffset_t)B->emit_end - buffer_base);
     }
-    object_offset = store_uoffset((uoffset_t)object_ref - buffer_base);
+    write_uoffset(&object_offset, (uoffset_t)object_ref - buffer_base);
     if (0 == (buffer_ref = emit_front(B, &iov))) {
         check(0, "emitter rejected buffer content");
         return 0;
@@ -1128,7 +1128,7 @@ flatcc_builder_vt_ref_t flatcc_builder_create_vtable(flatcc_builder_t *B,
             return 0;
         }
         for (i = 0; i < vt_size / sizeof(voffset_t); ++i) {
-            vt_[i] = store_voffset(vt[i]);
+            write_voffset(&vt_[i], vt[i]);
         }
         vt = vt_;
         /* We don't need to free the reservation since we don't advance any base pointer. */
@@ -1259,11 +1259,11 @@ flatcc_builder_ref_t flatcc_builder_create_table(flatcc_builder_t *B, const void
         return -1;
     }
     /* Protocol endian encoding. */
-    vt_offset_field = store_uoffset(vt_offset);
+    write_uoffset(&vt_offset_field, vt_offset);
     for (i = 0; i < offset_count; ++i) {
         offset_field = (uoffset_t *)((size_t)data + offsets[i]);
         offset = *offset_field - base - offsets[i] - field_size;
-        *offset_field = store_uoffset(offset);
+        write_uoffset(offset_field, offset);
     }
     init_iov();
     push_iov(&vt_offset_field, field_size);
@@ -1378,7 +1378,7 @@ flatcc_builder_ref_t flatcc_builder_create_vector(flatcc_builder_t *B,
 #if FLATBUFFERS_UOFFSET_MAX > SIZE_MAX
     check_error(vec_size < SIZE_MAX, 0, "vector larger than address space");
 #endif
-    length_prefix = store_uoffset((uoffset_t)count);
+    write_uoffset(&length_prefix, (uoffset_t)count);
     /* Alignment is calculated for the first element, not the header. */
     vec_pad = front_pad(B, vec_size, align);
     init_iov();
@@ -1437,7 +1437,7 @@ static flatcc_builder_ref_t _create_offset_vector_direct(flatcc_builder_t *B,
     }
     set_min_align(B, field_size);
     vec_size = (uoffset_t)count * field_size;
-    length_prefix = store_uoffset((uoffset_t)count);
+    write_uoffset(&length_prefix, (uoffset_t)count);
     /* Alignment is calculated for the first element, not the header. */
     vec_pad = front_pad(B, vec_size, field_size);
     init_iov();
@@ -1457,7 +1457,7 @@ static flatcc_builder_ref_t _create_offset_vector_direct(flatcc_builder_t *B,
          */
         if (vec[i] != 0) {
             offset = vec[i] - base - i * field_size - field_size;
-            vec[i] = store_uoffset(offset);
+            write_uoffset(&vec[i], offset);
             if (types) {
                 check(types[i] != 0, "union vector cannot have non-null element with type NONE");
             }
@@ -1529,7 +1529,7 @@ int flatcc_builder_table_add_union(flatcc_builder_t *B, int id,
     }
     putype = flatcc_builder_table_add(B, id - 1, utype_size, utype_size);
     check_error(putype != 0, -1, "unable to add union type");
-    *putype = store_utype(uref.type);
+    write_utype(putype, uref.type);
     return 0;
 }
 
@@ -1716,7 +1716,7 @@ flatcc_builder_ref_t flatcc_builder_create_string(flatcc_builder_t *B, const cha
     if (len > max_string_len) {
         return 0;
     }
-    length_prefix = store_uoffset((uoffset_t)len);
+    write_uoffset(&length_prefix, (uoffset_t)len);
     /* Add 1 for zero termination. */
     s_pad = front_pad(B, (uoffset_t)len + 1, field_size) + 1;
     init_iov();
