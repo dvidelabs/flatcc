@@ -20,7 +20,30 @@ static inline const T *N ## __const_ptr_add(const T *p, size_t i)           \
 static inline T N ## _read(const void *p)                                   \
 { return *(T *)p; }                                                         \
 static inline void N ## _write(void *p, T v)                                \
-{ *(T *)p = v; }                                                            \
+{ *(T *)p = v; }
+
+#define __flatcc_define_integer_accessors_impl(N, T, W, E)                  \
+static inline T N ## _read_from_pe(const void *p)                           \
+{ uint ## W ## _t u = *(uint ## W ## _t *)p;                                \
+  u = E ## W ## toh(u); return (T)u; }                                      \
+static inline void N ## _write_to_pe(void *p, T v)                          \
+{ uint ## W ## _t u = (uint ## W ## _t)v;                                   \
+  *(uint ## W ## _t *)p = hto ## E ## W(u); }                               \
+static inline T N ## _read_from_le(const void *p)                           \
+{ uint ## W ## _t u = *(uint ## W ## _t *)p;                                \
+  u = le ## W ## toh(u); return (T)u; }                                     \
+static inline void N ## _write_to_le(void *p, T v)                          \
+{ uint ## W ## _t u = (uint ## W ## _t)v;                                   \
+  *(uint ## W ## _t *)p = htole ## W(u); }                                  \
+static inline T N ## _read_from_be(const void *p)                           \
+{ uint ## W ## _t u = *(uint ## W ## _t *)p;                                \
+  u = be ## W ## toh(u); return (T)u; }                                     \
+static inline void N ## _write_to_be(void *p, T v)                          \
+{ uint ## W ## _t u = (uint ## W ## _t)v;                                   \
+  *(uint ## W ## _t *)p = htobe ## W(u); }                                  \
+__flatcc_basic_scalar_accessors_impl(N, T, W, E)
+
+#define __flatcc_define_real_accessors_impl(N, T, W, E)                     \
 static inline T N ## _read_from_pe(const void *p)                           \
 { T v; uint ## W ## _t u = *(uint ## W ## _t *)p;                           \
   u = E ## W ## toh(u); memcpy(&v, &u, sizeof(v)); return v; }              \
@@ -39,11 +62,6 @@ static inline T N ## _read_from_be(const void *p)                           \
 static inline void N ## _write_to_be(void *p, T v)                          \
 { uint ## W ## _t u; memcpy(&u, &v, sizeof(v));                             \
   *(uint ## W ## _t *)p = htobe ## W(u); }                                  \
-
-#define __flatcc_define_integer_accessors_impl(N, T, W, E)                  \
-__flatcc_basic_scalar_accessors_impl(N, T, W, E)
-
-#define __flatcc_define_real_accessors_impl(N, T, W, E)                     \
 __flatcc_basic_scalar_accessors_impl(N, T, W, E)
 
 #define __flatcc_define_integer_accessors(N, T, W, E)                       \
