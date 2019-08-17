@@ -25,7 +25,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
-  * [Main features supported as of 0.5.3](#main-features-supported-as-of-053)
+  * [Main features supported as of 0.6.0](#main-features-supported-as-of-060)
   * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
   * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
   * [Portability](#portability)
@@ -288,15 +288,23 @@ fi
 
 ## Status
 
-Release 0.6.0 (not released) introduces a "primary" attribute to be used
-together with a key attribute to chose default key for finding and
-sorting. If primary is absent, the key with the lowest id becomes
-primary. Tables and vectors can now be sorted recursively on primary
-keys. BREAKING: previously the first listed, not the lowest id, would be
-the primary key. Also introduces fixed size scalar arrays in struct fields
-(struct and enum elements are not supported). Structs support fixed
-size array fields, including char arrays. Empty structs never fully worked
-and are no longer supported, they are also no longer supported by flatc.
+Release 0.6.0 introduces a "primary" attribute to be used together with
+a key attribute to chose default key for finding and sorting. If primary
+is absent, the key with the lowest id becomes primary. Tables and
+vectors can now be sorted recursively on primary keys. BREAKING:
+previously the first listed, not the lowest id, would be the primary
+key. Also introduces fixed size scalar arrays in struct fields (struct
+and enum elements are not supported). Structs support fixed size array
+fields, including char arrays. Empty structs never fully worked and are
+no longer supported, they are also no longer supported by flatc.
+NOTE: char arrays are not currently part of Googles flatc compiler -
+int8 arrays may be used instead. BREAKING: empty structs are no longer
+supported - they are also not valid in Googles flatc compiler. See
+CHANGELOG for additional changes. DEPRECATED: low-level `cast_to/from`
+from functions in `flatcc_accessors.h` will be removed in favor of
+`read/write_from/to` because the cast interface breaks float conversion
+on some uncommon platforms. This should not affect normal use but
+remains valid in this release.
 
 Release 0.5.3 inlcudes various bug fixes (see changelog) and one
 breaking but likely low impact change: BREAKING: 0.5.3 changes behavour
@@ -327,7 +335,7 @@ low-level union interface so the terms { type, value } are used
 consistently over { type, member } and { types, members }.
 
 
-### Main features supported as of 0.5.3
+### Main features supported as of 0.6.0
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -350,6 +358,8 @@ consistently over { type, member } and { types, members }.
   adding support for union vectors and mixed type unions of strings,
   structs, and tables, and type aliases for uint8, ..., float64.
 - base64(url) encoded binary data in JSON.
+- sort fields by primary key (as of 0.6.0)
+- char arrays (as of 0.6.0)
 
 There are no plans to make frequent updates once the project becomes
 stable, but input from the community will always be welcome and included
