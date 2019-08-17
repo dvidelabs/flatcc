@@ -406,10 +406,10 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
-        "#define __%scopy_from_pe(P, P2, N) (*(P) = N ## _cast_from_pe(*P2), (P))\n"
-        "#define __%sfrom_pe(P, N) (*(P) = N ## _cast_from_pe(*P), (P))\n"
-        "#define __%scopy_to_pe(P, P2, N) (*(P) = N ## _cast_to_pe(*P2), (P))\n"
-        "#define __%sto_pe(P, N) (*(P) = N ## _cast_to_pe(*P), (P))\n",
+        "#define __%scopy_from_pe(P, P2, N) (*(P) = N ## _read_from_pe(P2), (P))\n"
+        "#define __%sfrom_pe(P, N) (*(P) = N ## _read_from_pe(P), (P))\n"
+        "#define __%scopy_to_pe(P, P2, N) (N ## _write_to_pe((P), *(P2)), (P))\n"
+        "#define __%sto_pe(P, N) (N ## _write_to_pe((P), *(P)), (P))\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_fixed_array_primitives(NS, N, T)\\\n"
@@ -433,9 +433,9 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "{ return __ ## NS ## copy_to_pe(p, p2, N); }\\\n"
         "static inline T *N ## _assign(T *p, const T v0) { *p = v0; return p; }\\\n"
         "static inline T *N ## _assign_from_pe(T *p, T v0)\\\n"
-        "{ *p = N ## _cast_from_pe(v0); return p; }\\\n"
+        "{ *p = N ## _read_from_pe(&v0); return p; }\\\n"
         "static inline T *N ## _assign_to_pe(T *p, T v0)\\\n"
-        "{ *p = N ## _cast_to_pe(v0); return p; }\n"
+        "{ N ## _write_to_pe(p, v0); return p; }\n"
         "#define __%sbuild_scalar(NS, N, T)\\\n"
         "__ ## NS ## define_scalar_primitives(NS, N, T)\\\n"
         "__ ## NS ## define_fixed_array_primitives(NS, N, T)\\\n"
