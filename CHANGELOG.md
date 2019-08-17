@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.6.0-pre]
+## [0.6.0]
 
 - BREAKING: if there are multiple table fields with a key attribute, the
   default key is now the field with the smaller id rather than the first
