@@ -943,7 +943,6 @@ This produces:
 
     flatbuffers_common_reader.h
     flatbuffers_common_builder.h
-    flatbuffers_common_verifier.h
     include_test1_reader.h
     include_test1_builder.h
     include_test1_verifier.h
@@ -959,8 +958,10 @@ unless we only intend to read buffers - the builder generation always
 generates read acces too.
 
 By including `"monster_test_builder.h"` all other files are included
-automatically. The C compiler needs the -I include directive to access
-`flatbuffers/flatcc_builder.h` and related.
+automatically. The C compiler needs the `-I include` directive to access
+`flatcc/flatcc_builder.h`, `flatcc/flatcc_verifier.h`, and other files
+depending on specifics, assuming the project root is the current
+directory.
 
 The verifiers are not required and just created because we lazily chose
 the -a option.
