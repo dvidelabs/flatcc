@@ -1873,6 +1873,20 @@ void *flatcc_builder_aligned_alloc(size_t alignment, size_t size);
 void flatcc_builder_aligned_free(void *p);
 
 /*
+ * Same allocation as `flatcc_builder_finalize_buffer` returnes. Usually
+ * same as `malloc` but can redefined via macros.
+ */
+void *flatcc_builder_alloc(size_t size);
+
+/*
+ * A stable implementation of `free` when the default allocation
+ * methods have been redefined.
+ *
+ * Deallocates memory returned from `flatcc_builder_finalize_buffer`.
+ */
+void flatcc_builder_free(void *p);
+
+/*
  * Only for use with the default emitter.
  *
  * Convenience method to copy buffer from default emitter. Forwards

@@ -2008,6 +2008,16 @@ void flatcc_builder_aligned_free(void *p)
     FLATCC_BUILDER_ALIGNED_FREE(p);
 }
 
+void *flatcc_builder_alloc(size_t size)
+{
+    return FLATCC_BUILDER_ALLOC(size);
+}
+
+void flatcc_builder_free(void *p)
+{
+    FLATCC_BUILDER_FREE(p);
+}
+
 void *flatcc_builder_get_emit_context(flatcc_builder_t *B)
 {
     return B->emit_context;

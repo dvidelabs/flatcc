@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.6.1-pre]
+
+- Add `flatcc_builder_alloc` and `flatcc_builder_free` to handle situations
+  where stanard allocation has been redefined via macros so `free` is no longer
+  safe to use. These are similar to the existing `aligned_alloc/free` functions.
+
 ## [0.6.0]
 
 - BREAKING: if there are multiple table fields with a key attribute, the
