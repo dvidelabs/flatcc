@@ -5,6 +5,9 @@
 - Add `flatcc_builder_alloc` and `flatcc_builder_free` to handle situations
   where stanard allocation has been redefined via macros so `free` is no longer
   safe to use. These are similar to the existing `aligned_alloc/free` functions.
+- Fix a potential, but never seen, low level race condition in the builder when
+  writing a union field because the builder might reallocate between type
+  field and value field. Affects `flacc_common_builder.h` but not `builder.c`.
 
 ## [0.6.0]
 
