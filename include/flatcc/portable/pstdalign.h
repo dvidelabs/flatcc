@@ -11,6 +11,9 @@
  *
  * C++14 does not define __alignas_is_defined, at least sometimes.
  *
+ * GCC 8.3 reverts on this and makes C++11 behave the same as C++14
+ * preventing a simple __cplusplus version check from working.
+ *
  * Clang C++ without std=c++11 or std=c++14 does define alignas
  * but does so incorrectly wrt. C11 and C++11 semantics because
  * `alignas(4) float x;` is not recognized.
@@ -33,6 +36,17 @@
  * insufficient to detect this, try including <stdaligh.h> manually
  * or define HAVE_STDALIGN_H.
  */
+
+/* https://github.com/dvidelabs/flatcc/issues/130 */
+#ifndef __alignas_is_defined
+#if defined(__cplusplus)
+#if __cplusplus == 201103 && !defined(__clang__) && ((__GNUC__ > 8) || (__GNUC__ == 8 && __GNUC_MINOR__ >= 3))
+#define __alignas_is_defined 1
+#define __alignof_is_defined 1
+#include <stdalign.h>
+#endif
+#endif
+#endif
 
 /* Allow for alternative solution to be included first. */
 #ifndef __alignas_is_defined
