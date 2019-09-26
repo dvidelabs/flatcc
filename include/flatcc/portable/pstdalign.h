@@ -59,7 +59,7 @@
 #endif
 #endif
 
-#if !defined PORTABLE_HAS_INCLUDE_STDALIGN
+#if !defined(PORTABLE_HAS_INCLUDE_STDALIGN)
 #if defined(__has_include)
 #if __has_include(<stdalign.h>)
 #define PORTABLE_HAS_INCLUDE_STDALIGN 1
