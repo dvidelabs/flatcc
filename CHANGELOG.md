@@ -8,6 +8,8 @@
 - Fix a potential, but never seen, low level race condition in the builder when
   writing a union field because the builder might reallocate between type
   field and value field. Affects `flacc_common_builder.h` but not `builder.c`.
+- Fix GCC 8.3 reversal on `__alignas_is_defined` for -std=c11, affecting
+  pstdalign.h (#130).
 
 ## [0.6.0]
 
