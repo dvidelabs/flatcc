@@ -740,6 +740,8 @@ printing symbolic enums, but these can also be disabled at runtime.
 
 ## Trouble Shooting
 
+Make sure to link with `libflatccrt` (rt for runtime) and not `libflatcc` (the schema compiler), otherwise the builder will not be available. Also make sure to have the 'include' of the flatcc project root in the include path.
+
 Flatcc will by default expect a `file_identifier` in the buffer when reading or
 verifying a buffer.
 
