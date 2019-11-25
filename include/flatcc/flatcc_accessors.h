@@ -27,7 +27,9 @@ static inline void N ## _write_from_pe(void *p, T v)                        \
 static inline void N ## _write_to_pe(void *p, T v)                          \
 { *(T *)p = N ## _cast_to_pe(v); }                                          \
 static inline void N ## _write(void *p, T v)                                \
-{ *(T *)p = v; }
+{ *(T *)p = v; }                                                            \
+static inline T N ## _read_from_le(const void *p)                           \
+{ return N ## _cast_from_le(*(T *)p); }                                     \
 
 #define __flatcc_define_integer_accessors_impl(N, T, W, E)                  \
 static inline T N ## _cast_from_pe(T v)                                     \

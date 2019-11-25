@@ -25,7 +25,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
-  * [Main features supported as of 0.5.3](#main-features-supported-as-of-053)
+  * [Main features supported as of 0.6.0](#main-features-supported-as-of-060)
   * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
   * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
   * [Portability](#portability)
@@ -288,15 +288,23 @@ fi
 
 ## Status
 
-Release 0.6.0 (not released) introduces a "primary" attribute to be used
-together with a key attribute to chose default key for finding and
-sorting. If primary is absent, the key with the lowest id becomes
-primary. Tables and vectors can now be sorted recursively on primary
-keys. BREAKING: previously the first listed, not the lowest id, would be
-the primary key. Also introduces fixed size scalar arrays in struct fields
-(struct and enum elements are not supported). Structs support fixed
-size array fields, including char arrays. Empty structs never fully worked
-and are no longer supported, they are also no longer supported by flatc.
+Release 0.6.0 introduces a "primary" attribute to be used together with
+a key attribute to chose default key for finding and sorting. If primary
+is absent, the key with the lowest id becomes primary. Tables and
+vectors can now be sorted recursively on primary keys. BREAKING:
+previously the first listed, not the lowest id, would be the primary
+key. Also introduces fixed size scalar arrays in struct fields (struct
+and enum elements are not supported). Structs support fixed size array
+fields, including char arrays. Empty structs never fully worked and are
+no longer supported, they are also no longer supported by flatc.
+NOTE: char arrays are not currently part of Googles flatc compiler -
+int8 arrays may be used instead. BREAKING: empty structs are no longer
+supported - they are also not valid in Googles flatc compiler. See
+CHANGELOG for additional changes. DEPRECATED: low-level `cast_to/from`
+from functions in `flatcc_accessors.h` will be removed in favor of
+`read/write_from/to` because the cast interface breaks float conversion
+on some uncommon platforms. This should not affect normal use but
+remains valid in this release.
 
 Release 0.5.3 inlcudes various bug fixes (see changelog) and one
 breaking but likely low impact change: BREAKING: 0.5.3 changes behavour
@@ -327,7 +335,7 @@ low-level union interface so the terms { type, value } are used
 consistently over { type, member } and { types, members }.
 
 
-### Main features supported as of 0.5.3
+### Main features supported as of 0.6.0
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -350,6 +358,8 @@ consistently over { type, member } and { types, members }.
   adding support for union vectors and mixed type unions of strings,
   structs, and tables, and type aliases for uint8, ..., float64.
 - base64(url) encoded binary data in JSON.
+- sort fields by primary key (as of 0.6.0)
+- char arrays (as of 0.6.0)
 
 There are no plans to make frequent updates once the project becomes
 stable, but input from the community will always be welcome and included
@@ -377,12 +387,21 @@ neither absent nor fully working as expected. There are often
 workarounds, but it is more reliable to use `-std=c++11` or
 `-std=c++14`.
 
+The portably library does not support GCC C++ pre 4.7 because the
+portable library does not work around C++ limitations in stdalign.h and
+stdint.h before GCC 4.7. This could be fixed but is not a priority.
+
 Some previously testet compiler versions may have been retired as the
 CI environment gets updated. See `.travis.yml` and `appveyor.yml` in
 the `ci-more` branch for the current configuration.
 
 The monster sample does not work with MSVC 2010 because it intentionally
 uses C99 style code to better follow the C++ version.
+
+The build option `FLATCC_TEST` can be used to disable all tests which
+might make flatcc compile on platforms that are otherwise problematic.
+The buld option `FLATCC_CXX_TEST` can be disabled specifically for C++
+tests (a simple C++ file that includes generated C code).
 
 ### Platforms reported to work by users
 
@@ -730,6 +749,8 @@ printing symbolic enums, but these can also be disabled at runtime.
 
 ## Trouble Shooting
 
+Make sure to link with `libflatccrt` (rt for runtime) and not `libflatcc` (the schema compiler), otherwise the builder will not be available. Also make sure to have the 'include' of the flatcc project root in the include path.
+
 Flatcc will by default expect a `file_identifier` in the buffer when reading or
 verifying a buffer.
 
@@ -933,7 +954,6 @@ This produces:
 
     flatbuffers_common_reader.h
     flatbuffers_common_builder.h
-    flatbuffers_common_verifier.h
     include_test1_reader.h
     include_test1_builder.h
     include_test1_verifier.h
@@ -949,8 +969,10 @@ unless we only intend to read buffers - the builder generation always
 generates read acces too.
 
 By including `"monster_test_builder.h"` all other files are included
-automatically. The C compiler needs the -I include directive to access
-`flatbuffers/flatcc_builder.h` and related.
+automatically. The C compiler needs the `-I include` directive to access
+`flatcc/flatcc_builder.h`, `flatcc/flatcc_verifier.h`, and other files
+depending on specifics, assuming the project root is the current
+directory.
 
 The verifiers are not required and just created because we lazily chose
 the -a option.

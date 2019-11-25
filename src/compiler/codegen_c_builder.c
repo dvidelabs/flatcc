@@ -406,10 +406,10 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
-        "#define __%scopy_from_pe(P, P2, N) (*(P) = N ## _cast_from_pe(*P2), (P))\n"
-        "#define __%sfrom_pe(P, N) (*(P) = N ## _cast_from_pe(*P), (P))\n"
-        "#define __%scopy_to_pe(P, P2, N) (*(P) = N ## _cast_to_pe(*P2), (P))\n"
-        "#define __%sto_pe(P, N) (*(P) = N ## _cast_to_pe(*P), (P))\n",
+        "#define __%scopy_from_pe(P, P2, N) (*(P) = N ## _read_from_pe(P2), (P))\n"
+        "#define __%sfrom_pe(P, N) (*(P) = N ## _read_from_pe(P), (P))\n"
+        "#define __%scopy_to_pe(P, P2, N) (N ## _write_to_pe((P), *(P2)), (P))\n"
+        "#define __%sto_pe(P, N) (N ## _write_to_pe((P), *(P)), (P))\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_fixed_array_primitives(NS, N, T)\\\n"
@@ -433,9 +433,9 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "{ return __ ## NS ## copy_to_pe(p, p2, N); }\\\n"
         "static inline T *N ## _assign(T *p, const T v0) { *p = v0; return p; }\\\n"
         "static inline T *N ## _assign_from_pe(T *p, T v0)\\\n"
-        "{ *p = N ## _cast_from_pe(v0); return p; }\\\n"
+        "{ *p = N ## _read_from_pe(&v0); return p; }\\\n"
         "static inline T *N ## _assign_to_pe(T *p, T v0)\\\n"
-        "{ *p = N ## _cast_to_pe(v0); return p; }\n"
+        "{ N ## _write_to_pe(p, v0); return p; }\n"
         "#define __%sbuild_scalar(NS, N, T)\\\n"
         "__ ## NS ## define_scalar_primitives(NS, N, T)\\\n"
         "__ ## NS ## define_fixed_array_primitives(NS, N, T)\\\n"
@@ -530,8 +530,8 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "#define __%sbuild_union_field(ID, NS, N, TN, TT)\\\n"
         "static inline int N ## _add(NS ## builder_t *B, TN ## _union_ref_t uref)\\\n"
         "{ NS ## ref_t *_p; TN ## _union_type_t *_pt; if (uref.type == TN ## _NONE) return 0; if (uref.value == 0) return -1;\\\n"
-        "  if (!(_pt = (TN ## _union_type_t *)flatcc_builder_table_add(B, ID - 1, sizeof(*_pt), sizeof(*_pt))) ||\\\n"
-        "  !(_p = flatcc_builder_table_add_offset(B, ID))) return -1; *_pt = uref.type; *_p = uref.value; return 0; }\\\n"
+        "  if (!(_pt = (TN ## _union_type_t *)flatcc_builder_table_add(B, ID - 1, sizeof(*_pt), sizeof(*_pt)))) return -1;\\\n"
+        "  *_pt = uref.type; if (!(_p = flatcc_builder_table_add_offset(B, ID))) return -1; *_p = uref.value; return 0; }\\\n"
         "static inline int N ## _add_type(NS ## builder_t *B, TN ## _union_type_t type)\\\n"
         "{ TN ## _union_type_t *_pt; if (type == TN ## _NONE) return 0; return (_pt = (TN ## _union_type_t *)flatcc_builder_table_add(B, ID - 1,\\\n"
         "  sizeof(*_pt), sizeof(*_pt))) ? ((*_pt = type), 0) : -1; }\\\n"

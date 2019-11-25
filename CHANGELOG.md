@@ -1,6 +1,18 @@
 # Change Log
 
-## [0.6.0-pre]
+## [0.6.1-pre]
+
+- Add `flatcc_builder_alloc` and `flatcc_builder_free` to handle situations
+  where stanard allocation has been redefined via macros so `free` is no longer
+  safe to use. These are similar to the existing `aligned_alloc/free` functions.
+- Fix a potential, but never seen, low level race condition in the builder when
+  writing a union field because the builder might reallocate between type
+  field and value field. Affects `flacc_common_builder.h` but not `builder.c`.
+- Fix GCC 8.3 reversal on `__alignas_is_defined` for -std=c++11, affecting
+  pstdalign.h (#130).
+- Make C++ test optional via build flag and disable for pre GCC-4.7 (#134).
+
+## [0.6.0]
 
 - BREAKING: if there are multiple table fields with a key attribute, the
   default key is now the field with the smaller id rather than the first
