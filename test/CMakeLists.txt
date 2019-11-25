@@ -2,7 +2,7 @@
 # Under git such files are protected with the `.gitattributes` file.
 # Incorrect line endings may lead to failed tests.
 if (FLATCC_TEST)
-if (FLATCC_CPP_TEST)
+if (FLATCC_CXX_TEST)
     # This is tests is primarly for making sure C++ users can use
     # generated FlatCC code. It fails for pre GCC 4.7 C++ because both
     # stdint.h and stdalign.h are not sufficiently supported and it
