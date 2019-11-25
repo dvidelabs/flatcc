@@ -387,12 +387,21 @@ neither absent nor fully working as expected. There are often
 workarounds, but it is more reliable to use `-std=c++11` or
 `-std=c++14`.
 
+The portably library does not support GCC C++ pre 4.7 because the
+portable library does not work around C++ limitations in stdalign.h and
+stdint.h before GCC 4.7. This could be fixed but is not a priority.
+
 Some previously testet compiler versions may have been retired as the
 CI environment gets updated. See `.travis.yml` and `appveyor.yml` in
 the `ci-more` branch for the current configuration.
 
 The monster sample does not work with MSVC 2010 because it intentionally
 uses C99 style code to better follow the C++ version.
+
+The build option `FLATCC_TEST` can be used to disable all tests which
+might make flatcc compile on platforms that are otherwise problematic.
+The buld option `FLATCC_CPP_TEST` can be disabled specifically for C++
+tests (a simple C++ file that includes generated C code).
 
 ### Platforms reported to work by users
 

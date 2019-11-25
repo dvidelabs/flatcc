@@ -2,7 +2,13 @@
 # Under git such files are protected with the `.gitattributes` file.
 # Incorrect line endings may lead to failed tests.
 if (FLATCC_TEST)
-add_subdirectory(monster_test_cpp)
+if (FLATCC_CPP_TEST)
+    # This is tests is primarly for making sure C++ users can use
+    # generated FlatCC code. It fails for pre GCC 4.7 C++ because both
+    # stdint.h and stdalign.h are not sufficiently supported and it
+    # is not worth attempting to support in flatcc/portable.
+    add_subdirectory(monster_test_cpp)
+endif()
 add_subdirectory(cgen_test)
 add_subdirectory(monster_test)
 add_subdirectory(monster_test_solo)

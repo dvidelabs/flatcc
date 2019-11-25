@@ -9,9 +9,14 @@ cmake_minimum_required (VERSION 2.8)
 # experience issues, and this option can then help.
 option(FLATCC_TEST "enable tests" ON)
 
+# Only active if FLATCC_TEST is active. Used to ensure that C++ users
+# can include generatd C source. Old GCC pre 4.7 won't compile C++ test
+# project.
+option(FLATCC_CPP_TEST "enable C++ tests" ON)
+
 # Conditionally set project languages based on FLATCC_TEST, as C++ is
 # only necessary if building the tests.
-if (FLATCC_TEST)
+if (FLATCC_TEST AND FLATCC_CPP_TEST)
     project (FlatCC C CXX)
 else()
     project (FlatCC C)
@@ -193,6 +198,15 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
         # We need stdalign.h
         set(FLATCC_PORTABLE true)
+        # Disable C++ test for old compilers known to break due to
+        # missing stdalign.h and incomplete stdint.h which is not a
+        # priority to fix in portable library for C++ use case.
+        # Note: we test the C compiler version not the C++ compiler
+        # version, but that is (hopefully) close enough.
+        if (FLATCC_CPP_TEST)
+            message(STATUS "Disabling C++ tests for GCC pre 4.7")
+            set(FLATCC_CPP_TEST false)
+        endif()
     else()
         message(STATUS "Setting GNU C compiler options with c11 and Posix")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")

@@ -10,6 +10,7 @@
   field and value field. Affects `flacc_common_builder.h` but not `builder.c`.
 - Fix GCC 8.3 reversal on `__alignas_is_defined` for -std=c++11, affecting
   pstdalign.h (#130).
+- Make C++ test optional via build flag and disable for pre GCC-4.7 (#134).
 
 ## [0.6.0]
 
