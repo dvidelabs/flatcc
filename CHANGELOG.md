@@ -11,6 +11,12 @@
 - Fix GCC 8.3 reversal on `__alignas_is_defined` for -std=c++11, affecting
   pstdalign.h (#130).
 - Make C++ test optional via build flag and disable for pre GCC-4.7 (#134).
+- Avoid conflicts with table or struct fields named `identifier` (#99, #135)
+  by not generating `<table-name>_identifier` for the table (or structs) file
+  identifier, instead `<table-name>_file_identifier` is generated and the old
+  form is generated for backwards compatibility when there is no conflict.
+- DEPRECATED: `<table-name>_identifier` should now be
+  `<table-name>_file_identifer`.
 
 ## [0.6.0]
 

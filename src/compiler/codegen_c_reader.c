@@ -5,6 +5,12 @@
 #include "codegen_c.h"
 #include "codegen_c_sort.h"
 
+static inline int match_kw_identifier(fb_symbol_t *sym)
+{
+    return (sym->ident->len == 10 && 
+            memcmp(sym->ident->text, "identifier", 10) == 0);
+}
+
 /*
  * Use of file identifiers for undeclared roots is fuzzy, but we need an
  * identifer for all, so we use the one defined for the current schema
@@ -29,6 +35,8 @@ static void print_type_identifier(fb_output_t *out, fb_compound_type_t *ct)
     fb_scoped_name_t snt;
     const char *name;
     uint32_t type_hash;
+    int conflict = 0;
+    fb_symbol_t *sym;
 
     fb_clear(snt);
 
@@ -36,11 +44,30 @@ static void print_type_identifier(fb_output_t *out, fb_compound_type_t *ct)
     name = snt.text;
     type_hash = ct->type_hash;
 
+    /* 
+     * It's not practical to detect all possible name conflicts, but
+     * 'identifier' is common enough to require special handling.
+     */
+    for (sym = ct->members; sym; sym = sym->link) {
+        if (match_kw_identifier(sym)) {
+            conflict = 1;
+            break;
+        }
+    }
     fprintf(out->fp,
-            "#ifndef %s_identifier\n"
-            "#define %s_identifier %sidentifier\n"
+            "#ifndef %s_file_identifier\n"
+            "#define %s_file_identifier %sidentifier\n"
             "#endif\n",
             name, name, nsc);
+    if (!conflict) {
+        /* For backwards compatibility. */
+        fprintf(out->fp,
+                "/* deprecated, use %s_file_identifier */\n"
+                "#ifndef %s_identifier\n"
+                "#define %s_identifier %sidentifier\n"
+                "#endif\n",
+                name, name, name, nsc);
+    }
     fprintf(out->fp,
         "#define %s_type_hash ((%sthash_t)0x%lx)\n",
         name, nsc, (unsigned long)(type_hash));
@@ -862,7 +889,7 @@ static void gen_helpers(fb_output_t *out)
             "static inline T ## _ ## K ## t C ## _ ## N ## _as_typed_root(C ## _ ## table_t t__tmp)\\\n"
             "{ const uint8_t *buffer__tmp = C ## _ ## N(t__tmp); return __%sread_root(T, K, buffer__tmp, C ## _ ## type_identifier); }\\\n"
             "static inline T ## _ ## K ## t C ## _ ## N ## _as_root(C ## _ ## table_t t__tmp)\\\n"
-            "{ const char *fid__tmp = T ## _identifier;\\\n"
+            "{ const char *fid__tmp = T ## _file_identifier;\\\n"
             "  const uint8_t *buffer__tmp = C ## _ ## N(t__tmp); return __%sread_root(T, K, buffer__tmp, fid__tmp); }\n",
             nsc, nsc, nsc, nsc);
     fprintf(out->fp,
@@ -872,7 +899,7 @@ static void gen_helpers(fb_output_t *out)
             "static inline N ## _ ## K ## t N ## _as_root_with_type_hash(const void *buffer__tmp, %sthash_t thash__tmp)\\\n"
             "{ return __%sread_typed_root(N, K, buffer__tmp, thash__tmp); }\\\n"
             "static inline N ## _ ## K ## t N ## _as_root(const void *buffer__tmp)\\\n"
-            "{ const char *fid__tmp = N ## _identifier;\\\n"
+            "{ const char *fid__tmp = N ## _file_identifier;\\\n"
             "  return __%sread_root(N, K, buffer__tmp, fid__tmp); }\\\n"
             "static inline N ## _ ## K ## t N ## _as_typed_root(const void *buffer__tmp)\\\n"
             "{ return __%sread_typed_root(N, K, buffer__tmp, N ## _type_hash); }\n"

@@ -1245,7 +1245,7 @@ static void gen_builder_struct(fb_output_t *out, fb_compound_type_t *ct)
     fprintf(out->fp, "{ ");
     gen_builder_struct_field_assign(out, ct, 0, arg_count, convert_from_pe, 1);
     fprintf(out->fp, "return p; }\n");
-    fprintf(out->fp, "__%sbuild_struct(%s, %s, %llu, %u, %s_identifier, %s_type_identifier)\n",
+    fprintf(out->fp, "__%sbuild_struct(%s, %s, %llu, %u, %s_file_identifier, %s_type_identifier)\n",
             nsc, nsc, snt.text, llu(ct->size), ct->align, snt.text, snt.text);
 
     if (ct->size > 0) {
@@ -1516,7 +1516,7 @@ static int gen_builder_table_prolog(fb_output_t *out, fb_compound_type_t *ct)
     fb_clear(snt);
     fb_compound_name(ct, &snt);
 
-    fprintf(out->fp, "__%sbuild_table_prolog(%s, %s, %s_identifier, %s_type_identifier)\n",
+    fprintf(out->fp, "__%sbuild_table_prolog(%s, %s, %s_file_identifier, %s_type_identifier)\n",
             nsc, nsc, snt.text, snt.text, snt.text);
     return 0;
 }
