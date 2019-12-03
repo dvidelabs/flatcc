@@ -45,7 +45,7 @@ static const char zero_pad[100];
 int verify_empty_monster(void *buffer)
 {
     /* Proper id given. */
-    ns(Monster_table_t) monster = ns(Monster_as_root_with_identifier)(buffer, ns(Monster_identifier));
+    ns(Monster_table_t) monster = ns(Monster_as_root_with_identifier)(buffer, ns(Monster_file_identifier));
     /* Invalid id. */
     ns(Monster_table_t) monster2 = ns(Monster_as_root_with_identifier(buffer, "1234"));
     /* `with_id` can also mean ignore id when given a null argument. */
@@ -192,7 +192,7 @@ int test_empty_monster(flatcc_builder_t *B)
 
     flatcc_builder_reset(B);
 
-    flatbuffers_buffer_start(B, ns(Monster_identifier));
+    flatbuffers_buffer_start(B, ns(Monster_file_identifier));
     ns(Monster_start(B));
     /* Cannot make monster empty as name is required. */
     ns(Monster_name_create_str(B, "MyMonster"));
@@ -206,7 +206,7 @@ int test_empty_monster(flatcc_builder_t *B)
         goto done;
     }
 
-    if ((ret = ns(Monster_verify_as_root_with_identifier(buffer, size, ns(Monster_identifier))))) {
+    if ((ret = ns(Monster_verify_as_root_with_identifier(buffer, size, ns(Monster_file_identifier))))) {
         printf("could not verify empty monster, got %s\n", flatcc_verify_error_string(ret));
         return -1;
     }
@@ -349,7 +349,7 @@ int verify_monster(void *buffer)
         printf("accepted wrong monster identifier (when explicit)\n");
         return -1;
     }
-    if (!nsc(has_identifier(buffer, ns(Monster_identifier)))) {
+    if (!nsc(has_identifier(buffer, ns(Monster_file_identifier)))) {
         printf("wrong monster identifier (via defined identifier)\n");
         return -1;
     }

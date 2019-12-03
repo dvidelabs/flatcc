@@ -23,7 +23,7 @@ struct test_scope {
 
 static const struct test_scope Monster = {
     /* The is the schema global file identifier. */
-    ns(Monster_identifier),
+    ns(Monster_file_identifier),
     ns(Monster_parse_json_table),
     ns(Monster_print_json_table),
     ns(Monster_verify_table)
