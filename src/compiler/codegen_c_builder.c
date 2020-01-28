@@ -501,7 +501,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "static inline int N ## _start(NS ## builder_t *B)\\\n"
         "{ return flatcc_builder_start_table(B, K); }\\\n"
         "static inline N ## _ref_t N ## _end(NS ## builder_t *B)\\\n"
-        "{ assert(flatcc_builder_check_required(B, __ ## N ## _required,\\\n"
+        "{ FLATCC_ASSERT(flatcc_builder_check_required(B, __ ## N ## _required,\\\n"
         "  sizeof(__ ## N ## _required) / sizeof(__ ## N ## _required[0]) - 1));\\\n"
         "  return flatcc_builder_end_table(B); }\\\n"
         "__%sbuild_offset_vector(NS, N)\n"

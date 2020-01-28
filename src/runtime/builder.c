@@ -15,7 +15,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include "flatcc/flatcc_builder.h"
 #include "flatcc/flatcc_emitter.h"
@@ -338,7 +337,7 @@ static int alloc_ht(flatcc_builder_t *B)
 
     size_t size, k;
     /* Allocate null entry so we can check for return errors. */
-    assert(B->vd_end == 0);
+    FLATCC_ASSERT(B->vd_end == 0);
     if (!reserve_buffer(B, flatcc_builder_alloc_vd, B->vd_end, sizeof(vtable_descriptor_t), 0)) {
         return -1;
     }
@@ -430,7 +429,7 @@ int flatcc_builder_custom_reset(flatcc_builder_t *B, int set_defaults, int reduc
             }
             memset(buf->iov_base, 0, buf->iov_len);
         } else {
-            assert(buf->iov_len == 0);
+            FLATCC_ASSERT(buf->iov_len == 0);
         }
     }
     B->vb_end = 0;
@@ -544,7 +543,7 @@ size_t flatcc_builder_exit_user_frame(flatcc_builder_t *B)
 {
     size_t *hdr;
 
-    assert(B->user_frame_offset > 0);
+    FLATCC_ASSERT(B->user_frame_offset > 0);
 
     hdr = us_ptr(B->user_frame_offset);
     B->user_frame_end = B->user_frame_offset - sizeof(size_t);
@@ -553,7 +552,7 @@ size_t flatcc_builder_exit_user_frame(flatcc_builder_t *B)
 
 size_t flatcc_builder_exit_user_frame_at(flatcc_builder_t *B, size_t handle)
 {
-    assert(B->user_frame_offset >= handle);
+    FLATCC_ASSERT(B->user_frame_offset >= handle);
 
     B->user_frame_offset = handle;
     return flatcc_builder_exit_user_frame(B);
@@ -750,8 +749,8 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
     }
     set_min_align(B, align);
     if (identifier) {
-        assert(sizeof(flatcc_builder_identifier_t) == identifier_size);
-        assert(sizeof(flatcc_builder_identifier_t) == field_size);
+        FLATCC_ASSERT(sizeof(flatcc_builder_identifier_t) == identifier_size);
+        FLATCC_ASSERT(sizeof(flatcc_builder_identifier_t) == field_size);
         memcpy(&id_out, identifier, identifier_size);
         id_out = __flatbuffers_thash_read_from_le(&id_out);
         write_identifier(&id_out, id_out);
@@ -1741,7 +1740,7 @@ flatcc_builder_ref_t flatcc_builder_end_string(flatcc_builder_t *B)
     flatcc_builder_ref_t string_ref;
 
     check(frame(type) == flatcc_builder_string, "expected string frame");
-    assert(frame(vector.count) == B->ds_offset);
+    FLATCC_ASSERT(frame(vector.count) == B->ds_offset);
     if (0 == (string_ref = flatcc_builder_create_string(B,
             (const char *)B->ds, B->ds_offset))) {
         return 0;

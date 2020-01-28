@@ -12,11 +12,11 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include "flatcc/flatcc_rtconfig.h"
 #include "flatcc/flatcc_refmap.h"
 #include "flatcc/flatcc_alloc.h"
+#include "flatcc/flatcc_assert.h"
 
 #define _flatcc_refmap_calloc FLATCC_CALLOC
 #define _flatcc_refmap_free FLATCC_FREE
@@ -102,7 +102,7 @@ int flatcc_refmap_resize(flatcc_refmap_t *refmap, size_t count)
         refmap->table = _flatcc_refmap_calloc(buckets, sizeof(refmap->table[0]));
         if (refmap->table == 0) {
             refmap->table = T_old;
-            assert(0); /* out of memory */
+            FLATCC_ASSERT(0); /* out of memory */
             return -1;
         }
     }

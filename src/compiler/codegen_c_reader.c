@@ -263,7 +263,7 @@ static void gen_union(fb_output_t *out)
         "{ return NS ## vec_len(uv__tmp.type); }\\\n"
         "static inline T ## _union_t T ## _union_vec_at(T ## _union_vec_t uv__tmp, size_t i__tmp)\\\n"
         "{ T ## _union_t u__tmp = { 0, 0 }; size_t n__tmp = NS ## vec_len(uv__tmp.type);\\\n"
-        "  assert(n__tmp > (i__tmp) && \"index out of range\"); u__tmp.type = uv__tmp.type[i__tmp];\\\n"
+        "  FLATCC_ASSERT(n__tmp > (i__tmp) && \"index out of range\"); u__tmp.type = uv__tmp.type[i__tmp];\\\n"
         "  /* Unknown type is treated as NONE for schema evolution. */\\\n"
         "  if (u__tmp.type == 0) return u__tmp;\\\n"
         "  u__tmp.value = NS ## generic_vec_at(uv__tmp.value, i__tmp); return u__tmp; }\\\n"
@@ -294,7 +294,7 @@ static void gen_union(fb_output_t *out)
         "static inline T ## _union_vec_t N ## _ ## NK ## _union(N ## _table_t t__tmp)\\\n"
         "{ T ## _union_vec_t uv__tmp; uv__tmp.type = N ## _ ## NK ## _type_get(t__tmp);\\\n"
         "  uv__tmp.value = N ## _ ## NK(t__tmp);\\\n"
-        "  assert(NS ## vec_len(uv__tmp.type) == NS ## vec_len(uv__tmp.value)\\\n"
+        "  FLATCC_ASSERT(NS ## vec_len(uv__tmp.type) == NS ## vec_len(uv__tmp.value)\\\n"
         "  && \"union vector type length mismatch\"); return uv__tmp; }\n",
         nsc);
 }
@@ -502,7 +502,7 @@ static void gen_helpers(fb_output_t *out)
         "#define __%sread_vt(ID, offset, t)\\\n"
         "%svoffset_t offset = 0;\\\n"
         "{   %svoffset_t id__tmp, *vt__tmp;\\\n"
-        "    assert(t != 0 && \"null pointer table access\");\\\n"
+        "    FLATCC_ASSERT(t != 0 && \"null pointer table access\");\\\n"
         "    id__tmp = ID;\\\n"
         "    vt__tmp = (%svoffset_t *)((uint8_t *)(t) -\\\n"
         "        __%ssoffset_read_from_pe(t));\\\n"
@@ -555,7 +555,7 @@ static void gen_helpers(fb_output_t *out)
         "    if (offset__tmp) {\\\n"
         "        return (T)((uint8_t *)(t) + offset__tmp);\\\n"
         "    }\\\n"
-        "    assert(!(r) && \"required field missing\");\\\n"
+        "    FLATCC_ASSERT(!(r) && \"required field missing\");\\\n"
         "    return 0;\\\n"
         "}\n",
         nsc, nsc);
@@ -570,7 +570,7 @@ static void gen_helpers(fb_output_t *out)
         "        return (T)((uint8_t *)(elem__tmp) + adjust +\\\n"
         "              __%suoffset_read_from_pe(elem__tmp));\\\n"
         "    }\\\n"
-        "    assert(!(r) && \"required field missing\");\\\n"
+        "    FLATCC_ASSERT(!(r) && \"required field missing\");\\\n"
         "    return 0;\\\n"
         "}\n",
         nsc, nsc, nsc, nsc, nsc);
@@ -643,18 +643,18 @@ static void gen_helpers(fb_output_t *out)
     fprintf(out->fp,
         /* Tb is the base type for loads. */
         "#define __%sscalar_vec_at(N, vec, i)\\\n"
-        "{ assert(%svec_len(vec) > (i) && \"index out of range\");\\\n"
+        "{ FLATCC_ASSERT(%svec_len(vec) > (i) && \"index out of range\");\\\n"
         "  return __%sread_scalar(N, &(vec)[i]); }\n",
         nsc, nsc, nsc);
     fprintf(out->fp,
         "#define __%sstruct_vec_at(vec, i)\\\n"
-        "{ assert(%svec_len(vec) > (i) && \"index out of range\"); return (vec) + (i); }\n",
+        "{ FLATCC_ASSERT(%svec_len(vec) > (i) && \"index out of range\"); return (vec) + (i); }\n",
         nsc, nsc);
     fprintf(out->fp,
         "/* `adjust` skips past the header for string vectors. */\n"
         "#define __%soffset_vec_at(T, vec, i, adjust)\\\n"
         "{ const %suoffset_t *elem__tmp = (vec) + (i);\\\n"
-        "  assert(%svec_len(vec) > (i) && \"index out of range\");\\\n"
+        "  FLATCC_ASSERT(%svec_len(vec) > (i) && \"index out of range\");\\\n"
         "  return (T)((uint8_t *)(elem__tmp) + (size_t)__%suoffset_read_from_pe(elem__tmp) + (adjust)); }\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,

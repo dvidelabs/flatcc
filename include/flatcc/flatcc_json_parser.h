@@ -14,7 +14,6 @@ extern "C" {
 
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include "flatcc/flatcc_rtconfig.h"
 #include "flatcc/flatcc_builder.h"
