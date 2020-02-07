@@ -35,7 +35,6 @@ extern "C" {
 #endif
 
 #include <stdlib.h>
-#include <assert.h>
 #include <limits.h>
 
 #include "grisu3_math.h"
@@ -77,16 +76,16 @@ static int grisu3_diy_fp_cached_dec_pow(int d_exp, grisu3_diy_fp_t *p)
     const int d_exp_dist = GRISU3_CACHED_EXP_STEP;
     int i, a_exp;
 
-    assert(GRISU3_MIN_CACHED_EXP <= d_exp);
-    assert(d_exp <  GRISU3_MAX_CACHED_EXP + d_exp_dist);
+    GRISU3_ASSERT(GRISU3_MIN_CACHED_EXP <= d_exp);
+    GRISU3_ASSERT(d_exp <  GRISU3_MAX_CACHED_EXP + d_exp_dist);
 
     i = (d_exp + cached_offset) / d_exp_dist;
     a_exp = grisu3_diy_fp_pow_cache[i].d_exp;
     p->f = grisu3_diy_fp_pow_cache[i].fract;
     p->e = grisu3_diy_fp_pow_cache[i].b_exp;
 
-    assert(a_exp <= d_exp);
-    assert(d_exp < a_exp + d_exp_dist);
+    GRISU3_ASSERT(a_exp <= d_exp);
+    GRISU3_ASSERT(d_exp < a_exp + d_exp_dist);
 
     return a_exp;
 }
@@ -182,7 +181,7 @@ static int grisu3_diy_fp_encode_double(uint64_t fraction, int exponent, int frac
             { 0xf424000000000000ULL, -44 },
             { 0x9896800000000000ULL, -40 },
         };
-        assert(adj_exp >= 0 && adj_exp < 7);
+        GRISU3_ASSERT(adj_exp >= 0 && adj_exp < 7);
         v = grisu3_diy_fp_multiply(v, cp_10_lut[adj_exp]);
 
         /* 20 decimal digits won't always fit in 64 bit.
