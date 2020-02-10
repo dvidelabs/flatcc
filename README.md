@@ -68,6 +68,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
   * [Docker](#docker)
   * [Cross-compilation](#cross-compilation)
   * [Custom Allocation](#custom-allocation)
+  * [Custom Asserts](#custom-asserts)
   * [Shared Libraries](#shared-libraries)
 * [Distribution](#distribution)
   * [Unix Files](#unix-files)
@@ -2248,6 +2249,30 @@ if doing so. There is a test case implementing a new emitter, and a
 custom allocator can be copied from the one embedded in the builder
 library source.
 
+
+### Custom Asserts
+
+On systems where the default POSIX `assert` call is unavailable, or when 
+a different assert behaviour is desirable, it is possible to override 
+the default behaviour in runtime part of flatcc library via logic defined 
+in [flatcc_assert.h](include/flatcc/flatcc_assert.h).
+
+By default Posix `assert` is beeing used. It can be changed by preprocessor definition:
+
+    -DFLATCC_ASSERT=own_assert
+    
+Please be aware of that, it only changes assert handling in flatcc library. For parsing 
+floating point numbers flatcc uses external Girsu3 library which also uses assertions. 
+To override asserts in Girsu3 library following definition can be used:
+
+    -DGRISU3_ASSERT=own_assert
+
+It is possible to disable assertions by using definitions:
+
+    -DFLATCC_NO_ASSERT
+    -DGRISU3_NO_ASSERT
+
+This will not affect inclusion of <assert.h> for static assertions.
 
 ### Shared Libraries
 

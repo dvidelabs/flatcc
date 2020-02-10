@@ -24,6 +24,7 @@ extern "C" {
 #include "flatcc/portable/pstdalign.h"
 
 #include "flatcc/flatcc_alloc.h"
+#include "flatcc/flatcc_assert.h"
 
 #define __FLATBUFFERS_PASTE2(a, b) a ## b
 #define __FLATBUFFERS_PASTE3(a, b, c) a ## b ## c

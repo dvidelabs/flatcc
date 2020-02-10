@@ -1,5 +1,6 @@
 #include "flatcc/flatcc_rtconfig.h"
 #include "flatcc/flatcc_json_parser.h"
+#include "flatcc/flatcc_assert.h"
 
 #define uoffset_t flatbuffers_uoffset_t
 #define soffset_t flatbuffers_soffset_t
@@ -1080,7 +1081,7 @@ const char *flatcc_json_parser_union_type(flatcc_json_parser_t *ctx,
         f->union_count += e->type != 0;
         return buf;
     }
-    assert(f->union_count);
+    FLATCC_ASSERT(f->union_count);
     --f->union_count;
     /*
      * IMPORTANT: we cannot access any value in the frame or entry
@@ -1237,7 +1238,7 @@ const char *flatcc_json_parser_union_type_vector(flatcc_json_parser_t *ctx,
         ++f->union_count;
         return buf;
     }
-    assert(f->union_count);
+    FLATCC_ASSERT(f->union_count);
     --f->union_count;
     line = ctx->line;
     line_start = ctx->line_start;

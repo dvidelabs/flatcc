@@ -71,7 +71,7 @@ extern "C" {
 
 /* It is possible to enable logging here. */
 #ifndef FLATCC_BUILDER_ASSERT
-#define FLATCC_BUILDER_ASSERT(cond, reason) assert(cond)
+#define FLATCC_BUILDER_ASSERT(cond, reason) FLATCC_ASSERT(cond)
 #endif
 
 /*
