@@ -6,20 +6,23 @@ extern "C" {
 #endif
 
 /*
-* These assert abstraction is __only__ for runtime libraries.
-*
-* The flatcc compiler uses Posix assert routines regardless
-* of how this file is configured.
+* This assert abstraction is only used for the flatcc runtime library.
+* The flatcc compiler uses Posix assert routines regardless of how this
+* file is configured.
 *
 * This header makes it possible to use systems where assert is not
-* valid to use.
+* valid to use. Note that `<assert.h>` may remain a dependency for static
+* assertions.
 *
 * `FLATCC_ASSERT` is designed to handle errors which cannot be ignored
-* and could lead to crash.
+* and could lead to crash. The portable library may use assertions that
+* are not affected by this macro.
 *
-* `FLATCC_ASSERT` can be overrided by preprocessor definition
+* `FLATCC_ASSERT` defaults to POSIX assert but can be overrided by a
+* preprocessor definition.
 *
-* If `FLATCC_ASSERT` definition is not provided, posix assert is being used
+* Runtime assertions can be entirely disabled by defining
+* `FLATCC_NO_ASSERT`.
 */
 
 #ifdef FLATCC_NO_ASSERT 

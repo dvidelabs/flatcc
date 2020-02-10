@@ -2252,27 +2252,30 @@ library source.
 
 ### Custom Asserts
 
-On systems where the default POSIX `assert` call is unavailable, or when 
-a different assert behaviour is desirable, it is possible to override 
-the default behaviour in runtime part of flatcc library via logic defined 
+On systems where the default POSIX `assert` call is unavailable, or when
+a different assert behaviour is desirable, it is possible to override
+the default behaviour in runtime part of flatcc library via logic defined
 in [flatcc_assert.h](include/flatcc/flatcc_assert.h).
 
 By default Posix `assert` is beeing used. It can be changed by preprocessor definition:
 
     -DFLATCC_ASSERT=own_assert
-    
-Please be aware of that, it only changes assert handling in flatcc library. For parsing 
-floating point numbers flatcc uses external Girsu3 library which also uses assertions. 
-To override asserts in Girsu3 library following definition can be used:
 
-    -DGRISU3_ASSERT=own_assert
+but it will not override assertions used in the portable library, notably the
+Grisu3 fast numerical conversion library used with JSON parsing.
 
-It is possible to disable assertions by using definitions:
+Runtime assertions can be disabled using:
 
     -DFLATCC_NO_ASSERT
-    -DGRISU3_NO_ASSERT
 
-This will not affect inclusion of <assert.h> for static assertions.
+This will also disable Grisu3 assertions. See
+[flatcc_assert.h](include/flatcc/flatcc_assert.h) for details.
+
+The `<assert.h>` file will in all cases remain a dependency for C11 style static
+assertions. Static assertions are needed to ensure the generated structs have
+the correct physical layout on all compilers. The portable library has a generic
+static assert implementation for older compilers.
+
 
 ### Shared Libraries
 

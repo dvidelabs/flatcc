@@ -17,6 +17,8 @@
   form is generated for backwards compatibility when there is no conflict.
 - DEPRECATED: `<table-name>_identifier` should now be
   `<table-name>_file_identifer`.
+- `FLATCC_ASSERT` and `FLATCC_NO_ASSERT` provided for custom runtime assert
+  handling (#139).
 
 ## [0.6.0]
 
