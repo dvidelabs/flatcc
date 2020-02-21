@@ -19,6 +19,8 @@
   `<table-name>_file_identifer`.
 - `FLATCC_ASSERT` and `FLATCC_NO_ASSERT` provided for custom runtime assert
   handling (#139).
+- Add guards in case bswap macroes are already defined and use POSIX compliant
+  Linux detection (#129).
 
 ## [0.6.0]
 
