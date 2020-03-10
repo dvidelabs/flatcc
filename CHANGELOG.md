@@ -21,6 +21,7 @@
   handling (#139).
 - Add guards in case bswap macroes are already defined and use POSIX compliant
   Linux detection (#129).
+- Fix precision loss of floating point default values in generated code (#140).
 
 ## [0.6.0]
 
