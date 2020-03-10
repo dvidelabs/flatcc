@@ -262,10 +262,17 @@ static inline size_t print_literal(fb_scalar_type_t scalar_type, const fb_value_
         return sprintf(literal, "%s(%u)", cast, (unsigned)value->b);
         break;
     case vt_float:
+        /* 
+         * .9g ensures sufficient precision in 32-bit floats and
+         * .17g ensures sufficient precision for 64-bit floats (double).
+         * The '#' forces a decimal point that would not be printed
+         * for integers which would result in the wrong type in C
+         * source.
+         */
         if (scalar_type == fb_float) {
-            return sprintf(literal, "%ff", (float)value->f);
+            return sprintf(literal, "%#.9gf", (float)value->f);
         } else {
-            return sprintf(literal, "%lf", (double)value->f);
+            return sprintf(literal, "%#.17g", (double)value->f);
         }
         break;
     default:
