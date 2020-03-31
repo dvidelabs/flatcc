@@ -48,6 +48,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [JSON Parsing and Printing](#json-parsing-and-printing)
   * [Base64 Encoding](#base64-encoding)
   * [Fixed Size Arrays](#fixed-size-arrays)
+  * [Runtime Flags](#runtime-flags)
   * [Generic Parsing and Printing.](#generic-parsing-and-printing)
   * [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
@@ -1576,10 +1577,21 @@ pad strings. Note that other arrays are always printed in full. If the flag
 `skip_array_overflow` is set, a string might be truncated in the middle of a
 multi-byte character. This is not checked nor enforced by the verifier.
 
+### Runtime Flags
+
+Both the printer and the parser have the ability to accept runtime flags that
+modifies their behavior. Please refer to header file comments for documentation
+and test cases for examples. Notably it is possible to print unquoted symbols
+and to ignore unknown fields when parsing instead of generating an error.
+
+Note that deprecated fields are considered unknown fields during parsing so in
+order to process JSON from an old schema version with deprecated fields present,
+unknown symbols must be skipped.
+
 ### Generic Parsing and Printing.
 
-As of v0.5.1 [test_json.c] demonstrates how a single parser driver can be used to parse
-different table types without changes to the driver or to the schema.
+As of v0.5.1 [test_json.c] demonstrates how a single parser driver can be used
+to parse different table types without changes to the driver or to the schema.
 
 For example, the following layout can be used to configure a generic parser or printer.
 
