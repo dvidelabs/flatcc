@@ -380,6 +380,10 @@ The ci-more branch tests additional compilers:
 
 C11/C++11 is the reference that is expected to always work.
 
+The GCC `--pedantic` compiler option is not supported as of GCC-8+
+because it forces non-portable code changes and because it tends to
+break the code base with each new GCC release.
+
 MSVC 2017 is not always tested because the CI environment then won't
 support MSVC 2010.
 
