@@ -22,6 +22,7 @@
 - Add guards in case bswap macroes are already defined and use POSIX compliant
   Linux detection (#129).
 - Fix precision loss of floating point default values in generated code (#140).
+- Fix anon union pedantic warning in internal builder struct (PR #143).
 
 ## [0.6.0]
 
