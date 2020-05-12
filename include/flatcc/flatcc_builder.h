@@ -353,7 +353,7 @@ struct __flatcc_builder_frame {
         __flatcc_builder_table_frame_t table;
         __flatcc_builder_vector_frame_t vector;
         __flatcc_builder_buffer_frame_t buffer;
-    };
+    } container;
 };
 
 /**
