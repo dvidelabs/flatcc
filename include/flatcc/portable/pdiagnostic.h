@@ -20,12 +20,22 @@
 
 #if defined(_MSC_VER) && !defined(PDIAGNOSTIC_AWARE_MSVC)
 #define PDIAGNOSTIC_AWARE_MSVC 1
-#elif defined(__clang__) && !defined(PDIAGNOSTIC_AWARE_CLANG)
+#elif !defined(PDIAGNOSTIC_AWARE_MSVC)
+#define PDIAGNOSTIC_AWARE_MSVC 0
+#endif
+
+#if defined(__clang__) && !defined(PDIAGNOSTIC_AWARE_CLANG)
 #define PDIAGNOSTIC_AWARE_CLANG 1
+#elif !defined(PDIAGNOSTIC_AWARE_CLANG)
+#define PDIAGNOSTIC_AWARE_CLANG 0
+#endif
+
 /* Can disable some warnings even if push is not available (gcc-4.2 vs gcc-4.7) */
-#elif ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && \
+#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && \
         !defined(PDIAGNOSTIC_AWARE_GCC)
 #define PDIAGNOSTIC_AWARE_GCC 1
+#elif !defined(PDIAGNOSTIC_AWARE_GCC)
+#define PDIAGNOSTIC_AWARE_GCC 0
 #endif
 
 #if defined(PDIAGNOSTIC_IGNORE_UNUSED_FUNCTION) || defined(PDIAGNOSTIC_IGNORE_UNUSED)
