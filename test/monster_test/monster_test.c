@@ -1992,7 +1992,7 @@ int test_recursive_sort(flatcc_builder_t *B)
     ns(Monster_table_t) monster;
     ns(MultipleKeys_vec_t) mkvec;
     ns(MultipleKeys_table_t) mk;
-    int index;
+    size_t index;
 
     flatcc_builder_reset(B);
 
@@ -2022,7 +2022,7 @@ int test_recursive_sort(flatcc_builder_t *B)
     mkvec = ns(Alt_multik(alt));
     index = ns(MultipleKeys_vec_len(mkvec));
     if (index != 4) {
-        printf("unexpected multik vec len, got %d\n", index);
+        printf("unexpected multik vec len, got %d\n", (int)index);
         goto done;
     }
     mk = ns(MultipleKeys_vec_at(mkvec, 0));
