@@ -713,7 +713,7 @@ static void parse_fixed_array_size(fb_parser_t *P, fb_token_t *ttype, fb_value_t
         v->type = vt_invalid;
         return;
     }
-    v->len = vsize.u;
+    v->len = (uint32_t)vsize.u;
 }
 
 /* ':' must already be matched */
