@@ -506,7 +506,7 @@ static void gen_helpers(fb_output_t *out)
         "    id__tmp = ID;\\\n"
         "    vt__tmp = (%svoffset_t *)((uint8_t *)(t) -\\\n"
         "        __%ssoffset_read_from_pe(t));\\\n"
-        "    if (__%svoffset_read_from_pe(vt__tmp) >= sizeof(vt__tmp[0]) * (id__tmp + 3)) {\\\n"
+        "    if (__%svoffset_read_from_pe(vt__tmp) >= sizeof(vt__tmp[0]) * (id__tmp + 3u)) {\\\n"
         "        offset = __%svoffset_read_from_pe(vt__tmp + id__tmp + 2);\\\n"
         "    }\\\n"
         "}\n",
