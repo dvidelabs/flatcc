@@ -30,11 +30,14 @@
 #define PDIAGNOSTIC_AWARE_CLANG 0
 #endif
 
+#if !defined(PDIAGNOSTIC_AWARE_GCC) && defined(__GNUC__) && !defined(__clang__)
 /* Can disable some warnings even if push is not available (gcc-4.2 vs gcc-4.7) */
-#if !defined(PDIAGNOSTIC_AWARE_GCC) && \
-        ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2))
+#if (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)
 #define PDIAGNOSTIC_AWARE_GCC 1
-#elif !defined(PDIAGNOSTIC_AWARE_GCC)
+#endif
+#endif
+
+#if !defined(PDIAGNOSTIC_AWARE_GCC)
 #define PDIAGNOSTIC_AWARE_GCC 0
 #endif
 
