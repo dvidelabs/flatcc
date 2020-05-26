@@ -1923,7 +1923,7 @@ static int gen_union(fb_output_t *out, fb_compound_type_t *ct)
             break;
         case vt_missing:
             fprintf(out->fp,
-                "static inline %s_union_ref_t %s_as_NONE()\n"
+                "static inline %s_union_ref_t %s_as_NONE(void)\n"
                 "{ %s_union_ref_t uref; uref.type = %s_NONE; uref.value = 0; return uref; }\n",
                 snt.text, snt.text, snt.text, snt.text);
             break;
