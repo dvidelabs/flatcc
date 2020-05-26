@@ -40,12 +40,16 @@
 #define PDIAGNOSTIC_PUSHED_CLANG 0
 #endif
 
+#if defined(__GNUC__) && !defined(__clang__)
 #if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
 #pragma GCC diagnostic push
 #define PDIAGNOSTIC_PUSHED_GCC 1
 #else
 #define PDIAGNOSTIC_PUSHED_GCC 0
-#endif
+#endif // GNUC >= 4.6
+#else
+#define PDIAGNOSTIC_PUSHED_GCC 0
+#endif // defined(__GNUC__) && !defined(__clang__)
 
 #endif /* PDIAGNOSTIC_PUSH_H */
 
