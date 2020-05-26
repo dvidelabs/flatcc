@@ -173,7 +173,7 @@ static void gen_find(fb_output_t *out)
         "/* Note: find only works on vectors sorted by this field. */\\\n"
         "static inline size_t N ## _vec_find_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
         "__%sfind_by_string_field(N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
-        "static inline size_t N ## _vec_find_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "static inline size_t N ## _vec_find_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, size_t n__tmp)\\\n"
         "__%sfind_by_string_n_field(N ## _ ## NK, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\n",
         nsc, nsc, nsc);
     fprintf(out->fp,
@@ -185,7 +185,7 @@ static void gen_find(fb_output_t *out)
         "#define __%sdefine_default_find_by_string_field(N, NK) \\\n"
         "static inline size_t N ## _vec_find(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
         "{ return N ## _vec_find_by_ ## NK(vec__tmp, s__tmp); }\\\n"
-        "static inline size_t N ## _vec_find_n(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "static inline size_t N ## _vec_find_n(N ## _vec_t vec__tmp, const char *s__tmp, size_t n__tmp)\\\n"
         "{ return N ## _vec_find_n_by_ ## NK(vec__tmp, s__tmp, n__tmp); }\n",
         nsc);
 }
@@ -386,19 +386,19 @@ static void gen_scan(fb_output_t *out)
         "#define __%sdefine_scan_by_string_field(N, NK) \\\n"
         "static inline size_t N ## _vec_scan_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
         "__%sscan_by_string_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
-        "static inline size_t N ## _vec_scan_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "static inline size_t N ## _vec_scan_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, size_t n__tmp)\\\n"
         "__%sscan_by_string_n_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\\\n"
         "static inline size_t N ## _vec_scan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\\\n"
         "__%sscan_by_string_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
-        "static inline size_t N ## _vec_scan_ex_n_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "static inline size_t N ## _vec_scan_ex_n_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, size_t n__tmp)\\\n"
         "__%sscan_by_string_n_field(begin__tmp, __%smin( end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\\\n"
         "static inline size_t N ## _vec_rscan_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
         "__%srscan_by_string_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
-        "static inline size_t N ## _vec_rscan_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "static inline size_t N ## _vec_rscan_n_by_ ## NK(N ## _vec_t vec__tmp, const char *s__tmp, size_t n__tmp)\\\n"
         "__%srscan_by_string_n_field(0, N ## _vec_len(vec__tmp), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\\\n"
         "static inline size_t N ## _vec_rscan_ex_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\\\n"
         "__%srscan_by_string_field(begin__tmp, __%smin(end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp)\\\n"
-        "static inline size_t N ## _vec_rscan_ex_n_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "static inline size_t N ## _vec_rscan_ex_n_by_ ## NK(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, size_t n__tmp)\\\n"
         "__%srscan_by_string_n_field(begin__tmp, __%smin( end__tmp, N ## _vec_len(vec__tmp)), N ## _ ## NK ## _get, vec__tmp, N ## _vec_at, N ## _vec_len, s__tmp, n__tmp)\n",
         nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
@@ -416,19 +416,19 @@ static void gen_scan(fb_output_t *out)
         "#define __%sdefine_default_scan_by_string_field(N, NK) \\\n"
         "static inline size_t N ## _vec_scan(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
         "{ return N ## _vec_scan_by_ ## NK(vec__tmp, s__tmp); }\\\n"
-        "static inline size_t N ## _vec_scan_n(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "static inline size_t N ## _vec_scan_n(N ## _vec_t vec__tmp, const char *s__tmp, size_t n__tmp)\\\n"
         "{ return N ## _vec_scan_n_by_ ## NK(vec__tmp, s__tmp, n__tmp); }\\\n"
         "static inline size_t N ## _vec_scan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\\\n"
         "{ return N ## _vec_scan_ex_by_ ## NK(vec__tmp, begin__tmp, end__tmp, s__tmp); }\\\n"
-        "static inline size_t N ## _vec_scan_ex_n(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "static inline size_t N ## _vec_scan_ex_n(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, size_t n__tmp)\\\n"
         "{ return N ## _vec_scan_ex_n_by_ ## NK(vec__tmp, begin__tmp, end__tmp, s__tmp, n__tmp); }\\\n"
         "static inline size_t N ## _vec_rscan(N ## _vec_t vec__tmp, const char *s__tmp)\\\n"
         "{ return N ## _vec_rscan_by_ ## NK(vec__tmp, s__tmp); }\\\n"
-        "static inline size_t N ## _vec_rscan_n(N ## _vec_t vec__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "static inline size_t N ## _vec_rscan_n(N ## _vec_t vec__tmp, const char *s__tmp, size_t n__tmp)\\\n"
         "{ return N ## _vec_rscan_n_by_ ## NK(vec__tmp, s__tmp, n__tmp); }\\\n"
         "static inline size_t N ## _vec_rscan_ex(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp)\\\n"
         "{ return N ## _vec_rscan_ex_by_ ## NK(vec__tmp, begin__tmp, end__tmp, s__tmp); }\\\n"
-        "static inline size_t N ## _vec_rscan_ex_n(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, int n__tmp)\\\n"
+        "static inline size_t N ## _vec_rscan_ex_n(N ## _vec_t vec__tmp, size_t begin__tmp, size_t end__tmp, const char *s__tmp, size_t n__tmp)\\\n"
         "{ return N ## _vec_rscan_ex_n_by_ ## NK(vec__tmp, begin__tmp, end__tmp, s__tmp, n__tmp); }\n",
         nsc);
 }
