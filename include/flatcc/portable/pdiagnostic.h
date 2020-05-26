@@ -18,21 +18,21 @@
 #pragma warning(disable: 4668) /* preprocessor name not defined */
 #endif
 
-#if defined(_MSC_VER) && !defined(PDIAGNOSTIC_AWARE_MSVC)
+#if !defined(PDIAGNOSTIC_AWARE_MSVC) && defined(_MSC_VER)
 #define PDIAGNOSTIC_AWARE_MSVC 1
 #elif !defined(PDIAGNOSTIC_AWARE_MSVC)
 #define PDIAGNOSTIC_AWARE_MSVC 0
 #endif
 
-#if defined(__clang__) && !defined(PDIAGNOSTIC_AWARE_CLANG)
+#if !defined(PDIAGNOSTIC_AWARE_CLANG) && defined(__clang__)
 #define PDIAGNOSTIC_AWARE_CLANG 1
 #elif !defined(PDIAGNOSTIC_AWARE_CLANG)
 #define PDIAGNOSTIC_AWARE_CLANG 0
 #endif
 
 /* Can disable some warnings even if push is not available (gcc-4.2 vs gcc-4.7) */
-#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && \
-        !defined(PDIAGNOSTIC_AWARE_GCC)
+#if !defined(PDIAGNOSTIC_AWARE_GCC) && \
+        ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2))
 #define PDIAGNOSTIC_AWARE_GCC 1
 #elif !defined(PDIAGNOSTIC_AWARE_GCC)
 #define PDIAGNOSTIC_AWARE_GCC 0
