@@ -433,7 +433,7 @@ static inline fb_compound_type_t *get_compound_if_visible(fb_schema_t *schema, f
 }
 
 /* Constants are specific to 32-bit FNV-1a hash. It is important to use unsigned integers. */
-static inline uint32_t fb_hash_fnv1a_32_init()
+static inline uint32_t fb_hash_fnv1a_32_init(void)
 {
     return 2166136261UL;
 }
