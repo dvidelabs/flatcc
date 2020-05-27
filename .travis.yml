@@ -11,6 +11,24 @@ matrix:
       compiler: gcc
     - os: linux
       sudo: false
+      dist: bionic
+      compiler: gcc-9
+      env: CC="gcc-9" CXX="g++-9"
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-9', 'g++-9']
+    - os: linux
+      sudo: false
+      dist: bionic
+      compiler: gcc-8
+      env: CC="gcc-8" CXX="g++-8"
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['gcc-8', 'g++-8']
+    - os: linux
+      sudo: false
       dist: trusty
       compiler: gcc-7
       addons:
