@@ -116,6 +116,42 @@ matrix:
     - os: linux
       sudo: false
       dist: bionic
+      compiler: clang-9
+      env: CC="clang-9" CXX="clang++-9"
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-bionic-9']
+          packages: ['clang-9']
+    - os: linux
+      sudo: false
+      dist: bionic
+      compiler: clang-8
+      env: CC="clang-8" CXX="clang++-8"
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-bionic-8']
+          packages: ['clang-8']
+    - os: linux
+      sudo: false
+      dist: bionic
+      compiler: clang-7
+      env: CC="clang-7" CXX="clang++-7"
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-bionic-7']
+          packages: ['clang-7']
+    - os: linux
+      sudo: false
+      dist: bionic
+      compiler: clang-6.0
+      env: CC="clang-6.0" CXX="clang++-6.0"
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-bionic-6.0']
+          packages: ['clang-6.0']
+    - os: linux
+      sudo: false
+      dist: bionic
       compiler: clang-5.0
       env: CC="clang-5.0" CXX="clang++-5.0"
       addons:
@@ -125,12 +161,12 @@ matrix:
     - os: linux
       sudo: false
       dist: trusty
-      compiler: clang-4.2
-      env: CC="clang-4.2" CXX="clang++-4.2"
+      compiler: clang-4.0
+      env: CC="clang-4.0" CXX="clang++-4.0"
       addons:
         apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.2']
-          packages: ['clang-4.2']
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
+          packages: ['clang-4.0']
     - os: linux
       sudo: false
       dist: trusty
