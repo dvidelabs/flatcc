@@ -37,6 +37,12 @@ extern "C" {
 #include "pstdint.h"
 #endif
 
+#if defined(__linux__)
+#include <endian.h>
+#elif defined(__OpenBSD__) || defined(__FreeBSD__)
+#include <sys/endian.h>
+#endif
+
 #include "pendian_detect.h"
 
 #if defined(_MSC_VER)
@@ -48,22 +54,37 @@ extern "C" {
 #endif
 #elif defined(__clang__)
 #if __has_builtin(__builtin_bswap16)
+#ifndef bswap16
 #define bswap16 __builtin_bswap16
 #endif
+#endif
 #if __has_builtin(__builtin_bswap32)
+#ifndef bswap32
 #define bswap32 __builtin_bswap32
+#endif
 #endif
 #if __has_builtin(__builtin_bswap64)
+#ifndef bswap64
 #define bswap64 __builtin_bswap64
 #endif
-#elif defined(__OpenBSD__)
-#include <sys/endian.h>
+#endif
+#elif defined(__OpenBSD__) || defined(__FreeBSD__)
+#ifndef bswap16
 #define bswap16 swap16
+#endif
+#ifndef bswap32
 #define bswap32 swap32
+#endif
+#ifndef bswap64
 #define bswap64 swap64
+#endif
 #elif defined(__GNUC__)  /* Supported since at least GCC 4.4 */
+#ifndef bswap32
 #define bswap32 __builtin_bswap32
+#endif
+#ifndef bswap64
 #define bswap64 __builtin_bswap64
+#endif
 #endif
 
 #ifndef bswap16

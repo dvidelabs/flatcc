@@ -39,7 +39,7 @@ int verify_parse(void *buffer)
 {
     ns(Test_struct_t) test;
     ns(Vec3_struct_t) pos;
-    ns(Monster_table_t) monster = ns(Monster_as_root_with_identifier)(buffer, ns(Monster_identifier));
+    ns(Monster_table_t) monster = ns(Monster_as_root_with_identifier)(buffer, ns(Monster_file_identifier));
 
     pos = ns(Monster_pos(monster));
     test_assert(pos);

@@ -63,7 +63,16 @@ extern "C" {
 #ifndef UINT8_MAX
 #include <stdint.h> /* uint64_t etc. */
 #endif
+
+#ifdef GRISU3_NO_ASSERT
+#undef GRISU3_ASSERT
+#define GRISU3_ASSERT(x) ((void)0)
+#endif
+
+#ifndef GRISU3_ASSERT
 #include <assert.h> /* assert */
+#define GRISU3_ASSERT(x) assert(x)
+#endif
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4204) /* nonstandard extension used : non-constant aggregate initializer */
@@ -236,7 +245,7 @@ static int grisu3_diy_fp_cached_pow(int exp, grisu3_diy_fp_t *p)
 static grisu3_diy_fp_t grisu3_diy_fp_minus(grisu3_diy_fp_t x, grisu3_diy_fp_t y)
 {
     grisu3_diy_fp_t d; d.f = x.f - y.f; d.e = x.e;
-    assert(x.e == y.e && x.f >= y.f);
+    GRISU3_ASSERT(x.e == y.e && x.f >= y.f);
     return d;
 }
 
@@ -257,7 +266,7 @@ static grisu3_diy_fp_t grisu3_diy_fp_multiply(grisu3_diy_fp_t x, grisu3_diy_fp_t
 
 static grisu3_diy_fp_t grisu3_diy_fp_normalize(grisu3_diy_fp_t n)
 {
-    assert(n.f != 0);
+    GRISU3_ASSERT(n.f != 0);
     while(!(n.f & 0xFFC0000000000000ULL)) { n.f <<= 10; n.e -= 10; }
     while(!(n.f & GRISU3_D64_SIGN)) { n.f <<= 1; --n.e; }
     return n;

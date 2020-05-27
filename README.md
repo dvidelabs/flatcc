@@ -48,6 +48,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [JSON Parsing and Printing](#json-parsing-and-printing)
   * [Base64 Encoding](#base64-encoding)
   * [Fixed Size Arrays](#fixed-size-arrays)
+  * [Runtime Flags](#runtime-flags)
   * [Generic Parsing and Printing.](#generic-parsing-and-printing)
   * [Performance Notes](#performance-notes)
 * [Global Scope and Included Schema](#global-scope-and-included-schema)
@@ -68,6 +69,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
   * [Docker](#docker)
   * [Cross-compilation](#cross-compilation)
   * [Custom Allocation](#custom-allocation)
+  * [Custom Asserts](#custom-asserts)
   * [Shared Libraries](#shared-libraries)
 * [Distribution](#distribution)
   * [Unix Files](#unix-files)
@@ -377,6 +379,10 @@ The ci-more branch tests additional compilers:
 - C++11/C++14 user code on the above platforms.
 
 C11/C++11 is the reference that is expected to always work.
+
+The GCC `--pedantic` compiler option is not supported as of GCC-8+
+because it forces non-portable code changes and because it tends to
+break the code base with each new GCC release.
 
 MSVC 2017 is not always tested because the CI environment then won't
 support MSVC 2010.
@@ -1163,6 +1169,16 @@ allowed in FlatBuffers schema names, but in this case we have name
 conflict in the generated the C code. FlatCC does not attempt to avoid
 such conflicts so such schema are considered invalid.
 
+Notably several users have experienced conflicts with a table or struct
+field named 'identifier' because `<table-name>_identifier` has been
+defined to be the file identifier to be used when creating a buffer with
+that table (or struct) as root. As of 0.6.1, the name is
+`<table-name>_file_identifier` to reduce the risk of conflicts. The old
+form is deprecated but still generated for tables without a field named
+'identifier' for backwards compatibility. Mostly this macro is used for
+higher level functions such as `mytable_create_as_root` which need to
+know what identifier to use.
+
 
 ### Debugging a Buffer
 
@@ -1254,7 +1270,7 @@ and is undefined and redefined for each generated `_reader.h` file.
 
 The user can now override the identifier for a given type, for example:
 
-    #define MyGame_Example_Vec3_identifer "VEC3"
+    #define MyGame_Example_Vec3_identifier "VEC3"
     #include "monster_test_builder.h"
 
     ...
@@ -1565,10 +1581,21 @@ pad strings. Note that other arrays are always printed in full. If the flag
 `skip_array_overflow` is set, a string might be truncated in the middle of a
 multi-byte character. This is not checked nor enforced by the verifier.
 
+### Runtime Flags
+
+Both the printer and the parser have the ability to accept runtime flags that
+modifies their behavior. Please refer to header file comments for documentation
+and test cases for examples. Notably it is possible to print unquoted symbols
+and to ignore unknown fields when parsing instead of generating an error.
+
+Note that deprecated fields are considered unknown fields during parsing so in
+order to process JSON from an old schema version with deprecated fields present,
+unknown symbols must be skipped.
+
 ### Generic Parsing and Printing.
 
-As of v0.5.1 [test_json.c] demonstrates how a single parser driver can be used to parse
-different table types without changes to the driver or to the schema.
+As of v0.5.1 [test_json.c] demonstrates how a single parser driver can be used
+to parse different table types without changes to the driver or to the schema.
 
 For example, the following layout can be used to configure a generic parser or printer.
 
@@ -2237,6 +2264,33 @@ runtime allocation functions. _Carefully_ read the comments in this file
 if doing so. There is a test case implementing a new emitter, and a
 custom allocator can be copied from the one embedded in the builder
 library source.
+
+
+### Custom Asserts
+
+On systems where the default POSIX `assert` call is unavailable, or when
+a different assert behaviour is desirable, it is possible to override
+the default behaviour in runtime part of flatcc library via logic defined
+in [flatcc_assert.h](include/flatcc/flatcc_assert.h).
+
+By default Posix `assert` is beeing used. It can be changed by preprocessor definition:
+
+    -DFLATCC_ASSERT=own_assert
+
+but it will not override assertions used in the portable library, notably the
+Grisu3 fast numerical conversion library used with JSON parsing.
+
+Runtime assertions can be disabled using:
+
+    -DFLATCC_NO_ASSERT
+
+This will also disable Grisu3 assertions. See
+[flatcc_assert.h](include/flatcc/flatcc_assert.h) for details.
+
+The `<assert.h>` file will in all cases remain a dependency for C11 style static
+assertions. Static assertions are needed to ensure the generated structs have
+the correct physical layout on all compilers. The portable library has a generic
+static assert implementation for older compilers.
 
 
 ### Shared Libraries

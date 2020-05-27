@@ -374,10 +374,18 @@ namespace is chosen. Each specific schema type also has a named file
 exntension reflection the extension active when the type was defined,
 for example:
 
-    MyGame_Example_Monster_identifier
+    MyGame_Example_Monster_file_identifier
 
 This define is used when `create_as_root` automatically sets a file
 identifier.
+
+NOTE: before flatcc 0.6.1, the identifier was named
+
+    MyGame_Example_Monster_identifier (DEPRECATED)
+
+but that would conflict with a table field named `identifier` which
+happened often enough to be a problem. This naming is now removed on
+conflict and will be completely removed in a future version.
 
 When the buffer is ended, nothing special happens but only at this point
 does it really makes sense to access the resulting buffer. The default

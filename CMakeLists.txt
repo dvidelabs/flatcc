@@ -210,7 +210,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     else()
         message(STATUS "Setting GNU C compiler options with c11 and Posix")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
-        if (GCC_VERSION VERSION_GREATER_EQUAL 8.0)
+        if (NOT (GCC_VERSION VERSION_LESS 8.0))
             # Disable some GCC checks:
             # (warnings exist since 8.0, but are more aggressive in 9.0)
             #

@@ -3,11 +3,11 @@
  */
 
 #include <stdio.h>
-#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include "flatcc/flatcc_rtconfig.h"
+#include "flatcc/flatcc_assert.h"
 
 /*
  * Grisu significantly improves printing speed of floating point values
@@ -313,7 +313,7 @@ static void print_uint8_vector_base64_object(flatcc_json_printer_t *ctx, const v
         /* Multiples of 4 output chars consumes exactly 3 bytes before final padding. */
         k = (ctx->pflush - ctx->p) & ~(size_t)3;
         n = k * 3 / 4;
-        assert(n > 0);
+        FLATCC_ASSERT(n > 0);
         src_len = k * 3 / 4;
         base64_encode((uint8_t *)ctx->p, data, 0, &src_len, unpadded_mode);
         ctx->p += k;
@@ -985,7 +985,7 @@ void flatcc_json_printer_union_vector_field(flatcc_json_printer_t *ctx,
     ud.ttl = td->ttl;
     if (len > FLATCC_JSON_PRINT_NAME_LEN_MAX) {
         RAISE_ERROR(bad_input);
-        assert(0 && "identifier too long");
+        FLATCC_ASSERT(0 && "identifier too long");
         return;
     }
     memcpy(type_name, name, len);
@@ -1187,7 +1187,7 @@ static int accept_header(flatcc_json_printer_t * ctx,
 
     if (buf == 0 || bufsiz < offset_size + FLATBUFFERS_IDENTIFIER_SIZE) {
         RAISE_ERROR(bad_input);
-        assert(0 && "buffer header too small");
+        FLATCC_ASSERT(0 && "buffer header too small");
         return 0;
     }
     if (fid != 0) {
@@ -1195,7 +1195,7 @@ static int accept_header(flatcc_json_printer_t * ctx,
         id = __flatbuffers_thash_read_from_pe((uint8_t *)buf + offset_size);
         if (!(id2 == 0 || id == id2)) {
             RAISE_ERROR(bad_input);
-            assert(0 && "identifier mismatch");
+            FLATCC_ASSERT(0 && "identifier mismatch");
             return 0;
         }
     }
@@ -1314,7 +1314,7 @@ int flatcc_json_printer_init(flatcc_json_printer_t *ctx, void *fp)
      * Make sure we have space for primitive operations such as printing numbers
      * without having to flush.
      */
-    assert(ctx->flush_size + FLATCC_JSON_PRINT_RESERVE <= ctx->size);
+    FLATCC_ASSERT(ctx->flush_size + FLATCC_JSON_PRINT_RESERVE <= ctx->size);
     return 0;
 }
 
@@ -1332,7 +1332,7 @@ static void __flatcc_json_printer_flush_buffer(flatcc_json_printer_t *ctx, int a
 
 int flatcc_json_printer_init_buffer(flatcc_json_printer_t *ctx, char *buffer, size_t buffer_size)
 {
-    assert(buffer_size >= FLATCC_JSON_PRINT_RESERVE);
+    FLATCC_ASSERT(buffer_size >= FLATCC_JSON_PRINT_RESERVE);
     if (buffer_size < FLATCC_JSON_PRINT_RESERVE) {
         return -1;
     }
