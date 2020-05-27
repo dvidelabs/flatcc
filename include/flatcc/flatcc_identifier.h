@@ -59,13 +59,13 @@ static inline flatbuffers_thash_t flatbuffers_type_hash_from_name(const char *na
  */
 static inline void flatbuffers_identifier_from_type_hash(flatbuffers_thash_t type_hash, flatbuffers_fid_t out_identifier)
 {
-    out_identifier[0] = type_hash & 0xff;
+    out_identifier[0] = (char)(type_hash & 0xff);
     type_hash >>= 8;
-    out_identifier[1] = type_hash & 0xff;
+    out_identifier[1] = (char)(type_hash & 0xff);
     type_hash >>= 8;
-    out_identifier[2] = type_hash & 0xff;
+    out_identifier[2] = (char)(type_hash & 0xff);
     type_hash >>= 8;
-    out_identifier[3] = type_hash & 0xff;
+    out_identifier[3] = (char)(type_hash & 0xff);
 }
 
 /* Native integer encoding of file identifier. */
