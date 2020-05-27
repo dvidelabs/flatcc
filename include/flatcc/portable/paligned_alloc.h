@@ -60,17 +60,30 @@ extern "C" {
 #endif /* PORTABLE_C11_ALIGNED_ALLOC */
 
 /* https://linux.die.net/man/3/posix_memalign */
-#if !defined(PORTABLE_POSIX_MEMALIGN)
+#if !defined(PORTABLE_POSIX_MEMALIGN) && defined(_GNU_SOURCE)
+#define PORTABLE_POSIX_MEMALIGN 1
+#endif
 
 /* https://forum.kde.org/viewtopic.php?p=66274 */
-#if (defined _GNU_SOURCE) || ((_XOPEN_SOURCE + 0) >= 600) || (_POSIX_C_SOURCE + 0) >= 200112L 
+#if !defined(PORTABLE_POSIX_MEMALIGN) && defined(_XOPEN_SOURCE)
+#if _XOPEN_SOURCE >= 600
 #define PORTABLE_POSIX_MEMALIGN 1
-#elif defined (__clang__)
+#endif
+#endif
+
+#if !defined(PORTABLE_POSIX_MEMALIGN) && defined(_POSIX_C_SOURCE)
+#if _POSIX_C_SOURCE >= 200112L
 #define PORTABLE_POSIX_MEMALIGN 1
-#else
+#endif
+#endif
+
+#if !defined(PORTABLE_POSIX_MEMALIGN) && defined(__clang__)
+#define PORTABLE_POSIX_MEMALIGN 1
+#endif
+
+#if !defined(PORTABLE_POSIX_MEMALIGN)
 #define PORTABLE_POSIX_MEMALIGN 0
 #endif
-#endif /* PORTABLE_POSIX_MEMALIGN */
 
 /* https://forum.kde.org/viewtopic.php?p=66274 */
 #if (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L)
@@ -95,8 +108,12 @@ extern "C" {
 
 #elif PORTABLE_POSIX_MEMALIGN
 
-#if defined(__GNUC__) && __GNUCC__ < 5
+#if defined(__GNUC__)
+#if !defined(__GNUCC__)
 extern int posix_memalign (void **, size_t, size_t);
+#elif __GNUCC__ < 5
+extern int posix_memalign (void **, size_t, size_t);
+#endif
 #endif
 
 static inline void *__portable_aligned_alloc(size_t alignment, size_t size)

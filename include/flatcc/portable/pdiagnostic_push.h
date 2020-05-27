@@ -29,13 +29,27 @@
 #if defined(_MSC_VER)
 #pragma warning( push )
 #define PDIAGNOSTIC_PUSHED_MSVC 1
-#elif defined(__clang__)
+#else
+#define PDIAGNOSTIC_PUSHED_MSVC 0
+#endif
+
+#if defined(__clang__)
 #pragma clang diagnostic push
 #define PDIAGNOSTIC_PUSHED_CLANG 1
-#elif ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#else
+#define PDIAGNOSTIC_PUSHED_CLANG 0
+#endif
+
+#if defined(__GNUC__) && !defined(__clang__)
+#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
 #pragma GCC diagnostic push
 #define PDIAGNOSTIC_PUSHED_GCC 1
-#endif
+#else
+#define PDIAGNOSTIC_PUSHED_GCC 0
+#endif // GNUC >= 4.6
+#else
+#define PDIAGNOSTIC_PUSHED_GCC 0
+#endif // defined(__GNUC__) && !defined(__clang__)
 
 #endif /* PDIAGNOSTIC_PUSH_H */
 
