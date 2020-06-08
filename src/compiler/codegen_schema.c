@@ -253,7 +253,7 @@ static void export_objects(flatcc_builder_t *B, object_entry_t *objects, int nob
         if (is_struct) {
             reflection_Object_bytesize_add(B, (int32_t)ct->size);
         }
-        reflection_Object_is_struct_add(B, is_struct);
+        reflection_Object_is_struct_add(B, (flatbuffers_bool_t)is_struct);
         reflection_Object_minalign_add(B, ct->align);
         if (ct->metadata) {
             reflection_Object_attributes_start(B);
@@ -300,7 +300,7 @@ static void export_enums(flatcc_builder_t *B, enum_entry_t *enums, int nenums,
             export_enumval(B, (fb_member_t *)sym, is_union ? object_map : 0);
         }
         reflection_Enum_values_end(B);
-        reflection_Enum_is_union_add(B, is_union);
+        reflection_Enum_is_union_add(B, (flatbuffers_bool_t)is_union);
         reflection_Enum_underlying_type_add(B, export_type(B, ct->type));
         if (ct->metadata) {
             reflection_Enum_attributes_start(B);

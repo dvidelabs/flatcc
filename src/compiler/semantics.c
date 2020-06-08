@@ -382,7 +382,7 @@ static void install_known_attributes(fb_parser_t *P)
         a = new_elem(P, sizeof(*a));
         a->known = i;
         a->name.name.s.s = (char *)fb_known_attribute_names[i];
-        a->name.name.s.len = (long)strlen(fb_known_attribute_names[i]);
+        a->name.name.s.len = (int)strlen(fb_known_attribute_names[i]);
         a->name.name.type = vt_string;
         a->name.link = 0;
         if ((a = (fb_attribute_t *)define_fb_name(&P->schema.root_schema->attribute_index, &a->name))) {
@@ -408,9 +408,9 @@ static void revert_order(fb_compound_type_t **list) {
 }
 
 static inline unsigned short process_metadata(fb_parser_t *P, fb_metadata_t *m,
-        unsigned short expect, fb_metadata_t *out[KNOWN_ATTR_COUNT])
+        uint16_t expect, fb_metadata_t *out[KNOWN_ATTR_COUNT])
 {
-    unsigned short flags;
+    uint16_t flags;
     unsigned int i, n = FLATCC_ATTR_MAX;
     int type;
     fb_attribute_t *a;
@@ -635,7 +635,7 @@ static int define_nested_table(fb_parser_t *P, fb_scope_t *local, fb_member_t *m
     }
     type_sym = lookup_string_reference(P, local, m->value.s.s, (size_t)m->value.s.len);
     if (!type_sym) {
-        error_tok_as_string(P, m->ident, "nested reference not found", m->value.s.s, m->value.s.len);
+        error_tok_as_string(P, m->ident, "nested reference not found", m->value.s.s, (size_t)m->value.s.len);
         return -1;
     }
     if (type_sym->kind != fb_is_table) {
@@ -851,10 +851,10 @@ static fb_member_t *align_order_members(fb_parser_t *P, fb_member_t *members)
                  * always be added last in a second pass since it is 1
                  * byte.
                  */
-                k = P->opts.offset_size;
+                k = (uint16_t)P->opts.offset_size;
                 break;
             default:
-                k = P->opts.offset_size;
+                k = (uint16_t)P->opts.offset_size;
                 break;
             }
             break;
@@ -862,7 +862,7 @@ static fb_member_t *align_order_members(fb_parser_t *P, fb_member_t *members)
         case vt_string_type:
         case vt_vector_type:
         case vt_vector_string_type:
-            k = P->opts.offset_size;
+            k = (uint16_t)P->opts.offset_size;
             break;
         case vt_invalid:
             /* Just to have some sane behavior. */
@@ -962,7 +962,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         if (P->opts.allow_primary_key) {
             allow_flags |= fb_f_primary_key;
         }
-        member->metadata_flags = process_metadata(P, member->metadata, allow_flags, knowns);
+        member->metadata_flags = process_metadata(P, member->metadata, (uint16_t)allow_flags, knowns);
         if ((m = knowns[fb_attr_nested_flatbuffer])) {
             define_nested_table(P, ct->scope, member, m);
         }

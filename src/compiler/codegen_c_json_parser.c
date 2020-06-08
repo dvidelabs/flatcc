@@ -256,7 +256,7 @@ static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
         }
         ++n;
     }
-    *count_out = n;
+    *count_out = (int)n;
     if (n == 0) {
         return 0;
     }
@@ -272,14 +272,14 @@ static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
             continue;
         }
         de->text = member->symbol.ident->text;
-        de->len = member->symbol.ident->len;
+        de->len = (int)member->symbol.ident->len;
         de->data = member;
         de->hint = 0;
         ++de;
         is_union = is_union_member(member);
         if (is_union) {
             member->export_index = union_index++;
-            de->len = member->symbol.ident->len + 5;
+            de->len = (int)member->symbol.ident->len + 5;
             de->text = strbuf;
             memcpy(strbuf, member->symbol.ident->text, (size_t)member->symbol.ident->len);
             strbuf += member->symbol.ident->len;
@@ -315,7 +315,7 @@ static void install_visible_enum_symbol(void *context, fb_symbol_t *sym)
 
     if (get_enum_if_visible(p->schema, sym)) {
         p->de->text = sym->ident->text;
-        p->de->len = sym->ident->len;
+        p->de->len = (int)sym->ident->len;
         p->de->data = sym;
         p->de++;
     }
@@ -370,7 +370,7 @@ static dict_entry_t *build_global_scope_dict(catalog_t *catalog, int *count_out)
     size_t i, n = (size_t)catalog->nenums;
     dict_entry_t *dict;
 
-    *count_out = n;
+    *count_out = (int)n;
     if (n == 0) {
         return 0;
     }

@@ -19,7 +19,7 @@ static inline size_t pstrnlen(const char *s, size_t max_len)
 static inline char *pstrcpyupper(char *dst, const char *src) {
     char *p = dst;
     while (*src) {
-        *p++ = toupper(*src++);
+        *p++ = (char)toupper(*src++);
     }
     *p = '\0';
     return dst;
@@ -28,7 +28,7 @@ static inline char *pstrcpyupper(char *dst, const char *src) {
 static inline char *pstrncpyupper(char *dst, const char *src, size_t n) {
     size_t i;
     for (i = 0; i < n && src[i]; ++i) {
-        dst[i] = toupper(src[i]);
+        dst[i] = (char)toupper(src[i]);
     }
     if (i < n) {
         dst[i] = '\0';
@@ -39,7 +39,7 @@ static inline char *pstrncpyupper(char *dst, const char *src, size_t n) {
 static inline char *pstrtoupper(char *dst) {
     char *p;
     for (p = dst; *p; ++p) {
-        *p = toupper(*p);
+        *p = (char)toupper(*p);
     }
     return dst;
 }
@@ -47,7 +47,7 @@ static inline char *pstrtoupper(char *dst) {
 static inline char *pstrntoupper(char *dst, size_t n) {
     size_t i;
     for (i = 0; i < n && dst[i]; ++i) {
-        dst[i] = toupper(dst[i]);
+        dst[i] = (char)toupper(dst[i]);
     }
     return dst;
 }

@@ -58,13 +58,13 @@ const char *error_find_file_of_token(fb_parser_t *P, fb_token_t *t)
     return "";
 }
 
-void error_report(fb_parser_t *P, fb_token_t *t, const char *msg, fb_token_t *peer, const char *s, int len)
+void error_report(fb_parser_t *P, fb_token_t *t, const char *msg, fb_token_t *peer, const char *s, size_t len)
 {
     const char *file, *peer_file;
 
     if (t && !s) {
         s = t->text;
-        len = (int)t->len;
+        len = (size_t)t->len;
     }
     if (!msg) {
         msg = "";
@@ -100,16 +100,16 @@ void error_ref_sym(fb_parser_t *P, fb_ref_t *ref, const char *msg, fb_symbol_t *
 {
     fb_ref_t *p;
     char buf[FLATCC_MAX_IDENT_SHOW + 1];
-    int k = FLATCC_MAX_IDENT_SHOW;
-    int n = 0;
-    int n0 = 0;
+    size_t k = FLATCC_MAX_IDENT_SHOW;
+    size_t n = 0;
+    size_t n0 = 0;
     p = ref;
     while (p && k > 0) {
-        n = p->ident->len;
+        n = (size_t)p->ident->len;
         if (k < n) {
             n = k;
         }
-        memcpy(buf + n0, p->ident->text, (size_t)n);
+        memcpy(buf + n0, p->ident->text, n);
         k -= n;
         n0 += n;
         buf[n0] = '.';
@@ -461,7 +461,7 @@ static void read_integer_value(fb_parser_t *P, fb_token_t *t, fb_value_t *v, int
 
     v->type = vt_uint;
     /* The token does not store the sign internally. */
-    parse_integer(t->text, t->len, &v->u, &status);
+    parse_integer(t->text, (size_t)t->len, &v->u, &status);
     if (status != PARSE_INTEGER_UNSIGNED) {
         v->type = vt_invalid;
         error_tok(P, t, "invalid integer format");
@@ -485,7 +485,7 @@ static void read_hex_value(fb_parser_t *P, fb_token_t *t, fb_value_t *v, int sig
 
     v->type = vt_uint;
     /* The token does not store the sign internally. */
-    parse_hex_integer(t->text, t->len, &v->u, &status);
+    parse_hex_integer(t->text, (size_t)t->len, &v->u, &status);
     if (status != PARSE_INTEGER_UNSIGNED) {
         v->type = vt_invalid;
         error_tok(P, t, "invalid hex integer format");
@@ -581,7 +581,7 @@ done:
      * string as is excluding delimiting quotes.
      */
     if (v->s.s) {
-        v->s.len = (long)(P->token->text - v->s.s);
+        v->s.len = (int)(P->token->text - v->s.s);
     }
     if (!match(P, LEX_TOK_STRING_END, "unterminated string")) {
         v->type = vt_invalid;
@@ -1115,7 +1115,7 @@ static void parse_attribute(fb_parser_t *P, fb_attribute_t *a)
 static void parse_file_extension(fb_parser_t *P, fb_value_t *v)
 {
     if (v->type == vt_string) {
-        error_tok_as_string(P, P->token, "file extension already set", v->s.s, v->s.len);
+        error_tok_as_string(P, P->token, "file extension already set", v->s.s, (size_t)v->s.len);
     }
     if (!match(P, LEX_TOK_STRING_BEGIN, "file_extension expected string literal")) {
         goto fail;
@@ -1131,7 +1131,7 @@ static void parse_file_identifier(fb_parser_t *P, fb_value_t *v)
 {
     fb_token_t *t;
     if (v->type != vt_missing) {
-        error_tok_as_string(P, P->token, "file identifier already set", v->s.s, v->s.len);
+        error_tok_as_string(P, P->token, "file identifier already set", v->s.s, (size_t)v->s.len);
     }
     if (!match(P, LEX_TOK_STRING_BEGIN, "file_identifier expected string literal")) {
         goto fail;
@@ -1415,11 +1415,11 @@ int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
     pstrntoupper(s, n);
     P->schema.basenameup = s;
     P->schema.name.name.s.s = s;
-    P->schema.name.name.s.len = (long)n;
+    P->schema.name.name.s.len = (int)n;
     checkmem((P->schema.errorname = fb_create_basename(name, name_len, "")));
     if (opts->ns) {
         P->schema.prefix.s = (char *)opts->ns;
-        P->schema.prefix.len = (long)strlen(opts->ns);
+        P->schema.prefix.len = (int)strlen(opts->ns);
     }
     P->current_scope = fb_add_scope(P, 0);
     assert(P->current_scope == fb_scope_table_find(&P->schema.root_schema->scope_index, 0, 0));

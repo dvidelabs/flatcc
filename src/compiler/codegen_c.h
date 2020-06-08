@@ -18,7 +18,7 @@
 #define lld(x) (long long int)(x)
 
 static inline void token_name(fb_token_t *t, int *n, const char **s) {
-    *n = t->len;
+    *n = (int)t->len;
     *s = t->text;
 }
 

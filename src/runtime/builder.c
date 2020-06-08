@@ -48,9 +48,6 @@ static inline size_t pstrnlen(const char *s, size_t max_len)
 #undef strnlen
 #define strnlen pstrnlen
 
-/* `align` must be a power of 2. */
-#define alignup(x, align) (((size_t)(x) + (size_t)(align) - 1) & ~((size_t)(align) - 1))
-
 /* Padding can be up to 255 zeroes, and 1 zero string termination byte.
  * When two paddings are combined at nested buffers, we need twice that.
  * Visible to emitter so it can test for zero padding in iov. */
@@ -81,6 +78,19 @@ const uint8_t flatcc_builder_padding_base[512] = { 0 };
 #define iovec_t flatcc_iovec_t
 #define frame_size sizeof(__flatcc_builder_frame_t)
 #define frame(x) (B->frame[0].x)
+
+
+/* `align` must be a power of 2. */
+static inline uoffset_t alignup_uoffset(uoffset_t x, size_t align)
+{
+    return (x + align - 1) & ~((uoffset_t)align - 1);
+}
+
+static inline size_t alignup_size(size_t x, size_t align)
+{
+    return (x + align - 1) & ~(align - 1);
+}
+
 
 typedef struct vtable_descriptor vtable_descriptor_t;
 struct vtable_descriptor {
@@ -266,7 +276,7 @@ static inline void *push_ds_field(flatcc_builder_t *B, uoffset_t size, uint16_t 
      * allocated yet and size is 0 so the return value would be mistaken
      * for an error.
      */
-    offset = alignup(B->ds_offset, align);
+    offset = alignup_uoffset(B->ds_offset, align);
     if ((B->ds_offset = offset + size) >= B->ds_limit) {
         if (reserve_ds(B, B->ds_offset + 1, table_limit)) {
             return 0;
@@ -283,7 +293,7 @@ static inline void *push_ds_offset_field(flatcc_builder_t *B, voffset_t id)
 {
     uoffset_t offset;
 
-    offset = alignup(B->ds_offset, field_size);
+    offset = alignup_uoffset(B->ds_offset, field_size);
     if ((B->ds_offset = offset + field_size) > B->ds_limit) {
         if (reserve_ds(B, B->ds_offset, table_limit)) {
             return 0;
@@ -510,7 +520,7 @@ void *flatcc_builder_enter_user_frame_ptr(flatcc_builder_t *B, size_t size)
 {
     size_t *frame;
 
-    size = alignup(size, sizeof(size_t)) + sizeof(size_t);
+    size = alignup_size(size, sizeof(size_t)) + sizeof(size_t);
 
     if (!(frame = reserve_buffer(B, flatcc_builder_alloc_us, B->user_frame_end, size, 0))) {
         return 0;
@@ -526,7 +536,7 @@ size_t flatcc_builder_enter_user_frame(flatcc_builder_t *B, size_t size)
 {
     size_t *frame;
 
-    size = alignup(size, sizeof(size_t)) + sizeof(size_t);
+    size = alignup_size(size, sizeof(size_t)) + sizeof(size_t);
 
     if (!(frame = reserve_buffer(B, flatcc_builder_alloc_us, B->user_frame_end, size, 0))) {
         return 0;
@@ -591,7 +601,7 @@ static int enter_frame(flatcc_builder_t *B, uint16_t align)
     /* Note: do not assume padding before first has been allocated! */
     frame(ds_first) = B->ds_first;
     frame(type_limit) = data_limit;
-    B->ds_first = alignup(B->ds_first + B->ds_offset, 8);
+    B->ds_first = alignup_uoffset(B->ds_first + B->ds_offset, 8);
     B->ds_offset = 0;
     return 0;
 }
@@ -815,7 +825,7 @@ int flatcc_builder_start_buffer(flatcc_builder_t *B,
     frame(container.buffer.block_align) = B->block_align;
     B->block_align = block_align;
     frame(container.buffer.flags = B->buffer_flags);
-    B->buffer_flags = flags;
+    B->buffer_flags = (uint16_t)flags;
     frame(container.buffer.mark) = B->buffer_mark;
     frame(container.buffer.nest_id) = B->nest_id;
     /*
@@ -1798,7 +1808,7 @@ void *flatcc_builder_table_add(flatcc_builder_t *B, int id, size_t size, uint16_
     }
 #endif
     FLATCC_BUILDER_UPDATE_VT_HASH(B->vt_hash, (uint32_t)id, (uint32_t)size);
-    return push_ds_field(B, (uoffset_t)size, align, id);
+    return push_ds_field(B, (uoffset_t)size, align, (voffset_t)id);
 }
 
 void *flatcc_builder_table_edit(flatcc_builder_t *B, size_t size)
@@ -1833,7 +1843,7 @@ flatcc_builder_ref_t *flatcc_builder_table_add_offset(flatcc_builder_t *B, int i
     }
 #endif
     FLATCC_BUILDER_UPDATE_VT_HASH(B->vt_hash, (uint32_t)id, (uint32_t)field_size);
-    return push_ds_offset_field(B, id);
+    return push_ds_offset_field(B, (voffset_t)id);
 }
 
 uint16_t flatcc_builder_push_buffer_alignment(flatcc_builder_t *B)

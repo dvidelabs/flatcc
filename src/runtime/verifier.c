@@ -162,7 +162,7 @@ static inline int verify_struct(uoffset_t end, uoffset_t base, uoffset_t offset,
     return flatcc_verify_ok;
 }
 
-static inline uoffset_t read_vt_entry(flatcc_table_verifier_descriptor_t *td, voffset_t id)
+static inline voffset_t read_vt_entry(flatcc_table_verifier_descriptor_t *td, voffset_t id)
 {
     voffset_t vo = (id + 2) * sizeof(voffset_t);
 
