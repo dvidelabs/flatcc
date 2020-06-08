@@ -508,9 +508,9 @@ static inline int N ## _end_pe(NS ## builder_t *B)\
 { return N ## _add(B, TN ## _vec_end_pe(B)); }\
 static inline int N ## _end(NS ## builder_t *B)\
 { return N ## _add(B, TN ## _vec_end(B)); }\
-static inline int N ## _create_pe(NS ## builder_t *B, T *data, size_t len)\
+static inline int N ## _create_pe(NS ## builder_t *B, const T *data, size_t len)\
 { return N ## _add(B, TN ## _vec_create_pe(B, data, len)); }\
-static inline int N ## _create(NS ## builder_t *B, T *data, size_t len)\
+static inline int N ## _create(NS ## builder_t *B, const T *data, size_t len)\
 { return N ## _add(B, TN ## _vec_create(B, data, len)); }\
 static inline int N ## _slice(NS ## builder_t *B, TN ## _vec_t vec, size_t index, size_t len)\
 { return N ## _add(B, TN ## _vec_slice(B, vec, index, len)); }\
