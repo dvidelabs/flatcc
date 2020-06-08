@@ -109,7 +109,7 @@ void error_ref_sym(fb_parser_t *P, fb_ref_t *ref, const char *msg, fb_symbol_t *
         if (k < n) {
             n = k;
         }
-        memcpy(buf + n0, p->ident->text, n);
+        memcpy(buf + n0, p->ident->text, (size_t)n);
         k -= n;
         n0 += n;
         buf[n0] = '.';

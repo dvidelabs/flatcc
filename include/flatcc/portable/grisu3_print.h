@@ -236,7 +236,7 @@ static int grisu3_print_double(double v, char *dst)
     if (d_exp < 0 && (len + d_exp) > -3 && len <= -d_exp)
     {
         /* mikkelfj: fix zero prefix .1 => 0.1, and short exponents 1.3e-2 => 0.013. */
-        memmove(s2 + 2 - d_exp - len, s2, len);
+        memmove(s2 + 2 - d_exp - len, s2, (size_t)len);
         s2[0] = '0';
         s2[1] = '.';
         for (i = 2; i < 2-d_exp-len; ++i) s2[i] = '0';

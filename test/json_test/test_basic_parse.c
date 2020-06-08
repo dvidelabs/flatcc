@@ -216,7 +216,7 @@ t1_again:
                     flatcc_builder_start_string(B);
                     s = flatcc_builder_extend_string(B, (size_t)(buf - k));
                     if (!s) { goto fail; }
-                    memcpy(s, k, buf - k);
+                    memcpy(s, k, (size_t)(buf - k));
                     do {
                         buf = flatcc_json_parser_string_escape(ctx, buf, end, code);
                         flatcc_builder_append_string(B, code + 1, (size_t)code[0]);

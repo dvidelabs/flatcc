@@ -97,14 +97,14 @@ static void install_symbol(void *context, fb_symbol_t *sym)
         scope_name = ct->scope->name;
         while (scope_name) {
             n = scope_name->ident->len;
-            memcpy(s, scope_name->ident->text, n);
+            memcpy(s, scope_name->ident->text, (size_t)n);
             s += n;
             *s++ = '.';
             scope_name = scope_name->link;
         }
     }
     n = sym->ident->len;
-    memcpy(s, sym->ident->text, n);
+    memcpy(s, sym->ident->text, (size_t)n);
     s += n;
     *s++ = '\0';
     catalog->next_name = s;
