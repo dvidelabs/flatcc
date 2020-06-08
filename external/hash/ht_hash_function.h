@@ -145,11 +145,11 @@ static inline size_t ht_str_hash_function(const void *key, size_t len)
 {
     const unsigned char *str = key;
     size_t hash = 5381 ^ (HT_HASH_SEED);
-    int c;
+    size_t c;
 
     (void)len;
 
-    while ((c = *str++))
+    while ((c = (size_t)*str++))
         hash = ((hash << 5) + hash) ^ c; /* (hash * 33) xor c */
 
     return hash;
@@ -160,9 +160,9 @@ static inline size_t ht_strn_hash_function(const void *key, size_t len)
 {
     const unsigned char *str = key;
     size_t hash = 5381 ^ (HT_HASH_SEED);
-    int c;
+    size_t c;
 
-    while (--len && (c = *str++))
+    while (--len && (c = (size_t)*str++))
         hash = ((hash << 5) + hash) ^ c; /* (hash * 33) xor c */
 
     return hash;

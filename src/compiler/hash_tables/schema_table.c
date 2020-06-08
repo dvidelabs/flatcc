@@ -17,5 +17,5 @@ static inline const void *ht_key(fb_schema_t *schema)
 
 static inline size_t ht_key_len(fb_schema_t *schema)
 {
-    return schema->name.name.s.len;
+    return (size_t)schema->name.name.s.len;
 }

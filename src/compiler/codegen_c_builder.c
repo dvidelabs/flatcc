@@ -1046,7 +1046,7 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
         }
         switch (member->type.type) {
         case vt_fixed_array_compound_type_ref:
-            len = member->type.len;
+            len = (size_t)member->type.len;
             fb_compound_name(member->type.ct, &snref);
             if (member->metadata_flags & fb_f_deprecated) {
                 fprintf(out->fp, "__%sstruct_clear_field(p->__deprecated%i)",
@@ -1123,7 +1123,7 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
             continue;
         case vt_fixed_array_type:
             tprefix = scalar_type_prefix(member->type.st);
-            len = member->type.len;
+            len = (size_t)member->type.len;
             if (member->metadata_flags & fb_f_deprecated) {
                 fprintf(out->fp, "__%sstruct_clear_field(p->__deprecated%i)",
                         nsc, deprecated_index);

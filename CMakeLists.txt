@@ -175,6 +175,8 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     # We don't add -Wstrict-prototypes to gcc because it breaks
     # code by failing on function definitions as well.
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wsign-conversion")
+    #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -Wextra")
     # Fix broken C++ alignas - either will do

@@ -17,5 +17,5 @@ static inline const void *ht_key(fb_name_t *name)
 
 static inline size_t ht_key_len(fb_name_t *name)
 {
-    return name->name.s.len;
+    return (size_t)name->name.s.len;
 }

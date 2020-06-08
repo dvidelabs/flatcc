@@ -18,5 +18,5 @@ static inline size_t ht_key_len(fb_symbol_t *sym)
 {
     fb_token_t *ident = sym->ident;
 
-    return ident->len;
+    return (size_t)ident->len;
 }

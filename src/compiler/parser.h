@@ -28,9 +28,9 @@
 typedef struct fb_parser fb_parser_t;
 typedef flatcc_options_t fb_options_t;
 
-typedef void (*fb_error_fun)(void *err_ctx, const char *buf, int len);
+typedef void (*fb_error_fun)(void *err_ctx, const char *buf, size_t len);
 
-void __flatcc_fb_default_error_out(void *err_ctx, const char *buf, int len);
+void __flatcc_fb_default_error_out(void *err_ctx, const char *buf, size_t len);
 #define  fb_default_error_out __flatcc_fb_default_error_out
 
 int __flatcc_fb_print_error(fb_parser_t *P, const char * format, ...);
@@ -84,12 +84,12 @@ static inline void checkmem(const void *p)
     }
 }
 
-static inline void *new_elem(fb_parser_t *P, int size)
+static inline void *new_elem(fb_parser_t *P, size_t size)
 {
     size_t elem;
     void *buf;
 
-    size = (size + 15) & ~15;
+    size = (size + 15) & ~(size_t)15;
     elem = P->elem;
     if (elem + size > P->elem_end) {
         buf = calloc(ELEM_BUFSIZ, 1);

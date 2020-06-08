@@ -80,8 +80,8 @@ static inline int ht_match(const void *key, size_t len, fb_scope_t *scope)
          */
         /* `key` is a ref list (a list of tokens). */
         while (name && keyname) {
-            n1 = name->ident->len;
-            n2 = keyname->ident->len;
+            n1 = (size_t)name->ident->len;
+            n2 = (size_t)keyname->ident->len;
             if (n1 != n2 || strncmp(name->ident->text, keyname->ident->text, n1)) {
                 return 0;
             }
@@ -100,7 +100,7 @@ static inline int ht_match(const void *key, size_t len, fb_scope_t *scope)
         const char *s1, *s2 = key;
         while (name) {
             s1 = name->ident->text;
-            n1 = name->ident->len;
+            n1 = (size_t)name->ident->len;
             if (n1 > len) {
                 return 0;
             }
@@ -148,7 +148,7 @@ static inline size_t scope_hash(const void *key, size_t len)
         const fb_ref_t *name = key;
 
         while (name) {
-            h ^= ht_strn_hash_function(name->ident->text, name->ident->len);
+            h ^= ht_strn_hash_function(name->ident->text, (size_t)name->ident->len);
             h = ht_int_hash_function((void *)h, 0);
             name = name->link;
             if (++count == 0) {

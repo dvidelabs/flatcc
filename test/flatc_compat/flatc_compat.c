@@ -7,7 +7,7 @@
 #include "flatcc/support/hexdump.h"
 
 #define align_up(alignment, size)                                           \
-    (((size) + (alignment) - 1) & ~((alignment) - 1))
+    (((size_t)(size) + (size_t)(alignment) - 1) & ~((size_t)(alignment) - 1))
 
 const char *filename = "monsterdata_test.mon";
 
@@ -26,7 +26,7 @@ int verify_monster(void *buffer)
     flatbuffers_uint8_vec_t inv;
     flatbuffers_string_vec_t aofs;
     flatbuffers_string_t s;
-    int i;
+    size_t i;
 
     if (!(monster = ns(Monster_as_root(buffer)))) {
         printf("Monster not available\n");
@@ -40,7 +40,7 @@ int verify_monster(void *buffer)
         printf("Position is absent\n");
         return -1;
     }
-    offset = (char *)vec - (char *)buffer;
+    offset = (size_t)((char *)vec - (char *)buffer);
     if (offset & 15) {
         printf("Force align of Vec3 struct not correct\n");
         return -1;
@@ -86,7 +86,7 @@ int verify_monster(void *buffer)
     }
     for (i = 0; i < 5; ++i) {
         if (flatbuffers_uint8_vec_at(inv, i) != i) {
-            printf("Inventory item #%d is wrong\n", i);
+            printf("Inventory item #%d is wrong\n", (int)i);
             return -1;
         }
     }

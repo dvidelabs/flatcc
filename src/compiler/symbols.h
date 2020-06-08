@@ -104,7 +104,7 @@ typedef enum fb_scalar_type fb_scalar_type_t;
 
 static inline size_t sizeof_scalar_type(fb_scalar_type_t st)
 {
-    static const int scalar_type_size[] = {
+    static const size_t scalar_type_size[] = {
         0, 8, 4, 2, 1, 1, 8, 4, 2, 1, 8, 4, 1
     };
 

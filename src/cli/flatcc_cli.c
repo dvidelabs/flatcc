@@ -165,7 +165,7 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
     const char *v = strchr(s, '=');
     if (v) {
         a = v + 1;
-        n = v - s;
+        n = (size_t)(v - s);
     }
     if (*s == 'h' || 0 == strcmp("-help", s)) {
         /* stdout so less and more works. */
@@ -416,11 +416,11 @@ int main(int argc, const char *argv[])
         exit(-1);
     }
     flatcc_init_options(&opts);
-    if (!(opts.inpaths = malloc(argc * sizeof(char *)))) {
+    if (!(opts.inpaths = malloc((size_t)argc * sizeof(char *)))) {
         fprintf(stderr, "memory allocation failure\n");
         exit(-1);
     }
-    if (!(opts.srcpaths = malloc(argc * sizeof(char *)))) {
+    if (!(opts.srcpaths = malloc((size_t)argc * sizeof(char *)))) {
         fprintf(stderr, "memory allocation failure\n");
         free((void *)opts.inpaths);
         exit(-1);

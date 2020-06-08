@@ -131,18 +131,18 @@ static inline void set_type_hash(fb_compound_type_t *ct)
     hash = fb_hash_fnv1a_32_init();
     if (ct->scope)
     for (name = ct->scope->name; name; name = name->link) {
-        hash = fb_hash_fnv1a_32_append(hash, name->ident->text, name->ident->len);
+        hash = fb_hash_fnv1a_32_append(hash, name->ident->text, (size_t)name->ident->len);
         hash = fb_hash_fnv1a_32_append(hash, ".", 1);
     }
     sym = &ct->symbol;
-    hash = fb_hash_fnv1a_32_append(hash, sym->ident->text, sym->ident->len);
+    hash = fb_hash_fnv1a_32_append(hash, sym->ident->text, (size_t)sym->ident->len);
     if (hash == 0) {
         hash = fb_hash_fnv1a_32_init();
     }
     ct->type_hash = hash;
 }
 
-static inline fb_scope_t *fb_find_scope_by_string(fb_schema_t *S, const char *name, int len)
+static inline fb_scope_t *fb_find_scope_by_string(fb_schema_t *S, const char *name, size_t len)
 {
     if (!S || !S->root_schema) {
         return 0;
@@ -151,7 +151,7 @@ static inline fb_scope_t *fb_find_scope_by_string(fb_schema_t *S, const char *na
         /* Global scope. */
         name = 0;
     }
-    return fb_scope_table_find(&S->root_schema->scope_index, name, (size_t)len);
+    return fb_scope_table_find(&S->root_schema->scope_index, name, len);
 }
 
 /* count = 0 indicates zero-terminated ref list, name = 0 indicates global scope. */
@@ -170,7 +170,7 @@ static inline fb_symbol_t *define_fb_symbol(fb_symbol_table_t *si, fb_symbol_t *
 
 static inline fb_symbol_t *find_fb_symbol_by_token(fb_symbol_table_t *si, fb_token_t *token)
 {
-    return fb_symbol_table_find(si, token->text, token->len);
+    return fb_symbol_table_find(si, token->text, (size_t)token->len);
 }
 
 static inline fb_name_t *define_fb_name(fb_name_table_t *ni, fb_name_t *name)
@@ -178,9 +178,9 @@ static inline fb_name_t *define_fb_name(fb_name_table_t *ni, fb_name_t *name)
     return fb_name_table_insert_item(ni, name, ht_keep);
 }
 
-static inline fb_name_t * find_fb_name_by_token(fb_name_table_t *ni, fb_token_t *token)
+static inline fb_name_t *find_fb_name_by_token(fb_name_table_t *ni, fb_token_t *token)
 {
-    return fb_name_table_find(ni, token->text, token->len);
+    return fb_name_table_find(ni, token->text, (size_t)token->len);
 }
 
 /* Returns 1 if value exists, 0 otherwise, */
@@ -227,12 +227,12 @@ static inline fb_scope_t *find_parent_scope(fb_parser_t *P, fb_scope_t *scope)
     return fb_find_scope_by_ref(&P->schema, 0, 0);
 }
 
-static inline fb_symbol_t *lookup_string_reference(fb_parser_t *P, fb_scope_t *local, const char *s, int len)
+static inline fb_symbol_t *lookup_string_reference(fb_parser_t *P, fb_scope_t *local, const char *s, size_t len)
 {
     fb_symbol_t *sym;
     fb_scope_t *scope;
     const char *name, *basename;
-    int k;
+    size_t k;
 
     name = s;
     basename = s;
@@ -374,7 +374,7 @@ static inline int lookup_enum_name(fb_parser_t *P, fb_scope_t *local, fb_compoun
 /* This is repeated for every include file, but this pose no problem. */
 static void install_known_attributes(fb_parser_t *P)
 {
-    int i;
+    unsigned int i;
     fb_attribute_t *a;
 
     for (i = 0; i < KNOWN_ATTR_COUNT; ++i) {
@@ -411,8 +411,7 @@ static inline unsigned short process_metadata(fb_parser_t *P, fb_metadata_t *m,
         unsigned short expect, fb_metadata_t *out[KNOWN_ATTR_COUNT])
 {
     unsigned short flags;
-    int n = FLATCC_ATTR_MAX;
-    int i;
+    unsigned int i, n = FLATCC_ATTR_MAX;
     int type;
     fb_attribute_t *a;
 
@@ -634,7 +633,7 @@ static int define_nested_table(fb_parser_t *P, fb_scope_t *local, fb_member_t *m
         /* All known attributes get automatically type checked, so just ignore. */
         return -1;
     }
-    type_sym = lookup_string_reference(P, local, m->value.s.s, m->value.s.len);
+    type_sym = lookup_string_reference(P, local, m->value.s.s, (size_t)m->value.s.len);
     if (!type_sym) {
         error_tok_as_string(P, m->ident, "nested reference not found", m->value.s.s, m->value.s.len);
         return -1;

@@ -11,6 +11,7 @@ extern "C" {
 static char *readfile(const char *filename, size_t max_size, size_t *size_out)
 {
     FILE *fp;
+    long k;
     size_t size, pos, n, _out;
     char *buf;
 
@@ -24,7 +25,9 @@ static char *readfile(const char *filename, size_t max_size, size_t *size_out)
         goto fail;
     }
     fseek(fp, 0L, SEEK_END);
-    size = ftell(fp);
+    k = ftell(fp);
+    if (k < 0) goto fail;
+    size = (size_t)k;
     *size_out = size;
     if (max_size > 0 && size > max_size) {
         goto fail;

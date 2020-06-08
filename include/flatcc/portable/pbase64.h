@@ -219,7 +219,7 @@ static int base64_encode(uint8_t *dst, const uint8_t *src, size_t *dst_len, size
     len = 0;
 done:
     if (dst_len) {
-        *dst_len = dst - dst_base;
+        *dst_len = (size_t)(dst - dst_base);
     }
     if (src_len) {
         *src_len -= len;
@@ -395,7 +395,7 @@ static int base64_decode(uint8_t *dst, const uint8_t *src, size_t *dst_len, size
     }
 done:
     if (dst_len) {
-        *dst_len = dst - dst_base;
+        *dst_len = (size_t)(dst - dst_base);
     }
     if (src_len) {
         *src_len -= mark;

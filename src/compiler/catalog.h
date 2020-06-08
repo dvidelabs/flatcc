@@ -145,7 +145,7 @@ static void sort_entries(entry_t *entries, int count)
 {
     int i;
 
-    qsort(entries, count, sizeof(entries[0]), compare_entries);
+    qsort(entries, (size_t)count, sizeof(entries[0]), compare_entries);
 
     for (i = 0; i < count; ++i) {
         entries[i].ct->export_index = (size_t)i;
@@ -174,8 +174,8 @@ static int build_catalog(catalog_t *catalog, fb_schema_t *schema, int qualify_na
 
     /* Build support datastructures before export. */
     fb_scope_table_visit(index, count_symbols, catalog);
-    catalog->objects = calloc(catalog->nobjects, sizeof(catalog->objects[0]));
-    catalog->enums = calloc(catalog->nenums, sizeof(catalog->enums[0]));
+    catalog->objects = calloc((size_t)catalog->nobjects, sizeof(catalog->objects[0]));
+    catalog->enums = calloc((size_t)catalog->nenums, sizeof(catalog->enums[0]));
     catalog->name_table = malloc(catalog->name_table_size);
     catalog->next_object = catalog->objects;
     catalog->next_enum = catalog->enums;
