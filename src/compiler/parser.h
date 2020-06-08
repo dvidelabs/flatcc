@@ -123,7 +123,7 @@ const char *__flatcc_error_find_file_of_token(fb_parser_t *P, fb_token_t *t);
  * `fb_print_error` may be called instead to generate text to the error
  * output that is not counted as an error.
  */
-void __flatcc_error_report(fb_parser_t *P, fb_token_t *t, const char *msg, fb_token_t *peer, const char *s, int len);
+void __flatcc_error_report(fb_parser_t *P, fb_token_t *t, const char *msg, fb_token_t *peer, const char *s, size_t len);
 #define error_report __flatcc_error_report
 
 static void error_tok_2(fb_parser_t *P, fb_token_t *t, const char *msg, fb_token_t *peer)
@@ -137,7 +137,7 @@ static inline void error_tok(fb_parser_t *P, fb_token_t *t, const char *msg)
 }
 
 /* Only use the token location. */
-static inline void error_tok_as_string(fb_parser_t *P, fb_token_t *t, const char *msg, char *s, int len)
+static inline void error_tok_as_string(fb_parser_t *P, fb_token_t *t, const char *msg, char *s, size_t len)
 {
     error_report(P, t, msg, 0, s, len);
 }
@@ -152,7 +152,7 @@ static inline void error_name(fb_parser_t *P, fb_name_t *name, const char *msg)
     if (!name) {
         error(P, msg);
     } else {
-        error_report(P, 0, msg, 0, name->name.s.s, name->name.s.len);
+        error_report(P, 0, msg, 0, name->name.s.s, (size_t)name->name.s.len);
     }
 }
 

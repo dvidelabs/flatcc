@@ -238,8 +238,8 @@ static int grisu3_diy_fp_encode_double(uint64_t fraction, int exponent, int frac
     }
     rounded.f = v.f >> prec;
     rounded.e = v.e + prec;
-    prec_bits = (v.f & ((uint64_t)1 << (prec - 1))) * error_one;
-    half_way = ((uint64_t)1 << (prec - 1)) * error_one;
+    prec_bits = (int)(v.f & ((uint64_t)1 << (prec - 1))) * error_one;
+    half_way = (int)((uint64_t)1 << (prec - 1)) * error_one;
     if (prec >= half_way + error) {
         rounded.f++;
         /* Prevent overflow. */
@@ -396,7 +396,7 @@ static const char *grisu3_parse_hex_fp(const char *buf, const char *end, int sig
  * sign is not allowed and space after the sign is not allowed.
  * At most the first 1000 characters of the input is considered.
  */
-static const char *grisu3_parse_double(const char *buf, int len, double *result)
+static const char *grisu3_parse_double(const char *buf, size_t len, double *result)
 {
     const char *mark, *k, *end;
     int sign = 0, esign = 0;

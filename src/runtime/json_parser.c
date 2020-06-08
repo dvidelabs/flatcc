@@ -604,7 +604,7 @@ const char *flatcc_json_parser_double(flatcc_json_parser_t *ctx, const char *buf
     if (end - k > 1 && (k[0] == '.' || (k[0] == '0' && k[1] == '0'))) {
         return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_numeric);
     }
-    next = parse_double(buf, (int)(end - buf), v);
+    next = parse_double(buf, (size_t)(end - buf), v);
     if (next == 0 || next == buf) {
         if (parse_double_isinf(*v)) {
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_overflow);
@@ -627,7 +627,7 @@ const char *flatcc_json_parser_float(flatcc_json_parser_t *ctx, const char *buf,
     if (end - k > 1 && (k[0] == '.' || (k[0] == '0' && k[1] == '0'))) {
         return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_numeric);
     }
-    next = parse_float(buf, (int)(end - buf), v);
+    next = parse_float(buf, (size_t)(end - buf), v);
     if (next == 0 || next == buf) {
         if (parse_float_isinf(*v)) {
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_overflow);

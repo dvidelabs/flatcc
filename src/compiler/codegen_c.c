@@ -130,7 +130,7 @@ void fb_gen_c_includes(fb_output_t *out, const char *ext, const char *extup)
         checkmem((basenameup = fb_copy_path(basename)));
         s = basenameup;
         while (*s) {
-            *s = toupper(*s);
+            *s = (char)toupper(*s);
             ++s;
         }
         if (str_set_insert_item(&set, basenameup, ht_keep)) {
@@ -186,7 +186,7 @@ void fb_scoped_symbol_name(fb_scope_t *scope, fb_symbol_t *sym, fb_scoped_name_t
             fprintf(stderr, "skipping too long namespace\n");
         }
     }
-    sn->len = t->len;
+    sn->len = (int)t->len;
     sn->total_len = sn->scope_len + sn->len;
     if (sn->total_len > FLATCC_NAME_BUFSIZ - 1) {
         fprintf(stderr, "warning: truncating identifier: %.*s\n", sn->len, t->text);

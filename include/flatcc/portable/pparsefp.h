@@ -87,13 +87,13 @@ static inline int parse_float_is_range_error(float x)
 #endif
 
 #ifdef grisu3_parse_double_is_defined
-static inline const char *parse_double(const char *buf, int len, double *result)
+static inline const char *parse_double(const char *buf, size_t len, double *result)
 {
     return grisu3_parse_double(buf, len, result);
 }
 #else
 #include <stdio.h>
-static inline const char *parse_double(const char *buf, int len, double *result)
+static inline const char *parse_double(const char *buf, size_t len, double *result)
 {
     char *end;
 
@@ -103,7 +103,7 @@ static inline const char *parse_double(const char *buf, int len, double *result)
 }
 #endif
 
-static inline const char *parse_float(const char *buf, int len, float *result)
+static inline const char *parse_float(const char *buf, size_t len, float *result)
 {
     const char *end;
     double v;

@@ -1156,7 +1156,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
             case vt_fixed_array_type:
                 tname_ns = scalar_type_ns(member->type.st, nsc);
                 tname = scalar_type_name(member->type.st);
-                len = (size_t)member->type.len;
+                len = (int)member->type.len;
                 if (do_pad) {
                     fprintf(out->fp, "    %s%s ", tname_ns, tname);
                 } else {
@@ -1178,7 +1178,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                 assert(member->type.ct->symbol.kind == fb_is_struct || member->type.ct->symbol.kind == fb_is_enum);
                 kind = member->type.ct->symbol.kind == fb_is_struct ? "" : "enum_";
                 fb_compound_name(member->type.ct, &snref);
-                len = (size_t)member->type.len;
+                len = (int)member->type.len;
                 if (do_pad) {
                     fprintf(out->fp, "    %s_%st ", snref.text, kind);
                 } else {

@@ -9,7 +9,7 @@ extern "C" {
  * Type specific integer parsers:
  *
  *     const char *
- *     parse_<type-name>(const char *buf, int len, <type> *value, int *status);
+ *     parse_<type-name>(const char *buf, size_t len, <type> *value, int *status);
  *
  *     parse_uint64, parse_int64
  *     parse_uint32, parse_int32
@@ -74,7 +74,7 @@ extern "C" {
  *
  * Status argument can be null.
  */
-static const char *parse_integer(const char *buf, int len, uint64_t *value, int *status)
+static const char *parse_integer(const char *buf, size_t len, uint64_t *value, int *status)
 {
     uint64_t x0, x = 0;
     const char *k, *end = buf + len;
@@ -123,7 +123,7 @@ static const char *parse_integer(const char *buf, int len, uint64_t *value, int 
  * Parse hex values like 0xff, -0xff, 0XdeAdBeaf42, cannot be trailed by '.', 'p', or 'P'.
  * Overflows if string is more than 16 valid hex digits. Otherwise similar to parse_integer.
  */
-static const char *parse_hex_integer(const char *buf, int len, uint64_t *value, int *status)
+static const char *parse_hex_integer(const char *buf, size_t len, uint64_t *value, int *status)
 {
     uint64_t x = 0;
     const char *k, *k2, *end = buf + len;
@@ -203,7 +203,7 @@ done:
 
 #define __portable_define_parse_unsigned(NAME, TYPE, LIMIT)                 \
 static inline const char *parse_ ## NAME                                    \
-        (const char *buf, int len, TYPE *value, int *status)                \
+        (const char *buf, size_t len, TYPE *value, int *status)             \
 {                                                                           \
     int status_ = 0;                                                        \
     uint64_t x;                                                             \
@@ -230,7 +230,7 @@ static inline const char *parse_ ## NAME                                    \
 
 #define __portable_define_parse_hex_unsigned(NAME, TYPE, LIMIT)             \
 static inline const char *parse_hex_ ## NAME                                \
-        (const char *buf, int len, TYPE *value, int *status)                \
+        (const char *buf, size_t len, TYPE *value, int *status)             \
 {                                                                           \
     int status_ = 0;                                                        \
     uint64_t x;                                                             \
@@ -258,7 +258,7 @@ static inline const char *parse_hex_ ## NAME                                \
 /* This assumes two's complement. */
 #define __portable_define_parse_signed(NAME, TYPE, LIMIT)                   \
 static inline const char *parse_ ## NAME                                    \
-        (const char *buf, int len, TYPE *value, int *status)                \
+        (const char *buf, size_t len, TYPE *value, int *status)             \
 {                                                                           \
     int status_ = 0;                                                        \
     uint64_t x;                                                             \
@@ -290,7 +290,7 @@ static inline const char *parse_ ## NAME                                    \
 /* This assumes two's complement. */
 #define __portable_define_parse_hex_signed(NAME, TYPE, LIMIT)               \
 static inline const char *parse_hex_ ## NAME                                \
-        (const char *buf, int len, TYPE *value, int *status)                \
+        (const char *buf, size_t len, TYPE *value, int *status)             \
 {                                                                           \
     int status_ = 0;                                                        \
     uint64_t x;                                                             \
@@ -319,7 +319,7 @@ static inline const char *parse_hex_ ## NAME                                \
     }                                                                       \
 }
 
-static inline const char *parse_uint64(const char *buf, int len, uint64_t *value, int *status)
+static inline const char *parse_uint64(const char *buf, size_t len, uint64_t *value, int *status)
 {
     buf = parse_integer(buf, len, value, status);
     if (*status == PARSE_INTEGER_SIGNED) {
@@ -329,7 +329,7 @@ static inline const char *parse_uint64(const char *buf, int len, uint64_t *value
     return buf;
 }
 
-static inline const char *parse_hex_uint64(const char *buf, int len, uint64_t *value, int *status)
+static inline const char *parse_hex_uint64(const char *buf, size_t len, uint64_t *value, int *status)
 {
     buf = parse_hex_integer(buf, len, value, status);
     if (*status == PARSE_INTEGER_SIGNED) {

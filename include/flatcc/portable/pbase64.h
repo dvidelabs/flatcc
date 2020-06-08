@@ -384,9 +384,9 @@ static int base64_decode(uint8_t *dst, const uint8_t *src, size_t *dst_len, size
         if (limit < 3) {
             goto more;
         }
-        dst[0] = (hold[0] << 2) | (hold[1] >> 4);
-        dst[1] = (hold[1] << 4) | (hold[2] >> 2);
-        dst[2] = (hold[2] << 6) | (hold[3]);
+        dst[0] = (uint8_t)((hold[0] << 2) | (hold[1] >> 4));
+        dst[1] = (uint8_t)((hold[1] << 4) | (hold[2] >> 2));
+        dst[2] = (uint8_t)((hold[2] << 6) | (hold[3]));
         dst += 3;
         src += 4;
         limit -= 3;
@@ -413,7 +413,7 @@ tail:
         if (limit < 1) {
             goto more;
         }
-        dst[0] = (hold[0] << 2) | (hold[1] >> 4);
+        dst[0] = (uint8_t)((hold[0] << 2) | (hold[1] >> 4));
         dst += 1;
         break;
     case 3:
@@ -423,8 +423,8 @@ tail:
         if (limit < 2) {
             goto more;
         }
-        dst[0] = (hold[0] << 2) | (hold[1] >> 4);
-        dst[1] = (hold[1] << 4) | (hold[2] >> 2);
+        dst[0] = (uint8_t)((hold[0] << 2) | (hold[1] >> 4));
+        dst[1] = (uint8_t)((hold[1] << 4) | (hold[2] >> 2));
         dst += 2;
         break;
     default:

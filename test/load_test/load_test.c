@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
     ns(Monster_table_t) mon;
     ns(Monster_vec_t) mv;
     double t1, t2;
-    size_t rep = 10, i;
+    int rep = 10, i;
     int ret = 0;
 
 #if MEASURE_DECODE
