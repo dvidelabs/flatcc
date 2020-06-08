@@ -92,7 +92,7 @@ static const char *parse_integer(const char *buf, int len, uint64_t *value, int 
     buf += sign;
     while (buf != end && *buf >= '0' && *buf <= '9') {
         x0 = x;
-        x = x * 10 + *buf - '0';
+        x = x * 10 + (uint64_t)(*buf - '0');
         if (x0 > x) {
             *status = sign ? PARSE_INTEGER_UNDERFLOW : PARSE_INTEGER_OVERFLOW;
             return 0;
@@ -150,7 +150,7 @@ static const char *parse_hex_integer(const char *buf, int len, uint64_t *value, 
         k2 = buf + 16;
     }
     while (buf != k2) {
-        c = *buf;
+        c = (unsigned char)*buf;
         if (c >= '0' && c <= '9') {
             x = x * 16 + c - '0';
         } else {
@@ -177,7 +177,7 @@ static const char *parse_hex_integer(const char *buf, int len, uint64_t *value, 
     if (buf == end) {
         goto done;
     }
-    c = *buf;
+    c = (unsigned char)*buf;
     if (buf == k2) {
         if (c >= '0' && c <= '9') {
             *status = sign ? PARSE_INTEGER_UNDERFLOW : PARSE_INTEGER_OVERFLOW;

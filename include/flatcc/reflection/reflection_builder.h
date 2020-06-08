@@ -223,7 +223,7 @@ __flatbuffers_build_table_field(1, flatbuffers_, reflection_Field_type, reflecti
 __flatbuffers_build_scalar_field(2, flatbuffers_, reflection_Field_id, flatbuffers_uint16, uint16_t, 2, 2, UINT16_C(0), reflection_Field)
 __flatbuffers_build_scalar_field(3, flatbuffers_, reflection_Field_offset, flatbuffers_uint16, uint16_t, 2, 2, UINT16_C(0), reflection_Field)
 __flatbuffers_build_scalar_field(4, flatbuffers_, reflection_Field_default_integer, flatbuffers_int64, int64_t, 8, 8, INT64_C(0), reflection_Field)
-__flatbuffers_build_scalar_field(5, flatbuffers_, reflection_Field_default_real, flatbuffers_double, double, 8, 8, 0.000000, reflection_Field)
+__flatbuffers_build_scalar_field(5, flatbuffers_, reflection_Field_default_real, flatbuffers_double, double, 8, 8, 0.0000000000000000, reflection_Field)
 __flatbuffers_build_scalar_field(6, flatbuffers_, reflection_Field_deprecated, flatbuffers_bool, flatbuffers_bool_t, 1, 1, UINT8_C(0), reflection_Field)
 __flatbuffers_build_scalar_field(7, flatbuffers_, reflection_Field_required, flatbuffers_bool, flatbuffers_bool_t, 1, 1, UINT8_C(0), reflection_Field)
 __flatbuffers_build_scalar_field(8, flatbuffers_, reflection_Field_key, flatbuffers_bool, flatbuffers_bool_t, 1, 1, UINT8_C(0), reflection_Field)

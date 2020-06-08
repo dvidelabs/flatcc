@@ -18,7 +18,7 @@
 #include "pstrutil.h"
 #include "flatcc/portable/pparseint.h"
 
-void fb_default_error_out(void *err_ctx, const char *buf, int len)
+void fb_default_error_out(void *err_ctx, const char *buf, size_t len)
 {
     (void)err_ctx;
 
@@ -38,7 +38,7 @@ int fb_print_error(fb_parser_t *P, const char * format, ...)
         strcpy(buf + ERROR_BUFSIZ - 5, "...\n");
         n = ERROR_BUFSIZ - 1;
     }
-    P->error_out(P->error_ctx, buf, n);
+    P->error_out(P->error_ctx, buf, (size_t)n);
     return n;
 }
 
@@ -1259,9 +1259,9 @@ static void push_token(fb_parser_t *P, long id, const char *first, const char *l
 
     P->te = P->ts + P->tcapacity;
     if (P->token == P->te) {
-        offset = P->token - P->ts;
+        offset = (size_t)(P->token - P->ts);
         P->tcapacity = P->tcapacity ? 2 * P->tcapacity : 1024;
-        P->ts = realloc(P->ts, P->tcapacity * sizeof(fb_token_t));
+        P->ts = realloc(P->ts, (size_t)P->tcapacity * sizeof(fb_token_t));
         checkmem(P->ts);
         P->te = P->ts + P->tcapacity;
         P->token = P->ts + offset;

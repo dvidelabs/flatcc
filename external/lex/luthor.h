@@ -255,7 +255,8 @@
             ((unsigned long)(x3) << 24)) :
 
 #define lex_kw_match(kw)                                                \
-        if (memcmp(#kw, lexeme, sizeof(#kw) - 1) == 0) return tok_kw_##kw;
+        if (memcmp(#kw, lexeme, sizeof(#kw) - 1) == 0)                  \
+                return tok_kw_##kw;
 
 #define lex_kw_end()                                                    \
         break;
@@ -265,11 +266,11 @@
             lex_kw_match(kw)                                            \
         lex_kw_end()
 
-static unsigned long lex_match_kw(unsigned long tag, const char *lexeme);
+static long lex_match_kw(unsigned long tag, const char *lexeme);
 
 /* Static so multiple grammers are possible in a single program. */
 #define LEX_KW_TABLE_BEGIN                                              \
-static unsigned long lex_match_kw(unsigned long tag, const char *lexeme)\
+static long lex_match_kw(unsigned long tag, const char *lexeme)         \
 {                                                                       \
     switch (tag) {                                                      \
 

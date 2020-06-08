@@ -236,7 +236,7 @@ static inline const char *flatcc_json_parser_symbol_start(flatcc_json_parser_t *
 static inline uint64_t flatcc_json_parser_symbol_part_ext(const char *buf, const char *end)
 {
     uint64_t w = 0;
-    size_t n = end - buf;
+    size_t n = (size_t)(end - buf);
 
     if (n > 8) {
         n = 8;
@@ -292,7 +292,7 @@ static inline uint64_t flatcc_json_parser_symbol_part_ext(const char *buf, const
  */
 static inline uint64_t flatcc_json_parser_symbol_part(const char *buf, const char *end)
 {
-    size_t n = end - buf;
+    size_t n = (size_t)(end - buf);
 
 #if FLATCC_ALLOW_UNALIGNED_ACCESS
     if (n >= 8) {

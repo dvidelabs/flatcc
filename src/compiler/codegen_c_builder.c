@@ -643,9 +643,9 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "{ return N ## _add(B, TN ## _vec_end_pe(B)); }\\\n"
         "static inline int N ## _end(NS ## builder_t *B)\\\n"
         "{ return N ## _add(B, TN ## _vec_end(B)); }\\\n"
-        "static inline int N ## _create_pe(NS ## builder_t *B, T *data, size_t len)\\\n"
+        "static inline int N ## _create_pe(NS ## builder_t *B, const T *data, size_t len)\\\n"
         "{ return N ## _add(B, TN ## _vec_create_pe(B, data, len)); }\\\n"
-        "static inline int N ## _create(NS ## builder_t *B, T *data, size_t len)\\\n"
+        "static inline int N ## _create(NS ## builder_t *B, const T *data, size_t len)\\\n"
         "{ return N ## _add(B, TN ## _vec_create(B, data, len)); }\\\n"
         "static inline int N ## _slice(NS ## builder_t *B, TN ## _vec_t vec, size_t index, size_t len)\\\n"
         "{ return N ## _add(B, TN ## _vec_slice(B, vec, index, len)); }\\\n"
@@ -1046,7 +1046,7 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
         }
         switch (member->type.type) {
         case vt_fixed_array_compound_type_ref:
-            len = member->type.len;
+            len = (size_t)member->type.len;
             fb_compound_name(member->type.ct, &snref);
             if (member->metadata_flags & fb_f_deprecated) {
                 fprintf(out->fp, "__%sstruct_clear_field(p->__deprecated%i)",
@@ -1123,7 +1123,7 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
             continue;
         case vt_fixed_array_type:
             tprefix = scalar_type_prefix(member->type.st);
-            len = member->type.len;
+            len = (size_t)member->type.len;
             if (member->metadata_flags & fb_f_deprecated) {
                 fprintf(out->fp, "__%sstruct_clear_field(p->__deprecated%i)",
                         nsc, deprecated_index);

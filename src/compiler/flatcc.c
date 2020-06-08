@@ -398,7 +398,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
         buf = 0;
         inc = P->schema.includes;
         while (inc) {
-            checkmem((include_file = fb_copy_path_n(inc->name.s.s, inc->name.s.len)));
+            checkmem((include_file = fb_copy_path_n(inc->name.s.s, (size_t)inc->name.s.len)));
             if (__parse_include_file(P, include_file)) {
                 goto done;
             }

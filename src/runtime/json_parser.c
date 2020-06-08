@@ -163,13 +163,13 @@ static int decode_hex4(const char *buf, uint32_t *result)
     u = 0;
     c = buf[0];
     if (c >= '0' && c <= '9') {
-        x = c - '0';
+        x = (uint32_t)(c - '0');
         u = x << 12;
     } else {
         /* Lower case. */
         c |= 0x20;
         if (c >= 'a' && c <= 'f') {
-            x = c - 'a' + 10;
+            x = (uint32_t)(c - 'a' + 10);
             u |= x << 12;
         } else {
             return -1;
@@ -177,13 +177,13 @@ static int decode_hex4(const char *buf, uint32_t *result)
     }
     c = buf[1];
     if (c >= '0' && c <= '9') {
-        x = c - '0';
+        x = (uint32_t)(c - '0');
         u |= x << 8;
     } else {
         /* Lower case. */
         c |= 0x20;
         if (c >= 'a' && c <= 'f') {
-            x = c - 'a' + 10;
+            x = (uint32_t)(c - 'a' + 10);
             u |= x << 8;
         } else {
             return -1;
@@ -191,13 +191,13 @@ static int decode_hex4(const char *buf, uint32_t *result)
     }
     c = buf[2];
     if (c >= '0' && c <= '9') {
-        x = c - '0';
+        x = (uint32_t)(c - '0');
         u |= x << 4;
     } else {
         /* Lower case. */
         c |= 0x20;
         if (c >= 'a' && c <= 'f') {
-            x = c - 'a' + 10;
+            x = (uint32_t)(c - 'a' + 10);
             u |= x << 4;
         } else {
             return -1;
@@ -205,13 +205,13 @@ static int decode_hex4(const char *buf, uint32_t *result)
     }
     c = buf[3];
     if (c >= '0' && c <= '9') {
-        x = c - '0';
+        x = (uint32_t)(c - '0');
         u |= x;
     } else {
         /* Lower case. */
         c |= 0x20;
         if (c >= 'a' && c <= 'f') {
-            x = c - 'a' + 10;
+            x = (uint32_t)(c - 'a' + 10);
             u |= x;
         } else {
             return -1;
@@ -766,7 +766,7 @@ const char *flatcc_json_parser_integer(flatcc_json_parser_t *ctx, const char *bu
     buf += *value_sign;
     while (buf != end && *buf >= '0' && *buf <= '9') {
         x0 = x;
-        x = x * 10 + *buf - '0';
+        x = x * 10 + (uint64_t)(*buf - '0');
         if (x0 > x) {
             return flatcc_json_parser_set_error(ctx, buf, end, value_sign ?
                     flatcc_json_parser_error_underflow : flatcc_json_parser_error_overflow);
@@ -802,7 +802,7 @@ const char *flatcc_json_parser_build_uint8_vector_base64(flatcc_json_parser_t *c
     if (buf == end || *buf != '\"') {
         goto base64_failed;
     }
-    max_len = base64_decoded_size(buf - mark);
+    max_len = base64_decoded_size((size_t)(buf - mark));
     if (flatcc_builder_start_vector(ctx->ctx, 1, 1, FLATBUFFERS_COUNT_MAX((utype_size)))) {
         goto failed;
     }
@@ -851,7 +851,7 @@ const char *flatcc_json_parser_char_array(flatcc_json_parser_t *ctx,
     while (*buf != '\"') {
         buf = flatcc_json_parser_string_part(ctx, (mark = buf), end);
         if (buf == end) return end;
-        k = buf - mark;
+        k = (size_t)(buf - mark);
         if (k > n) {
             if (!(ctx->flags & flatcc_json_parser_f_skip_array_overflow)) {
                 return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_overflow);
@@ -897,15 +897,15 @@ const char *flatcc_json_parser_build_string(flatcc_json_parser_t *ctx,
     buf = flatcc_json_parser_string_start(ctx, buf, end);
     buf = flatcc_json_parser_string_part(ctx, (mark = buf), end);
     if (buf != end && *buf == '\"') {
-        *ref = flatcc_builder_create_string(ctx->ctx, mark, buf - mark);
+        *ref = flatcc_builder_create_string(ctx->ctx, mark, (size_t)(buf - mark));
     } else {
         if (flatcc_builder_start_string(ctx->ctx) ||
-                0 == flatcc_builder_append_string(ctx->ctx, mark, buf - mark)) goto failed;
+                0 == flatcc_builder_append_string(ctx->ctx, mark, (size_t)(buf - mark))) goto failed;
         while (buf != end && *buf != '\"') {
             buf = flatcc_json_parser_string_escape(ctx, buf, end, code);
-            if (0 == flatcc_builder_append_string(ctx->ctx, code + 1, code[0])) goto failed;
+            if (0 == flatcc_builder_append_string(ctx->ctx, code + 1, (size_t)code[0])) goto failed;
             if (end != (buf = flatcc_json_parser_string_part(ctx, (mark = buf), end))) {
-                if (0 == flatcc_builder_append_string(ctx->ctx, mark, buf - mark)) goto failed;
+                if (0 == flatcc_builder_append_string(ctx->ctx, mark, (size_t)(buf - mark))) goto failed;
             }
         }
         *ref = flatcc_builder_end_string(ctx->ctx);

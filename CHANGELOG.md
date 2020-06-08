@@ -23,6 +23,10 @@
   Linux detection (#129).
 - Fix precision loss of floating point default values in generated code (#140).
 - Fix anon union pedantic warning in internal builder struct (PR #143).
+- Remove warnings triggered by -Wsign-conversion.
+- BREAKING: some functions taking a string or buffer argument, and a separate
+  size argument, have changed the size type from `int` to `size_t` in an effort
+  to standardize and to remove sign conversion warnings.
 
 ## [0.6.0]
 

@@ -30,10 +30,10 @@
 int create_monster_bottom_up(flatcc_builder_t *B, int flexible)
 {
     flatbuffers_string_ref_t weapon_one_name = flatbuffers_string_create_str(B, "Sword");
-    uint16_t weapon_one_damage = 3;
+    int16_t weapon_one_damage = 3;
 
     flatbuffers_string_ref_t weapon_two_name = flatbuffers_string_create_str(B, "Axe");
-    uint16_t weapon_two_damage = 5;
+    int16_t weapon_two_damage = 5;
 
     // Use the `MyGame_Sample_Weapon_create` shortcut to create Weapons
     // with all the fields set.
@@ -70,9 +70,9 @@ int create_monster_bottom_up(flatcc_builder_t *B, int flexible)
 
 
     // Set his hit points to 300 and his mana to 150.
-    uint16_t hp = 300;
+    int16_t hp = 300;
     // The default value is 150, so we will never store this field.
-    uint16_t mana = 150;
+    int16_t mana = 150;
 
     // Create the equipment union. In the C++ language API this is given
     // as two arguments to the create call, or as two separate add
@@ -210,8 +210,8 @@ int access_monster_buffer(const void *buffer)
     // Make sure the buffer is accessible.
     test_assert(monster != 0);
 
-    uint16_t hp = ns(Monster_hp(monster));
-    uint16_t mana = ns(Monster_mana(monster));
+    int16_t hp = ns(Monster_hp(monster));
+    int16_t mana = ns(Monster_mana(monster));
     // This is just a const char *, but it also supports a fast length operation.
     flatbuffers_string_t name = ns(Monster_name(monster));
     size_t name_len = flatbuffers_string_len(name);
@@ -271,7 +271,7 @@ int access_monster_buffer(const void *buffer)
     test_assert(weapons_len == 2);
     // We can use `const char *` instead of `flatbuffers_string_t`.
     const char *second_weapon_name = ns(Weapon_name(ns(Weapon_vec_at(weapons, 1))));
-    uint16_t second_weapon_damage =  ns(Weapon_damage(ns(Weapon_vec_at(weapons, 1))));
+    int16_t second_weapon_damage =  ns(Weapon_damage(ns(Weapon_vec_at(weapons, 1))));
     test_assert(second_weapon_name != 0 && strcmp(second_weapon_name, "Axe") == 0);
     test_assert(second_weapon_damage == 5);
 
@@ -281,7 +281,7 @@ int access_monster_buffer(const void *buffer)
         // C does not require the cast to Weapon_table_t, but C++ does.
         ns(Weapon_table_t) weapon = (ns(Weapon_table_t)) ns(Monster_equipped(monster));
         const char *weapon_name = ns(Weapon_name(weapon));
-        uint16_t weapon_damage = ns(Weapon_damage(weapon));
+        int16_t weapon_damage = ns(Weapon_damage(weapon));
 
         test_assert(0 == strcmp(weapon_name, "Axe"));
         test_assert(weapon_damage == 5);

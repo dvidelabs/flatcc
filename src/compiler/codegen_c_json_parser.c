@@ -236,12 +236,12 @@ static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
 {
     fb_symbol_t *sym;
     fb_member_t *member;
-    int n;
+    size_t n;
     dict_entry_t *dict, *de;
     char *strbuf = 0;
-    int strbufsiz = 0;
+    size_t strbufsiz = 0;
     int is_union;
-    int union_index = 0;
+    size_t union_index = 0;
 
     n = 0;
     for (sym = ct->members; sym; sym = sym->link) {
@@ -252,7 +252,7 @@ static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
         is_union = is_union_member(member);
         if (is_union) {
             ++n;
-            strbufsiz += member->symbol.ident->len + 6;
+            strbufsiz += (size_t)member->symbol.ident->len + 6;
         }
         ++n;
     }
@@ -355,19 +355,19 @@ static dict_entry_t *build_local_scope_dict(fb_schema_t *schema, fb_scope_t *sco
     if (iec.count == 0) {
         return 0;
     }
-    dict = malloc(iec.count * sizeof(dict[0]));
+    dict = malloc((size_t)iec.count * sizeof(dict[0]));
     if (!dict) {
         return 0;
     }
     iec.de = dict;
     fb_symbol_table_visit(&scope->symbol_index, install_visible_enum_symbol, &iec);
-    qsort(dict, iec.count, sizeof(dict[0]), dict_cmp);
+    qsort(dict, (size_t)iec.count, sizeof(dict[0]), dict_cmp);
     return dict;
 }
 
 static dict_entry_t *build_global_scope_dict(catalog_t *catalog, int *count_out)
 {
-    int i, n = catalog->nenums;
+    size_t i, n = (size_t)catalog->nenums;
     dict_entry_t *dict;
 
     *count_out = n;
@@ -378,13 +378,13 @@ static dict_entry_t *build_global_scope_dict(catalog_t *catalog, int *count_out)
     if (!dict) {
         return 0;
     }
-    for (i = 0; i < catalog->nenums; ++i) {
+    for (i = 0; i < (size_t)catalog->nenums; ++i) {
         dict[i].text = catalog->enums[i].name;
         dict[i].len = (int)strlen(catalog->enums[i].name);
         dict[i].data = catalog->enums[i].ct;
         dict[i].hint = 0;
     }
-    qsort(dict, catalog->nenums, sizeof(dict[0]), dict_cmp);
+    qsort(dict, (size_t)catalog->nenums, sizeof(dict[0]), dict_cmp);
     *count_out = catalog->nenums;
     return dict;
 }
@@ -419,7 +419,7 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     int is_array = 0;
     int is_char_array = 0;
     size_t array_len = 0;
-    int st = 0;
+    fb_scalar_type_t st = 0;
     const char *tname_prefix = "n/a", *tname = "n/a"; /* suppress compiler warnigns */
 
     fb_clear(snref);
@@ -1522,10 +1522,10 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
         is_required = member->metadata_flags & fb_f_required;
         if (is_required) {
             if (first) {
-                println(out, "if (!flatcc_builder_check_required_field(ctx->ctx, %"PRIu64")", member->id - is_union);
+                println(out, "if (!flatcc_builder_check_required_field(ctx->ctx, %"PRIu64")", member->id - !!is_union);
                 indent();
             } else {
-                println(out, "||  !flatcc_builder_check_required_field(ctx->ctx, %"PRIu64")", member->id - is_union);
+                println(out, "||  !flatcc_builder_check_required_field(ctx->ctx, %"PRIu64")", member->id - !!is_union);
             }
             first = 0;
         }

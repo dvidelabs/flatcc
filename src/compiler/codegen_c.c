@@ -125,7 +125,7 @@ void fb_gen_c_includes(fb_output_t *out, const char *ext, const char *extup)
     str_set_insert_item(&set, fb_copy_path(out->S->basenameup), ht_keep);
     while (inc) {
         checkmem((basename = fb_create_basename(
-                    inc->name.s.s, inc->name.s.len, out->opts->default_schema_ext)));
+                    inc->name.s.s, (size_t)inc->name.s.len, out->opts->default_schema_ext)));
         inc = inc->link;
         checkmem((basenameup = fb_copy_path(basename)));
         s = basenameup;
@@ -155,19 +155,19 @@ int fb_copy_scope(fb_scope_t *scope, char *buf)
     size_t n, len;
     fb_ref_t *name;
 
-    len = scope->prefix.len;
+    len = (size_t)scope->prefix.len;
     for (name = scope->name; name; name = name->link) {
-        n = name->ident->len;
+        n = (size_t)name->ident->len;
         len += n + 1;
     }
     if (len > FLATCC_NAMESPACE_MAX + 1) {
         buf[0] = '\0';
         return -1;
     }
-    len = scope->prefix.len;
+    len = (size_t)scope->prefix.len;
     memcpy(buf, scope->prefix.s, len);
     for (name = scope->name; name; name = name->link) {
-        n = name->ident->len;
+        n = (size_t)name->ident->len;
         memcpy(buf + len, name->ident->text, n);
         len += n + 1;
         buf[len - 1] = '_';

@@ -49,7 +49,7 @@ static inline size_t pstrnlen(const char *s, size_t max_len)
 #define strnlen pstrnlen
 
 /* `align` must be a power of 2. */
-#define alignup(x, align) (((x) + (align) - 1) & ~((align) - 1))
+#define alignup(x, align) (((size_t)(x) + (size_t)(align) - 1) & ~((size_t)(align) - 1))
 
 /* Padding can be up to 255 zeroes, and 1 zero string termination byte.
  * When two paddings are combined at nested buffers, we need twice that.
@@ -312,11 +312,11 @@ static inline void *reserve_buffer(flatcc_builder_t *B, int alloc_type, size_t u
 
 static inline int reserve_fields(flatcc_builder_t *B, int count)
 {
-    uoffset_t used, need;
+    size_t used, need;
 
     /* Provide faster stack operations for common table operations. */
     used = frame(container.table.vs_end) + frame(container.table.id_end) * sizeof(voffset_t);
-    need = (count + 2) * sizeof(voffset_t);
+    need = (size_t)(count + 2) * sizeof(voffset_t);
     if (!(B->vs = reserve_buffer(B, flatcc_builder_alloc_vs, used, need, 1))) {
         return -1;
     }
@@ -324,7 +324,7 @@ static inline int reserve_fields(flatcc_builder_t *B, int count)
     B->vs += 2;
     used = frame(container.table.pl_end);
     /* Add one to handle special case of first table being empty. */
-    need = count * sizeof(*(B->pl)) + 1;
+    need = (size_t)count * sizeof(*(B->pl)) + 1;
     if (!(B->pl = reserve_buffer(B, flatcc_builder_alloc_pl, used, need, 0))) {
         return -1;
     }
@@ -575,7 +575,7 @@ static int enter_frame(flatcc_builder_t *B, uint16_t align)
             return -1;
         }
         if (!(B->frame = reserve_buffer(B, flatcc_builder_alloc_fs,
-                        (B->level - 1) * frame_size, frame_size, 0))) {
+                        (size_t)(B->level - 1) * frame_size, frame_size, 0))) {
             return -1;
         }
         B->limit_level = (int)(B->buffers[flatcc_builder_alloc_fs].iov_len / frame_size);
@@ -619,12 +619,12 @@ static inline void exit_frame(flatcc_builder_t *B)
 
 static inline uoffset_t front_pad(flatcc_builder_t *B, uoffset_t size, uint16_t align)
 {
-    return (B->emit_start - size) & (align - 1);
+    return (uoffset_t)(B->emit_start - (flatcc_builder_ref_t)size) & (align - 1);
 }
 
 static inline uoffset_t back_pad(flatcc_builder_t *B, uint16_t align)
 {
-    return (B->emit_end) & (align - 1);
+    return (uoffset_t)(B->emit_end) & (align - 1);
 }
 
 static inline flatcc_builder_ref_t emit_front(flatcc_builder_t *B, iov_state_t *iov)
@@ -1427,8 +1427,9 @@ static flatcc_builder_ref_t _create_offset_vector_direct(flatcc_builder_t *B,
         flatcc_builder_ref_t *vec, size_t count, const utype_t *types)
 {
     uoffset_t vec_size, vec_pad;
-    uoffset_t length_prefix, base, offset;
+    uoffset_t length_prefix, offset;
     uoffset_t i;
+    soffset_t base;
     iov_state_t iov;
 
     if ((uoffset_t)count > max_offset_count) {
@@ -1443,7 +1444,7 @@ static flatcc_builder_ref_t _create_offset_vector_direct(flatcc_builder_t *B,
     push_iov(&length_prefix, field_size);
     push_iov(vec, vec_size);
     push_iov(_pad, vec_pad);
-    base = (uoffset_t)B->emit_start - (uoffset_t)iov.len;
+    base = B->emit_start - (soffset_t)iov.len;
     for (i = 0; i < (uoffset_t)count; ++i) {
         /*
          * 0 is either end of buffer, start of vtables, or start of
@@ -1455,7 +1456,8 @@ static flatcc_builder_ref_t _create_offset_vector_direct(flatcc_builder_t *B,
          * Unions do permit nulls, but only when the type is NONE.
          */
         if (vec[i] != 0) {
-            offset = vec[i] - base - i * field_size - field_size;
+            offset = (uoffset_t)
+                (vec[i] - base - (soffset_t)(i * field_size) - (soffset_t)field_size);
             write_uoffset(&vec[i], offset);
             if (types) {
                 check(types[i] != 0, "union vector cannot have non-null element with type NONE");

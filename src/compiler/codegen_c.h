@@ -251,15 +251,15 @@ static inline size_t print_literal(fb_scalar_type_t scalar_type, const fb_value_
     switch (value->type) {
     case vt_uint:
         cast = scalar_cast(scalar_type);
-        return sprintf(literal, "%s(%llu)", cast, llu(value->u));
+        return (size_t)sprintf(literal, "%s(%llu)", cast, llu(value->u));
         break;
     case vt_int:
         cast = scalar_cast(scalar_type);
-        return sprintf(literal, "%s(%lld)", cast, lld(value->i));
+        return (size_t)sprintf(literal, "%s(%lld)", cast, lld(value->i));
         break;
     case vt_bool:
         cast = scalar_cast(scalar_type);
-        return sprintf(literal, "%s(%u)", cast, (unsigned)value->b);
+        return (size_t)sprintf(literal, "%s(%u)", cast, (unsigned)value->b);
         break;
     case vt_float:
         /* 
@@ -270,9 +270,9 @@ static inline size_t print_literal(fb_scalar_type_t scalar_type, const fb_value_
          * source.
          */
         if (scalar_type == fb_float) {
-            return sprintf(literal, "%#.9gf", (float)value->f);
+            return (size_t)sprintf(literal, "%#.9gf", (float)value->f);
         } else {
-            return sprintf(literal, "%#.17g", (double)value->f);
+            return (size_t)sprintf(literal, "%#.17g", (double)value->f);
         }
         break;
     default:

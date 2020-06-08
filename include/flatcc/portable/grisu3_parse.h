@@ -448,7 +448,7 @@ static const char *grisu3_parse_double(const char *buf, int len, double *result)
              */
             return sign ? 0 : mark;
         }
-        fraction = *buf++ - '0';
+        fraction = (uint64_t)(*buf++ - '0');
     }
     k = buf;
     /*
@@ -463,7 +463,7 @@ static const char *grisu3_parse_double(const char *buf, int len, double *result)
             ulp_half_error = 1;
             break;
         }
-        fraction = fraction * 10 + *buf++ - '0';
+        fraction = fraction * 10 + (uint64_t)(*buf++ - '0');
     }
     fraction_exp = (int)(buf - k);
     /* Skip surplus digits. Trailing zero does not introduce error. */
@@ -495,7 +495,7 @@ static const char *grisu3_parse_double(const char *buf, int len, double *result)
                 }
                 break;
             }
-            fraction = fraction * 10 + *buf++ - '0';
+            fraction = fraction * 10 + (uint64_t)(*buf++ - '0');
             --exponent;
         }
         fraction_exp += (int)(buf - k);

@@ -97,8 +97,8 @@ static int grisu3_digit_gen(grisu3_diy_fp_t low, grisu3_diy_fp_t w, grisu3_diy_f
     while(*kappa > 0)
     {
         uint64_t rest;
-        int digit = p1 / div;
-        buffer[*length] = (char)('0' + digit);
+        char digit = (char)(p1 / div);
+        buffer[*length] = '0' + digit;
         ++*length;
         p1 %= div;
         --*kappa;
@@ -109,13 +109,13 @@ static int grisu3_digit_gen(grisu3_diy_fp_t low, grisu3_diy_fp_t w, grisu3_diy_f
 
     for(;;)
     {
-        int digit;
+        char digit;
         p2 *= 10;
         unit *= 10;
         unsafe_interval.f *= 10;
         /* Integer division by one. */
-        digit = (int)(p2 >> -one.e);
-        buffer[*length] = (char)('0' + digit);
+        digit = (char)(p2 >> -one.e);
+        buffer[*length] = '0' + digit;
         ++*length;
         p2 &= one.f - 1; /* Modulo by one. */
         --*kappa;

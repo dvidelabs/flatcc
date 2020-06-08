@@ -78,7 +78,7 @@ int emit_test()
     float data[4] = { 1.0f, 1.1f, 1.2f, 1.3f };
 
     main_table_t mt;
-    uint64_t time;
+    int64_t time;
 
     (void)expect;
     B = &builder;

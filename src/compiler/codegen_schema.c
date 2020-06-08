@@ -138,9 +138,9 @@ static void export_attributes(flatcc_builder_t *B, fb_metadata_t *m)
 {
     for (; m; m = m->link) {
         reflection_KeyValue_vec_push_start(B);
-        reflection_KeyValue_key_create_strn(B, m->ident->text, m->ident->len);
+        reflection_KeyValue_key_create_strn(B, m->ident->text, (size_t)m->ident->len);
         if (m->value.type == vt_string) {
-            reflection_KeyValue_value_create_strn(B, m->value.s.s, m->value.s.len);
+            reflection_KeyValue_value_create_strn(B, m->value.s.s, (size_t)m->value.s.len);
         }
         reflection_KeyValue_vec_push_end(B);
     }
@@ -172,7 +172,7 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
                 && member->type.ct->symbol.kind == fb_is_union) {
             reflection_Field_vec_push_start(B);
             reflection_Field_name_start(B);
-            reflection_Field_name_append(B, member->symbol.ident->text, member->symbol.ident->len);
+            reflection_Field_name_append(B, member->symbol.ident->text, (size_t)member->symbol.ident->len);
             reflection_Field_name_append(B, "_type", 5);
             reflection_Field_name_end(B);
             switch(member->type.type) {
@@ -189,7 +189,7 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
             reflection_Field_vec_push_end(B);
         }
         reflection_Field_vec_push_start(B);
-        reflection_Field_name_create(B, member->symbol.ident->text, member->symbol.ident->len);
+        reflection_Field_name_create(B, member->symbol.ident->text, (size_t)member->symbol.ident->len);
         reflection_Field_type_add(B, export_type(B, member->type));
         switch (ct->symbol.kind) {
         case fb_is_table:
@@ -251,7 +251,7 @@ static void export_objects(flatcc_builder_t *B, object_entry_t *objects, int nob
         reflection_Object_fields_end(B);
         is_struct = ct->symbol.kind == fb_is_struct;
         if (is_struct) {
-            reflection_Object_bytesize_add(B, (uint32_t)ct->size);
+            reflection_Object_bytesize_add(B, (int32_t)ct->size);
         }
         reflection_Object_is_struct_add(B, is_struct);
         reflection_Object_minalign_add(B, ct->align);
@@ -262,7 +262,7 @@ static void export_objects(flatcc_builder_t *B, object_entry_t *objects, int nob
         }
         object_map[i] = reflection_Object_end(B);
     }
-    reflection_Schema_objects_create(B, object_map, nobjects);
+    reflection_Schema_objects_create(B, object_map, (size_t)nobjects);
 }
 
 static void export_enumval(flatcc_builder_t *B, fb_member_t *member, reflection_Object_ref_t *object_map)
@@ -270,7 +270,7 @@ static void export_enumval(flatcc_builder_t *B, fb_member_t *member, reflection_
     int is_union = object_map != 0;
 
     reflection_EnumVal_vec_push_start(B);
-    reflection_EnumVal_name_create(B, member->symbol.ident->text, member->symbol.ident->len);
+    reflection_EnumVal_name_create(B, member->symbol.ident->text, (size_t)member->symbol.ident->len);
     if (is_union) {
         if (member->type.type == vt_compound_type_ref) {
             /* object is deprecated in favor of union_type to support mixed union types. */
@@ -278,7 +278,7 @@ static void export_enumval(flatcc_builder_t *B, fb_member_t *member, reflection_
         }
         reflection_EnumVal_union_type_add(B, export_type(B, member->type));
     }
-    reflection_EnumVal_value_add(B, member->value.u);
+    reflection_EnumVal_value_add(B, (int64_t)member->value.u);
     reflection_EnumVal_vec_push_end(B);
 }
 
@@ -338,7 +338,7 @@ static int export_schema(flatcc_builder_t *B, fb_options_t *opts, fb_schema_t *S
         return -1;
     }
 
-    if (catalog.nobjects > 0 && !(object_map = malloc(catalog.nobjects * sizeof(object_map[0])))) {
+    if (catalog.nobjects > 0 && !(object_map = malloc((size_t)catalog.nobjects * sizeof(object_map[0])))) {
         clear_catalog(&catalog);
         return -1;
     }
@@ -352,11 +352,11 @@ static int export_schema(flatcc_builder_t *B, fb_options_t *opts, fb_schema_t *S
     }
     if (S->file_identifier.type == vt_string) {
         reflection_Schema_file_ident_create(B,
-                S->file_identifier.s.s, S->file_identifier.s.len);
+                S->file_identifier.s.s, (size_t)S->file_identifier.s.len);
     }
     if (S->file_extension.type == vt_string) {
         reflection_Schema_file_ext_create(B,
-                S->file_extension.s.s, S->file_extension.s.len);
+                S->file_extension.s.s, (size_t)S->file_extension.s.len);
     }
     export_objects(B, catalog.objects, catalog.nobjects, object_map);
     export_enums(B, catalog.enums, catalog.nenums, object_map);

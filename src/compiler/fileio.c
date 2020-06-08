@@ -57,7 +57,7 @@ char *fb_create_join_path_n(const char *prefix, size_t prefix_len,
             (prefix[prefix_len - 1] == '/' || prefix[prefix_len - 1] == '\\'))) {
         path_sep = 0;
     }
-    path = malloc(prefix_len + path_sep + suffix_len + ext_len + 1);
+    path = malloc(prefix_len + !!path_sep + suffix_len + ext_len + 1);
     if (!path) {
         return 0;
     }
@@ -152,7 +152,7 @@ size_t fb_find_basename(const char *path, size_t len)
             break;
         }
     }
-    return p - path;
+    return (size_t)(p - path);
 }
 
 char *fb_create_basename(const char *path, size_t len, const char *ext)
@@ -174,6 +174,7 @@ char *fb_create_basename(const char *path, size_t len, const char *ext)
 char *fb_read_file(const char *filename, size_t max_size, size_t *size_out)
 {
     FILE *fp;
+    long k;
     size_t size, pos, n, _out;
     char *buf;
 
@@ -187,7 +188,9 @@ char *fb_read_file(const char *filename, size_t max_size, size_t *size_out)
         goto fail;
     }
     fseek(fp, 0L, SEEK_END);
-    size = ftell(fp);
+    k = ftell(fp);
+    if (k < 0) goto fail;
+    size = (size_t)k;
     *size_out = size;
     if (max_size > 0 && size > max_size) {
         goto fail;

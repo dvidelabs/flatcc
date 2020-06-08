@@ -105,10 +105,11 @@ int main(int argc, char *argv[])
     ns(Monster_table_t) mon;
     ns(Monster_vec_t) mv;
     double t1, t2;
-    int rep = 10, i, ret = 0;
+    size_t rep = 10, i;
+    int ret = 0;
 
 #if MEASURE_DECODE
-    int j;
+    size_t j;
 #endif
 
     (void)argc;
