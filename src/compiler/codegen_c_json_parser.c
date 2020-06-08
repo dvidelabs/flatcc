@@ -281,7 +281,7 @@ static dict_entry_t *build_compound_dict(fb_compound_type_t *ct, int *count_out)
             member->export_index = union_index++;
             de->len = member->symbol.ident->len + 5;
             de->text = strbuf;
-            memcpy(strbuf, member->symbol.ident->text, member->symbol.ident->len);
+            memcpy(strbuf, member->symbol.ident->text, (size_t)member->symbol.ident->len);
             strbuf += member->symbol.ident->len;
             strcpy(strbuf, "_type");
             strbuf += 6;

@@ -193,7 +193,7 @@ void fb_scoped_symbol_name(fb_scope_t *scope, fb_symbol_t *sym, fb_scoped_name_t
         sn->len = FLATCC_NAME_BUFSIZ - sn->scope_len - 1;
         sn->total_len = sn->scope_len + sn->len;
     }
-    memcpy(sn->text + sn->scope_len, t->text, sn->len);
+    memcpy(sn->text + sn->scope_len, t->text, (size_t)sn->len);
     sn->text[sn->total_len] = '\0';
 }
 
