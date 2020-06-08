@@ -43,8 +43,20 @@ extern "C" {
 #define isnan _isnan
 #define isinf(x) (!_finite(x))
 #endif
+/*
+ * clang-5 through clang-8 but not clang-9 issues incorrect precision
+ * loss warning with -Wconversion flag when cast is absent.
+ */
+#if defined(__clang__)
+#if __clang_major__ >= 5 && __clang_major__ <= 8
+#define parse_double_isinf(x) isinf((float)x)
+#endif
+#endif
+#if !defined(parse_double_isinf)
 #define parse_double_isinf isinf
+#endif
 #define parse_float_isinf isinf
+
 #else
 
 #ifndef UINT8_MAX
