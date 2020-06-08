@@ -42,8 +42,8 @@ static inline flatbuffers_thash_t flatbuffers_type_hash_from_name(const char *na
 {
     uint32_t hash = 2166136261UL;
     while (*name) {
-        hash ^= (uint32_t)*name;
-        hash = hash * 16777619UL;
+        hash ^= (unsigned char)*name;
+        hash = hash * 16777619U;
         ++name;
     }
     if (hash == 0) {
@@ -126,8 +126,8 @@ static inline uint32_t flatbuffers_disperse_type_hash(flatbuffers_thash_t type_h
     /* http://stackoverflow.com/a/12996028 */
     uint32_t x = type_hash;
 
-    x = ((x >> 16) ^ x) * 0x45d9f3bUL;
-    x = ((x >> 16) ^ x) * 0x45d9f3bUL;
+    x = ((x >> 16) ^ x) * 0x45d9f3bU;
+    x = ((x >> 16) ^ x) * 0x45d9f3bU;
     x = ((x >> 16) ^ x);
     return x;
 }
