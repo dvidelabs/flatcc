@@ -1456,7 +1456,7 @@ lex_c_octal_to_exponent_part:
                         }
                     }
                     tag |= (unsigned long)p[-1] << 24;
-                    tag |= (unsigned char)(p - s) + '0';
+                    tag |= (unsigned char)(p - s) + (unsigned long)'0';
                     lex_emit_id(s, p, tag);
                     continue;
                 }

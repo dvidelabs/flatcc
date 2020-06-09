@@ -9,6 +9,10 @@ extern "C" {
 #error "include via flatcc/flatcc_flatbuffers.h"
 #endif
 
+#ifndef UINT8_MAX
+#include <stdint.h>
+#endif
+
 /*
  * FlatBuffers identifiers are normally specified by "file_identifer" in
  * the schema, but a standard hash of the fully qualified type name can
@@ -40,14 +44,14 @@ extern "C" {
  */
 static inline flatbuffers_thash_t flatbuffers_type_hash_from_name(const char *name)
 {
-    uint32_t hash = 2166136261UL;
+    uint32_t hash = UINT32_C(2166136261);
     while (*name) {
-        hash ^= (uint32_t)*name;
-        hash = hash * 16777619UL;
+        hash ^= (unsigned char)*name;
+        hash = hash * UINT32_C(16777619);
         ++name;
     }
     if (hash == 0) {
-        hash = 2166136261UL;
+        hash = UINT32_C(2166136261);
     }
     return hash;
 }
@@ -126,8 +130,8 @@ static inline uint32_t flatbuffers_disperse_type_hash(flatbuffers_thash_t type_h
     /* http://stackoverflow.com/a/12996028 */
     uint32_t x = type_hash;
 
-    x = ((x >> 16) ^ x) * 0x45d9f3bUL;
-    x = ((x >> 16) ^ x) * 0x45d9f3bUL;
+    x = ((x >> 16) ^ x) * UINT32_C(0x45d9f3b);
+    x = ((x >> 16) ^ x) * UINT32_C(0x45d9f3b);
     x = ((x >> 16) ^ x);
     return x;
 }

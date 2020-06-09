@@ -146,7 +146,7 @@ static inline int check_aligned_header(uoffset_t end, uoffset_t base, uoffset_t 
     align = align < uoffset_size ? uoffset_size : align;
 
     /* Note to self: the builder can also use the mask OR trick to propagate `min_align`. */
-    return k > base && k + offset_size <= end && !((k + offset_size) & ((offset_size - 1) | (align - 1)));
+    return k > base && k + offset_size <= end && !((k + offset_size) & ((offset_size - 1) | (align - 1u)));
 }
 
 static inline int verify_struct(uoffset_t end, uoffset_t base, uoffset_t offset, uoffset_t size, uint16_t align)
@@ -158,13 +158,13 @@ static inline int verify_struct(uoffset_t end, uoffset_t base, uoffset_t offset,
     base += offset;
     verify(base + size >= base, flatcc_verify_error_struct_size_overflow);
     verify(base + size <= end, flatcc_verify_error_struct_out_of_range);
-    verify (!(base & (align - 1)), flatcc_verify_error_struct_unaligned);
+    verify (!(base & (align - 1u)), flatcc_verify_error_struct_unaligned);
     return flatcc_verify_ok;
 }
 
 static inline voffset_t read_vt_entry(flatcc_table_verifier_descriptor_t *td, voffset_t id)
 {
-    voffset_t vo = (id + 2) * sizeof(voffset_t);
+    voffset_t vo = (id + 2u) * sizeof(voffset_t);
 
     /* Assumes tsize has been verified for alignment. */
     if (vo >= td->vsize) {
@@ -219,8 +219,8 @@ static int verify_field(flatcc_table_verifier_descriptor_t *td,
     k += td->table + base;
     trace_verify("entry: buf + table + vte", k);
     trace_verify("align", align);
-    trace_verify("align masked entry", k & (align - 1));
-    verify(!(k & (align - 1)), flatcc_verify_error_table_field_not_aligned);
+    trace_verify("align masked entry", k & (align - 1u));
+    verify(!(k & (align - 1u)), flatcc_verify_error_table_field_not_aligned);
     /* We assume the table size has already been verified. */
     return flatcc_verify_ok;
 }
@@ -251,7 +251,7 @@ static int get_offset_field(flatcc_table_verifier_descriptor_t *td, voffset_t id
     /* This normally optimizes to nop. */
     verify(uoffset_size > voffset_size || k <= k2, flatcc_verify_error_table_field_size_overflow);
     k += td->table;
-    verify(!(k & (offset_size - 1)), flatcc_verify_error_table_field_not_aligned);
+    verify(!(k & (offset_size - 1u)), flatcc_verify_error_table_field_not_aligned);
     /* We assume the table size has already been verified. */
     *out = k;
     return flatcc_verify_ok;
