@@ -172,8 +172,6 @@ message(STATUS "lib install dir ${dist_dir}/${lib_dir}")
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     # Clang or AppleClang
     message(STATUS "Setting Clang compiler options")
-    # We don't add -Wstrict-prototypes to gcc because it breaks
-    # code by failing on function definitions as well.
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wsign-conversion")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion")
@@ -239,10 +237,25 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-type-limits")
     endif()
 
+    # Too aggressive, e.g. main() is not permitted and main with
+    # args then yields unused arg warning.
+    # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes")
+
     # In gcc 4.8 it is not possible to suppress this warning using
     # #pragma GCC diagnostic ignored "-Wunused-function"
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-function")
-    #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-type-limits")
+    # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-type-limits")
+
+    if (GCC_VERSION VERSION_LESS 4.8)
+        # -Wsign-conversion broken for GCC 4.7 conditional operator
+    else()
+        # Might be disabled if GCC keeps getting more agressive.
+        # Incorrectly warns on explicit char to uint32_t casts.
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wsign-conversion")
+
+        # Too aggressive, warns on `x = x + 1;` or `n = -n;`.
+        # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion")
+    endif()
 
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Intel")
     message(STATUS "Setting Intel C compiler options")

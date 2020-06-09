@@ -1677,7 +1677,7 @@ static int process_enum(fb_parser_t *P, fb_compound_type_t *ct)
                 error_sym(P, sym, "enum value out of range when used with 'bit_flags'");
                 return -1;
             }
-            member->value.u = 1LL << index.u;
+            member->value.u = UINT64_C(1) << index.u;
             member->value.type = vt_uint;
             if (fb_coerce_scalar_type(P, sym, ct->type.st, &member->value)) {
                  /* E.g. enumval = 15 causes signed overflow with short. */

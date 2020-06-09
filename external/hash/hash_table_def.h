@@ -38,7 +38,7 @@
 #define HT_LOAD_FACTOR 0.7
 #endif
 
-#define HT_LOAD_FACTOR_FRAC ((int)((float)(HT_LOAD_FACTOR)*256))
+#define HT_LOAD_FACTOR_FRAC ((size_t)((float)(HT_LOAD_FACTOR)*256))
 
 #ifndef HT_PANIC
 #include <stdio.h>
