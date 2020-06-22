@@ -945,9 +945,9 @@ To read a struct the pointer to the struct is retrieved first
     ns(MyStruct_struct_t) x;
 
     t = ns(MyTable_as_root(buf));
-    x = ns(MyTable_mystruct_get());
+    x = ns(MyTable_mystruct_get(t));
     for (sum = 0, i = 0; i < ns(MyStruct_counters_get_len()); ++i) {
-      sum += ns(MyStruct_counters_get(x, 0)) +
+      sum += ns(MyStruct_counters_get(x, i)) +
       // char arrays are endian neutral, so we can use pointer access.
       name = ns(MyStruct_name_get_ptr(x);
       name_len = strnlen(name, ns(MyStruct_name_get_len()));
