@@ -27,9 +27,9 @@
 - BREAKING: some functions taking a string or buffer argument, and a separate
   size argument, have changed the size type from `int` to `size_t` in an effort
   to standardize and to remove sign conversion warnings.
-- Fixed size arrays renamed to fixed length arrays for consistency with googles
+- Fixed size arrays renamed to fixed length arrays for consistency with Googles
   project.
-- Support `aligned_alloc` for MingW.
+- Support `aligned_alloc` for MingW (#155).
 
 ## [0.6.0]
 
