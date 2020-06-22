@@ -29,6 +29,7 @@
   to standardize and to remove sign conversion warnings.
 - Fixed size arrays renamed to fixed length arrays for consistency with googles
   project.
+- Support `aligned_alloc` for MingW.
 
 ## [0.6.0]
 
