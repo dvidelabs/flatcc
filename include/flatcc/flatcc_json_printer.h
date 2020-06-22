@@ -49,7 +49,7 @@ extern "C" {
     XX(bad_input,               "bad input")                                \
     XX(deep_recursion,          "deep recursion")                           \
     /*                                                                      \
-     * When the output was larger than the available fixed size buffer,     \
+     * When the output was larger than the available fixed length buffer,     \
      * or dynamic allocation could not grow the buffer sufficiently.        \
      */                                                                     \
     XX(overflow,                "overflow")
@@ -119,7 +119,7 @@ static inline void flatcc_json_printer_reset(flatcc_json_printer_t *ctx)
 /*
  * A custom init function can be implemented with a custom flush
  * function can be custom implemented. A few have been provided:
- * init with external fixed size buffer, and init with dynamically
+ * init with external fixed length buffer, and init with dynamically
  * growing buffer.
  *
  * Because there are a lot of small print functions, it is essentially
@@ -165,7 +165,7 @@ int flatcc_json_printer_init_buffer(flatcc_json_printer_t *ctx, char *buffer, si
  * Returns the current buffer pointer and also the content size in
  * `buffer_size` if it is null. The operation is not very useful for
  * file oriented printers (created with `init`) and will then only
- * return the unflushed buffer content. For fixed size buffers
+ * return the unflushed buffer content. For fixed length buffers
  * (`init_buffer`), only the last content is available if the buffer
  * overflowed. Works well with (`init_buffer`) when the dynamic buffer
  * is be reused, otherwise `finalize_dynamic_buffer` could be more

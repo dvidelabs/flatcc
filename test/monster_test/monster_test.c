@@ -1810,7 +1810,7 @@ failed:
     goto done;
 }
 
-int verify_fixed_size_array(const void *buffer, size_t size)
+int verify_fixed_length_array(const void *buffer, size_t size)
 {
     const char *text;
     ns(Monster_table_t) mon;
@@ -1821,7 +1821,7 @@ int verify_fixed_size_array(const void *buffer, size_t size)
     int ret;
 
     if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
-        printf("Monster buffer with fixed size arrays failed to verify, got: %s\n", flatcc_verify_error_string(ret));
+        printf("Monster buffer with fixed length arrays failed to verify, got: %s\n", flatcc_verify_error_string(ret));
         return -1;
     }
     
@@ -1840,41 +1840,41 @@ int verify_fixed_size_array(const void *buffer, size_t size)
     fa = ns(Alt_fixed_array(alt));
 
     if (ns(FooBar_foo(fa, 0)) != 1.0f || ns(FooBar_bar(fa, 9) != 1000)) {
-        printf("Monster buffer with fixed size arrays has wrong content\n");
+        printf("Monster buffer with fixed length arrays has wrong content\n");
         return -1;
     }
 
     if (ns(FooBar_foo_get(fa, 0)) != 1.0f || ns(FooBar_bar_get(fa, 9) != 1000)) {
-        printf("Monster buffer with fixed size arrays has wrong content\n");
+        printf("Monster buffer with fixed length arrays has wrong content\n");
         return -1;
     }
     if (ns(FooBar_foo_get(fa, 16)) != 0.0f || ns(FooBar_bar_get(fa, 10) != 0)) {
-        printf("Monster buffer with fixed size arrays has bad bounds check\n");
+        printf("Monster buffer with fixed length arrays has bad bounds check\n");
         return -1;
     }
     if (ns(FooBar_col_get(fa, 2)) != ns(Color_Red)) {
-        printf("Fixed size enum array content not correct\n");
+        printf("Fixed length enum array content not correct\n");
         return -1;
     }
     t0 = ns(FooBar_tests_get(fa, 0));
     t1 = ns(FooBar_tests_get(fa, 1));
     if (!t0 || !t1) {
-        printf("Monster buffer with fixed size struct arrays has missing element\n");
+        printf("Monster buffer with fixed length struct arrays has missing element\n");
         return -1;
     }
     if (ns(Test_a_get(t0)) != 0 || ns(Test_b_get(t0)) != 4) {
-        printf("Monster buffer with fixed size struct arrays has wrong first element member content\n");
+        printf("Monster buffer with fixed length struct arrays has wrong first element member content\n");
         return -1;
     }
     if (ns(Test_a_get(t1)) != 1 || ns(Test_b_get(t1)) != 2) {
-        printf("Monster buffer with fixed size struct arrays has wrong second element member content\n");
+        printf("Monster buffer with fixed length struct arrays has wrong second element member content\n");
         return -1;
     }
 
     /* Endian safe because char arrays are endian neutral. */
     text = ns(FooBar_text_get_ptr(fa));
     if (strncmp(text, "hello", ns(FooBar_text_get_len())) != 0) {
-        printf("Monster buffer with fixed size array field has wrong text\n");
+        printf("Monster buffer with fixed length array field has wrong text\n");
         return -1;
     }
 
@@ -1885,7 +1885,7 @@ int verify_fixed_size_array(const void *buffer, size_t size)
      */
     if (flatbuffers_is_native_pe()) {
         if (ns(FooBar_foo_get_ptr(fa))[1] != 2.0f) {
-            printf("Monster buffer with fixed size arrays get_ptr has wrong content\n");
+            printf("Monster buffer with fixed length arrays get_ptr has wrong content\n");
             return -1;
         }
     }
@@ -1893,11 +1893,11 @@ int verify_fixed_size_array(const void *buffer, size_t size)
     ns(FooBar_copy_from_pe(&fa2, fa));
     if (fa2.foo[0] != 1.0f || fa2.foo[1] != 2.0f || fa2.foo[15] != 16.0f ||
             fa2.bar[0] != 100 || fa2.bar[9] != 1000) {
-        printf("Monster buffer with copied fixed size arrays has wrong content\n");
+        printf("Monster buffer with copied fixed length arrays has wrong content\n");
         return -1;
     }
     if (fa2.foo[2] != 0.0f || fa2.foo[14] != 0.0f || fa2.bar[1] != 0 || fa2.bar[8] != 0) {
-        printf("Monster buffer with copied fixed size arrays has not been zero padded\n");
+        printf("Monster buffer with copied fixed length arrays has not been zero padded\n");
         return -1;
     }
 
@@ -1908,17 +1908,17 @@ int verify_fixed_size_array(const void *buffer, size_t size)
     ns(FooBar_from_pe)((ns(FooBar_t) *)fa);
     if (fa->foo[0] != 1.0f || fa->foo[1] != 2.0f || fa->foo[15] != 16.0f ||
             fa->bar[0] != 100 || fa->bar[9] != 1000) {
-        printf("Monster buffer with in-place converted fixed size arrays has wrong content\n");
+        printf("Monster buffer with in-place converted fixed length arrays has wrong content\n");
         return -1;
     }
     if (fa->foo[2] != 0.0f || fa->foo[14] != 0.0f || fa->bar[1] != 0 || fa->bar[8] != 0) {
-        printf("Monster buffer with in-place converted fixed size arrays has not been zero padded\n");
+        printf("Monster buffer with in-place converted fixed length arrays has not been zero padded\n");
         return -1;
     }
     return 0;
 }
 
-int test_fixed_size_array(flatcc_builder_t *B)
+int test_fixed_length_array(flatcc_builder_t *B)
 {
     void *buffer = 0;
     size_t size;
@@ -1953,7 +1953,7 @@ int test_fixed_size_array(flatcc_builder_t *B)
     ns(Monster_end_as_root(B));
 
     buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
-    ret = verify_fixed_size_array(buffer, size);
+    ret = verify_fixed_length_array(buffer, size);
     flatcc_builder_aligned_free(buffer);
     if (ret) return -1;
 
@@ -1970,7 +1970,7 @@ int test_fixed_size_array(flatcc_builder_t *B)
     ns(Monster_end_as_root(B));
 
     buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
-    ret = verify_fixed_size_array(buffer, size);
+    ret = verify_fixed_length_array(buffer, size);
     flatcc_builder_aligned_free(buffer);
     if (ret) return -1;
 
@@ -2890,7 +2890,7 @@ int main(int argc, char *argv[])
     }
 #endif
 #if 1
-    if (test_fixed_size_array(B)) {
+    if (test_fixed_length_array(B)) {
         printf("TEST FAILED\n");
         return -1;
     }

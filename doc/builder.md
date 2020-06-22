@@ -15,7 +15,7 @@
 * [Packing tables](#packing-tables)
 * [Strings](#strings)
 * [Structs](#structs)
-  * [Fixed Size Arrays in Structs](#fixed-size-arrays-in-structs)
+  * [Fixed Length Arrays in Structs](#fixed-length-arrays-in-structs)
 * [Nested Buffers](#nested-buffers)
 * [Scalars and Enums](#scalars-and-enums)
 * [Vectors](#vectors)
@@ -883,21 +883,21 @@ Be aware that `Vec3_t` is for native updates while `Vec3_struct_t` is a const
 pointer to an endian encoded struct used in the reader interface, and actually
 also as source type in the clone operation.
 
-### Fixed Size Arrays in Structs
+### Fixed Length Arrays in Structs
 
-As of flatcc 0.6.0 it is possible to have fixed size arrays as structs members.
-A fixed size array is equivalent to having a struct field repeated one or more
-times. The schema syntax is `name : [type:count];` similar to an ordinary struct
-field `name : type;`. The type is any type that can ba valid struct field type
-including enums and nested structs. The size cannot be 0 and the overall size is
-limited by the maximum struct size the array is contained within which is
-typically 65535 (2^16-1).
+As of flatcc 0.6.0 it is possible to have fixed length arrays as structs
+members. A fixed length array is equivalent to having a struct field repeated
+one or more times. The schema syntax is `name : [type:count];` similar to an
+ordinary struct field `name : type;`. The type is any type that can ba valid
+struct field type including enums and nested structs. The size cannot be 0 and
+the overall size is limited by the maximum struct size the array is contained
+within which is typically 65535 (2^16-1).
 
 For example, given the schema:
 
     struct MyStruct {
       counters:[int:3];
-      // char is only valid as a fixed size array type
+      // char is only valid as a fixed length array type
       name:[char:6];
     }
     table MyTable {
@@ -964,9 +964,9 @@ The `_get` suffix can be ommitted in the above if the flatcc `-g` has not
 supplied to reduce the risk of name conflicts, but not for `_get_len` and
 `_get_ptr`.
 
-Note that it is not possible to have fixed size vectors as part of a table but
+Note that it is not possible to have fixed length arrays as part of a table but
 it is possible to wrap such data in a struct, and it is also possible to have
-vectors of structs that contain fixed size arrays.
+vectors of structs that contain fixed length arrays.
 
 
 ## Nested Buffers

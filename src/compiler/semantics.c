@@ -731,7 +731,7 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
             }
             break;
         case vt_fixed_array_string_type:
-            error_sym(P, sym, "fixed size arrays cannot have string elements");
+            error_sym(P, sym, "fixed length arrays cannot have string elements");
             member->type.type = vt_invalid;
             return -1;
         case vt_fixed_array_type:
@@ -740,7 +740,7 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
         case vt_scalar_type:
             break;
         default:
-            error_sym(P, sym, "struct member member can only be of struct scalar, or fixed size scalar array type");
+            error_sym(P, sym, "struct member member can only be of struct scalar, or fixed length scalar array type");
             return -1;
         }
         if (!key_ok) {
@@ -1036,7 +1036,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         case vt_fixed_array_type_ref:
         case vt_fixed_array_string_type:
         case vt_fixed_array_type:
-            error_sym(P, sym, "fixed size arrays can only be used with structs");
+            error_sym(P, sym, "fixed length arrays can only be used with structs");
             member->type.type = vt_invalid;
             return -1;
         case vt_string_type:

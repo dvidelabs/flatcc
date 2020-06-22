@@ -670,7 +670,7 @@ static void parse_value(fb_parser_t *P, fb_value_t *v, int flags, const char *er
 
 static void parse_fixed_array_size(fb_parser_t *P, fb_token_t *ttype, fb_value_t *v)
 {
-    const char *error_msg = "fixed size array length expected to be an unsigned integer";
+    const char *error_msg = "fixed length array length expected to be an unsigned integer";
     fb_value_t vsize;
     fb_token_t *tlen = P->token;
 
@@ -694,12 +694,12 @@ static void parse_fixed_array_size(fb_parser_t *P, fb_token_t *ttype, fb_value_t
     case vt_invalid:
         return;
     default:
-        error_tok(P, ttype, "invalid fixed size array type");
+        error_tok(P, ttype, "invalid fixed length array type");
         v->type = vt_invalid;
         return;
     }
     if (vsize.u == 0) {
-        error_tok(P, tlen, "fixed size array length cannot be 0");
+        error_tok(P, tlen, "fixed length array length cannot be 0");
         v->type = vt_invalid;
         return;
     }
@@ -709,7 +709,7 @@ static void parse_fixed_array_size(fb_parser_t *P, fb_token_t *ttype, fb_value_t
      * without extra size cost.
      */
     if (vsize.u > UINT32_MAX) {
-        error_tok(P, tlen, "fixed size array length overflow");
+        error_tok(P, tlen, "fixed length array length overflow");
         v->type = vt_invalid;
         return;
     }
@@ -791,7 +791,7 @@ static void parse_type(fb_parser_t *P, fb_value_t *v)
     }
     if (ttype->id == tok_kw_char && v->type != vt_invalid) {
         if (v->type != vt_fixed_array_type) {
-            error_tok(P, ttype, "char can only be used as a fixed size array type [char:<n>]");
+            error_tok(P, ttype, "char can only be used as a fixed length array type [char:<n>]");
             v->type = vt_invalid;
         }
     }

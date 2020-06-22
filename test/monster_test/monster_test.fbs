@@ -162,7 +162,7 @@ table Stat {
   count:ushort;
 }
 
-// fixed size arrays new to flatcc 0.6.0
+// fixed length arrays new to flatcc 0.6.0
 struct FooBar {
     foo:[float:0x10];
     bar:[int:10];

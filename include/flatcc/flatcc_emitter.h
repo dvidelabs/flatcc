@@ -47,7 +47,7 @@ extern "C" {
  */
 
 /*
- * Memory is allocated in fixed size page units - the first page is
+ * Memory is allocated in fixed length page units - the first page is
  * split between front and back so each get half the page size. If the
  * size is a multiple of 128 then each page offset will be a multiple of
  * 64, which may be useful for sequencing etc.
