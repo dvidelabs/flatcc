@@ -356,3 +356,10 @@ root_type MyGame.Example.Monster;
 
 file_identifier "MONS";
 file_extension "mon";
+
+// Out of order enums
+
+enum ReorderedEnum: int { rx = 10, ry = 1, rz = 9 }
+
+enum ReorderedColor:byte (bit_flags) { RBlue = 3, RRed = 0, RGreen }
+

@@ -11,12 +11,12 @@
  * be seen as how things were when this file was last updated.
  *
  * One notable, but convenient, difference is that structs and enums are
- * not required to be defined in a specific order here. The schema can be
- * rearranged by the user to support the flatc compiler without changing
- * the underlying. This does put an extra restraint on struct depth as
+ * not required to be defined in a specific order here (as of June 2020
+ * flatc supports out of order enums). The schema can be rearranged by
+ * the user to support the flatc compiler without changing the
+ * underlying. This does put an extra restraint on struct depth as
  * recursion must have set maximum level, but this also applies to
- * target C compilers, e.g. clang has a limit of about 100-200
- * nestings.
+ * target C compilers, e.g. clang has a limit of about 100-200 nestings.
  *
  * Another more significant difference is that structs are allowed as
  * root objects. This is important if a query should return a partial
@@ -199,9 +199,10 @@
  * flatc requires ascending enums, and it does simplify code generation
  * to multiple languages, and name mapping of enums, so we require this
  * by default, but C code generator handles both cases fine.
+ * As of June 2020 flatc supports out of order enums.
  */
 #ifndef FLATCC_ASCENDING_ENUM
-#define FLATCC_ASCENDING_ENUM 1
+#define FLATCC_ASCENDING_ENUM 0
 #endif
 
 /*

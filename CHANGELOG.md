@@ -30,6 +30,8 @@
 - Fixed size arrays renamed to fixed length arrays for consistency with Googles
   project.
 - Support `aligned_alloc` for MingW (#155).
+- Disable config flag `FLATCC_ASCENDING_ENUM` now that Googles flatc compiler
+  also has support for reordered enums.
 
 ## [0.6.0]
 
