@@ -32,6 +32,8 @@
 - Support `aligned_alloc` for MingW (#155).
 - Disable config flag `FLATCC_ASCENDING_ENUM` now that Googles flatc compiler
   also has support for reordered enums.
+- Fix cli options so common files can be generated without schema files
+  (PR 156).
 
 ## [0.6.0]
 
