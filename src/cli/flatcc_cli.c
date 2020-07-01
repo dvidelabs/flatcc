@@ -427,10 +427,12 @@ int main(int argc, const char *argv[])
     }
  
     parse_opts(argc, argv, &opts);
-    opts.cgen_common_builder = opts.cgen_builder && opts.cgen_common_reader;
+    if (opts.cgen_builder && opts.cgen_common_reader) {
+        opts.cgen_common_builder = 1;
+    }
     if (opts.srcpath_count == 0) {
-        /* No input files, so only generate header. */
-        if (!opts.cgen_common_reader || opts.bgen_bfbs) {
+        /* No input files, so only generate header(s). */
+        if (!(opts.cgen_common_reader || opts.cgen_common_builder) || opts.bgen_bfbs) {
             fprintf(stderr, "filename missing\n");
             goto fail;
         }
