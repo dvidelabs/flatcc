@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # link a specific build.cfg.xxx to build.cfg to use that build
 # configuration, e.g. ln -sf build.cfg.make build.cfg
