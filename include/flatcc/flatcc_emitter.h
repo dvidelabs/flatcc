@@ -132,7 +132,7 @@ void flatcc_emitter_reset(flatcc_emitter_t *E);
  * Helper function that allows a page between front and back to be
  * recycled while the buffer is still being constructed - most likely as part
  * of partial copy or transmission. Attempting to recycle front or back
- * pages will result will result in an error. Recycling pages outside the
+ * pages will result in an error. Recycling pages outside the
  * front and back will be valid but pointless. After recycling and copy
  * operations are no longer well-defined and should be replaced with
  * whatever logic is recycling the pages.  The reset operation

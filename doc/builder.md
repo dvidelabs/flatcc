@@ -61,7 +61,7 @@ stack, it may also avoid external temporary allocation.
 
 A builder object is required to start buffer construction. The builder
 must be initialized first and can be reset and reused between buffers,
-reusing stack allocation. The builder is can have a customized emitter
+reusing stack allocation. The builder can have a customized emitter
 object but here we use the default. Finalizing the buffer depends
 the emitter and we can use a default finalizer only because we use the
 default emitter - it allocates and populates a linear buffer from a
@@ -174,7 +174,7 @@ verifying buffers the buffer and size arguments should be used. See also
 
 Note that the size prefix ensures internal alignment but does not
 guarantee that the next buffer in a file can be appended directly
-because the next buffers alignment is unknown and becuase it potentially
+because the next buffers alignment is unknown and because it potentially
 wastes padding bytes.  The buffer size at offset 0 can increased to the
 needed alignment as long as endianness is handled and the size of the
 size field is subtracted, and zeroes are appended as necesary.
@@ -526,7 +526,7 @@ as an operation on the field name, here with `Monster_Mini_start/end`:
 
     flatcc_builder_buffer_end(B, root);
 
-We can repeat the the table ensting as deep as we like, provided our
+We can repeat the the table nesting as deep as we like, provided our
 builder is willing to allocate enough stack space.
 
 **Warning**: It is possible to use the wrong table type operations
@@ -543,7 +543,7 @@ names.
 A table may be created with a constructor, but it requires all
 non-scalar objects to be references or pointers. Struct fields must be
 pointers to zero padded structs, and strings, vectors and tables must be
-references. The constructors are proably most useful for simple tables
+references. The constructors are probably most useful for simple tables
 with mostly scalar values (here we use the original Monster fields and
 leaves out any we have invented for the sake of illustration):
 
@@ -579,7 +579,7 @@ special problem since it is two fields treated as one and the type field
 will generally waste padding space if stored in order:
 
 To help pack unions better these can be added with the type
-seperate from the value reference using `add_type(B, test.type`,
+seperate from the value reference using `add_type(B, test.type)`,
 `add_value(B, test)` where the value is only added if the type is
 not `NONE`. The `add_type` should be called last since it is the
 smallest type.
