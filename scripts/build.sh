@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 set -e
 
@@ -17,9 +17,12 @@ FLATCC_BUILD_CMD=${FLATCC_BUILD_CMD:-ninja}
 mkdir -p ${ROOT}/bin
 mkdir -p ${ROOT}/lib
 
-rm -f ${ROOT}/bin/flatcc{,_d}
-rm -f ${ROOT}/libflatcc{,_d}.a
-rm -f ${ROOT}/libflatccrt{,_d}.a
+rm -f ${ROOT}/bin/flatcc
+rm -f ${ROOT}/bin/flatcc_d
+rm -f ${ROOT}/libflatcc
+rm -f ${ROOT}/libflatcc_d.a
+rm -f ${ROOT}/libflatccrt.a
+rm -f ${ROOT}/libflatccrt_d.a
 
 if [ ! -d ${ROOT}/build/Debug ] || [ ! -d  ${ROOT}/build/Release ]; then
     ${ROOT}/scripts/initbuild.sh
