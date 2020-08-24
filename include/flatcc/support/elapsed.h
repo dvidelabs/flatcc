@@ -16,7 +16,7 @@ static double elapsed_realtime(void) { // returns 0 seconds first time called
     gettimeofday(&tv, 0);
     if (!t0.tv_sec)
         t0 = tv;
-    return (double)(tv.tv_sec - t0.tv_sec) + (double)(tv.tv_usec - t0.tv_usec) / 1000000.;
+    return (double)(tv.tv_sec - t0.tv_sec) + (double)(tv.tv_usec - t0.tv_usec) / 1e6;
 }
 #else
 #include <windows.h>
