@@ -16,7 +16,7 @@ static double elapsed_realtime(void) { // returns 0 seconds first time called
     gettimeofday(&tv, 0);
     if (!t0.tv_sec)
         t0 = tv;
-    return tv.tv_sec - t0.tv_sec + (tv.tv_usec - t0.tv_usec) / 1000000.;
+    return (double)(tv.tv_sec - t0.tv_sec) + (double)(tv.tv_usec - t0.tv_usec) / 1e6;
 }
 #else
 #include <windows.h>
@@ -48,7 +48,7 @@ static int show_benchmark(const char *descr, double t1, double t2, size_t size, 
     printf("elapsed time: %.3f (s)\n", tdiff);
     printf("iterations: %d\n", rep);
     printf("size: %lu (bytes)\n", (unsigned long)size);
-    printf("bandwidth: %.3f (MB/s)\n", (double)rep * size / 1e6 / tdiff);
+    printf("bandwidth: %.3f (MB/s)\n", (double)rep * (double)size / 1e6 / tdiff);
     printf("throughput in ops per sec: %.3f\n", rep / tdiff);
     if (reptext && rep != 1) {
         printf("throughput in %s ops per sec: %.3f\n", reptext, 1 / tdiff);
