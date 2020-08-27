@@ -1515,7 +1515,7 @@ Union vectors are supported as of v0.5.0. A union vector is represented
 as two vectors, one with a vector of tables and one with a vector of
 types, similar to ordinary unions. It is more efficient to place the
 type vector first because it avoids backtracking. Because a union of
-type NONE cannot be represented by abasence of table field when dealing
+type NONE cannot be represented by absence of table field when dealing
 with vectors of unions, a table must have the value `null` if its type
 is NONE in the corresponding type vector. In other cases a table should
 be absent, and not null.
