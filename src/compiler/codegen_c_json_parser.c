@@ -1437,7 +1437,7 @@ static int gen_struct_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "if (!(pval = flatcc_builder_start_struct(ctx->ctx, %"PRIu64", %"PRIu16"))) goto failed;",
             (uint64_t)ct->size, (uint16_t)ct->align);
     println(out, "buf = %s_parse_json_struct_inline(ctx, buf, end, pval);", snt.text);
-    println(out, "if (buf == end || !(*result = flatcc_builder_end_struct(ctx->ctx))) goto failed;");
+    println(out, "if (ctx->error || !(*result = flatcc_builder_end_struct(ctx->ctx))) goto failed;");
     println(out, "return buf;");
     margin();
     println(out, "failed:");
