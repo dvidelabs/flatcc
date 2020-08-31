@@ -199,7 +199,7 @@ static inline int is_in_value_set(fb_value_set_t *vs, fb_value_t *value)
  * appear in a later search, so we return the nearest existing parent
  * and do not cache the parent.
  */
-static inline fb_scope_t *find_parent_scope(fb_parser_t *P, fb_scope_t *scope) 
+static inline fb_scope_t *find_parent_scope(fb_parser_t *P, fb_scope_t *scope)
 {
     fb_ref_t *p;
     int count;
@@ -780,7 +780,7 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
                 error_sym(P, sym, "at most one struct member can have a primary_key attribute");
                 member->type.type = vt_invalid;
                 return -1;
-            } 
+            }
             key_count++;
             /* Allow backends to treat primary key as an ordinary key. */
             member->metadata_flags |= fb_f_key;
@@ -955,7 +955,11 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         if (member->type.type == vt_scalar_type || member->type.type == vt_vector_type) {
             member->type.st = map_scalar_token_type(member->type.t);
         }
-        allow_flags = 
+        if (member->value.type == vt_null) {
+            member->flags |= fb_fm_optional;
+            member->value.type = vt_missing;
+        }
+        allow_flags =
                 fb_f_id | fb_f_nested_flatbuffer | fb_f_deprecated | fb_f_key |
                 fb_f_required | fb_f_hash | fb_f_base64 | fb_f_base64url | fb_f_sorted;
 
@@ -965,6 +969,9 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         member->metadata_flags = process_metadata(P, member->metadata, (uint16_t)allow_flags, knowns);
         if ((m = knowns[fb_attr_nested_flatbuffer])) {
             define_nested_table(P, ct->scope, member, m);
+        }
+        if ((member->metadata_flags & fb_f_required) && member->flags & fb_fm_optional) {
+            error_sym(P, sym, "'required' attribute is incompatible with optional field declaration (= null)");
         }
         if ((member->metadata_flags & fb_f_required) && member->type.type == vt_scalar_type) {
             error_sym(P, sym, "'required' attribute is redundant on scalar table field");
@@ -996,7 +1003,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                 member->id = (unsigned short)count;
             }
             ++count;
-        } 
+        }
         switch (member->type.type) {
         case vt_scalar_type:
             key_ok = 1;
@@ -1266,7 +1273,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             } else if (member->metadata_flags & fb_f_primary_key) {
                 error_sym(P, sym, "primary_key attribute conflicts with key attribute");
                 member->type.type = vt_invalid;
-            } else if (!ct->primary_key || 
+            } else if (!ct->primary_key ||
                     (primary_count == 0 && ct->primary_key->id > member->id)) {
                 /*
                  * Set key field with lowest id as default primary key
@@ -1328,7 +1335,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
     if (ct->metadata_flags & fb_f_original_order) {
         ct->ordered_members = original_order_members(P, (fb_member_t *)ct->members);
     } else {
-        /* Size efficient ordering. */ 
+        /* Size efficient ordering. */
         ct->ordered_members = align_order_members(P, (fb_member_t *)ct->members);
     }
     if (!id_failed && need_id && count > 0) {

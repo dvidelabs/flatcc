@@ -178,6 +178,10 @@ enum fb_symbol_flags {
     fb_indexed = 8,
 };
 
+enum fb_member_flags {
+    fb_fm_optional = 1
+};
+
 /*
  * We keep the link first in all structs so that we can use a
  * generic list reverse function after all symbols have been pushed
@@ -222,6 +226,7 @@ struct fb_member {
      * at most 256 and must be a power of 2.
      */
     uint16_t align;
+    uint16_t flags;
     uint64_t offset;
     uint64_t size;
 
