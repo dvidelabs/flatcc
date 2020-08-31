@@ -22,6 +22,7 @@ LEX_KW_TABLE_BEGIN
     lex_kw(enum, '4', 'e', 'n', 'm')
     lex_kw(int8, '4', 'i', 'n', '8')
     lex_kw(long, '4', 'l', 'o', 'g')
+    lex_kw(null, '4', 'n', 'u', 'l')
     lex_kw(true, '4', 't', 'r', 'e')
     lex_kw(uint, '4', 'u', 'i', 't')
     lex_kw(false, '5', 'f', 'a', 'e')
