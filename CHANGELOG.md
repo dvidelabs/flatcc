@@ -35,6 +35,7 @@
 - Fix cli options so common files can be generated without schema files
   (PR #156).
 - Make build.sh work for non-bash shells (PR #159).
+- Fix parsing json struct as roort (#157)
 
 ## [0.6.0]
 
