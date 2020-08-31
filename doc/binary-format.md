@@ -1061,6 +1061,13 @@ values.
 
 ## StructBuffers
 
+_NOTE: the Google FlatBuffer project originally documented structs as
+valid root objects, but never actually implemented it, and has as of mid
+2020 changed the specification to disallow root structs as covered in
+this section. FlatCC for C has been supporting root structs for a long
+time, and they can provide significant speed advantages, so FlatCC will
+continue to support these._
+
 Unlike tables, structs are are usually embedded in in a fixed memory
 block representing a table, in a vector, or embedded inline in other
 structs, but can also be independent when used in a union.
