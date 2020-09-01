@@ -58,6 +58,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [Unions](#unions)
   * [Union Scope Resolution](#union-scope-resolution)
 * [Fixed Length Arrays](#fixed-length-arrays-1)
+* [Optional Fields](#optional-fields)
 * [Endianness](#endianness)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
 * [Searching and Sorting](#searching-and-sorting)
@@ -1915,6 +1916,54 @@ Flatcc opts to allow arbitrary length fixed length arrays but limit the entire
 struct to 2^16-1 bytes. Tables cannot hold larger structs, and the C language
 does not guarantee support for larger structs. Other implementations might have
 different limits on maximum array size. Arrays of 0 length are not permitted.
+
+
+## Optional Fields
+
+Optional scalar table fields were introduced to FlatBuffers mid 2020 in order to
+better handle null values also for scalar data types, as is common in SQL
+databases. Before describing optional values, first understand how ordinary
+scalar values work in FlatBuffers:
+
+Imagine a FlatBuffer table with a `mana` field from the monster sample schema.
+Ordinarily a scalar table field has implicit default value of 0 like `mana :
+uint8;`, or an explicit default value specified in the schema like `mana : uint8
+= 100;`. When a value is absent from a table field, the default value is
+returned, and when a value is added during buffer construction, it will not
+actually be stored if the value matches the default value, unless the
+`force_add` option is used to write a value even if it matches the default
+value. Likewise the `is_present` method can be used to test if a field was
+actually stored in the buffer when reading it.
+
+When a table has many fields, most of which just hold default settings,
+signficant space can be saved using default values, but it also means that an
+absent value does not indicate null. Field absence is essentially just a data
+compression technique, not a semantic change to the data. However, it is
+possible to use `force_add` and `is_present` to interpret values as null when
+not present, except that this is not a standardized technique. Optional fields
+represents a standardized way to achieve this.
+
+Scalar fields can be marked as optional by assigning `null` as a default
+value. For example, some objects might not have a meaningful `mana`
+value, so it could be represented as `lifeforce : uint8 = null`. Now the
+`lifeforce` field has become an optional field. In the FlatCC implementation
+this means that the field is written, it will always be written also if the
+value is 0 or any other representable value. It also means that the `force_add`
+method is not available for the field because `force_add` is essentially always
+in effect for the field. On the read side, optional scalar fields behave exactly is ordinary scalar fields that have not specified a default value, that is, if the field is absent, 0 will be returned and `is_present` will return false. Instead optional scalar fields get a new accessor method with the suffix `_option()` which returns a struct with two fiels: `{ is_null, value }` where `is_null == !is_present()` and value is the same value is the `_get()` method, which will be 0 if `is_null` is true. The option struct is named after the type similar to unions, for example `flatbuffers_uint8_option_t` or `MyGame_Example_Color_option_t`, and the option accessor method also works similar to unions.
+
+By keeping the original accessors, read logic can be made simpler and faster when it is not important whether a value is null or 0 and at the same time the option value can be returned and stored.
+
+Note that struct fields cannot be optional. Also note that, non-scalar table fields are not declared optional because these types can already represent null via a null pointer or a NONE union type.
+
+JSON parsing and printing change behavior for scalar fields by treating absent
+fields differently according the optional semantics. For example parsing a
+missing field will not store a default value even if the parser is executed with
+a flag to force default values to be stored and the printer will not print
+absent optional fields even if otherwise flagged to print default values.
+Currenlty the JSON printers and parsers do not print or parse JSON null and can
+only represent null be absence of a field.
+
 
 ## Endianness
 

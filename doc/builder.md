@@ -453,16 +453,17 @@ buffer we could use:
 
     Monster_hp_force_add(B, 100);
 
-Only scalar fields and enums have a `set` operation since only these
+Only scalar fields and enums have a `force_add` operation since only these
 types have a default value, and other types have a meaningful
 interpretation of null. (It is not quite clear if empty tables separate
 from null/absent are valid in all implementations).
 
-`set` may be useful when roundtripping data from a database where it is
-relevant to distinguish between any valid value and null. Most readers
-will not be able to tell the difference, but it is possible to inspect a
-flatbuffer to see if a table field is present, present and default, or
-absent, meaning null.
+`force_add` may be useful when roundtripping data from a database where it is
+relevant to distinguish between any valid value and null. Most readers will not
+be able to tell the difference, but it is possible to inspect a flatbuffer to
+see if a table field is present, present and default, or absent, meaning null.
+
+NOTE: As of mid 2020, FlatBuffers added optional scalar table fields with support in flatcc 0.6.1. These fields automatically imply `force_add` to represent null values when a field is absent and therefore these fields do not have a `force_add` method and these fields also do not have a default value other than `null`, i.e. null if not added.
 
 If Monster is declared as root, the above may also be called as:
 
