@@ -553,7 +553,7 @@ static void gen_helpers(fb_output_t *out)
         "__%sdefine_scalar_field(ID, N, NK, TK, T, V)\\\n"
         "static inline TK ## _option_t N ## _ ## NK ## _option(N ## _table_t t__tmp)\\\n"
         "{ TK ## _option_t ret; __%sread_vt(ID, offset__tmp, t__tmp)\\\n"
-        "  ret.is_null = offset_tmp == 0; ret.value = offset__tmp ?\\\n"
+        "  ret.is_null = offset__tmp == 0; ret.value = offset__tmp ?\\\n"
         "  __%sread_scalar_at_byteoffset(TK, t__tmp, offset__tmp) : V;\\\n"
         "  return ret; }\n", nsc, nsc, nsc, nsc);
     fprintf(out->fp,
@@ -756,7 +756,6 @@ static void gen_helpers(fb_output_t *out)
     fprintf(out->fp,
             "#define __%sdefine_integer_type(N, T, W)\\\n"
             "__flatcc_define_integer_accessors(N, T, W, %sendian)\\\n"
-            "typedef struct { int is_null; T value; } N ## _option_t;\\\n"
             "__%sdefine_scalar_vector(N, T)\n",
             nsc, nsc, nsc);
     fprintf(out->fp,
