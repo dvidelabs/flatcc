@@ -7,7 +7,7 @@
 
 static inline int match_kw_identifier(fb_symbol_t *sym)
 {
-    return (sym->ident->len == 10 && 
+    return (sym->ident->len == 10 &&
             memcmp(sym->ident->text, "identifier", 10) == 0);
 }
 
@@ -44,7 +44,7 @@ static void print_type_identifier(fb_output_t *out, fb_compound_type_t *ct)
     name = snt.text;
     type_hash = ct->type_hash;
 
-    /* 
+    /*
      * It's not practical to detect all possible name conflicts, but
      * 'identifier' is common enough to require special handling.
      */
@@ -549,6 +549,14 @@ static void gen_helpers(fb_output_t *out)
         fprintf(out->fp, "\n");
     }
     fprintf(out->fp,
+        "#define __%sdefine_scalar_optional_field(ID, N, NK, TK, T, V)\\\n"
+        "__%sdefine_scalar_field(ID, N, NK, TK, T, V)\\\n"
+        "static inline TK ## _option_t N ## _ ## NK ## _option(N ## _table_t t__tmp)\\\n"
+        "{ TK ## _option_t ret; __%sread_vt(ID, offset__tmp, t__tmp)\\\n"
+        "  ret.is_null = offset_tmp == 0; ret.value = offset__tmp ?\\\n"
+        "  __%sread_scalar_at_byteoffset(TK, t__tmp, offset__tmp) : V;\\\n"
+        "  return ret; }\n", nsc, nsc, nsc, nsc);
+    fprintf(out->fp,
         "#define __%sstruct_field(T, ID, t, r)\\\n"
         "{\\\n"
         "    __%sread_vt(ID, offset__tmp, t)\\\n"
@@ -748,6 +756,7 @@ static void gen_helpers(fb_output_t *out)
     fprintf(out->fp,
             "#define __%sdefine_integer_type(N, T, W)\\\n"
             "__flatcc_define_integer_accessors(N, T, W, %sendian)\\\n"
+            "typedef struct { int is_null; T value; } N ## _option_t;\\\n"
             "__%sdefine_scalar_vector(N, T)\n",
             nsc, nsc, nsc);
     fprintf(out->fp,
@@ -1552,6 +1561,7 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
     fb_scoped_name_t snref;
     uint64_t present_id;
     fb_literal_t literal;
+    int is_optional;
 
     assert(ct->symbol.kind == fb_is_table);
 
@@ -1587,6 +1597,7 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
         member = (fb_member_t *)sym;
         present_id = member->id;
         is_primary_key = ct->primary_key == member;
+        is_optional = !!(member->flags & fb_fm_optional);
         print_doc(out, "", member->doc);
         /*
          * In flatc, there can at most one key field, and it should be
@@ -1607,9 +1618,15 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             tname = scalar_type_name(member->type.st);
             tname_prefix = scalar_type_prefix(member->type.st);
             print_literal(member->type.st, &member->value, literal);
-            fprintf(out->fp,
-                "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %s)\n",
-                nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, literal);
+            if (is_optional) {
+                fprintf(out->fp,
+                    "__%sdefine_scalar_optional_field(%llu, %s, %.*s, %s%s, %s%s, %s)\n",
+                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, literal);
+            } else {
+                fprintf(out->fp,
+                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %s)\n",
+                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, literal);
+            }
             if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                 fprintf(out->fp,
                         "__%sdefine_scan_by_scalar_field(%s, %.*s, %s%s)\n",
@@ -1712,9 +1729,15 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 break;
             case fb_is_enum:
                 print_literal(member->type.ct->type.st, &member->value, literal);
-                fprintf(out->fp,
-                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s, %s_enum_t, %s)\n",
-                    nsc, llu(member->id), snt.text, n, s, snref.text, snref.text, literal);
+                if (is_optional) {
+                    fprintf(out->fp,
+                        "__%sdefine_scalar_optional_field(%llu, %s, %.*s, %s, %s_enum_t, %s)\n",
+                        nsc, llu(member->id), snt.text, n, s, snref.text, snref.text, literal);
+                } else {
+                    fprintf(out->fp,
+                        "__%sdefine_scalar_field(%llu, %s, %.*s, %s, %s_enum_t, %s)\n",
+                        nsc, llu(member->id), snt.text, n, s, snref.text, snref.text, literal);
+                }
                 if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                     fprintf(out->fp,
                             "__%sdefine_scan_by_scalar_field(%s, %.*s, %s_enum_t)\n",
