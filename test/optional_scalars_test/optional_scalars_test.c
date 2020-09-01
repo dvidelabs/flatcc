@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "optional_scalars_test_builder.h"
+#include "optional_scalars_test_json_printer.h"
 
 
 #undef ns
@@ -147,6 +148,34 @@ int test()
     return 0;
 }
 
+const char *expected_json =
+"{\"just_i8\":10,\"maybe_i8\":11,\"default_i8\":12,\"just_i16\":42,\"maybe_i16\":42,\"maybe_u32\":0,\"default_u32\":0,\"just_f32\":42,\"maybe_f32\":42,\"just_bool\":true,\"maybe_bool\":true,\"just_enum\":\"One\",\"maybe_enum\":\"One\"}";
+
+int test_json()
+{
+    flatcc_builder_t builder;
+    void  *buf;
+    size_t size;
+    flatcc_json_printer_t printer;
+    char *json_buf;
+    size_t json_size;
+
+    flatcc_builder_init(&builder);
+    test_assert(0 == create_scalar_stuff(&builder));
+    buf = flatcc_builder_finalize_aligned_buffer(&builder, &size);
+    test_assert(0 == access_scalar_stuff(buf));
+    flatcc_builder_clear(&builder);
+    flatcc_json_printer_init_dynamic_buffer(&printer, 0);
+    test_assert(ns(ScalarStuff_print_json_as_root)(&printer, buf, size, NULL));
+    flatcc_builder_aligned_free(buf);
+    json_buf = flatcc_json_printer_get_buffer(&printer, &json_size);
+    printf("%.*s\n", (int)json_size, json_buf);
+    test_assert(strlen(expected_json) == json_size);
+    test_assert(0 == memcmp(expected_json, json_buf, json_size));
+    flatcc_json_printer_clear(&printer);
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     /* Silence warnings. */
@@ -156,9 +185,12 @@ int main(int argc, char *argv[])
     if (test()) {
         printf("optional scalars test failed");
         return 1;
-    } else {
-        printf("optional scalars test passed");
-        return 0;
     }
+    if (test_json()) {
+        printf("optional scalars json test failed");
+        return 1;
+    }
+    printf("optional scalars test passed");
+    return 0;
 }
 
