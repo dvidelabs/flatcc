@@ -60,8 +60,12 @@ table ScalarStuff {
   maybe_enum: OptionalByte = null;
   default_enum: OptionalByte = One;
 
-  just_factor: OptionalFactor = Once;
-  maybe_factor: OptionalFactor = null;
-  default_factor: OptionalFactor = Twice;
+  just_xfactor: OptionalFactor = Once;
+  maybe_xfactor: OptionalFactor = null;
+  default_xfactor: OptionalFactor = Twice;
+
+  just_yfactor: OptionalFactor = Once;
+  maybe_yfactor: OptionalFactor = null;
+  default_yfactor: OptionalFactor = Twice;
 
 }

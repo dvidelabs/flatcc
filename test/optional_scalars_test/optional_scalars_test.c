@@ -9,7 +9,7 @@
 #undef ns
 #define ns(x) FLATBUFFERS_WRAP_NAMESPACE(optional_scalars, x)
 
- #define TEST_ASSERT
+// #define TEST_ASSERT
 
 #ifdef TEST_ASSERT
 #define test_assert(x) do { if (!(x)) { assert(0); return -1; }} while(0)
@@ -45,6 +45,10 @@ int create_scalar_stuff(flatcc_builder_t *builder)
     ns(ScalarStuff_maybe_enum_add)(builder, ns(OptionalByte_One));
     ns(ScalarStuff_default_enum_add)(builder, ns(OptionalByte_One));
 
+    ns(ScalarStuff_just_xfactor_add)(builder, ns(OptionalFactor_Twice));
+    ns(ScalarStuff_maybe_xfactor_add)(builder, ns(OptionalFactor_Twice));
+    ns(ScalarStuff_default_xfactor_add)(builder, ns(OptionalFactor_Twice));
+
     ns(ScalarStuff_end_as_root(builder));
 
     return 0;
@@ -60,6 +64,8 @@ int access_scalar_stuff(const void *buf)
     flatbuffers_float_option_t maybe_f32;
     flatbuffers_bool_option_t maybe_bool;
     ns(OptionalByte_option_t) maybe_enum;
+    ns(OptionalFactor_option_t) maybe_xfactor;
+    ns(OptionalFactor_option_t) maybe_yfactor;
 
     test_assert(10 == ns(ScalarStuff_just_i8_get(t)));
     test_assert(11 == ns(ScalarStuff_maybe_i8_get(t)));
@@ -130,6 +136,23 @@ int access_scalar_stuff(const void *buf)
     test_assert(ns(ScalarStuff_maybe_enum_is_present(t)));
     test_assert(!ns(ScalarStuff_default_enum_is_present(t)));
 
+    test_assert(2 == ns(ScalarStuff_just_xfactor_get(t)));
+    maybe_xfactor = ns(ScalarStuff_maybe_xfactor_option(t));
+    test_assert(2 == ns(ScalarStuff_default_xfactor_get(t)));
+    test_assert(!maybe_xfactor.is_null);
+    test_assert(maybe_xfactor.value == 2);
+    test_assert(ns(ScalarStuff_just_xfactor_is_present(t)));
+    test_assert(ns(ScalarStuff_maybe_xfactor_is_present(t)));
+    test_assert(!ns(ScalarStuff_default_xfactor_is_present(t)));
+
+    test_assert(1 == ns(ScalarStuff_just_yfactor_get(t)));
+    maybe_yfactor = ns(ScalarStuff_maybe_yfactor_option(t));
+    test_assert(2 == ns(ScalarStuff_default_yfactor_get(t)));
+    test_assert(maybe_yfactor.is_null);
+    test_assert(maybe_yfactor.value == 0);
+    test_assert(!ns(ScalarStuff_just_yfactor_is_present(t)));
+    test_assert(!ns(ScalarStuff_maybe_yfactor_is_present(t)));
+    test_assert(!ns(ScalarStuff_default_yfactor_is_present(t)));
     return 0;
 }
 
@@ -150,7 +173,7 @@ int test()
 }
 
 const char *expected_json =
-"{\"just_i8\":10,\"maybe_i8\":11,\"default_i8\":12,\"just_i16\":42,\"maybe_i16\":42,\"maybe_u32\":0,\"default_u32\":0,\"just_f32\":42,\"maybe_f32\":42,\"just_bool\":true,\"maybe_bool\":true,\"just_enum\":\"One\",\"maybe_enum\":\"One\"}";
+"{\"just_i8\":10,\"maybe_i8\":11,\"default_i8\":12,\"just_i16\":42,\"maybe_i16\":42,\"maybe_u32\":0,\"default_u32\":0,\"just_f32\":42,\"maybe_f32\":42,\"just_bool\":true,\"maybe_bool\":true,\"just_enum\":\"One\",\"maybe_enum\":\"One\",\"just_xfactor\":\"Twice\",\"maybe_xfactor\":\"Twice\"}";
 
 #if 0
 int print_buffer(const void *buf, size_t size)
