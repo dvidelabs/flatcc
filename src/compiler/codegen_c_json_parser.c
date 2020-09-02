@@ -601,9 +601,10 @@ repeat_nested:
         println(out, "buf = flatcc_json_parser_symbolic_%s(ctx, (mark = buf), end, symbolic_parsers, &val);", tname_prefix);
         println(out, "if (buf == mark || buf == end) goto failed;");
         unindent(); println(out, "}");
-        if (!is_struct_container && !is_vector && !is_base64 && !is_base64url && !is_optional) {
+        if (!is_struct_container && !is_vector && !is_base64 && !is_base64url) {
 #if !FLATCC_JSON_PARSE_FORCE_DEFAULTS
             /* We need to create a check for the default value and create a table field if not the default. */
+            if (!is_optional)
             switch (member->value.type) {
             case vt_bool:
             case vt_uint:
