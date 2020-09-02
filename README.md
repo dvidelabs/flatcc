@@ -1965,7 +1965,7 @@ Currenlty the JSON printers and parsers do not print or parse JSON null and can
 only represent null be absence of a field.
 
 For an example of reading and writing, as well as printing and parsing JSON,
-optional scalar fields, please refer to [optional_scalar_test.fbs] and [optional_scalar_test.c].
+optional scalar fields, please refer to [optional_scalars_test.fbs] and [optional_scalars_test.c].
 
 
 ## Endianness
@@ -2538,8 +2538,8 @@ See [Benchmarks]
 [Benchmarks]: https://github.com/dvidelabs/flatcc/blob/master/doc/benchmarks.md
 [monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
 [monster_test.fbs]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.fbs
-[optional_scalar_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/optional_scalar_test/optional_scalar_test.c
-[optional_scalar_test.fbs]: https://github.com/dvidelabs/flatcc/blob/master/test/optional_scalar_test/optional_scalar_test.fbs
+[optional_scalars_test.fbs]: https://github.com/dvidelabs/flatcc/blob/optional/test/optional_scalars_test/optional_scalars_test.fbs
+[optional_scalars_test.c]: https://github.com/dvidelabs/flatcc/blob/optional/test/optional_scalars_test/optional_scalars_test.c
 [paligned_alloc.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/portable/paligned_alloc.h
 [test_json.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json.c
 [test_json_parser.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json_parser.c
