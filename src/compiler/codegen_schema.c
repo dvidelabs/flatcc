@@ -153,6 +153,7 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
     flatbuffers_bool_t has_key, deprecated, required, key_processed = 0;
     int64_t default_integer;
     double default_real;
+    flatbuffers_bool_t nullable;
 
     for (sym = ct->members; sym; sym = sym->link) {
         member = (fb_member_t *)sym;
@@ -167,6 +168,7 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
         default_integer = 0;
         default_real = 0.0;
         deprecated = (member->metadata_flags & fb_f_deprecated) != 0;
+        nullable = !!(member->flags & fb_fm_optional);
 
         if ((member->type.type == vt_compound_type_ref || member->type.type == vt_vector_compound_type_ref)
                 && member->type.ct->symbol.kind == fb_is_union) {
@@ -213,6 +215,7 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
             reflection_Field_offset_add(B, (uint16_t)(member->id + 2) * sizeof(flatbuffers_voffset_t));
             reflection_Field_key_add(B, has_key);
             reflection_Field_required_add(B, required);
+            reflection_Field_nullable_add(B, nullable);
             break;
         case fb_is_struct:
             reflection_Field_offset_add(B, (uint16_t)member->offset);
