@@ -5,6 +5,15 @@ enum OptionalByte: byte {
   One = 1,
 }
 
+// Enums without a 0 element normally requires an initializer
+// which is a problem when = null is the default. In this case
+// the default value is forced to 0 when a reader insists on
+// getting a numerical value instead of null.
+enum OptionalFactor: byte {
+  Once = 1,
+  Twice = 2,
+}
+
 // This table tests optional scalars in tables. It should be integrated with
 // the main monster test once most languages support optional scalars.
 table ScalarStuff {
@@ -50,4 +59,9 @@ table ScalarStuff {
   just_enum: OptionalByte;
   maybe_enum: OptionalByte = null;
   default_enum: OptionalByte = One;
+
+  just_factor: OptionalFactor = Once;
+  maybe_factor: OptionalFactor = null;
+  default_factor: OptionalFactor = Twice;
+
 }

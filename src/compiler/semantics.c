@@ -1144,7 +1144,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                         member->type.type = vt_invalid;
                         continue;
                     }
-                    if (P->opts.strict_enum_init) {
+                    if (P->opts.strict_enum_init && !(member->flags & fb_fm_optional)) {
                         if (!is_in_value_set(&member->type.ct->value_set, &member->value)) {
                             error_sym(P, sym, "initializer does not match a defined enum value");
                             member->type.type = vt_invalid;
