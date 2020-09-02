@@ -152,6 +152,20 @@ int test()
 const char *expected_json =
 "{\"just_i8\":10,\"maybe_i8\":11,\"default_i8\":12,\"just_i16\":42,\"maybe_i16\":42,\"maybe_u32\":0,\"default_u32\":0,\"just_f32\":42,\"maybe_f32\":42,\"just_bool\":true,\"maybe_bool\":true,\"just_enum\":\"One\",\"maybe_enum\":\"One\"}";
 
+#if 0
+int print_buffer(const void *buf, size_t size)
+{
+    flatcc_json_printer_t printer;
+    flatcc_json_printer_init(&printer, 0);
+    ns(ScalarStuff_print_json_as_root)(&printer, buf, size, NULL);
+    if (flatcc_json_printer_get_error(&printer)) {
+        printf("could not print buffer\n");
+        return -1;
+    }
+    return 0;
+}
+#endif
+
 int test_json_printer()
 {
     flatcc_builder_t builder;
@@ -179,23 +193,15 @@ int test_json_printer()
     return 0;
 }
 
-int print_buffer(const void *buf, size_t size)
-{
-    flatcc_json_printer_t printer;
-    flatcc_json_printer_init(&printer, 0);
-    if (ns(ScalarStuff_print_json_as_root)(&printer, buf, size, NULL)) {
-        printf("error printing buffer");
-        return -1;
-    }
-    return 0;
-}
-
 int test_json_parser()
 {
     flatcc_builder_t builder;
     void  *buf;
     size_t size;
     flatcc_json_parser_t parser;
+    flatcc_json_printer_t printer;
+    char *json_buf;
+    size_t json_size;
     int ret;
 
     flatcc_builder_init(&builder);
@@ -205,9 +211,19 @@ int test_json_parser()
 
     buf = flatcc_builder_finalize_aligned_buffer(&builder, &size);
 
-    // TODO: parsed content is all wrong
-    print_buffer(buf, size);
+    flatcc_json_printer_init_dynamic_buffer(&printer, 0);
+    ns(ScalarStuff_print_json_as_root)(&printer, buf, size, NULL);
+    if (flatcc_json_printer_get_error(&printer)) {
+        printf("could not print buffer\n");
+        return -1;
+    }
     test_assert(0 == access_scalar_stuff(buf));
+
+    json_buf = flatcc_json_printer_get_buffer(&printer, &json_size);
+    printf("%.*s\n", (int)json_size, json_buf);
+    test_assert(strlen(expected_json) == json_size);
+    test_assert(0 == memcmp(expected_json, json_buf, json_size));
+    flatcc_json_printer_clear(&printer);
 
     flatcc_builder_aligned_free(buf);
     flatcc_builder_clear(&builder);
