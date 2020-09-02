@@ -955,10 +955,6 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         if (member->type.type == vt_scalar_type || member->type.type == vt_vector_type) {
             member->type.st = map_scalar_token_type(member->type.t);
         }
-        if (member->value.type == vt_null) {
-            member->flags |= fb_fm_optional;
-            member->value.type = vt_missing;
-        }
         allow_flags =
                 fb_f_id | fb_f_nested_flatbuffer | fb_f_deprecated | fb_f_key |
                 fb_f_required | fb_f_hash | fb_f_base64 | fb_f_base64url | fb_f_sorted;
@@ -969,12 +965,6 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         member->metadata_flags = process_metadata(P, member->metadata, (uint16_t)allow_flags, knowns);
         if ((m = knowns[fb_attr_nested_flatbuffer])) {
             define_nested_table(P, ct->scope, member, m);
-        }
-        if ((member->metadata_flags & fb_f_required) && member->flags & fb_fm_optional) {
-            error_sym(P, sym, "'required' attribute is incompatible with optional field declaration (= null)");
-        }
-        if ((member->metadata_flags & fb_f_required) && member->type.type == vt_scalar_type) {
-            error_sym(P, sym, "'required' attribute is redundant on scalar table field");
         }
         /* Note: we allow base64 and base64url with nested attribute. */
         if ((member->metadata_flags & fb_f_base64) &&
@@ -1006,6 +996,18 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         }
         switch (member->type.type) {
         case vt_scalar_type:
+            if (member->value.type == vt_null) {
+                member->value.type = vt_uint;
+                member->value.u = 0;
+                member->flags |= fb_fm_optional;
+            }
+            if (member->metadata_flags & fb_f_required) {
+                if (member->flags & fb_fm_optional) {
+                    error_sym(P, sym, "'required' attribute is incompatible with optional table field (= null)");
+                } else {
+                    error_sym(P, sym, "'required' attribute is redundant on scalar table field");
+                }
+            }
             key_ok = 1;
             if (member->value.type == vt_name_ref) {
                 if (lookup_enum_name(P, ct->scope, 0, member->value.ref, &member->value)) {
@@ -1017,8 +1019,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             if (!member->value.type) {
                 /*
                  * Simplifying by ensuring we always have a default
-                 * value where an initializer is possible (also goes for enum
-                 * above).
+                 * value where an initializer is possible (also goes for enum).
                  */
                 member->value.type = vt_uint;
                 member->value.u = 0;
@@ -1075,8 +1076,24 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             }
             switch (type_sym->kind) {
             case fb_is_enum:
+                /*
+                 * Note the enums without a 0 element requires an
+                 * initializer in the schema, but that cannot happen
+                 * with a null value, so in this case the value is force
+                 * to 0. This is only relevant when using the `_get()`
+                 * accessor instead of the `_option()`.
+                 */
+                if (member->value.type == vt_null) {
+                    member->value.type = vt_uint;
+                    member->value.u = 0;
+                    member->flags |= fb_fm_optional;
+                }
                 if (member->metadata_flags & fb_f_required) {
-                    error_sym(P, sym, "'required' attribute is redundant on enum table field");
+                    if (member->flags & fb_fm_optional) {
+                        error_sym(P, sym, "'required' attribute is incompatible with optional enum table field (= null)");
+                    } else {
+                        error_sym(P, sym, "'required' attribute is redundant on enum table field");
+                    }
                 }
                 key_ok = P->opts.allow_enum_key;
                 break;
