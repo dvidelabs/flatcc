@@ -22,6 +22,6 @@ add_subdirectory(optional_scalars_test)
 # Reflection can break during development, so it is necessary
 # to disable until new reflection code generates cleanly.
 if (FLATCC_REFLECTION)
-    add_subdirectory(reflection_test)
+    #    add_subdirectory(reflection_test)
 endif()
 endif()
