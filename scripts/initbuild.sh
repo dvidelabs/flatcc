@@ -24,7 +24,7 @@ if [ x"$1" != x ]; then
 fi
 
 if [ -e $CFGFILE ]; then
-    source $CFGFILE
+    . $CFGFILE
 fi
 
 FLATCC_BUILD_GEN=${FLATCC_BUILD_GEN:-Ninja}
