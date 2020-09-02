@@ -9,7 +9,7 @@ ROOT=`pwd`
 CFGFILE=${ROOT}/scripts/build.cfg
 
 if [ -e $CFGFILE ]; then
-    source $CFGFILE
+    . $CFGFILE
 fi
 
 FLATCC_BUILD_CMD=${FLATCC_BUILD_CMD:-ninja}
