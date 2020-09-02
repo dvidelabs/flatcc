@@ -388,12 +388,11 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
         if (member->metadata_flags & fb_f_deprecated) {
             continue;
         }
+        is_optional = !!(member->flags & fb_fm_optional);
         fprintf(out->fp, "\n    ");
         switch (member->type.type) {
         case vt_scalar_type:
             tp = scalar_type_prefix(member->type.st);
-            is_optional = !!(member->flags & fb_fm_optional);
-
             switch(member->value.type) {
             case vt_bool:
             case vt_uint:
