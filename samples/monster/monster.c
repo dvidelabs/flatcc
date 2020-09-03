@@ -308,7 +308,6 @@ int main(int argc, char *argv[])
     test_assert(0 == create_monster_bottom_up(&builder, 0));
 
     // Allocate and extract a readable buffer from internal builder heap.
-    // The returned buffer must be deallocated using `free`.
     // NOTE: Finalizing the buffer does NOT change the builder, it
     // just creates a snapshot of the builder content.
     // NOTE2: finalize_buffer uses malloc while finalize_aligned_buffer
@@ -316,6 +315,10 @@ int main(int argc, char *argv[])
     // version is sufficient, but won't work for all schema on all
     // systems. If the buffer is written to disk or network, but not
     // accessed in memory, `finalize_buffer` is also sufficient.
+    // The flatcc_builder version of free or aligned_free should be used
+    // instead of `free` although free will often work on POSIX systems.
+    // This ensures portability and prevents issues when linking to
+    // allocation libraries other than malloc.
     buf = flatcc_builder_finalize_aligned_buffer(&builder, &size);
     //buf = flatcc_builder_finalize_buffer(&builder, &size);
 
@@ -340,7 +343,7 @@ int main(int argc, char *argv[])
     create_monster_top_down(&builder);
     buf = flatcc_builder_finalize_buffer(&builder, &size);
     test_assert(0 == access_monster_buffer(buf));
-    free(buf);
+    flatcc_builder_aligned_free(buf);
     // Eventually the builder must be cleaned up:
     flatcc_builder_clear(&builder);
 
