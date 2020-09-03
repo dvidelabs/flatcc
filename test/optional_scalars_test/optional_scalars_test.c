@@ -128,8 +128,9 @@ int access_scalar_stuff(const void *buf)
     test_assert(!ns(ScalarStuff_default_bool_is_present(t)));
 
     test_assert(1 == ns(ScalarStuff_just_enum_get(t)));
-    maybe_enum = ns(ScalarStuff_maybe_enum_option(t));
+    test_assert(1 == ns(ScalarStuff_maybe_enum_get(t)));
     test_assert(1 == ns(ScalarStuff_default_enum_get(t)));
+    maybe_enum = ns(ScalarStuff_maybe_enum_option(t));
     test_assert(!maybe_enum.is_null);
     test_assert(maybe_enum.value == 1);
     test_assert(ns(ScalarStuff_just_enum_is_present(t)));
@@ -137,8 +138,9 @@ int access_scalar_stuff(const void *buf)
     test_assert(!ns(ScalarStuff_default_enum_is_present(t)));
 
     test_assert(2 == ns(ScalarStuff_just_xfactor_get(t)));
-    maybe_xfactor = ns(ScalarStuff_maybe_xfactor_option(t));
+    test_assert(2 == ns(ScalarStuff_maybe_xfactor_get(t)));
     test_assert(2 == ns(ScalarStuff_default_xfactor_get(t)));
+    maybe_xfactor = ns(ScalarStuff_maybe_xfactor_option(t));
     test_assert(!maybe_xfactor.is_null);
     test_assert(maybe_xfactor.value == 2);
     test_assert(ns(ScalarStuff_just_xfactor_is_present(t)));
@@ -146,8 +148,9 @@ int access_scalar_stuff(const void *buf)
     test_assert(!ns(ScalarStuff_default_xfactor_is_present(t)));
 
     test_assert(1 == ns(ScalarStuff_just_yfactor_get(t)));
-    maybe_yfactor = ns(ScalarStuff_maybe_yfactor_option(t));
+    test_assert(0 == ns(ScalarStuff_maybe_yfactor_get(t)));
     test_assert(2 == ns(ScalarStuff_default_yfactor_get(t)));
+    maybe_yfactor = ns(ScalarStuff_maybe_yfactor_option(t));
     test_assert(maybe_yfactor.is_null);
     test_assert(maybe_yfactor.value == 0);
     test_assert(!ns(ScalarStuff_just_yfactor_is_present(t)));
