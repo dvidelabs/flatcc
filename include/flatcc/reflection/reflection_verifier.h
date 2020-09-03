@@ -154,7 +154,7 @@ static int reflection_Field_verify_table(flatcc_table_verifier_descriptor_t *td)
     if ((ret = flatcc_verify_field(td, 8, 1, 1) /* key */)) return ret;
     if ((ret = flatcc_verify_table_vector_field(td, 9, 0, &reflection_KeyValue_verify_table) /* attributes */)) return ret;
     if ((ret = flatcc_verify_string_vector_field(td, 10, 0) /* documentation */)) return ret;
-    if ((ret = flatcc_verify_field(td, 11, 1, 1) /* nullable */)) return ret;
+    if ((ret = flatcc_verify_field(td, 11, 1, 1) /* optional */)) return ret;
     return flatcc_verify_ok;
 }
 

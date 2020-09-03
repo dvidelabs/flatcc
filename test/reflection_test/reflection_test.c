@@ -57,8 +57,8 @@ int test_schema(const char *monster_bfbs)
         printf("mana field has wrong type\n");
         goto done;
     }
-    if (reflection_Field_nullable(F)) {
-        printf("mana field is not nullable\n");
+    if (reflection_Field_optional(F)) {
+        printf("mana field is not optional\n");
         goto done;
     }
     k = reflection_Field_vec_find(Flds, "enemy");

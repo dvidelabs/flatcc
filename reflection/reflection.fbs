@@ -74,7 +74,7 @@ table Field {
     key:bool = false;
     attributes:[KeyValue];
     documentation:[string];
-    nullable:bool = false;
+    optional:bool = false;
 }
 
 table Object {  // Used for both tables and structs.

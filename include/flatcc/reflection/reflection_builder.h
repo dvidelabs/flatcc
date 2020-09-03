@@ -264,7 +264,7 @@ __flatbuffers_build_scalar_field(8, flatbuffers_, reflection_Field_key, flatbuff
 /* vector has keyed elements */
 __flatbuffers_build_table_vector_field(9, flatbuffers_, reflection_Field_attributes, reflection_KeyValue, reflection_Field)
 __flatbuffers_build_string_vector_field(10, flatbuffers_, reflection_Field_documentation, reflection_Field)
-__flatbuffers_build_scalar_field(11, flatbuffers_, reflection_Field_nullable, flatbuffers_bool, flatbuffers_bool_t, 1, 1, UINT8_C(0), reflection_Field)
+__flatbuffers_build_scalar_field(11, flatbuffers_, reflection_Field_optional, flatbuffers_bool, flatbuffers_bool_t, 1, 1, UINT8_C(0), reflection_Field)
 
 static inline reflection_Field_ref_t reflection_Field_create(flatbuffers_builder_t *B __reflection_Field_formal_args)
 {
@@ -280,7 +280,7 @@ static inline reflection_Field_ref_t reflection_Field_create(flatbuffers_builder
         || reflection_Field_deprecated_add(B, v6)
         || reflection_Field_required_add(B, v7)
         || reflection_Field_key_add(B, v8)
-        || reflection_Field_nullable_add(B, v11)) {
+        || reflection_Field_optional_add(B, v11)) {
         return 0;
     }
     return reflection_Field_end(B);
@@ -301,7 +301,7 @@ static reflection_Field_ref_t reflection_Field_clone(flatbuffers_builder_t *B, r
         || reflection_Field_deprecated_pick(B, t)
         || reflection_Field_required_pick(B, t)
         || reflection_Field_key_pick(B, t)
-        || reflection_Field_nullable_pick(B, t)) {
+        || reflection_Field_optional_pick(B, t)) {
         return 0;
     }
     __flatbuffers_memoize_end(B, t, reflection_Field_end(B));

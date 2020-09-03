@@ -304,7 +304,7 @@ __flatbuffers_define_scalar_field(7, reflection_Field, required, flatbuffers_boo
 __flatbuffers_define_scalar_field(8, reflection_Field, key, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 __flatbuffers_define_vector_field(9, reflection_Field, attributes, reflection_KeyValue_vec_t, 0)
 __flatbuffers_define_vector_field(10, reflection_Field, documentation, flatbuffers_string_vec_t, 0)
-__flatbuffers_define_scalar_field(11, reflection_Field, nullable, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+__flatbuffers_define_scalar_field(11, reflection_Field, optional, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 
 struct reflection_Object_table { uint8_t unused__; };
 
