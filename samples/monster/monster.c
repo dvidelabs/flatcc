@@ -343,7 +343,7 @@ int main(int argc, char *argv[])
     create_monster_top_down(&builder);
     buf = flatcc_builder_finalize_buffer(&builder, &size);
     test_assert(0 == access_monster_buffer(buf));
-    flatcc_builder_aligned_free(buf);
+    flatcc_builder_free(buf);
     // Eventually the builder must be cleaned up:
     flatcc_builder_clear(&builder);
 
