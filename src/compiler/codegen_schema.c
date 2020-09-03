@@ -10,6 +10,15 @@
 
 #define BaseType(x) FLATBUFFERS_WRAP_NAMESPACE(reflection_BaseType, x)
 
+static flatbuffers_bool_t is_nullable_type(fb_value_t type, int optional, int required)
+{
+    if (required) return 0;
+    if (optional) return 1;
+    if (type.type == vt_scalar_type) return 0;
+    if (type.type == vt_compound_type_ref && type.ct->symbol.kind == fb_is_enum) return 0;
+    return 1;
+}
+
 static reflection_Type_ref_t export_type(flatcc_builder_t *B, fb_value_t type)
 {
     fb_scalar_type_t st = fb_missing_type;
@@ -150,10 +159,9 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
 {
     fb_symbol_t *sym;
     fb_member_t *member;
-    flatbuffers_bool_t has_key, deprecated, required, key_processed = 0;
+    flatbuffers_bool_t has_key, deprecated, required, optional, nullable, key_processed = 0;
     int64_t default_integer;
     double default_real;
-    flatbuffers_bool_t nullable;
 
     for (sym = ct->members; sym; sym = sym->link) {
         member = (fb_member_t *)sym;
@@ -168,7 +176,8 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
         default_integer = 0;
         default_real = 0.0;
         deprecated = (member->metadata_flags & fb_f_deprecated) != 0;
-        nullable = !!(member->flags & fb_fm_optional);
+        optional = !!(member->flags & fb_fm_optional);
+        nullable = is_nullable_type(member->type, optional, required);
 
         if ((member->type.type == vt_compound_type_ref || member->type.type == vt_vector_compound_type_ref)
                 && member->type.ct->symbol.kind == fb_is_union) {
