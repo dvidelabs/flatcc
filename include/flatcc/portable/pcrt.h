@@ -24,12 +24,12 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 
-static int _portable_msvc_headless_report_hook(
-        int reportType, char *message, int *returnValue )
+static int _portable_msvc_headless_report_hook(int reportType, char *message, int *returnValue)
 {
     fprintf(stderr, "CRT[%d]: %s\n", reportType, message);
     *returnValue = 1;
     exit(1);
+    return 1;
 }
 
 #define init_headless_crt() _CrtSetReportHook(_portable_msvc_headless_report_hook)
