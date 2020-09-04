@@ -1,5 +1,6 @@
 #include "flatcc/support/readfile.h"
 #include "flatcc/reflection/reflection_reader.h"
+#include "flatcc/portable/pcrt.h"
 
 #define lld(x) (long long int)(x)
 
@@ -107,6 +108,9 @@ const char *filename = "generated/monster_test.bfbs";
 
 int main(int argc, char *argv[])
 {
+    /* Avoid assert dialogs on Windows. */
+    init_headless_crt();
+
     if (argc != 1 && argc != 2) {
         fprintf(stderr, usage);
         exit(1);
