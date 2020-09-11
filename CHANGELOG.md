@@ -36,6 +36,7 @@
   (PR #156).
 - Make build.sh work for non-bash shells (PR #159).
 - Fix parsing json struct as roort (#157)
+- Add support for optional scalar values (#162)
 
 ## [0.6.0]
 
