@@ -41,6 +41,14 @@ typedef const struct reflection_Object_table *reflection_Object_table_t;
 typedef struct reflection_Object_table *reflection_Object_mutable_table_t;
 typedef const flatbuffers_uoffset_t *reflection_Object_vec_t;
 typedef flatbuffers_uoffset_t *reflection_Object_mutable_vec_t;
+typedef const struct reflection_RPCCall_table *reflection_RPCCall_table_t;
+typedef struct reflection_RPCCall_table *reflection_RPCCall_mutable_table_t;
+typedef const flatbuffers_uoffset_t *reflection_RPCCall_vec_t;
+typedef flatbuffers_uoffset_t *reflection_RPCCall_mutable_vec_t;
+typedef const struct reflection_Service_table *reflection_Service_table_t;
+typedef struct reflection_Service_table *reflection_Service_mutable_table_t;
+typedef const flatbuffers_uoffset_t *reflection_Service_vec_t;
+typedef flatbuffers_uoffset_t *reflection_Service_mutable_vec_t;
 typedef const struct reflection_Schema_table *reflection_Schema_table_t;
 typedef struct reflection_Schema_table *reflection_Schema_mutable_table_t;
 typedef const flatbuffers_uoffset_t *reflection_Schema_vec_t;
@@ -99,6 +107,24 @@ typedef flatbuffers_uoffset_t *reflection_Schema_mutable_vec_t;
 #endif
 #define reflection_Object_type_hash ((flatbuffers_thash_t)0xb09729bd)
 #define reflection_Object_type_identifier "\xbd\x29\x97\xb0"
+#ifndef reflection_RPCCall_file_identifier
+#define reflection_RPCCall_file_identifier flatbuffers_identifier
+#endif
+/* deprecated, use reflection_RPCCall_file_identifier */
+#ifndef reflection_RPCCall_identifier
+#define reflection_RPCCall_identifier flatbuffers_identifier
+#endif
+#define reflection_RPCCall_type_hash ((flatbuffers_thash_t)0xe2d586f1)
+#define reflection_RPCCall_type_identifier "\xf1\x86\xd5\xe2"
+#ifndef reflection_Service_file_identifier
+#define reflection_Service_file_identifier flatbuffers_identifier
+#endif
+/* deprecated, use reflection_Service_file_identifier */
+#ifndef reflection_Service_identifier
+#define reflection_Service_identifier flatbuffers_identifier
+#endif
+#define reflection_Service_type_hash ((flatbuffers_thash_t)0xf31a13b5)
+#define reflection_Service_type_identifier "\xb5\x13\x1a\xf3"
 #ifndef reflection_Schema_file_identifier
 #define reflection_Schema_file_identifier flatbuffers_identifier
 #endif
@@ -129,6 +155,7 @@ __flatbuffers_define_integer_type(reflection_BaseType, reflection_BaseType_enum_
 #define reflection_BaseType_Obj ((reflection_BaseType_enum_t)INT8_C(15))
 #define reflection_BaseType_Union ((reflection_BaseType_enum_t)INT8_C(16))
 #define reflection_BaseType_Array ((reflection_BaseType_enum_t)INT8_C(17))
+#define reflection_BaseType_MaxBaseType ((reflection_BaseType_enum_t)INT8_C(18))
 
 static inline const char *reflection_BaseType_name(reflection_BaseType_enum_t value)
 {
@@ -151,6 +178,7 @@ static inline const char *reflection_BaseType_name(reflection_BaseType_enum_t va
     case reflection_BaseType_Obj: return "Obj";
     case reflection_BaseType_Union: return "Union";
     case reflection_BaseType_Array: return "Array";
+    case reflection_BaseType_MaxBaseType: return "MaxBaseType";
     default: return "";
     }
 }
@@ -176,6 +204,7 @@ static inline int reflection_BaseType_is_known_value(reflection_BaseType_enum_t 
     case reflection_BaseType_Obj: return 1;
     case reflection_BaseType_Union: return 1;
     case reflection_BaseType_Array: return 1;
+    case reflection_BaseType_MaxBaseType: return 1;
     default: return 0;
     }
 }
@@ -229,6 +258,7 @@ __flatbuffers_define_default_scan_by_scalar_field(reflection_EnumVal, value, int
 #define reflection_EnumVal_vec_sort reflection_EnumVal_vec_sort_by_value
 __flatbuffers_define_table_field(2, reflection_EnumVal, object, reflection_Object_table_t, 0)
 __flatbuffers_define_table_field(3, reflection_EnumVal, union_type, reflection_Type_table_t, 0)
+__flatbuffers_define_vector_field(4, reflection_EnumVal, documentation, flatbuffers_string_vec_t, 0)
 
 struct reflection_Enum_table { uint8_t unused__; };
 
@@ -248,6 +278,7 @@ __flatbuffers_define_vector_field(1, reflection_Enum, values, reflection_EnumVal
 __flatbuffers_define_scalar_field(2, reflection_Enum, is_union, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 __flatbuffers_define_table_field(3, reflection_Enum, underlying_type, reflection_Type_table_t, 1)
 __flatbuffers_define_vector_field(4, reflection_Enum, attributes, reflection_KeyValue_vec_t, 0)
+__flatbuffers_define_vector_field(5, reflection_Enum, documentation, flatbuffers_string_vec_t, 0)
 
 struct reflection_Field_table { uint8_t unused__; };
 
@@ -272,6 +303,8 @@ __flatbuffers_define_scalar_field(6, reflection_Field, deprecated, flatbuffers_b
 __flatbuffers_define_scalar_field(7, reflection_Field, required, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 __flatbuffers_define_scalar_field(8, reflection_Field, key, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 __flatbuffers_define_vector_field(9, reflection_Field, attributes, reflection_KeyValue_vec_t, 0)
+__flatbuffers_define_vector_field(10, reflection_Field, documentation, flatbuffers_string_vec_t, 0)
+__flatbuffers_define_scalar_field(11, reflection_Field, optional, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 
 struct reflection_Object_table { uint8_t unused__; };
 
@@ -292,6 +325,44 @@ __flatbuffers_define_scalar_field(2, reflection_Object, is_struct, flatbuffers_b
 __flatbuffers_define_scalar_field(3, reflection_Object, minalign, flatbuffers_int32, int32_t, INT32_C(0))
 __flatbuffers_define_scalar_field(4, reflection_Object, bytesize, flatbuffers_int32, int32_t, INT32_C(0))
 __flatbuffers_define_vector_field(5, reflection_Object, attributes, reflection_KeyValue_vec_t, 0)
+__flatbuffers_define_vector_field(6, reflection_Object, documentation, flatbuffers_string_vec_t, 0)
+
+struct reflection_RPCCall_table { uint8_t unused__; };
+
+static inline size_t reflection_RPCCall_vec_len(reflection_RPCCall_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline reflection_RPCCall_table_t reflection_RPCCall_vec_at(reflection_RPCCall_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(reflection_RPCCall_table_t, vec, i, 0)
+__flatbuffers_table_as_root(reflection_RPCCall)
+
+__flatbuffers_define_string_field(0, reflection_RPCCall, name, 1)
+__flatbuffers_define_find_by_string_field(reflection_RPCCall, name)
+__flatbuffers_define_table_sort_by_string_field(reflection_RPCCall, name)
+__flatbuffers_define_default_find_by_string_field(reflection_RPCCall, name)
+__flatbuffers_define_default_scan_by_string_field(reflection_RPCCall, name)
+#define reflection_RPCCall_vec_sort reflection_RPCCall_vec_sort_by_name
+__flatbuffers_define_table_field(1, reflection_RPCCall, request, reflection_Object_table_t, 1)
+__flatbuffers_define_table_field(2, reflection_RPCCall, response, reflection_Object_table_t, 1)
+__flatbuffers_define_vector_field(3, reflection_RPCCall, attributes, reflection_KeyValue_vec_t, 0)
+__flatbuffers_define_vector_field(4, reflection_RPCCall, documentation, flatbuffers_string_vec_t, 0)
+
+struct reflection_Service_table { uint8_t unused__; };
+
+static inline size_t reflection_Service_vec_len(reflection_Service_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline reflection_Service_table_t reflection_Service_vec_at(reflection_Service_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(reflection_Service_table_t, vec, i, 0)
+__flatbuffers_table_as_root(reflection_Service)
+
+__flatbuffers_define_string_field(0, reflection_Service, name, 1)
+__flatbuffers_define_find_by_string_field(reflection_Service, name)
+__flatbuffers_define_table_sort_by_string_field(reflection_Service, name)
+__flatbuffers_define_default_find_by_string_field(reflection_Service, name)
+__flatbuffers_define_default_scan_by_string_field(reflection_Service, name)
+#define reflection_Service_vec_sort reflection_Service_vec_sort_by_name
+__flatbuffers_define_vector_field(1, reflection_Service, calls, reflection_RPCCall_vec_t, 0)
+__flatbuffers_define_vector_field(2, reflection_Service, attributes, reflection_KeyValue_vec_t, 0)
+__flatbuffers_define_vector_field(3, reflection_Service, documentation, flatbuffers_string_vec_t, 0)
 
 struct reflection_Schema_table { uint8_t unused__; };
 
@@ -306,6 +377,7 @@ __flatbuffers_define_vector_field(1, reflection_Schema, enums, reflection_Enum_v
 __flatbuffers_define_string_field(2, reflection_Schema, file_ident, 0)
 __flatbuffers_define_string_field(3, reflection_Schema, file_ext, 0)
 __flatbuffers_define_table_field(4, reflection_Schema, root_table, reflection_Object_table_t, 0)
+__flatbuffers_define_vector_field(5, reflection_Schema, services, reflection_Service_vec_t, 0)
 
 
 #include "flatcc/flatcc_epilogue.h"

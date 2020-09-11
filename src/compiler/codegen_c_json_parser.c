@@ -408,6 +408,7 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     int is_vector = 0;
     int is_offset = 0;
     int is_scalar = 0;
+    int is_optional = 0;
     int is_table = 0;
     int is_struct = 0;
     int is_union = 0;
@@ -426,6 +427,7 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
 
     fb_copy_scope(ct->scope, scope_name);
     is_struct_container = ct->symbol.kind == fb_is_struct;
+    is_optional = !!(member->flags & fb_fm_optional);
 
     switch (member->type.type) {
     case vt_vector_type:
@@ -602,6 +604,7 @@ repeat_nested:
         if (!is_struct_container && !is_vector && !is_base64 && !is_base64url) {
 #if !FLATCC_JSON_PARSE_FORCE_DEFAULTS
             /* We need to create a check for the default value and create a table field if not the default. */
+            if (!is_optional)
             switch (member->value.type) {
             case vt_bool:
             case vt_uint:
@@ -650,7 +653,7 @@ repeat_nested:
         } else {
             println(out, "%s%s_write_to_pe(pval, val);", out->nsc, tname_prefix);
         }
-        if (!is_struct_container && !is_vector) {
+        if (!is_struct_container && !is_vector && !(is_scalar && is_optional)) {
             unindent(); println(out, "}");
         }
     } else if (is_struct) {

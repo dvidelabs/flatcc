@@ -614,6 +614,22 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         nsc);
 
     fprintf(out->fp,
+        "/* NS: common namespace, ID: table field id (not offset), TN: name of type T, TT: name of table type\n"
+        " * S: sizeof of scalar type, A: alignment of type T. */\n"
+        "#define __%sbuild_scalar_optional_field(ID, NS, N, TN, T, S, A, TT)\\\n"
+        "static inline int N ## _add(NS ## builder_t *B, const T v)\\\n"
+        "{ T *_p; if (!(_p = (T *)flatcc_builder_table_add(B, ID, S, A))) return -1;\\\n"
+        "  TN ## _assign_to_pe(_p, v); return 0; }\\\n"
+        "/* Clone does not skip default values and expects pe endian content. */\\\n"
+        "static inline int N ## _clone(NS ## builder_t *B, const T *p)\\\n"
+        "{ return 0 == flatcc_builder_table_add_copy(B, ID, p, S, A) ? -1 : 0; }\\\n"
+        "/* Transferring a missing field is a nop success with 0 as result. */\\\n"
+        "static inline int N ## _pick(NS ## builder_t *B, TT ## _table_t t)\\\n"
+        "{ const T *_p = N ## _get_ptr(t); return _p ? N ## _clone(B, _p) : 0; }\n"
+        "\n",
+        nsc);
+
+    fprintf(out->fp,
         "#define __%sbuild_struct_field(ID, NS, N, TN, S, A, TT)\\\n"
         "static inline TN ## _t *N ## _start(NS ## builder_t *B)\\\n"
         "{ return (TN ## _t *)flatcc_builder_table_add(B, ID, S, A); }\\\n"
@@ -1580,6 +1596,7 @@ static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
     fb_symbol_t *sym;
     const char *s, *tprefix, *tname, *tname_ns;
     int n;
+    int is_optional;
     fb_scoped_name_t snt;
     fb_scoped_name_t snref;
     fb_literal_t literal;
@@ -1595,16 +1612,24 @@ static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
             fprintf(out->fp, "/* Skipping build of deprecated field: '%s_%.*s' */\n\n", snt.text, n, s);
             continue;
         }
+        is_optional = member->flags & fb_fm_optional;
         switch (member->type.type) {
         case vt_scalar_type:
             tname_ns = scalar_type_ns(member->type.st, nsc);
             tname = scalar_type_name(member->type.st);
             tprefix = scalar_type_prefix(member->type.st);
-            print_literal(member->type.st, &member->value, literal);
-            fprintf(out->fp,
-                "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %s, %s)\n",
-                nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
-                llu(member->size), member->align, literal, snt.text);
+            if (is_optional) {
+                fprintf(out->fp,
+                    "__%sbuild_scalar_optional_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %s)\n",
+                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
+                    llu(member->size), member->align, snt.text);
+            } else {
+                print_literal(member->type.st, &member->value, literal);
+                fprintf(out->fp,
+                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %s, %s)\n",
+                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
+                    llu(member->size), member->align, literal, snt.text);
+            }
             break;
         case vt_vector_type:
             tname_ns = scalar_type_ns(member->type.st, nsc);
@@ -1657,11 +1682,18 @@ static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
                     nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snt.text);
                 break;
             case fb_is_enum:
-                print_literal(member->type.ct->type.st, &member->value, literal);
-                fprintf(out->fp,
-                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %llu, %u, %s, %s)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text,
-                    llu(member->size), member->align, literal, snt.text);
+                if (is_optional) {
+                    fprintf(out->fp,
+                        "__%sbuild_scalar_optional_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %llu, %u, %s)\n",
+                        nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text,
+                        llu(member->size), member->align, snt.text);
+                } else {
+                    print_literal(member->type.ct->type.st, &member->value, literal);
+                    fprintf(out->fp,
+                        "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %llu, %u, %s, %s)\n",
+                        nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text,
+                        llu(member->size), member->align, literal, snt.text);
+                }
                 break;
             case fb_is_union:
                 fprintf(out->fp,

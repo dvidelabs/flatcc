@@ -17,6 +17,7 @@
   * [Conflicts](#conflicts)
   * [Type Hash Variants](#type-hash-variants)
 * [Unions](#unions)
+* [Optional Fields](#optional-fields)
 * [Alignment](#alignment)
 * [Default Values and Deprecated Values](#default-values-and-deprecated-values)
 * [Schema Evolution](#schema-evolution)
@@ -564,6 +565,23 @@ structs, it is an offset to an separate aligned memory block that holds
 a struct and not an offset to memory inside any other table or struct.
 FlatCC supports mixed type unions and vectors of these as of v0.5.0.
 
+## Optional Fields
+
+As of mid 2020 the FlatBuffers format introduced optional scalar table fields.
+There is no change to the binary schema, but the semantics have changed slightly
+compared to ordinary scalar fields (which remain supported as is): If an
+optional field is not stored in a table, it is considered to be a null value. An
+optinal scalar field will have null as its default value, so any representable
+scalar value will always be stored in the buffer, unlike other scalar fields
+which by default do not store the field if the value matches the default numeric
+value. This was already possible before by using `force_add` semantics to force
+a value to be written even if it was matching the default value, and by
+providing an `is_present` test when reading a value so that it would be possible
+to distinguish between a value that happened to be a default value, and a value
+that was actually absent. However, such techniques were ad-hoc. Optional
+fields formalize the semantics of null values for scalars. Other field types
+already have meaningful null values. Only table fields can be optional so struct
+fields must always assign a value to all members.
 
 ## Alignment
 

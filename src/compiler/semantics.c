@@ -199,7 +199,7 @@ static inline int is_in_value_set(fb_value_set_t *vs, fb_value_t *value)
  * appear in a later search, so we return the nearest existing parent
  * and do not cache the parent.
  */
-static inline fb_scope_t *find_parent_scope(fb_parser_t *P, fb_scope_t *scope) 
+static inline fb_scope_t *find_parent_scope(fb_parser_t *P, fb_scope_t *scope)
 {
     fb_ref_t *p;
     int count;
@@ -780,7 +780,7 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
                 error_sym(P, sym, "at most one struct member can have a primary_key attribute");
                 member->type.type = vt_invalid;
                 return -1;
-            } 
+            }
             key_count++;
             /* Allow backends to treat primary key as an ordinary key. */
             member->metadata_flags |= fb_f_key;
@@ -955,7 +955,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         if (member->type.type == vt_scalar_type || member->type.type == vt_vector_type) {
             member->type.st = map_scalar_token_type(member->type.t);
         }
-        allow_flags = 
+        allow_flags =
                 fb_f_id | fb_f_nested_flatbuffer | fb_f_deprecated | fb_f_key |
                 fb_f_required | fb_f_hash | fb_f_base64 | fb_f_base64url | fb_f_sorted;
 
@@ -965,9 +965,6 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
         member->metadata_flags = process_metadata(P, member->metadata, (uint16_t)allow_flags, knowns);
         if ((m = knowns[fb_attr_nested_flatbuffer])) {
             define_nested_table(P, ct->scope, member, m);
-        }
-        if ((member->metadata_flags & fb_f_required) && member->type.type == vt_scalar_type) {
-            error_sym(P, sym, "'required' attribute is redundant on scalar table field");
         }
         /* Note: we allow base64 and base64url with nested attribute. */
         if ((member->metadata_flags & fb_f_base64) &&
@@ -996,9 +993,21 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                 member->id = (unsigned short)count;
             }
             ++count;
-        } 
+        }
         switch (member->type.type) {
         case vt_scalar_type:
+            if (member->value.type == vt_null) {
+                member->value.type = vt_uint;
+                member->value.u = 0;
+                member->flags |= fb_fm_optional;
+            }
+            if (member->metadata_flags & fb_f_required) {
+                if (member->flags & fb_fm_optional) {
+                    error_sym(P, sym, "'required' attribute is incompatible with optional table field (= null)");
+                } else {
+                    error_sym(P, sym, "'required' attribute is redundant on scalar table field");
+                }
+            }
             key_ok = 1;
             if (member->value.type == vt_name_ref) {
                 if (lookup_enum_name(P, ct->scope, 0, member->value.ref, &member->value)) {
@@ -1010,8 +1019,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             if (!member->value.type) {
                 /*
                  * Simplifying by ensuring we always have a default
-                 * value where an initializer is possible (also goes for enum
-                 * above).
+                 * value where an initializer is possible (also goes for enum).
                  */
                 member->value.type = vt_uint;
                 member->value.u = 0;
@@ -1068,8 +1076,24 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             }
             switch (type_sym->kind) {
             case fb_is_enum:
+                /*
+                 * Note the enums without a 0 element requires an
+                 * initializer in the schema, but that cannot happen
+                 * with a null value, so in this case the value is force
+                 * to 0. This is only relevant when using the `_get()`
+                 * accessor instead of the `_option()`.
+                 */
+                if (member->value.type == vt_null) {
+                    member->value.type = vt_uint;
+                    member->value.u = 0;
+                    member->flags |= fb_fm_optional;
+                }
                 if (member->metadata_flags & fb_f_required) {
-                    error_sym(P, sym, "'required' attribute is redundant on enum table field");
+                    if (member->flags & fb_fm_optional) {
+                        error_sym(P, sym, "'required' attribute is incompatible with optional enum table field (= null)");
+                    } else {
+                        error_sym(P, sym, "'required' attribute is redundant on enum table field");
+                    }
                 }
                 key_ok = P->opts.allow_enum_key;
                 break;
@@ -1120,7 +1144,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                         member->type.type = vt_invalid;
                         continue;
                     }
-                    if (P->opts.strict_enum_init) {
+                    if (P->opts.strict_enum_init && !(member->flags & fb_fm_optional)) {
                         if (!is_in_value_set(&member->type.ct->value_set, &member->value)) {
                             error_sym(P, sym, "initializer does not match a defined enum value");
                             member->type.type = vt_invalid;
@@ -1266,7 +1290,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             } else if (member->metadata_flags & fb_f_primary_key) {
                 error_sym(P, sym, "primary_key attribute conflicts with key attribute");
                 member->type.type = vt_invalid;
-            } else if (!ct->primary_key || 
+            } else if (!ct->primary_key ||
                     (primary_count == 0 && ct->primary_key->id > member->id)) {
                 /*
                  * Set key field with lowest id as default primary key
@@ -1328,7 +1352,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
     if (ct->metadata_flags & fb_f_original_order) {
         ct->ordered_members = original_order_members(P, (fb_member_t *)ct->members);
     } else {
-        /* Size efficient ordering. */ 
+        /* Size efficient ordering. */
         ct->ordered_members = align_order_members(P, (fb_member_t *)ct->members);
     }
     if (!id_failed && need_id && count > 0) {

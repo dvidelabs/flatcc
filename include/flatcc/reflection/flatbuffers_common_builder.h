@@ -483,6 +483,19 @@ static inline int N ## _clone(NS ## builder_t *B, const T *p)\
 static inline int N ## _pick(NS ## builder_t *B, TT ## _table_t t)\
 { const T *_p = N ## _get_ptr(t); return _p ? N ## _clone(B, _p) : 0; }
 
+/* NS: common namespace, ID: table field id (not offset), TN: name of type T, TT: name of table type
+ * S: sizeof of scalar type, A: alignment of type T. */
+#define __flatbuffers_build_scalar_optional_field(ID, NS, N, TN, T, S, A, TT)\
+static inline int N ## _add(NS ## builder_t *B, const T v)\
+{ T *_p; if (!(_p = (T *)flatcc_builder_table_add(B, ID, S, A))) return -1;\
+  TN ## _assign_to_pe(_p, v); return 0; }\
+/* Clone does not skip default values and expects pe endian content. */\
+static inline int N ## _clone(NS ## builder_t *B, const T *p)\
+{ return 0 == flatcc_builder_table_add_copy(B, ID, p, S, A) ? -1 : 0; }\
+/* Transferring a missing field is a nop success with 0 as result. */\
+static inline int N ## _pick(NS ## builder_t *B, TT ## _table_t t)\
+{ const T *_p = N ## _get_ptr(t); return _p ? N ## _clone(B, _p) : 0; }
+
 #define __flatbuffers_build_struct_field(ID, NS, N, TN, S, A, TT)\
 static inline TN ## _t *N ## _start(NS ## builder_t *B)\
 { return (TN ## _t *)flatcc_builder_table_add(B, ID, S, A); }\

@@ -410,7 +410,7 @@ static inline fb_token_t *match(fb_parser_t *P, long id, char *msg) {
 }
 
 /*
- * When a keyword should also be accepted as an identifier. 
+ * When a keyword should also be accepted as an identifier.
  * This is useful for JSON where field naems are visible.
  * Since field names are not referenced within the schema,
  * this is generally safe. Enums can also be resererved but
@@ -606,7 +606,7 @@ static void parse_ref(fb_parser_t *P, fb_ref_t **ref)
 }
 
 /* `flags` */
-enum { allow_string_value = 1, allow_id_value = 2 };
+enum { allow_string_value = 1, allow_id_value = 2, allow_null_value = 4 };
 static void parse_value(fb_parser_t *P, fb_value_t *v, int flags, const char *error_msg)
 {
     fb_token_t *t;
@@ -632,6 +632,14 @@ static void parse_value(fb_parser_t *P, fb_value_t *v, int flags, const char *er
     case tok_kw_false:
         v->b = 0;
         v->type = vt_bool;
+        break;
+    case tok_kw_null:
+        if (!(flags & allow_null_value)) {
+            v->type = vt_invalid;
+            error_tok(P, t, error_msg);
+            return;
+        }
+        v->type = vt_null;
         break;
     case LEX_TOK_STRING_BEGIN:
         next(P);
@@ -703,7 +711,7 @@ static void parse_fixed_array_size(fb_parser_t *P, fb_token_t *ttype, fb_value_t
         v->type = vt_invalid;
         return;
     }
-    /* 
+    /*
      * This allows for safe 64-bit multiplication by elements no
      * larger than 2^32-1 and also fits into the value len field.
      * without extra size cost.
@@ -847,7 +855,7 @@ static void parse_field(fb_parser_t *P, fb_member_t *fld)
          * We allow the initializer to be a name in case it is an enum
          * name.
          */
-        parse_value(P, &fld->value, allow_id_value, "initializer must be of scalar type");
+        parse_value(P, &fld->value, allow_id_value | allow_null_value, "initializer must be of scalar type or null");
     }
     fld->metadata = parse_metadata(P);
     advance(P, ';', "field must be terminated with ';'", 0);

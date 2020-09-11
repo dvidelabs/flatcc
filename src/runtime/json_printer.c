@@ -493,7 +493,7 @@ void flatcc_json_printer_char_array_struct_field(
         flatcc_json_printer_t *ctx,
         int index, const void *p, size_t offset,
         const char *name, size_t len, size_t count)
-{                                                                           
+{
     p = (void *)((size_t)p + offset);
     if (index) {
         print_char(',');
@@ -619,6 +619,25 @@ void flatcc_json_printer_ ## TN ## _field(flatcc_json_printer_t *ctx,       \
     ctx->p += print_ ## TN (x, ctx->p);                                     \
 }
 
+#define __define_print_scalar_optional_field(TN, T)                         \
+void flatcc_json_printer_ ## TN ## _optional_field(                         \
+        flatcc_json_printer_t *ctx,                                         \
+        flatcc_json_printer_table_descriptor_t *td,                         \
+        int id, const char *name, size_t len)                               \
+{                                                                           \
+    T x;                                                                    \
+    const void *p = get_field_ptr(td, id);                                  \
+                                                                            \
+    if (!p) return;                                                         \
+    x = flatbuffers_ ## TN ## _read_from_pe(p);                             \
+    if (td->count++) {                                                      \
+        print_char(',');                                                    \
+    }                                                                       \
+    print_name(ctx, name, len);                                             \
+    ctx->p += print_ ## TN (x, ctx->p);                                     \
+}
+
+
 #define __define_print_enum_field(TN, T)                                    \
 void flatcc_json_printer_ ## TN ## _enum_field(flatcc_json_printer_t *ctx,  \
         flatcc_json_printer_table_descriptor_t *td,                         \
@@ -639,6 +658,29 @@ void flatcc_json_printer_ ## TN ## _enum_field(flatcc_json_printer_t *ctx,  \
         }                                                                   \
         x = v;                                                              \
     }                                                                       \
+    if (td->count++) {                                                      \
+        print_char(',');                                                    \
+    }                                                                       \
+    print_name(ctx, name, len);                                             \
+    if (ctx->noenum) {                                                      \
+        ctx->p += print_ ## TN (x, ctx->p);                                 \
+    } else {                                                                \
+        pf(ctx, x);                                                         \
+    }                                                                       \
+}
+
+#define __define_print_enum_optional_field(TN, T)                           \
+void flatcc_json_printer_ ## TN ## _enum_optional_field(                    \
+        flatcc_json_printer_t *ctx,                                         \
+        flatcc_json_printer_table_descriptor_t *td,                         \
+        int id, const char *name, size_t len,                               \
+        flatcc_json_printer_ ## TN ##_enum_f *pf)                           \
+{                                                                           \
+    T x;                                                                    \
+    const void *p = get_field_ptr(td, id);                                  \
+                                                                            \
+    if (!p) return;                                                         \
+    x = flatbuffers_ ## TN ## _read_from_pe(p);                             \
     if (td->count++) {                                                      \
         print_char(',');                                                    \
     }                                                                       \
@@ -802,6 +844,28 @@ __define_print_enum_field(int16, int16_t)
 __define_print_enum_field(int32, int32_t)
 __define_print_enum_field(int64, int64_t)
 __define_print_enum_field(bool, flatbuffers_bool_t)
+
+__define_print_scalar_optional_field(uint8, uint8_t)
+__define_print_scalar_optional_field(uint16, uint16_t)
+__define_print_scalar_optional_field(uint32, uint32_t)
+__define_print_scalar_optional_field(uint64, uint64_t)
+__define_print_scalar_optional_field(int8, int8_t)
+__define_print_scalar_optional_field(int16, int16_t)
+__define_print_scalar_optional_field(int32, int32_t)
+__define_print_scalar_optional_field(int64, int64_t)
+__define_print_scalar_optional_field(bool, flatbuffers_bool_t)
+__define_print_scalar_optional_field(float, float)
+__define_print_scalar_optional_field(double, double)
+
+__define_print_enum_optional_field(uint8, uint8_t)
+__define_print_enum_optional_field(uint16, uint16_t)
+__define_print_enum_optional_field(uint32, uint32_t)
+__define_print_enum_optional_field(uint64, uint64_t)
+__define_print_enum_optional_field(int8, int8_t)
+__define_print_enum_optional_field(int16, int16_t)
+__define_print_enum_optional_field(int32, int32_t)
+__define_print_enum_optional_field(int64, int64_t)
+__define_print_enum_optional_field(bool, flatbuffers_bool_t)
 
 __define_print_scalar_struct_field(uint8, uint8_t)
 __define_print_scalar_struct_field(uint16, uint16_t)
@@ -1133,8 +1197,8 @@ void flatcc_json_printer_embedded_struct_field(flatcc_json_printer_t *ctx,
 }
 
 void flatcc_json_printer_embedded_struct_array_field(flatcc_json_printer_t *ctx,
-        int index, const void *p, size_t offset, 
-        const char *name, size_t len, 
+        int index, const void *p, size_t offset,
+        const char *name, size_t len,
         size_t size, size_t count,
         flatcc_json_printer_struct_f pf)
 {
