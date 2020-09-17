@@ -648,7 +648,7 @@ static inline flatcc_builder_ref_t emit_front(flatcc_builder_t *B, iov_state_t *
      * uoffset_t range, hence we subtract 16 to be safe. With that
      * guarantee we can also make a safe check on the soffset_t range.
      *
-     * We only allow buffers half the theoritical size of
+     * We only allow buffers half the theoretical size of
      * FLATBUFFERS_UOFFSET_MAX so we can safely use signed references.
      *
      * NOTE: vtables vt_offset field is signed, and the check in create
@@ -658,7 +658,11 @@ static inline flatcc_builder_ref_t emit_front(flatcc_builder_t *B, iov_state_t *
      * at emit_back to SOFFSET_MAX.
      */
     ref = B->emit_start - (flatcc_builder_ref_t)iov->len;
-    if ((iov->len > 16 && iov->len - 16 > FLATBUFFERS_UOFFSET_MAX) || ref >= B->emit_start) {
+    if (
+#if FLATBUFFERS_UOFFSET_MAX < UINT32_MAX
+        (iov->len > 16 && iov->len - 16 > FLATBUFFERS_UOFFSET_MAX) ||
+#endif
+        ref >= B->emit_start) {
         check(0, "buffer too large to represent");
         return 0;
     }
@@ -1725,9 +1729,11 @@ flatcc_builder_ref_t flatcc_builder_create_string(flatcc_builder_t *B, const cha
     uoffset_t length_prefix;
     iov_state_t iov;
 
+#if max_string_len < UINT32_MAX
     if (len > max_string_len) {
         return 0;
     }
+#endif
     write_uoffset(&length_prefix, (uoffset_t)len);
     /* Add 1 for zero termination. */
     s_pad = front_pad(B, (uoffset_t)len + 1, field_size) + 1;
