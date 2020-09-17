@@ -287,11 +287,11 @@ static inline N ## _vec_ref_t N ## _vec_create(NS ## builder_t *B, const N ## _r
 { return flatcc_builder_create_offset_vector(B, data, len); }\
 __flatbuffers_build_offset_vector_ops(NS, N ## _vec, N, N)\
 static inline N ## _vec_ref_t N ## _vec_clone(NS ## builder_t *B, N ##_vec_t vec)\
-{ int _ret; N ## _ref_t _e; size_t _i, _len; __flatbuffers_memoize_begin(B, vec);\
+{ N ## _ref_t _e; size_t _i, _len; __flatbuffers_memoize_begin(B, vec);\
  _len = N ## _vec_len(vec); if (flatcc_builder_start_offset_vector(B)) return 0;\
   for (_i = 0; _i < _len; ++_i) { if (!(_e = N ## _clone(B, N ## _vec_at(vec, _i)))) return 0;\
     if (!flatcc_builder_offset_vector_push(B, _e)) return 0; }\
-  __flatbuffers_memoize_end(B, vec, flatcc_builder_end_offset_vector(B)); }\
+  __flatbuffers_memoize_end(B, vec, flatcc_builder_end_offset_vector(B)); }
 
 #define __flatbuffers_build_string_ops(NS, N)\
 static inline char *N ## _append(NS ## builder_t *B, const char *s, size_t len)\
