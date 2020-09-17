@@ -165,7 +165,8 @@ int flatcc_builder_default_alloc(void *alloc_context, iovec_t *b, size_t request
         /* Add hysteresis to shrink. */
         return 0;
     }
-    if (!(p = FLATCC_BUILDER_REALLOC(b->iov_base, n))) {
+    p = FLATCC_BUILDER_REALLOC(b->iov_base, n);
+    if (!p) {
         return -1;
     }
     /* Realloc might also shrink. */
