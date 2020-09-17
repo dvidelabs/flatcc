@@ -1,6 +1,4 @@
 language: c
-
-language: c
 dist: xenial
 os: linux
 
