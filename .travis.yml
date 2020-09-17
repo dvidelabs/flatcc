@@ -1,9 +1,10 @@
 language: c
 
-# trusty: Ubuntu 14.04
-# https://launchpad.net/~ubuntu-toolchain-r/+archive/ubuntu/test
+language: c
+dist: xenial
+os: linux
 
-matrix:
+jobs:
   include:
     - os: linux
       dist: bionic
