@@ -1915,7 +1915,7 @@ void flatcc_builder_set_identifier(flatcc_builder_t *B, const char identifier[id
 
 enum flatcc_builder_type flatcc_builder_get_type(flatcc_builder_t *B)
 {
-    return B->frame ? frame(type) : flatcc_builder_empty;
+    return B->frame ? (enum flatcc_builder_type)frame(type) : flatcc_builder_empty;
 }
 
 enum flatcc_builder_type flatcc_builder_get_type_at(flatcc_builder_t *B, int level)
@@ -1923,7 +1923,7 @@ enum flatcc_builder_type flatcc_builder_get_type_at(flatcc_builder_t *B, int lev
     if (level < 1 || level > B->level) {
         return flatcc_builder_empty;
     }
-    return B->frame[level - B->level].type;
+    return (enum flatcc_builder_type)(B->frame[level - B->level].type);
 }
 
 void *flatcc_builder_get_direct_buffer(flatcc_builder_t *B, size_t *size_out)
