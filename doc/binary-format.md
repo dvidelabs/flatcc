@@ -119,7 +119,7 @@ Buffer :
 
         header:
 
-            +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
+            +0x0000 00 01 00 00 ; find root table at offset +0x00000100.
             +0x0004 'N', 'O', 'O', 'B' ; possibly our file identifier
 
             ...
