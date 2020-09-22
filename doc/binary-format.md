@@ -119,7 +119,7 @@ Buffer :
 
         header:
 
-            +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
+            +0x0000 00 01 00 00 ; find root table at offset +0x00000100.
             +0x0004 'N', 'O', 'O', 'B' ; possibly our file identifier
 
             ...
@@ -449,12 +449,12 @@ for our example buffer:
 
 Thus we can open a hex editor and locate
 
-            +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
+            +0x0000 00 01 00 00 ; find root table at offset +0x00000100.
             +0x0004 'N', 'O', 'O', 'B' ; possibly our file identifier
 
 and replace it with
 
-            +0x0000 00 01 00 00 ; find root table at offset +0x0000100.
+            +0x0000 00 01 00 00 ; find root table at offset +0x00000100.
             +0x0004 58 4f 60 0a ; very likely our file identifier identifier
 
 or generate it with `flatcc`:
