@@ -346,5 +346,7 @@ set_target_properties(${dist_targets}
 
 if (FLATCC_INSTALL)
     install(DIRECTORY include/flatcc DESTINATION include)
-endif()
+    install(EXPORT flatcc_exports NAMESPACE flatcc:: DESTINATION ${lib_dir}/cmake/flatcc FILE flatcc-targets.cmake)
 
+    include(CMakePackageConfigHelpers)
+endif()

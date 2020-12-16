@@ -37,7 +37,12 @@ if (FLATCC_REFLECTION)
 endif(FLATCC_REFLECTION)
 
 add_library(flatcc ${SOURCES})
+add_library(flatcc::libflatcc ALIAS flatcc)
+
+target_include_directories(flatcc PUBLIC $<INSTALL_INTERFACE:include>)
+
+set_target_properties(flatcc PROPERTIES EXPORT_NAME libflatcc)
 
 if (FLATCC_INSTALL)
-    install(TARGETS flatcc DESTINATION ${lib_dir})
+    install(TARGETS flatcc EXPORT flatcc_exports DESTINATION ${lib_dir})
 endif()
