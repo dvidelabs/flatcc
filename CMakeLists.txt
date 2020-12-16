@@ -346,5 +346,6 @@ set_target_properties(${dist_targets}
 
 if (FLATCC_INSTALL)
     install(DIRECTORY include/flatcc DESTINATION include)
+    install(DIRECTORY cmake DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
 
