@@ -349,4 +349,7 @@ if (FLATCC_INSTALL)
     install(EXPORT flatcc_exports NAMESPACE flatcc:: DESTINATION ${lib_dir}/cmake/flatcc FILE flatcc-targets.cmake)
 
     include(CMakePackageConfigHelpers)
+    configure_package_config_file(flatcc-config.cmake.in flatcc-config.cmake
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/flatcc")
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/flatcc-config.cmake" DESTINATION "lib/cmake/flatcc")
 endif()
