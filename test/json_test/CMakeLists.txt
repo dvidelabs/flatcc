@@ -9,9 +9,18 @@ set(DATA_SRC "${PROJECT_SOURCE_DIR}/test/flatc_compat")
 
 include_directories("${GEN_DIR}" "${INC_DIR}")
 
-add_custom_target(gen_monster_test_json ALL)
 add_custom_command (
-    TARGET gen_monster_test_json
+    OUTPUT "${GEN_DIR}/attributes_builder.h" "${GEN_DIR}/attributes_json_parser.h"
+        "${GEN_DIR}/attributes_json_printer.h" "${GEN_DIR}/attributes_reader.h" "${GEN_DIR}/attributes_verifier.h"
+        "${GEN_DIR}/flatbuffers_common_builder.h" "${GEN_DIR}/flatbuffers_common_reader.h"
+        "${GEN_DIR}/include_test1_builder.h" "${GEN_DIR}/include_test1_json_parser.h"
+        "${GEN_DIR}/include_test1_json_printer.h" "${GEN_DIR}/include_test1_reader.h"
+        "${GEN_DIR}/include_test1_verifier.h" "${GEN_DIR}/include_test2_builder.h"
+        "${GEN_DIR}/include_test2_json_parser.h" "${GEN_DIR}/include_test2_json_printer.h"
+        "${GEN_DIR}/include_test2_reader.h" "${GEN_DIR}/include_test2_verifier.h"
+        "${GEN_DIR}/monster_test_builder.h" "${GEN_DIR}/monster_test_json_parser.h"
+        "${GEN_DIR}/monster_test_json_printer.h" "${GEN_DIR}/monster_test_reader.h"
+        "${GEN_DIR}/monster_test_verifier.h"
     COMMAND cmake -E make_directory "${GEN_DIR}"
     COMMAND cmake -E copy "${DATA_SRC}/monsterdata_test.golden" "${DATA_DST}"
     COMMAND cmake -E copy "${DATA_SRC}/monsterdata_test.mon" "${DATA_DST}"
@@ -20,14 +29,9 @@ add_custom_command (
 )
 
 add_executable(test_basic_parse test_basic_parse.c)
-add_executable(test_json_parser test_json_parser.c)
-add_executable(test_json_printer test_json_printer.c)
-add_executable(test_json test_json.c)
-
-add_dependencies(test_basic_parse gen_monster_test_json)
-add_dependencies(test_json_parser gen_monster_test_json)
-add_dependencies(test_json_printer gen_monster_test_json)
-add_dependencies(test_json gen_monster_test_json)
+add_executable(test_json_parser test_json_parser.c "${GEN_DIR}/monster_test_reader.h" "${GEN_DIR}/monster_test_json_parser.h")
+add_executable(test_json_printer test_json_printer.c "${GEN_DIR}/monster_test_json_parser.h")
+add_executable(test_json test_json.c "${GEN_DIR}/monster_test_json_parser.h" "${GEN_DIR}/monster_test_json_printer.h")
 
 target_link_libraries(test_basic_parse flatccrt)
 target_link_libraries(test_json_parser flatccrt)
@@ -51,9 +55,9 @@ set(RTSRC
 )
 
 macro(jstest trg flags)
-    add_executable(${trg} test_json.c ${RTSRC})
-    add_dependencies(${trg} gen_monster_test_json)
-    add_test(${trg} ${trg}${CMAKE_EXECUTABLE_SUFFIX})
+    add_executable(${trg} test_json.c ${RTSRC} "${GEN_DIR}/monster_test_json_parser.h"
+        "${GEN_DIR}/monster_test_json_printer.h" "${GEN_DIR}/monster_test_verifier.h")
+    add_test(${trg} ${trg})
     set_target_properties(${trg} PROPERTIES COMPILE_FLAGS ${flags})
 endmacro()
 

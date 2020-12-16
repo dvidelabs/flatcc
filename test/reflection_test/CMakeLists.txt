@@ -14,7 +14,6 @@ add_custom_command (
     DEPENDS flatcc_cli "${FBS_DIR}/monster_test.fbs" "${FBS_DIR}/include_test1.fbs" "${FBS_DIR}/include_test2.fbs"
 )
 add_executable(reflection_test reflection_test.c)
-add_dependencies(reflection_test gen_reflection_test)
 target_link_libraries(reflection_test flatccrt)
 
 add_test(reflection_test reflection_test${CMAKE_EXECUTABLE_SUFFIX})
