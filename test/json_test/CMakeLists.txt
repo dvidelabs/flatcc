@@ -1,13 +1,12 @@
 include(CTest)
 
-set(INC_DIR "${PROJECT_SOURCE_DIR}/include")
 set(GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(FBS_DIR "${PROJECT_SOURCE_DIR}/test/monster_test")
 
 set(DATA_DST "${CMAKE_CURRENT_BINARY_DIR}")
 set(DATA_SRC "${PROJECT_SOURCE_DIR}/test/flatc_compat")
 
-include_directories("${GEN_DIR}" "${INC_DIR}")
+include_directories("${GEN_DIR}")
 
 add_custom_command (
     OUTPUT "${GEN_DIR}/attributes_builder.h" "${GEN_DIR}/attributes_json_parser.h"
@@ -24,8 +23,8 @@ add_custom_command (
     COMMAND cmake -E make_directory "${GEN_DIR}"
     COMMAND cmake -E copy "${DATA_SRC}/monsterdata_test.golden" "${DATA_DST}"
     COMMAND cmake -E copy "${DATA_SRC}/monsterdata_test.mon" "${DATA_DST}"
-    COMMAND flatcc_cli -av --json -o "${GEN_DIR}" "${FBS_DIR}/monster_test.fbs"
-    DEPENDS flatcc_cli "${FBS_DIR}/monster_test.fbs" "${FBS_DIR}/include_test1.fbs" "${FBS_DIR}/include_test2.fbs"
+    COMMAND flatcc::cli -av --json -o "${GEN_DIR}" "${FBS_DIR}/monster_test.fbs"
+    DEPENDS flatcc::cli "${FBS_DIR}/monster_test.fbs" "${FBS_DIR}/include_test1.fbs" "${FBS_DIR}/include_test2.fbs"
 )
 
 add_executable(test_basic_parse test_basic_parse.c)
@@ -33,15 +32,15 @@ add_executable(test_json_parser test_json_parser.c "${GEN_DIR}/monster_test_read
 add_executable(test_json_printer test_json_printer.c "${GEN_DIR}/monster_test_json_parser.h")
 add_executable(test_json test_json.c "${GEN_DIR}/monster_test_json_parser.h" "${GEN_DIR}/monster_test_json_printer.h")
 
-target_link_libraries(test_basic_parse flatccrt)
-target_link_libraries(test_json_parser flatccrt)
-target_link_libraries(test_json_printer flatccrt)
-target_link_libraries(test_json flatccrt)
+target_link_libraries(test_basic_parse PRIVATE flatcc::runtime)
+target_link_libraries(test_json_parser PRIVATE flatcc::runtime)
+target_link_libraries(test_json_printer PRIVATE flatcc::runtime)
+target_link_libraries(test_json PRIVATE flatcc::runtime)
 
-add_test(test_basic_parse test_basic_parse${CMAKE_EXECUTABLE_SUFFIX})
-add_test(test_json_parser test_json_parser${CMAKE_EXECUTABLE_SUFFIX})
-add_test(test_json_printer test_json_printer${CMAKE_EXECUTABLE_SUFFIX})
-add_test(test_json test_json${CMAKE_EXECUTABLE_SUFFIX})
+add_test(test_basic_parse test_basic_parse)
+add_test(test_json_parser test_json_parser)
+add_test(test_json_printer test_json_printer)
+add_test(test_json test_json)
 
 # Compile without default library in order to test various runtime flags
 set(RTPATH "${PROJECT_SOURCE_DIR}/src/runtime")
@@ -57,6 +56,7 @@ set(RTSRC
 macro(jstest trg flags)
     add_executable(${trg} test_json.c ${RTSRC} "${GEN_DIR}/monster_test_json_parser.h"
         "${GEN_DIR}/monster_test_json_printer.h" "${GEN_DIR}/monster_test_verifier.h")
+    target_include_directories(${trg} PRIVATE ${PROJECT_SOURCE_DIR}/include)
     add_test(${trg} ${trg})
     set_target_properties(${trg} PROPERTIES COMPILE_FLAGS ${flags})
 endmacro()

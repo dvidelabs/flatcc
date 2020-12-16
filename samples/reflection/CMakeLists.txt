@@ -9,25 +9,24 @@ include(CTest)
 # sample, and the actual C source of this project.
 #
 
-set(INC_DIR "${PROJECT_SOURCE_DIR}/include")
 set(GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(FBS_DIR "${PROJECT_SOURCE_DIR}/samples/monster")
 
-include_directories("${GEN_DIR}" "${INC_DIR}")
+include_directories("${GEN_DIR}")
 
 add_custom_command (
     OUTPUT "${GEN_DIR}/monster.bfbs"
     COMMAND cmake -E make_directory "${GEN_DIR}"
-    COMMAND flatcc_cli --schema -o "${GEN_DIR}" "${FBS_DIR}/monster.fbs"
-    DEPENDS flatcc_cli "${FBS_DIR}/monster.fbs"
+    COMMAND flatcc::cli --schema -o "${GEN_DIR}" "${FBS_DIR}/monster.fbs"
+    DEPENDS flatcc::cli "${FBS_DIR}/monster.fbs"
 )
 add_custom_target(build_moster_bfbs ALL
     DEPENDS "${GEN_DIR}/monster.bfbs"
 )
 
 add_executable(bfbs2json bfbs2json.c)
-target_link_libraries(bfbs2json flatccrt)
+target_link_libraries(bfbs2json flatcc::runtime)
 
 if (FLATCC_TEST)
-    add_test(bfbs2json bfbs2json${CMAKE_EXECUTABLE_SUFFIX} ${GEN_DIR}/monster.bfbs)
+    add_test(bfbs2json bfbs2json "${GEN_DIR}/monster.bfbs")
 endif()

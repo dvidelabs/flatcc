@@ -1,6 +1,5 @@
 include_directories (
     "${PROJECT_SOURCE_DIR}/external"
-    "${PROJECT_SOURCE_DIR}/include"
     "${PROJECT_SOURCE_DIR}/config"
 )
 
@@ -39,7 +38,7 @@ endif(FLATCC_REFLECTION)
 add_library(flatcc ${SOURCES})
 add_library(flatcc::libflatcc ALIAS flatcc)
 
-target_include_directories(flatcc PUBLIC $<INSTALL_INTERFACE:include>)
+target_include_directories(flatcc PUBLIC $<INSTALL_INTERFACE:include> $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
 
 set_target_properties(flatcc PROPERTIES EXPORT_NAME libflatcc)
 
