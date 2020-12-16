@@ -37,10 +37,10 @@ target_link_libraries(test_json_parser PRIVATE flatcc::runtime)
 target_link_libraries(test_json_printer PRIVATE flatcc::runtime)
 target_link_libraries(test_json PRIVATE flatcc::runtime)
 
-add_test(test_basic_parse test_basic_parse)
-add_test(test_json_parser test_json_parser)
-add_test(test_json_printer test_json_printer)
-add_test(test_json test_json)
+add_test(NAME test_basic_parse COMMAND test_basic_parse)
+add_test(NAME test_json_parser COMMAND test_json_parser)
+add_test(NAME test_json_printer COMMAND test_json_printer)
+add_test(NAME test_json COMMAND test_json)
 
 # Compile without default library in order to test various runtime flags
 set(RTPATH "${PROJECT_SOURCE_DIR}/src/runtime")
@@ -57,7 +57,7 @@ macro(jstest trg flags)
     add_executable(${trg} test_json.c ${RTSRC} "${GEN_DIR}/monster_test_json_parser.h"
         "${GEN_DIR}/monster_test_json_printer.h" "${GEN_DIR}/monster_test_verifier.h")
     target_include_directories(${trg} PRIVATE ${PROJECT_SOURCE_DIR}/include)
-    add_test(${trg} ${trg})
+    add_test(NAME ${trg} COMMAND ${trg})
     set_target_properties(${trg} PROPERTIES COMPILE_FLAGS ${flags})
 endmacro()
 

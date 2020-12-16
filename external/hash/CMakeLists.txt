@@ -29,10 +29,10 @@ add_executable (load_test_d_rh load_test.c ptr_set.c cmetrohash64.c)
 target_compile_definitions(load_test_rh PRIVATE
     -DPTR_SET_RH)
 
-add_test(hash_test hash_test)
-add_test(hash_test_32 hash_test_32)
-add_test(hash_test_rh hash_test_rh)
-add_test(load_test load_test)
-add_test(load_test_rh load_test_rh)
+add_test(NAME hash_test COMMAND hash_test)
+add_test(NAME hash_test_32 COMMAND hash_test_32)
+add_test(NAME hash_test_rh COMMAND hash_test_rh)
+add_test(NAME load_test COMMAND load_test)
+add_test(NAME load_test_rh COMMAND load_test_rh)
 
 enable_testing()

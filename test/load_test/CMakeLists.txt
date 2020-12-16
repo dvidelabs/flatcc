@@ -18,5 +18,5 @@ add_custom_command(
 add_executable(load_test load_test.c "${GEN_DIR}/monster_test_builder.h")
 target_link_libraries(load_test flatcc::runtime)
 
-add_test(load_test load_test)
+add_test(NAME load_test COMMAND load_test)
 

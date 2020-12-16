@@ -15,4 +15,4 @@ add_custom_command (
 add_executable(reflection_test reflection_test.c)
 target_link_libraries(reflection_test flatcc::runtime)
 
-add_test(reflection_test reflection_test)
+add_test(NAME reflection_test COMMAND reflection_test)

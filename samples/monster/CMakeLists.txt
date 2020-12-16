@@ -16,5 +16,5 @@ add_executable(monster monster.c "${GEN_DIR}/monster_builder.h")
 target_link_libraries(monster flatcc::runtime)
 
 if (FLATCC_TEST)
-    add_test(monster monster)
+    add_test(NAME monster COMMAND monster)
 endif()

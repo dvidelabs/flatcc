@@ -18,4 +18,4 @@ add_executable(optional_scalars_test optional_scalars_test.c "${GEN_DIR}/optiona
     "${GEN_DIR}/optional_scalars_test_json_printer.h" "${GEN_DIR}/optional_scalars_test_json_parser.h")
 target_link_libraries(optional_scalars_test flatcc::runtime)
 
-add_test(optional_scalars_test optional_scalars_test)
+add_test(NAME optional_scalars_test COMMAND optional_scalars_test)

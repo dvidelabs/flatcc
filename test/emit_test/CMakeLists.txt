@@ -15,4 +15,4 @@ add_custom_command (
 add_executable(emit_test emit_test.c "${GEN_DIR}/emit_test_builder.h")
 target_link_libraries(emit_test flatcc::runtime)
 
-add_test(emit_test emit_test)
+add_test(NAME emit_test COMMAND emit_test)

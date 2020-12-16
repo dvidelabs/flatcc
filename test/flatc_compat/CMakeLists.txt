@@ -19,4 +19,4 @@ add_custom_command (
 add_executable(flatc_compat flatc_compat.c "${GEN_DIR}/monster_test_reader.h" "${GEN_DIR}/monster_test_verifier.h")
 target_link_libraries(flatc_compat flatcc::runtime)
 
-add_test(flatc_compat flatc_compat)
+add_test(NAME flatc_compat COMMAND flatc_compat)

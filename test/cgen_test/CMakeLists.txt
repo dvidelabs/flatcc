@@ -8,7 +8,7 @@ target_link_libraries(cgen_test
     flatcc::libflatcc
 )
 
-add_test(cgen_test cgen_test)
+add_test(NAME cgen_test COMMAND cgen_test)
 
 
 # Compilation of the generated code tests many import edge cases 
@@ -37,5 +37,5 @@ if(${CMAKE_MAKE_PROGRAM} MATCHES make)
 # visible so build fails on <assert.h> not found in the custom build
 # stage where CMAKE_C_COMPILER uses a compiler call that has this
 # behavior
-#add_test(test_generated ${CMAKE_MAKE_PROGRAM} test_generated)
+#add_test(NAME test_generated COMMAND ${CMAKE_MAKE_PROGRAM} test_generated)
 endif(${CMAKE_MAKE_PROGRAM} MATCHES make)
