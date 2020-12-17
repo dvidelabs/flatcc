@@ -32,7 +32,7 @@ add_library(test_generated_objects STATIC EXCLUDE_FROM_ALL
 target_include_directories(test_generated_objects PRIVATE "${PROJECT_SOURCE_DIR}/include")
 
 add_custom_target(test_generated
-    COMMAND "${CMAKE_COMMAND}" -E rm -f $<TARGET_OBJECTS:test_generated_objects>
+    COMMAND "${CMAKE_COMMAND}" -E remove -f "${CMAKE_CURRENT_BINARY_DIR}/test_generated${CMAKE_EXECUTABLE_SUFFIX}.c" $<TARGET_OBJECTS:test_generated_objects>
     COMMAND "${CMAKE_COMMAND}" --build "${PROJECT_BINARY_DIR}" --target test_generated_objects --config $<CONFIG> --verbose
 )
 
