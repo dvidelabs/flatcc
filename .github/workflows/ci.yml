@@ -1,0 +1,63 @@
+on:
+  - push
+  - pull_request
+jobs:
+  test_unix:
+    name: 'Test Unix with CMake'
+    strategy:
+      matrix:
+        os: ['macos-latest', 'ubuntu-latest']
+        config: ['Release', 'Debug']
+        cmake_generator: ['Unix Makefiles', 'Ninja']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: 'Checkout repo'
+        uses: actions/checkout@v2
+      - name: 'Install meson (Ubuntu)'
+        if: ${{ contains(matrix.os, 'ubuntu') && (matrix.cmake_generator == 'Ninja') }}
+        run: |
+          sudo apt-get install ninja-build
+      - name: 'Install meson (Macos)'
+        if: ${{ contains(matrix.os, 'macos') && (matrix.cmake_generator == 'Ninja') }}
+        run: |
+          brew install meson
+      - name: 'CMake configure'
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "${{ matrix.cmake_generator }}" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DFLATCC_INSTALL=ON -DCMAKE_INSTALL_PREFIX=prefix
+      - name: 'CMake build'
+        run: |
+          cmake --build build --parallel
+      - name: 'CTest'
+        run: |
+          cd build
+          ctest -V -C ${{ matrix.config }}
+      - name: 'Install'
+        run: |
+          cmake --build build --target install
+  test_windows:
+    name: 'Test Windows with CMake'
+    strategy:
+      matrix:
+        config: ['Release', 'Debug']
+        arch: ['Win32', 'x64']
+    runs-on: 'windows-latest'
+    steps:
+      - name: 'Checkout repo'
+        uses: actions/checkout@v2
+      - name: 'CMake configure'
+        run: |
+          mkdir build
+          cd build
+          cmake .. -A ${{ matrix.arch }} -DFLATCC_INSTALL=ON -DCMAKE_INSTALL_PREFIX=prefix
+      - name: 'CMake build'
+        run: |
+          cmake --build build --parallel --config ${{ matrix.config }} --verbose
+      - name: 'CTest'
+        run: |
+          cd build
+          ctest -V -C ${{ matrix.config }}
+      - name: 'Install'
+        run: |
+          cmake --build build --target install --config ${{ matrix.config }}
