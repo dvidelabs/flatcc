@@ -1,5 +1,3 @@
-include(CTest)
-
 add_executable(cgen_test
     cgen_test.c
 )

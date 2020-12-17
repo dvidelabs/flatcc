@@ -1,5 +1,3 @@
-include(CTest)
-
 set(GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(FBS_DIR "${PROJECT_SOURCE_DIR}/test/monster_test")
 

@@ -1,5 +1,3 @@
-include(CTest)
-
 set(GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(FBS_DIR "${PROJECT_SOURCE_DIR}/test/monster_test")
 
@@ -11,38 +9,14 @@ include_directories("${GEN_DIR}")
 # FIXME: possible improvement if cmake_minimum_required >= 3.1:
 #        use add_library(... INTERFACE) +  add_custom_command + target_sources(INTERFACE) + target_link_libraries()
 
-# Use add_custom_target + add_custom_command + add_dependencies because a parallel MSVC build will cause
-# add_custom_command to be run multiple times in parallel which causes errors opening file for write.
-# This problem does not pose when generated sources are used by only one target.
-add_custom_target (gen_json_test
-    DEPENDS "${GEN_DIR}/attributes_builder.h" "${GEN_DIR}/attributes_json_parser.h"
-        "${GEN_DIR}/attributes_json_printer.h" "${GEN_DIR}/attributes_reader.h" "${GEN_DIR}/attributes_verifier.h"
-        "${GEN_DIR}/flatbuffers_common_builder.h" "${GEN_DIR}/flatbuffers_common_reader.h"
-        "${GEN_DIR}/include_test1_builder.h" "${GEN_DIR}/include_test1_json_parser.h"
-        "${GEN_DIR}/include_test1_json_printer.h" "${GEN_DIR}/include_test1_reader.h"
-        "${GEN_DIR}/include_test1_verifier.h" "${GEN_DIR}/include_test2_builder.h"
-        "${GEN_DIR}/include_test2_json_parser.h" "${GEN_DIR}/include_test2_json_printer.h"
-        "${GEN_DIR}/include_test2_reader.h" "${GEN_DIR}/include_test2_verifier.h"
-        "${GEN_DIR}/monster_test_builder.h" "${GEN_DIR}/monster_test_json_parser.h"
-        "${GEN_DIR}/monster_test_json_printer.h" "${GEN_DIR}/monster_test_reader.h"
-        "${GEN_DIR}/monster_test_verifier.h")
-add_custom_command (
-    OUTPUT "${GEN_DIR}/attributes_builder.h" "${GEN_DIR}/attributes_json_parser.h"
-        "${GEN_DIR}/attributes_json_printer.h" "${GEN_DIR}/attributes_reader.h" "${GEN_DIR}/attributes_verifier.h"
-        "${GEN_DIR}/flatbuffers_common_builder.h" "${GEN_DIR}/flatbuffers_common_reader.h"
-        "${GEN_DIR}/include_test1_builder.h" "${GEN_DIR}/include_test1_json_parser.h"
-        "${GEN_DIR}/include_test1_json_printer.h" "${GEN_DIR}/include_test1_reader.h"
-        "${GEN_DIR}/include_test1_verifier.h" "${GEN_DIR}/include_test2_builder.h"
-        "${GEN_DIR}/include_test2_json_parser.h" "${GEN_DIR}/include_test2_json_printer.h"
-        "${GEN_DIR}/include_test2_reader.h" "${GEN_DIR}/include_test2_verifier.h"
-        "${GEN_DIR}/monster_test_builder.h" "${GEN_DIR}/monster_test_json_parser.h"
-        "${GEN_DIR}/monster_test_json_printer.h" "${GEN_DIR}/monster_test_reader.h"
-        "${GEN_DIR}/monster_test_verifier.h"
-    COMMAND cmake -E make_directory "${GEN_DIR}"
+
+flatcc_generate_sources(ALL VERIFIER JSON OUTPUT_DIR "${GEN_DIR}" TARGET gen_json_test
+    DEFINITION_FILES "${FBS_DIR}/monster_test.fbs" "${FBS_DIR}/include_test1.fbs" "${FBS_DIR}/include_test2.fbs")
+
+add_custom_command (TARGET gen_json_test POST_BUILD
     COMMAND cmake -E copy "${DATA_SRC}/monsterdata_test.golden" "${DATA_DST}"
     COMMAND cmake -E copy "${DATA_SRC}/monsterdata_test.mon" "${DATA_DST}"
-    COMMAND flatcc::cli -av --json -o "${GEN_DIR}" "${FBS_DIR}/monster_test.fbs"
-    DEPENDS flatcc::cli "${FBS_DIR}/monster_test.fbs" "${FBS_DIR}/include_test1.fbs" "${FBS_DIR}/include_test2.fbs"
+    DEPENDS "${DATA_SRC}/monsterdata_test.golden" "${DATA_SRC}/monsterdata_test.mon"
 )
 
 add_executable(test_basic_parse test_basic_parse.c)

@@ -22,6 +22,10 @@ else()
     project (FlatCC C)
 endif()
 
+# Make the cmake scripts inside the cmake subfolder available
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+include(FlatccGenerateSources)
+
 #
 # NOTE: when changing build options, clean the build using on of:
 #

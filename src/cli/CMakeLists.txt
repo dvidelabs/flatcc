@@ -15,7 +15,7 @@ target_link_libraries(flatcc_cli
 # Rename because the libflatcc library and the flatcc executable would
 # conflict if they had the same target name `flatcc`.
 set_target_properties(flatcc_cli PROPERTIES
-    OUTPUT_NAME flatcc
+    OUTPUT_NAME flatcc$<$<CONFIG:Debug>:_d>
     EXPORT_NAME cli)
 
 if (FLATCC_INSTALL)
