@@ -26,11 +26,11 @@ echo "building before tests ..."
 $ROOT/scripts/build.sh $DEBUG
 
 echo "running test in debug build ..."
-cd $DBGDIR && ctest $ROOT
+cd $DBGDIR && ctest $ROOT --output-on-failure
 
 if [ "$DEBUG" != "--debug" ]; then
 echo "running test in release build ..."
-cd $RELDIR && ctest $ROOT
+cd $RELDIR && ctest $ROOT --output-on-failure
 echo "TEST PASSED"
 else
     echo "DEBUG TEST PASSED"
