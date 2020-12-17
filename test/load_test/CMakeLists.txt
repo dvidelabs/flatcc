@@ -3,9 +3,8 @@ set(FBS_DIR "${PROJECT_SOURCE_DIR}/test/monster_test")
 
 include_directories("${GEN_DIR}")
 
-# TODO: use recursive
 flatcc_generate_sources(ALL OUTPUT_DIR "${GEN_DIR}"
-    DEFINITION_FILES "${FBS_DIR}/monster_test.fbs" "${FBS_DIR}/include_test1.fbs" "${FBS_DIR}/include_test2.fbs")
+    DEFINITION_FILES "${FBS_DIR}/monster_test.fbs")
 
 add_executable(load_test load_test.c "${GEN_DIR}/monster_test_builder.h")
 target_link_libraries(load_test flatcc::runtime)

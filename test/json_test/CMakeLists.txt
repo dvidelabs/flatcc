@@ -6,12 +6,8 @@ set(DATA_SRC "${PROJECT_SOURCE_DIR}/test/flatc_compat")
 
 include_directories("${GEN_DIR}")
 
-# FIXME: possible improvement if cmake_minimum_required >= 3.1:
-#        use add_library(... INTERFACE) +  add_custom_command + target_sources(INTERFACE) + target_link_libraries()
-
-
 flatcc_generate_sources(ALL VERIFIER JSON OUTPUT_DIR "${GEN_DIR}" TARGET gen_json_test
-    DEFINITION_FILES "${FBS_DIR}/monster_test.fbs" "${FBS_DIR}/include_test1.fbs" "${FBS_DIR}/include_test2.fbs")
+    DEFINITION_FILES "${FBS_DIR}/monster_test.fbs")
 
 add_custom_command (TARGET gen_json_test POST_BUILD
     COMMAND cmake -E copy "${DATA_SRC}/monsterdata_test.golden" "${DATA_DST}"
