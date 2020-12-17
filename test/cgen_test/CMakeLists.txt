@@ -16,15 +16,24 @@ add_test(NAME cgen_test COMMAND cgen_test)
 # expansion of flags results in quotes the compiler won't eat,
 # separating arguments should fix this, but not sure how portable it is.
 # see also http://stackoverflow.com/questions/9870162/avoid-quoting-in-cmake-add-custom-command
-separate_arguments(CUSTOM_C_FLAGS UNIX_COMMAND "${CMAKE_C_FLAGS}")
+
+add_custom_COMMAND(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/test_generated${CMAKE_EXECUTABLE_SUFFIX}.c"
+    COMMAND cgen_test > "${CMAKE_CURRENT_BINARY_DIR}/test_generated${CMAKE_EXECUTABLE_SUFFIX}.c"
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test/cgen_test
+    DEPENDS cgen_test
+)
+
+if(NOT MSVC)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-error=unused-const-variable")
+endif()
+add_library(test_generated_objects STATIC EXCLUDE_FROM_ALL
+    "${CMAKE_CURRENT_BINARY_DIR}/test_generated${CMAKE_EXECUTABLE_SUFFIX}.c"
+)
+target_include_directories(test_generated_objects PRIVATE "${PROJECT_SOURCE_DIR}/include")
 
 add_custom_target(test_generated
-    COMMAND cgen_test > test_generated${CMAKE_EXECUTABLE_SUFFIX}.c
-    COMMAND ${CMAKE_C_COMPILER} ${CUSTOM_C_FLAGS} test_generated${CMAKE_EXECUTABLE_SUFFIX}.c -c
-        -I${CMAKE_SOURCE_DIR}/include
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test/cgen_test
-    BYPRODUCTS test_generated${CMAKE_EXECUTABLE_SUFFIX}.c
-    DEPENDS cgen_test
-    )
+    COMMAND "${CMAKE_COMMAND}" -E rm -f $<TARGET_OBJECTS:test_generated_objects>
+    COMMAND "${CMAKE_COMMAND}" --build "${PROJECT_BINARY_DIR}" --target test_generated_objects --config $<CONFIG> --verbose
+)
 
 add_test(NAME test_generated COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}" --target test_generated --config $<CONFIG>)
