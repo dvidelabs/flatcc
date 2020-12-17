@@ -136,6 +136,17 @@ function(flatcc_generate_sources)
     endif()
 
     set(ABSOLUTE_DEFINITION_FILES)
+
+    foreach(definition_file ${FLATCC_DEFINITION_FILES})
+        # TODO: file(REAL_PATH) if cmake_minimum_Version >= 3.19
+        if(IS_ABSOLUTE "${definition_file}")
+            set(absolute_def_file "${definition_file}")
+        else()
+            set(absolute_def_file "${CMAKE_CURRENT_SOURCE_DIR}/${definition_file}")
+        endif()
+        list(APPEND ABSOLUTE_DEFINITION_FILES "${absolute_def_file}")
+    endforeach()
+
     set(OUTPUT_FILES)
     if(FLATCC_OUTFILE)
         list(APPEND FLATCC_COMPILE_FLAGS "--outfile=${FLATCC_OUTPUT_DIR}/${FLATCC_OUTFILE}")
@@ -155,10 +166,6 @@ function(flatcc_generate_sources)
             list(APPEND OUTPUT_FILES "${FLATCC_OUTPUT_DIR}/flatbuffers_common_builder.h")
         endif()
     endif()
-    foreach(definition_file ${FLATCC_DEFINITION_FILES})
-        file(REAL_PATH "${definition_file}" absolute_def_file)
-        list(APPEND ABSOLUTE_DEFINITION_FILES "${absolute_def_file}")
-    endforeach()
 
     message(VERBOSE "Flatcc output directory: ${FLATCC_OUTPUT_DIR}")
     message(VERBOSE "Flatcc output files: ${OUTPUT_FILES}")
