@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # link a specific build.cfg.xxx to build.cfg to use that build
 # configuration, e.g. ln -sf build.cfg.make build.cfg
@@ -24,7 +24,7 @@ if [ x"$1" != x ]; then
 fi
 
 if [ -e $CFGFILE ]; then
-    source $CFGFILE
+    . $CFGFILE
 fi
 
 FLATCC_BUILD_GEN=${FLATCC_BUILD_GEN:-Ninja}

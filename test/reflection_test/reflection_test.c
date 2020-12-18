@@ -1,5 +1,6 @@
 #include "flatcc/support/readfile.h"
 #include "flatcc/reflection/reflection_reader.h"
+#include "flatcc/portable/pcrt.h"
 
 #define lld(x) (long long int)(x)
 
@@ -57,6 +58,10 @@ int test_schema(const char *monster_bfbs)
         printf("mana field has wrong type\n");
         goto done;
     }
+    if (reflection_Field_optional(F)) {
+        printf("mana field is not optional\n");
+        goto done;
+    }
     k = reflection_Field_vec_find(Flds, "enemy");
     if (k == flatbuffers_not_found) {
         printf("enemy field not found\n");
@@ -107,6 +112,9 @@ const char *filename = "generated/monster_test.bfbs";
 
 int main(int argc, char *argv[])
 {
+    /* Avoid assert dialogs on Windows. */
+    init_headless_crt();
+
     if (argc != 1 && argc != 2) {
         fprintf(stderr, usage);
         exit(1);

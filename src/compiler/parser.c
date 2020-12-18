@@ -410,7 +410,7 @@ static inline fb_token_t *match(fb_parser_t *P, long id, char *msg) {
 }
 
 /*
- * When a keyword should also be accepted as an identifier. 
+ * When a keyword should also be accepted as an identifier.
  * This is useful for JSON where field naems are visible.
  * Since field names are not referenced within the schema,
  * this is generally safe. Enums can also be resererved but
@@ -606,7 +606,7 @@ static void parse_ref(fb_parser_t *P, fb_ref_t **ref)
 }
 
 /* `flags` */
-enum { allow_string_value = 1, allow_id_value = 2 };
+enum { allow_string_value = 1, allow_id_value = 2, allow_null_value = 4 };
 static void parse_value(fb_parser_t *P, fb_value_t *v, int flags, const char *error_msg)
 {
     fb_token_t *t;
@@ -632,6 +632,14 @@ static void parse_value(fb_parser_t *P, fb_value_t *v, int flags, const char *er
     case tok_kw_false:
         v->b = 0;
         v->type = vt_bool;
+        break;
+    case tok_kw_null:
+        if (!(flags & allow_null_value)) {
+            v->type = vt_invalid;
+            error_tok(P, t, error_msg);
+            return;
+        }
+        v->type = vt_null;
         break;
     case LEX_TOK_STRING_BEGIN:
         next(P);
@@ -670,7 +678,7 @@ static void parse_value(fb_parser_t *P, fb_value_t *v, int flags, const char *er
 
 static void parse_fixed_array_size(fb_parser_t *P, fb_token_t *ttype, fb_value_t *v)
 {
-    const char *error_msg = "fixed size array length expected to be an unsigned integer";
+    const char *error_msg = "fixed length array length expected to be an unsigned integer";
     fb_value_t vsize;
     fb_token_t *tlen = P->token;
 
@@ -694,22 +702,22 @@ static void parse_fixed_array_size(fb_parser_t *P, fb_token_t *ttype, fb_value_t
     case vt_invalid:
         return;
     default:
-        error_tok(P, ttype, "invalid fixed size array type");
+        error_tok(P, ttype, "invalid fixed length array type");
         v->type = vt_invalid;
         return;
     }
     if (vsize.u == 0) {
-        error_tok(P, tlen, "fixed size array length cannot be 0");
+        error_tok(P, tlen, "fixed length array length cannot be 0");
         v->type = vt_invalid;
         return;
     }
-    /* 
+    /*
      * This allows for safe 64-bit multiplication by elements no
      * larger than 2^32-1 and also fits into the value len field.
      * without extra size cost.
      */
     if (vsize.u > UINT32_MAX) {
-        error_tok(P, tlen, "fixed size array length overflow");
+        error_tok(P, tlen, "fixed length array length overflow");
         v->type = vt_invalid;
         return;
     }
@@ -791,7 +799,7 @@ static void parse_type(fb_parser_t *P, fb_value_t *v)
     }
     if (ttype->id == tok_kw_char && v->type != vt_invalid) {
         if (v->type != vt_fixed_array_type) {
-            error_tok(P, ttype, "char can only be used as a fixed size array type [char:<n>]");
+            error_tok(P, ttype, "char can only be used as a fixed length array type [char:<n>]");
             v->type = vt_invalid;
         }
     }
@@ -847,7 +855,7 @@ static void parse_field(fb_parser_t *P, fb_member_t *fld)
          * We allow the initializer to be a name in case it is an enum
          * name.
          */
-        parse_value(P, &fld->value, allow_id_value, "initializer must be of scalar type");
+        parse_value(P, &fld->value, allow_id_value | allow_null_value, "initializer must be of scalar type or null");
     }
     fld->metadata = parse_metadata(P);
     advance(P, ';', "field must be terminated with ';'", 0);

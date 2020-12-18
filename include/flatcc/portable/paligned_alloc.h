@@ -10,6 +10,10 @@ extern "C" {
  * which is. Therefore, to remain portable, end user code needs to
  * use `aligned_free` which is not part of C11 but defined in this header.
  *
+ * glibc only provides aligned_alloc when _ISOC11_SOURCE is defined, but
+ * MingW does not support aligned_alloc despite of this, it uses the
+ * the _aligned_malloc as MSVC.
+ *
  * The same issue is present on some Unix systems not providing
  * posix_memalign.
  *
@@ -41,8 +45,16 @@ extern "C" {
 
 #if !defined(PORTABLE_C11_ALIGNED_ALLOC)
 
-#if defined (_ISOC11_SOURCE)
-/* glibc aligned_alloc detection. */
+/*
+ * PORTABLE_C11_ALIGNED_ALLOC = 1
+ * indicates that the system has builtin aligned_alloc
+ * If it doesn't, the section after detection provides an implemention.
+ */
+#if defined (__MINGW32__)
+/* MingW does not provide aligned_alloc despite defining _ISOC11_SOURCE */
+#define PORTABLE_C11_ALIGNED_ALLOC 0
+#elif defined (_ISOC11_SOURCE) 
+/* glibc aligned_alloc detection, but MingW is not truthful */
 #define PORTABLE_C11_ALIGNED_ALLOC 1
 #elif defined (__GLIBC__)
 /* aligned_alloc is not available in glibc just because __STDC_VERSION__ >= 201112L. */
@@ -98,7 +110,11 @@ extern "C" {
 #ifdef PORTABLE_DEBUG_ALIGNED_ALLOC
 #error "DEBUG: C11_ALIGNED_ALLOC configured"
 #endif
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) || defined(__MINGW32__)
+
+#ifdef PORTABLE_DEBUG_ALIGNED_ALLOC
+#error "DEBUG: Windows _aligned_malloc configured"
+#endif
 
 /* Aligned _aligned_malloc is not compatible with free. */
 #define aligned_alloc(alignment, size) _aligned_malloc(size, alignment)

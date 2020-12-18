@@ -45,6 +45,13 @@ __flatbuffers_scalar_field(T, ID, t__tmp)\
 static inline int N ## _ ## NK ## _is_present(N ## _table_t t__tmp)\
 __flatbuffers_field_present(ID, t__tmp)\
 __flatbuffers_define_scan_by_scalar_field(N, NK, T)
+#define __flatbuffers_define_scalar_optional_field(ID, N, NK, TK, T, V)\
+__flatbuffers_define_scalar_field(ID, N, NK, TK, T, V)\
+static inline TK ## _option_t N ## _ ## NK ## _option(N ## _table_t t__tmp)\
+{ TK ## _option_t ret; __flatbuffers_read_vt(ID, offset__tmp, t__tmp)\
+  ret.is_null = offset__tmp == 0; ret.value = offset__tmp ?\
+  __flatbuffers_read_scalar_at_byteoffset(TK, t__tmp, offset__tmp) : V;\
+  return ret; }
 #define __flatbuffers_struct_field(T, ID, t, r)\
 {\
     __flatbuffers_read_vt(ID, offset__tmp, t)\

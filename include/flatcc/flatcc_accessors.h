@@ -30,6 +30,7 @@ static inline void N ## _write(void *p, T v)                                \
 { *(T *)p = v; }                                                            \
 static inline T N ## _read_from_le(const void *p)                           \
 { return N ## _cast_from_le(*(T *)p); }                                     \
+typedef struct { int is_null; T value; } N ## _option_t;
 
 #define __flatcc_define_integer_accessors_impl(N, T, W, E)                  \
 static inline T N ## _cast_from_pe(T v)                                     \

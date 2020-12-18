@@ -12,7 +12,7 @@ extern "C" {
  * languages.
  *
  * The builder has two API layers: a stack based `start/end` approach,
- * and a direct `create`, and they may be fixed freely. The direct
+ * and a direct `create`, and they may be mixed freely. The direct
  * approach may be used as part of more specialized optimizations such
  * as rewriting buffers while the stack approach is convenient for state
  * machine driven parsers without a stack, or with a very simple stack
@@ -41,7 +41,7 @@ extern "C" {
  * these references remain stable an may be used for external references
  * into the buffer.
  *
- * The maximum buffer than can be constructed is in praxis limited to
+ * The maximum buffer that can be constructed is in praxis limited to
  * half the UOFFSET_MAX size, typically 2^31 bytes, not counting
  * clustered vtables that may consume and additional 2^31 bytes
  * (positive address range), but in praxis cannot because vtable

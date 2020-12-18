@@ -47,7 +47,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
   * [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
   * [Base64 Encoding](#base64-encoding)
-  * [Fixed Size Arrays](#fixed-size-arrays)
+  * [Fixed Length Arrays](#fixed-length-arrays)
   * [Runtime Flags](#runtime-flags)
   * [Generic Parsing and Printing.](#generic-parsing-and-printing)
   * [Performance Notes](#performance-notes)
@@ -57,7 +57,8 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [Types](#types)
 * [Unions](#unions)
   * [Union Scope Resolution](#union-scope-resolution)
-* [Fixed Size Arrays](#fixed-size-arrays-1)
+* [Fixed Length Arrays](#fixed-length-arrays-1)
+* [Optional Fields](#optional-fields)
 * [Endianness](#endianness)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
 * [Searching and Sorting](#searching-and-sorting)
@@ -87,6 +88,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 ## Online Forums
 
 - [Google Groups - FlatBuffers](https://groups.google.com/forum/#!forum/flatbuffers)
+- [Discord - FlatBuffers](https://discord.gg/6qgKs3R)
 - [Gitter - FlatBuffers](https://gitter.im/google/flatbuffers)
 
 
@@ -295,8 +297,8 @@ a key attribute to chose default key for finding and sorting. If primary
 is absent, the key with the lowest id becomes primary. Tables and
 vectors can now be sorted recursively on primary keys. BREAKING:
 previously the first listed, not the lowest id, would be the primary
-key. Also introduces fixed size scalar arrays in struct fields (struct
-and enum elements are not supported). Structs support fixed size array
+key. Also introduces fixed length scalar arrays in struct fields (struct
+and enum elements are not supported). Structs support fixed length array
 fields, including char arrays. Empty structs never fully worked and are
 no longer supported, they are also no longer supported by flatc.
 NOTE: char arrays are not currently part of Googles flatc compiler -
@@ -1396,7 +1398,7 @@ server context.
 The parser always takes a text buffer as input and produces output
 according to how the builder object is initialized. The printer has
 different init functions: one for printing to a file pointer, including
-stdout, one for printing to a fixed size external buffer, and one for
+stdout, one for printing to a fixed length external buffer, and one for
 printing to a dynamically growing buffer. The dynamic buffer may be
 reused between prints via the reset function. See `flatcc_json_parser.h`
 for details.
@@ -1514,7 +1516,7 @@ Union vectors are supported as of v0.5.0. A union vector is represented
 as two vectors, one with a vector of tables and one with a vector of
 types, similar to ordinary unions. It is more efficient to place the
 type vector first because it avoids backtracking. Because a union of
-type NONE cannot be represented by abasence of table field when dealing
+type NONE cannot be represented by absence of table field when dealing
 with vectors of unions, a table must have the value `null` if its type
 is NONE in the corresponding type vector. In other cases a table should
 be absent, and not null.
@@ -1564,9 +1566,9 @@ possible, but it is recognized that a `(force_align: n)` attribute on
 `[ubyte]` vectors could be useful, but it can also be handled via nested
 flatbuffers which also align data.
 
-### Fixed Size Arrays
+### Fixed Length Arrays
 
-Fixed size arrays introduced in 0.6.0 allow for structs containing arrays
+Fixed length arrays introduced in 0.6.0 allow for structs containing arrays
 of fixed length scalars, structs and chars. Arrays are parsed like vectors
 for of similar type but are zero padded if shorter than expected and fails
 if longer than expected. The flag `reject_array_underflow` will error if an
@@ -1888,13 +1890,13 @@ monster type to an Any union field, and `MyGame.Example.Any.Monster2`, or just
 `Monster2` when assigning the second monster type. C uses the usual enum
 namespace prefixed symbols like `MyGame_Example_Any_Monster2`.
 
-## Fixed Size Arrays
+## Fixed Length Arrays
 
-Fixed Size Arrays is a late feature to the FlatBuffers format introduced in
+Fixed Length Arrays is a late feature to the FlatBuffers format introduced in
 flatc and flatcc mid 2019. Currently only scalars arrays are supported, and only
-as struct fields. To use fixed size arrays as a table field wrap it in a struct
-first. It would make sense to support struct elements and enum elements, but
-that has not been implemented. Char arrays are more controversial due to
+as struct fields. To use fixed length arrays as a table field wrap it in a
+struct first. It would make sense to support struct elements and enum elements,
+but that has not been implemented. Char arrays are more controversial due to
 verification and zero termination and are also not supported. Arrays are aligned
 to the size of the first field and are equivalent to repeating elements within
 the struct.
@@ -1910,10 +1912,61 @@ struct MyStruct {
 See `test_fixed_array` in [monster_test.c] for an example of how to work with
 these arrays.
 
-Flatcc opts to allow arbitrary length fixed size arrays but limit the entire
+Flatcc opts to allow arbitrary length fixed length arrays but limit the entire
 struct to 2^16-1 bytes. Tables cannot hold larger structs, and the C language
 does not guarantee support for larger structs. Other implementations might have
 different limits on maximum array size. Arrays of 0 length are not permitted.
+
+
+## Optional Fields
+
+Optional scalar table fields were introduced to FlatBuffers mid 2020 in order to
+better handle null values also for scalar data types, as is common in SQL
+databases. Before describing optional values, first understand how ordinary
+scalar values work in FlatBuffers:
+
+Imagine a FlatBuffer table with a `mana` field from the monster sample schema.
+Ordinarily a scalar table field has implicit default value of 0 like `mana :
+uint8;`, or an explicit default value specified in the schema like `mana : uint8
+= 100;`. When a value is absent from a table field, the default value is
+returned, and when a value is added during buffer construction, it will not
+actually be stored if the value matches the default value, unless the
+`force_add` option is used to write a value even if it matches the default
+value. Likewise the `is_present` method can be used to test if a field was
+actually stored in the buffer when reading it.
+
+When a table has many fields, most of which just hold default settings,
+signficant space can be saved using default values, but it also means that an
+absent value does not indicate null. Field absence is essentially just a data
+compression technique, not a semantic change to the data. However, it is
+possible to use `force_add` and `is_present` to interpret values as null when
+not present, except that this is not a standardized technique. Optional fields
+represents a standardized way to achieve this.
+
+Scalar fields can be marked as optional by assigning `null` as a default
+value. For example, some objects might not have a meaningful `mana`
+value, so it could be represented as `lifeforce : uint8 = null`. Now the
+`lifeforce` field has become an optional field. In the FlatCC implementation
+this means that the field is written, it will always be written also if the
+value is 0 or any other representable value. It also means that the `force_add`
+method is not available for the field because `force_add` is essentially always
+in effect for the field. On the read side, optional scalar fields behave exactly is ordinary scalar fields that have not specified a default value, that is, if the field is absent, 0 will be returned and `is_present` will return false. Instead optional scalar fields get a new accessor method with the suffix `_option()` which returns a struct with two fiels: `{ is_null, value }` where `_option().is_null == !is_present()` and `_option().value` is the same value is the `_get()` method, which will be 0 if `is_null` is true. The option struct is named after the type similar to unions, for example `flatbuffers_uint8_option_t` or `MyGame_Example_Color_option_t`, and the option accessor method also works similar to unions. Note that `_get()` will also return 0 for optional enum values that are null (i.e. absent), even if the enum value does not have an enumerated element with the value 0. Normally enums without a 0 element is not allowed in the schema unless a default value is specified, but in this case it is null, and `_get()` needs some value to return in this case.
+
+By keeping the original accessors, read logic can be made simpler and faster when it is not important whether a value is null or 0 and at the same time the option value can be returned and stored.
+
+Note that struct fields cannot be optional. Also note that, non-scalar table fields are not declared optional because these types can already represent null via a null pointer or a NONE union type.
+
+JSON parsing and printing change behavior for scalar fields by treating absent
+fields differently according the optional semantics. For example parsing a
+missing field will not store a default value even if the parser is executed with
+a flag to force default values to be stored and the printer will not print
+absent optional fields even if otherwise flagged to print default values.
+Currenlty the JSON printers and parsers do not print or parse JSON null and can
+only represent null be absence of a field.
+
+For an example of reading and writing, as well as printing and parsing JSON,
+optional scalar fields, please refer to [optional_scalars_test.fbs] and [optional_scalars_test.c].
+
 
 ## Endianness
 
@@ -2485,6 +2538,8 @@ See [Benchmarks]
 [Benchmarks]: https://github.com/dvidelabs/flatcc/blob/master/doc/benchmarks.md
 [monster_test.c]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.c
 [monster_test.fbs]: https://github.com/dvidelabs/flatcc/blob/master/test/monster_test/monster_test.fbs
+[optional_scalars_test.fbs]: https://github.com/dvidelabs/flatcc/blob/optional/test/optional_scalars_test/optional_scalars_test.fbs
+[optional_scalars_test.c]: https://github.com/dvidelabs/flatcc/blob/optional/test/optional_scalars_test/optional_scalars_test.c
 [paligned_alloc.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/portable/paligned_alloc.h
 [test_json.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json.c
 [test_json_parser.c]: https://github.com/dvidelabs/flatcc/blob/master/test/json_test/test_json_parser.c

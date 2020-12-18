@@ -10,6 +10,15 @@
 
 #define BaseType(x) FLATBUFFERS_WRAP_NAMESPACE(reflection_BaseType, x)
 
+static flatbuffers_bool_t is_optional_type(fb_value_t type, int optional, int required)
+{
+    if (required) return 0;
+    if (optional) return 1;
+    if (type.type == vt_scalar_type) return 0;
+    if (type.type == vt_compound_type_ref && type.ct->symbol.kind == fb_is_enum) return 0;
+    return 1;
+}
+
 static reflection_Type_ref_t export_type(flatcc_builder_t *B, fb_value_t type)
 {
     fb_scalar_type_t st = fb_missing_type;
@@ -150,7 +159,7 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
 {
     fb_symbol_t *sym;
     fb_member_t *member;
-    flatbuffers_bool_t has_key, deprecated, required, key_processed = 0;
+    flatbuffers_bool_t has_key, deprecated, required, optional, key_processed = 0;
     int64_t default_integer;
     double default_real;
 
@@ -167,6 +176,12 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
         default_integer = 0;
         default_real = 0.0;
         deprecated = (member->metadata_flags & fb_f_deprecated) != 0;
+        /*
+         * Flag is only set when `= null` is used in the schema, but
+         * non-scalar types are optional by default and therfore also
+         * true in the binary schema.
+         */
+        optional = is_optional_type(member->type, !!(member->flags & fb_fm_optional), required);
 
         if ((member->type.type == vt_compound_type_ref || member->type.type == vt_vector_compound_type_ref)
                 && member->type.ct->symbol.kind == fb_is_union) {
@@ -213,6 +228,7 @@ static void export_fields(flatcc_builder_t *B, fb_compound_type_t *ct)
             reflection_Field_offset_add(B, (uint16_t)(member->id + 2) * sizeof(flatbuffers_voffset_t));
             reflection_Field_key_add(B, has_key);
             reflection_Field_required_add(B, required);
+            reflection_Field_optional_add(B, optional);
             break;
         case fb_is_struct:
             reflection_Field_offset_add(B, (uint16_t)member->offset);

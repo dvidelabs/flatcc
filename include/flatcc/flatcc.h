@@ -16,6 +16,8 @@ extern "C" {
  * which has a life of its own.
  */
 
+#include <stddef.h>
+
 #ifndef UINT8_MAX
 #include <stdint.h>
 #endif

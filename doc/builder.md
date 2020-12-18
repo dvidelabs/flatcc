@@ -15,7 +15,7 @@
 * [Packing tables](#packing-tables)
 * [Strings](#strings)
 * [Structs](#structs)
-  * [Fixed Size Arrays in Structs](#fixed-size-arrays-in-structs)
+  * [Fixed Length Arrays in Structs](#fixed-length-arrays-in-structs)
 * [Nested Buffers](#nested-buffers)
 * [Scalars and Enums](#scalars-and-enums)
 * [Vectors](#vectors)
@@ -61,7 +61,7 @@ stack, it may also avoid external temporary allocation.
 
 A builder object is required to start buffer construction. The builder
 must be initialized first and can be reset and reused between buffers,
-reusing stack allocation. The builder is can have a customized emitter
+reusing stack allocation. The builder can have a customized emitter
 object but here we use the default. Finalizing the buffer depends
 the emitter and we can use a default finalizer only because we use the
 default emitter - it allocates and populates a linear buffer from a
@@ -174,7 +174,7 @@ verifying buffers the buffer and size arguments should be used. See also
 
 Note that the size prefix ensures internal alignment but does not
 guarantee that the next buffer in a file can be appended directly
-because the next buffers alignment is unknown and becuase it potentially
+because the next buffers alignment is unknown and because it potentially
 wastes padding bytes.  The buffer size at offset 0 can increased to the
 needed alignment as long as endianness is handled and the size of the
 size field is subtracted, and zeroes are appended as necesary.
@@ -453,16 +453,17 @@ buffer we could use:
 
     Monster_hp_force_add(B, 100);
 
-Only scalar fields and enums have a `set` operation since only these
+Only scalar fields and enums have a `force_add` operation since only these
 types have a default value, and other types have a meaningful
 interpretation of null. (It is not quite clear if empty tables separate
 from null/absent are valid in all implementations).
 
-`set` may be useful when roundtripping data from a database where it is
-relevant to distinguish between any valid value and null. Most readers
-will not be able to tell the difference, but it is possible to inspect a
-flatbuffer to see if a table field is present, present and default, or
-absent, meaning null.
+`force_add` may be useful when roundtripping data from a database where it is
+relevant to distinguish between any valid value and null. Most readers will not
+be able to tell the difference, but it is possible to inspect a flatbuffer to
+see if a table field is present, present and default, or absent, meaning null.
+
+NOTE: As of mid 2020, FlatBuffers added optional scalar table fields with support in flatcc 0.6.1. These fields automatically imply `force_add` to represent null values when a field is absent and therefore these fields do not have a `force_add` method and these fields also do not have a default value other than `null`, i.e. null if not added.
 
 If Monster is declared as root, the above may also be called as:
 
@@ -526,7 +527,7 @@ as an operation on the field name, here with `Monster_Mini_start/end`:
 
     flatcc_builder_buffer_end(B, root);
 
-We can repeat the the table ensting as deep as we like, provided our
+We can repeat the the table nesting as deep as we like, provided our
 builder is willing to allocate enough stack space.
 
 **Warning**: It is possible to use the wrong table type operations
@@ -543,7 +544,7 @@ names.
 A table may be created with a constructor, but it requires all
 non-scalar objects to be references or pointers. Struct fields must be
 pointers to zero padded structs, and strings, vectors and tables must be
-references. The constructors are proably most useful for simple tables
+references. The constructors are probably most useful for simple tables
 with mostly scalar values (here we use the original Monster fields and
 leaves out any we have invented for the sake of illustration):
 
@@ -579,7 +580,7 @@ special problem since it is two fields treated as one and the type field
 will generally waste padding space if stored in order:
 
 To help pack unions better these can be added with the type
-seperate from the value reference using `add_type(B, test.type`,
+seperate from the value reference using `add_type(B, test.type)`,
 `add_value(B, test)` where the value is only added if the type is
 not `NONE`. The `add_type` should be called last since it is the
 smallest type.
@@ -883,21 +884,21 @@ Be aware that `Vec3_t` is for native updates while `Vec3_struct_t` is a const
 pointer to an endian encoded struct used in the reader interface, and actually
 also as source type in the clone operation.
 
-### Fixed Size Arrays in Structs
+### Fixed Length Arrays in Structs
 
-As of flatcc 0.6.0 it is possible to have fixed size arrays as structs members.
-A fixed size array is equivalent to having a struct field repeated one or more
-times. The schema syntax is `name : [type:count];` similar to an ordinary struct
-field `name : type;`. The type is any type that can ba valid struct field type
-including enums and nested structs. The size cannot be 0 and the overall size is
-limited by the maximum struct size the array is contained within which is
-typically 65535 (2^16-1).
+As of flatcc 0.6.0 it is possible to have fixed length arrays as structs
+members. A fixed length array is equivalent to having a struct field repeated
+one or more times. The schema syntax is `name : [type:count];` similar to an
+ordinary struct field `name : type;`. The type is any type that can ba valid
+struct field type including enums and nested structs. The size cannot be 0 and
+the overall size is limited by the maximum struct size the array is contained
+within which is typically 65535 (2^16-1).
 
 For example, given the schema:
 
     struct MyStruct {
       counters:[int:3];
-      // char is only valid as a fixed size array type
+      // char is only valid as a fixed length array type
       name:[char:6];
     }
     table MyTable {
@@ -945,9 +946,9 @@ To read a struct the pointer to the struct is retrieved first
     ns(MyStruct_struct_t) x;
 
     t = ns(MyTable_as_root(buf));
-    x = ns(MyTable_mystruct_get());
+    x = ns(MyTable_mystruct_get(t));
     for (sum = 0, i = 0; i < ns(MyStruct_counters_get_len()); ++i) {
-      sum += ns(MyStruct_counters_get(x, 0)) +
+      sum += ns(MyStruct_counters_get(x, i)) +
       // char arrays are endian neutral, so we can use pointer access.
       name = ns(MyStruct_name_get_ptr(x);
       name_len = strnlen(name, ns(MyStruct_name_get_len()));
@@ -964,9 +965,9 @@ The `_get` suffix can be ommitted in the above if the flatcc `-g` has not
 supplied to reduce the risk of name conflicts, but not for `_get_len` and
 `_get_ptr`.
 
-Note that it is not possible to have fixed size vectors as part of a table but
+Note that it is not possible to have fixed length arrays as part of a table but
 it is possible to wrap such data in a struct, and it is also possible to have
-vectors of structs that contain fixed size arrays.
+vectors of structs that contain fixed length arrays.
 
 
 ## Nested Buffers

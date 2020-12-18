@@ -15,6 +15,8 @@ static int reflection_EnumVal_verify_table(flatcc_table_verifier_descriptor_t *t
 static int reflection_Enum_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int reflection_Field_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int reflection_Object_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int reflection_RPCCall_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int reflection_Service_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int reflection_Schema_verify_table(flatcc_table_verifier_descriptor_t *td);
 
 static int reflection_Type_verify_table(flatcc_table_verifier_descriptor_t *td)
@@ -82,6 +84,7 @@ static int reflection_EnumVal_verify_table(flatcc_table_verifier_descriptor_t *t
     if ((ret = flatcc_verify_field(td, 1, 8, 8) /* value */)) return ret;
     if ((ret = flatcc_verify_table_field(td, 2, 0, &reflection_Object_verify_table) /* object */)) return ret;
     if ((ret = flatcc_verify_table_field(td, 3, 0, &reflection_Type_verify_table) /* union_type */)) return ret;
+    if ((ret = flatcc_verify_string_vector_field(td, 4, 0) /* documentation */)) return ret;
     return flatcc_verify_ok;
 }
 
@@ -113,6 +116,7 @@ static int reflection_Enum_verify_table(flatcc_table_verifier_descriptor_t *td)
     if ((ret = flatcc_verify_field(td, 2, 1, 1) /* is_union */)) return ret;
     if ((ret = flatcc_verify_table_field(td, 3, 1, &reflection_Type_verify_table) /* underlying_type */)) return ret;
     if ((ret = flatcc_verify_table_vector_field(td, 4, 0, &reflection_KeyValue_verify_table) /* attributes */)) return ret;
+    if ((ret = flatcc_verify_string_vector_field(td, 5, 0) /* documentation */)) return ret;
     return flatcc_verify_ok;
 }
 
@@ -149,6 +153,8 @@ static int reflection_Field_verify_table(flatcc_table_verifier_descriptor_t *td)
     if ((ret = flatcc_verify_field(td, 7, 1, 1) /* required */)) return ret;
     if ((ret = flatcc_verify_field(td, 8, 1, 1) /* key */)) return ret;
     if ((ret = flatcc_verify_table_vector_field(td, 9, 0, &reflection_KeyValue_verify_table) /* attributes */)) return ret;
+    if ((ret = flatcc_verify_string_vector_field(td, 10, 0) /* documentation */)) return ret;
+    if ((ret = flatcc_verify_field(td, 11, 1, 1) /* optional */)) return ret;
     return flatcc_verify_ok;
 }
 
@@ -181,6 +187,7 @@ static int reflection_Object_verify_table(flatcc_table_verifier_descriptor_t *td
     if ((ret = flatcc_verify_field(td, 3, 4, 4) /* minalign */)) return ret;
     if ((ret = flatcc_verify_field(td, 4, 4, 4) /* bytesize */)) return ret;
     if ((ret = flatcc_verify_table_vector_field(td, 5, 0, &reflection_KeyValue_verify_table) /* attributes */)) return ret;
+    if ((ret = flatcc_verify_string_vector_field(td, 6, 0) /* documentation */)) return ret;
     return flatcc_verify_ok;
 }
 
@@ -204,6 +211,67 @@ static inline int reflection_Object_verify_as_root_with_type_hash(const void *bu
     return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &reflection_Object_verify_table);
 }
 
+static int reflection_RPCCall_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_string_field(td, 0, 1) /* name */)) return ret;
+    if ((ret = flatcc_verify_table_field(td, 1, 1, &reflection_Object_verify_table) /* request */)) return ret;
+    if ((ret = flatcc_verify_table_field(td, 2, 1, &reflection_Object_verify_table) /* response */)) return ret;
+    if ((ret = flatcc_verify_table_vector_field(td, 3, 0, &reflection_KeyValue_verify_table) /* attributes */)) return ret;
+    if ((ret = flatcc_verify_string_vector_field(td, 4, 0) /* documentation */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int reflection_RPCCall_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, reflection_RPCCall_identifier, &reflection_RPCCall_verify_table);
+}
+
+static inline int reflection_RPCCall_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, reflection_RPCCall_type_identifier, &reflection_RPCCall_verify_table);
+}
+
+static inline int reflection_RPCCall_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &reflection_RPCCall_verify_table);
+}
+
+static inline int reflection_RPCCall_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &reflection_RPCCall_verify_table);
+}
+
+static int reflection_Service_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_string_field(td, 0, 1) /* name */)) return ret;
+    if ((ret = flatcc_verify_table_vector_field(td, 1, 0, &reflection_RPCCall_verify_table) /* calls */)) return ret;
+    if ((ret = flatcc_verify_table_vector_field(td, 2, 0, &reflection_KeyValue_verify_table) /* attributes */)) return ret;
+    if ((ret = flatcc_verify_string_vector_field(td, 3, 0) /* documentation */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int reflection_Service_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, reflection_Service_identifier, &reflection_Service_verify_table);
+}
+
+static inline int reflection_Service_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, reflection_Service_type_identifier, &reflection_Service_verify_table);
+}
+
+static inline int reflection_Service_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &reflection_Service_verify_table);
+}
+
+static inline int reflection_Service_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &reflection_Service_verify_table);
+}
+
 static int reflection_Schema_verify_table(flatcc_table_verifier_descriptor_t *td)
 {
     int ret;
@@ -212,6 +280,7 @@ static int reflection_Schema_verify_table(flatcc_table_verifier_descriptor_t *td
     if ((ret = flatcc_verify_string_field(td, 2, 0) /* file_ident */)) return ret;
     if ((ret = flatcc_verify_string_field(td, 3, 0) /* file_ext */)) return ret;
     if ((ret = flatcc_verify_table_field(td, 4, 0, &reflection_Object_verify_table) /* root_table */)) return ret;
+    if ((ret = flatcc_verify_table_vector_field(td, 5, 0, &reflection_Service_verify_table) /* services */)) return ret;
     return flatcc_verify_ok;
 }
 

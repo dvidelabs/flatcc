@@ -18,6 +18,7 @@ add_subdirectory(flatc_compat)
 add_subdirectory(json_test)
 add_subdirectory(emit_test)
 add_subdirectory(load_test)
+add_subdirectory(optional_scalars_test)
 # Reflection can break during development, so it is necessary
 # to disable until new reflection code generates cleanly.
 if (FLATCC_REFLECTION)

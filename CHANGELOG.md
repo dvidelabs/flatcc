@@ -27,6 +27,16 @@
 - BREAKING: some functions taking a string or buffer argument, and a separate
   size argument, have changed the size type from `int` to `size_t` in an effort
   to standardize and to remove sign conversion warnings.
+- Fixed size arrays renamed to fixed length arrays for consistency with Googles
+  project.
+- Support `aligned_alloc` for MingW (#155).
+- Disable config flag `FLATCC_ASCENDING_ENUM` now that Googles flatc compiler
+  also has support for reordered enums.
+- Fix cli options so common files can be generated without schema files
+  (PR #156).
+- Make build.sh work for non-bash shells (PR #159).
+- Fix parsing json struct as roort (#157)
+- Add support for optional scalar values (#162)
 
 ## [0.6.0]
 
@@ -55,8 +65,8 @@
 - Make `flatbuffers_not_found` and `flatbuffers_end` constant values both
   because it is more correct, and to silence warnings on some systems.
 - Fix flatcc endless loop with our of order field id's (#112).
-- Add support for fixed size arrays as struct member fields, including
-  fixed size char arrays. NOTE: bfbs schema uses byte arrays instead of
+- Add support for fixed length arrays as struct member fields, including
+  fixed length char arrays. NOTE: bfbs schema uses byte arrays instead of
   char arrays since Googles flatc tool does not have char arrays.
 - Fix `aligned_free` when used with `FLATCC_USE_GENERIC_ALIGNED_ALLOC` (#118).
 - Fix potential buffer overrun when parsing JSON containing surrogate pairs

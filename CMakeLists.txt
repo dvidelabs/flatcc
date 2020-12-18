@@ -49,7 +49,7 @@ option(FLATCC_RTONLY "enable build of runtime library only" OFF)
 # Use with or witout FLATCC_RTONLY to enable install targets.
 # Libraries are built statically by default, but can CMake's
 # cmake -DBUILD_SHARED_LIBS=on can override.
-option(FLATCC_INSTALL "enable build of runtime library only" OFF)
+option(FLATCC_INSTALL "enable install targets" OFF)
 
 # Use with debug build with testing enabled only. Enables generation
 # of coverage information during build and run. Adds target "coverage"
