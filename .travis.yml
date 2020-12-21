@@ -15,14 +15,17 @@ addons:
     packages:
       - ninja-build
 
-before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-
-install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ninja; fi
+# macos builds are too slow on travis, and now brew update doesn't work without additional configuration
+#before_install:
+#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+#
+#install:
+#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ninja; fi
 
 script:
   - scripts/initbuild.sh ninja
+	if: "$TRAVIS_OS_NAME" != "osx"
   - scripts/test.sh
+	if: "$TRAVIS_OS_NAME" != "osx"
   - scripts/initbuild.sh make-concurrent
   - scripts/test.sh
