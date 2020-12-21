@@ -2,7 +2,11 @@
 #include "flatcc/reflection/reflection_reader.h"
 #include "flatcc/portable/pcrt.h"
 
-#define lld(x) (long long int)(x)
+/* -DFLATCC_PORTABLE may help if inttypes.h is missing. */
+#ifndef PRId64
+#include <inttypes.h>
+#endif
+
 
 /* This is not an exhaustive test. */
 int test_schema(const char *monster_bfbs)
@@ -50,7 +54,7 @@ int test_schema(const char *monster_bfbs)
     if (reflection_Field_default_integer(F) != 150) {
         printf("mana field has wrong default value\n");
         printf("field name: %s\n", reflection_Field_name(F));
-        printf("%lld\n", lld(reflection_Field_default_integer(F)));
+        printf("%"PRId64"\n", (int64_t)reflection_Field_default_integer(F));
         goto done;
     }
     T = reflection_Field_type(F);
