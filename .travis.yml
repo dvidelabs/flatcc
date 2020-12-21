@@ -23,9 +23,7 @@ addons:
 #  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ninja; fi
 
 script:
-  - scripts/initbuild.sh ninja
-	if: "$TRAVIS_OS_NAME" != "osx"
-  - scripts/test.sh
-	if: "$TRAVIS_OS_NAME" != "osx"
+  - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then scripts/initbuild.sh ninja; fi
+  - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then scripts/test.sh; fi
   - scripts/initbuild.sh make-concurrent
   - scripts/test.sh
