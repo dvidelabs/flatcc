@@ -1261,8 +1261,8 @@ static void gen_builder_struct(fb_output_t *out, fb_compound_type_t *ct)
     fprintf(out->fp, "{ ");
     gen_builder_struct_field_assign(out, ct, 0, arg_count, convert_from_pe, 1);
     fprintf(out->fp, "return p; }\n");
-    fprintf(out->fp, "__%sbuild_struct(%s, %s, %llu, %u, %s_file_identifier, %s_type_identifier)\n",
-            nsc, nsc, snt.text, llu(ct->size), ct->align, snt.text, snt.text);
+    fprintf(out->fp, "__%sbuild_struct(%s, %s, %"PRIu64", %u, %s_file_identifier, %s_type_identifier)\n",
+            nsc, nsc, snt.text, (uint64_t)ct->size, ct->align, snt.text, snt.text);
 
     if (ct->size > 0) {
         fprintf(out->fp, "__%sdefine_fixed_array_primitives(%s, %s, %s_t)\n",
@@ -1298,7 +1298,7 @@ static int gen_builder_table_call_list(fb_output_t *out, fb_compound_type_t *ct,
             continue;
         }
         gen_comma(out, index, arg_count, is_macro);
-        fprintf(out->fp, "v%llu", llu(member->id));
+        fprintf(out->fp, "v%"PRIu64"", (uint64_t)member->id);
         ++index;
     }
     return index;
@@ -1367,17 +1367,17 @@ static int gen_builder_table_args(fb_output_t *out, fb_compound_type_t *ct, int 
             fb_compound_name(member->type.ct, &snref);
             switch (member->type.ct->symbol.kind) {
             case fb_is_struct:
-                fprintf(out->fp, "%s_t *v%llu", snref.text, llu(member->id));
+                fprintf(out->fp, "%s_t *v%"PRIu64"", snref.text, (uint64_t)member->id);
                 break;
             case fb_is_enum:
-                fprintf(out->fp, "%s_enum_t v%llu", snref.text, llu(member->id));
+                fprintf(out->fp, "%s_enum_t v%"PRIu64"", snref.text, (uint64_t)member->id);
                 break;
             case fb_is_table:
-                fprintf(out->fp, "%s_ref_t v%llu", snref.text, llu(member->id));
+                fprintf(out->fp, "%s_ref_t v%"PRIu64"", snref.text, (uint64_t)member->id);
                 break;
             case fb_is_union:
                 /* Unions jump an index because it is two fields. */
-                fprintf(out->fp, "%s_union_ref_t v%llu", snref.text, llu(member->id));
+                fprintf(out->fp, "%s_union_ref_t v%"PRIu64"", snref.text, (uint64_t)member->id);
                 break;
             default:
                 gen_panic(out, "internal error: unexpected table field type");
@@ -1390,10 +1390,10 @@ static int gen_builder_table_args(fb_output_t *out, fb_compound_type_t *ct, int 
             case fb_is_struct:
             case fb_is_enum:
             case fb_is_table:
-                fprintf(out->fp, "%s_vec_ref_t v%llu", snref.text, llu(member->id));
+                fprintf(out->fp, "%s_vec_ref_t v%"PRIu64"", snref.text, (uint64_t)member->id);
                 break;
             case fb_is_union:
-                fprintf(out->fp, "%s_union_vec_ref_t v%llu", snref.text, llu(member->id));
+                fprintf(out->fp, "%s_union_vec_ref_t v%"PRIu64"", snref.text, (uint64_t)member->id);
                 break;
             default:
                 gen_panic(out, "internal error: unexpected table table type");
@@ -1403,17 +1403,17 @@ static int gen_builder_table_args(fb_output_t *out, fb_compound_type_t *ct, int 
         case vt_scalar_type:
             tname_ns = scalar_type_ns(member->type.st, nsc);
             tname = scalar_type_name(member->type.st);
-            fprintf(out->fp, "%s%s v%llu", tname_ns, tname, llu(member->id));
+            fprintf(out->fp, "%s%s v%"PRIu64"", tname_ns, tname, (uint64_t)member->id);
             break;
         case vt_vector_type:
             tname = scalar_type_prefix(member->type.st);
-            fprintf(out->fp, "%s%s_vec_ref_t v%llu", nsc, tname, llu(member->id));
+            fprintf(out->fp, "%s%s_vec_ref_t v%"PRIu64"", nsc, tname, (uint64_t)member->id);
             break;
         case vt_string_type:
-            fprintf(out->fp, "%sstring_ref_t v%llu", nsc, llu(member->id));
+            fprintf(out->fp, "%sstring_ref_t v%"PRIu64"", nsc, (uint64_t)member->id);
             break;
         case vt_vector_string_type:
-            fprintf(out->fp, "%sstring_vec_ref_t v%llu", nsc, llu(member->id));
+            fprintf(out->fp, "%sstring_vec_ref_t v%"PRIu64"", nsc, (uint64_t)member->id);
             break;
         default:
             gen_panic(out, "internal error: unexpected table member type");
@@ -1472,11 +1472,11 @@ static int gen_builder_create_table(fb_output_t *out, fb_compound_type_t *ct)
         if (member->type.type == vt_compound_type_ref && member->type.ct->symbol.kind == fb_is_union) {
             has_union = 1;
             if (patch_union) {
-                fprintf(out->fp, "\n        || %s_%.*s_add_value(B, v%llu)", snt.text, n, s, llu(member->id));
+                fprintf(out->fp, "\n        || %s_%.*s_add_value(B, v%"PRIu64")", snt.text, n, s, (uint64_t)member->id);
                 continue;
             }
         }
-        fprintf(out->fp, "\n        || %s_%.*s_add(B, v%llu)", snt.text, n, s, llu(member->id));
+        fprintf(out->fp, "\n        || %s_%.*s_add(B, v%"PRIu64")", snt.text, n, s, (uint64_t)member->id);
     }
     if (patch_union && has_union) {
         for (member = ct->ordered_members; member; member = member->order) {
@@ -1485,7 +1485,7 @@ static int gen_builder_create_table(fb_output_t *out, fb_compound_type_t *ct)
             }
             if (member->type.type == vt_compound_type_ref && member->type.ct->symbol.kind == fb_is_union) {
                 symbol_name(&member->symbol, &n, &s);
-                fprintf(out->fp, "\n        || %s_%.*s_add_type(B, v%llu.type)", snt.text, n, s, llu(member->id));
+                fprintf(out->fp, "\n        || %s_%.*s_add_type(B, v%"PRIu64".type)", snt.text, n, s, (uint64_t)member->id);
             }
         }
     }
@@ -1519,8 +1519,8 @@ static int gen_builder_table(fb_output_t *out, fb_compound_type_t *ct)
     fprintf(out->fp,
             "static %s_ref_t %s_clone(%sbuilder_t *B, %s_table_t t);\n",
             snt.text, snt.text, nsc, snt.text);
-    fprintf(out->fp, "__%sbuild_table(%s, %s, %llu)\n",
-            nsc, nsc, snt.text, llu(ct->count));
+    fprintf(out->fp, "__%sbuild_table(%s, %s, %"PRIu64")\n",
+            nsc, nsc, snt.text, (uint64_t)ct->count);
     return 0;
 }
 
@@ -1620,15 +1620,15 @@ static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
             tprefix = scalar_type_prefix(member->type.st);
             if (is_optional) {
                 fprintf(out->fp,
-                    "__%sbuild_scalar_optional_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %s)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
-                    llu(member->size), member->align, snt.text);
+                    "__%sbuild_scalar_optional_field(%"PRIu64", %s, %s_%.*s, %s%s, %s%s, %"PRIu64", %u, %s)\n",
+                    nsc, (uint64_t)member->id, nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
+                    (uint64_t)member->size, member->align, snt.text);
             } else {
                 print_literal(member->type.st, &member->value, literal);
                 fprintf(out->fp,
-                    "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s%s, %s%s, %llu, %u, %s, %s)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
-                    llu(member->size), member->align, literal, snt.text);
+                    "__%sbuild_scalar_field(%"PRIu64", %s, %s_%.*s, %s%s, %s%s, %"PRIu64", %u, %s, %s)\n",
+                    nsc, (uint64_t)member->id, nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname,
+                    (uint64_t)member->size, member->align, literal, snt.text);
             }
             break;
         case vt_vector_type:
@@ -1636,8 +1636,8 @@ static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
             tname = scalar_type_name(member->type.st);
             tprefix = scalar_type_prefix(member->type.st);
             fprintf(out->fp,
-                "__%sbuild_vector_field(%llu, %s, %s_%.*s, %s%s, %s%s, %s)\n",
-                nsc, llu(member->id), nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname, snt.text);
+                "__%sbuild_vector_field(%"PRIu64", %s, %s_%.*s, %s%s, %s%s, %s)\n",
+                nsc, (uint64_t)member->id, nsc, snt.text, n, s, nsc, tprefix, tname_ns, tname, snt.text);
             /* [ubyte] vectors can nest buffers. */
             if (member->nest) {
                 switch (member->nest->symbol.kind) {
@@ -1660,45 +1660,45 @@ static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
             break;
         case vt_string_type:
             fprintf(out->fp,
-                "__%sbuild_string_field(%llu, %s, %s_%.*s, %s)\n",
-                nsc, llu(member->id), nsc, snt.text, n, s, snt.text);
+                "__%sbuild_string_field(%"PRIu64", %s, %s_%.*s, %s)\n",
+                nsc, (uint64_t)member->id, nsc, snt.text, n, s, snt.text);
             break;
         case vt_vector_string_type:
             fprintf(out->fp,
-                "__%sbuild_string_vector_field(%llu, %s, %s_%.*s, %s)\n",
-                nsc, llu(member->id), nsc, snt.text, n, s, snt.text);
+                "__%sbuild_string_vector_field(%"PRIu64", %s, %s_%.*s, %s)\n",
+                nsc, (uint64_t)member->id, nsc, snt.text, n, s, snt.text);
             break;
         case vt_compound_type_ref:
             fb_compound_name(member->type.ct, &snref);
             switch (member->type.ct->symbol.kind) {
             case fb_is_struct:
                 fprintf(out->fp,
-                    "__%sbuild_struct_field(%llu, %s, %s_%.*s, %s, %llu, %u, %s)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, snref.text, llu(member->size), member->align, snt.text);
+                    "__%sbuild_struct_field(%"PRIu64", %s, %s_%.*s, %s, %"PRIu64", %u, %s)\n",
+                    nsc, (uint64_t)member->id, nsc, snt.text, n, s, snref.text, (uint64_t)member->size, member->align, snt.text);
                 break;
             case fb_is_table:
                 fprintf(out->fp,
-                    "__%sbuild_table_field(%llu, %s, %s_%.*s, %s, %s)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snt.text);
+                    "__%sbuild_table_field(%"PRIu64", %s, %s_%.*s, %s, %s)\n",
+                    nsc, (uint64_t)member->id, nsc, snt.text, n, s, snref.text, snt.text);
                 break;
             case fb_is_enum:
                 if (is_optional) {
                     fprintf(out->fp,
-                        "__%sbuild_scalar_optional_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %llu, %u, %s)\n",
-                        nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text,
-                        llu(member->size), member->align, snt.text);
+                        "__%sbuild_scalar_optional_field(%"PRIu64", %s, %s_%.*s, %s, %s_enum_t, %"PRIu64", %u, %s)\n",
+                        nsc, (uint64_t)member->id, nsc, snt.text, n, s, snref.text, snref.text,
+                        (uint64_t)member->size, member->align, snt.text);
                 } else {
                     print_literal(member->type.ct->type.st, &member->value, literal);
                     fprintf(out->fp,
-                        "__%sbuild_scalar_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %llu, %u, %s, %s)\n",
-                        nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text,
-                        llu(member->size), member->align, literal, snt.text);
+                        "__%sbuild_scalar_field(%"PRIu64", %s, %s_%.*s, %s, %s_enum_t, %"PRIu64", %u, %s, %s)\n",
+                        nsc, (uint64_t)member->id, nsc, snt.text, n, s, snref.text, snref.text,
+                        (uint64_t)member->size, member->align, literal, snt.text);
                 }
                 break;
             case fb_is_union:
                 fprintf(out->fp,
-                    "__%sbuild_union_field(%llu, %s, %s_%.*s, %s, %s)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snt.text);
+                    "__%sbuild_union_field(%"PRIu64", %s, %s_%.*s, %s, %s)\n",
+                    nsc, (uint64_t)member->id, nsc, snt.text, n, s, snref.text, snt.text);
                 gen_union_fields(out, snt.text, n, s, member->type.ct, 0);
                 break;
             default:
@@ -1714,26 +1714,26 @@ static int gen_builder_table_fields(fb_output_t *out, fb_compound_type_t *ct)
                     fprintf(out->fp, "/* vector has keyed elements */\n");
                 }
                 fprintf(out->fp,
-                    "__%sbuild_vector_field(%llu, %s, %s_%.*s, %s, %s_t, %s)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text, snt.text);
+                    "__%sbuild_vector_field(%"PRIu64", %s, %s_%.*s, %s, %s_t, %s)\n",
+                    nsc, (uint64_t)member->id, nsc, snt.text, n, s, snref.text, snref.text, snt.text);
                 break;
             case fb_is_table:
                 if (member->type.ct->symbol.flags & fb_indexed) {
                     fprintf(out->fp, "/* vector has keyed elements */\n");
                 }
                 fprintf(out->fp,
-                    "__%sbuild_table_vector_field(%llu, %s, %s_%.*s, %s, %s)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snt.text);
+                    "__%sbuild_table_vector_field(%"PRIu64", %s, %s_%.*s, %s, %s)\n",
+                    nsc, (uint64_t)member->id, nsc, snt.text, n, s, snref.text, snt.text);
                 break;
             case fb_is_enum:
                 fprintf(out->fp,
-                    "__%sbuild_vector_field(%llu, %s, %s_%.*s, %s, %s_enum_t, %s)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snref.text, snt.text);
+                    "__%sbuild_vector_field(%"PRIu64", %s, %s_%.*s, %s, %s_enum_t, %s)\n",
+                    nsc, (uint64_t)member->id, nsc, snt.text, n, s, snref.text, snref.text, snt.text);
                 break;
             case fb_is_union:
                 fprintf(out->fp,
-                    "__%sbuild_union_vector_field(%llu, %s, %s_%.*s, %s, %s)\n",
-                    nsc, llu(member->id), nsc, snt.text, n, s, snref.text, snt.text);
+                    "__%sbuild_union_vector_field(%"PRIu64", %s, %s_%.*s, %s, %s)\n",
+                    nsc, (uint64_t)member->id, nsc, snt.text, n, s, snref.text, snt.text);
                 gen_union_fields(out, snt.text, n, s, member->type.ct, 1);
                 break;
             default:
