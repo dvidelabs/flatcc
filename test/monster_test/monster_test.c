@@ -720,8 +720,14 @@ int gen_monster(flatcc_builder_t *B, int with_size)
     test[1].a = 0x50;
     test[1].b = 0x60;
     ns(Monster_test4_push_create(B, 0x70, (int8_t)0x80));
+    /*
+     * Zero padding within struct
+     * - not needed when receiving a pointer like `test` in the above.
+     */
+    ns(Test_clear(&x));
     x.a = 0x190; /* This is a short. */
     x.b = (int8_t)0x91; /* This is a byte. */
+    /* And x also has a hidden trailing padding byte. */
     ns(Monster_test4_push(B, &x));
     ns(Monster_test4_push(B, &x));
     /* We can use either field mapped push or push on the type. */
@@ -1824,7 +1830,7 @@ int verify_fixed_length_array(const void *buffer, size_t size)
         printf("Monster buffer with fixed length arrays failed to verify, got: %s\n", flatcc_verify_error_string(ret));
         return -1;
     }
-    
+
     mon = ns(Monster_as_root(buffer));
     if (ns(Monster_test_type(mon)) != ns(Any_Alt)) {
         printf("test field does not have Alt type");
@@ -1889,7 +1895,7 @@ int verify_fixed_length_array(const void *buffer, size_t size)
             return -1;
         }
     }
-        
+
     ns(FooBar_copy_from_pe(&fa2, fa));
     if (fa2.foo[0] != 1.0f || fa2.foo[1] != 2.0f || fa2.foo[15] != 16.0f ||
             fa2.bar[0] != 100 || fa2.bar[9] != 1000) {
