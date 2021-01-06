@@ -79,7 +79,7 @@ as sharing a string.
 FlatBuffers are constructed back to front such that lower level objects
 such as sub-tables and strings are created first in stored last and such
 that the root object is stored last and early in the buffer. See also
-(Stream Buffers](#stream-buffers) for a proposed variation over this
+[Stream Buffers](#stream-buffers) for a proposed variation over this
 theme.
 
 All addressing in FlatBuffers are relative. The reason for this? When
