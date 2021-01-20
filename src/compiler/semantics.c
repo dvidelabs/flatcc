@@ -1711,15 +1711,15 @@ static int process_enum(fb_parser_t *P, fb_compound_type_t *ct)
         } else {
             if (member->value.type) {
                 index = member->value;
-                /*
-                 * Captures errors in user assigned values. Also captures
-                 * overflow on auto-increment on all types except maximum
-                 * representation size, i.e. long or ulong which we handled
-                 * above.
-                 */
-                if (fb_coerce_scalar_type(P, sym, ct->type.st, &index)) {
-                    return -1;
-                }
+            }
+            /*
+             * Captures errors in user assigned values. Also captures
+             * overflow on auto-increment on all types except maximum
+             * representation size, i.e. long or ulong which we handled
+             * above.
+             */
+            if (fb_coerce_scalar_type(P, sym, ct->type.st, &index)) {
+                return -1;
             }
             member->value = index;
         }
