@@ -461,7 +461,7 @@ may be higher but eventually smaller buffers will be hit by call
 overhead and thus we get down to 300MB/s at about 150ns/op encoding
 small buffers. These numbers are just a rough guideline - they obviously
 depend on hardware, compiler, and data encoded. Measurements are
-excluding an ininitial warmup step.
+excluding an initial warmup step.
 
 The generated JSON parsers are roughly 4 times slower than building a
 FlatBuffer directly in C or C++, or about 2200ns vs 600ns for a 700 byte
@@ -542,7 +542,7 @@ schema. It requires a `flatbuffers_common_builder.h` file also generated
 by the compiler and a small runtime library `libflatccrt.a`. It is
 because of this requirement that the reader and builder generated code
 is kept separate. Typical uses can be seen in the [monster_test.c] file.
-The builder allows of repeated pushing of content to a vector or a
+The builder allows for repeated pushing of content to a vector or a
 string while a containing table is being updated which simplifies
 parsing of external formats. It is also possible to build nested buffers
 in-line - at first this may sound excessive but it is useful when
