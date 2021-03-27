@@ -1,14 +1,38 @@
 on:
-  - push
-  - pull_request
+  push:
+    branches-ignore:
+      - 'ci-more'
+  pull_request:
 jobs:
   test_unix:
     name: 'Test Unix with CMake'
     strategy:
       matrix:
-        os: ['macos-latest', 'ubuntu-latest']
-        config: ['Release', 'Debug']
-        cmake_generator: ['Unix Makefiles', 'Ninja']
+        include:
+          - os: 'ubuntu-latest'
+            config: 'Release'
+            cmake_generator: 'Unix Makefiles'
+            shared: 'OFF'
+          - os: 'ubuntu-latest'
+            config: 'Debug'
+            cmake_generator: 'Ninja'
+            shared: 'OFF'
+          - os: 'ubuntu-latest'
+            config: 'Release'
+            cmake_generator: 'Unix Makefiles'
+            shared: 'ON'
+          - os: 'macos-latest'
+            config: 'Release'
+            cmake_generator: 'Unix Makefiles'
+            shared: 'OFF'
+          - os: 'macos-latest'
+            config: 'Debug'
+            cmake_generator: 'Ninja'
+            shared: 'OFF'
+          - os: 'macos-latest'
+            config: 'Release'
+            cmake_generator: 'Ninja'
+            shared: 'ON'
     runs-on: ${{ matrix.os }}
     steps:
       - name: 'Checkout repo'
@@ -25,7 +49,9 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -G "${{ matrix.cmake_generator }}" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DFLATCC_INSTALL=ON -DCMAKE_INSTALL_PREFIX=prefix
+          cmake .. -DBUILD_SHARED_LIBS=${{ matrix.shared }} -G "${{ matrix.cmake_generator }}" \
+              -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DFLATCC_INSTALL=ON \
+              -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/prefix
       - name: 'CMake build'
         run: |
           cmake --build build --parallel
@@ -36,6 +62,12 @@ jobs:
       - name: 'Install'
         run: |
           cmake --build build --target install
+      - name: 'Test installed flatcc prefix'
+        run: |
+          mkdir user && cd user
+          cmake "${{ github.workspace }}/test/install_test" -DCMAKE_PREFIX_PATH="${{ github.workspace }}/prefix"
+          cmake --build .
+          ctest .
   test_windows:
     name: 'Test Windows with CMake'
     strategy:
@@ -50,7 +82,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -A ${{ matrix.arch }} -DFLATCC_INSTALL=ON -DCMAKE_INSTALL_PREFIX=prefix
+          cmake .. -A ${{ matrix.arch }} -DFLATCC_INSTALL=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/prefix
       - name: 'CMake build'
         run: |
           cmake --build build --parallel --config ${{ matrix.config }} --verbose
@@ -61,3 +93,91 @@ jobs:
       - name: 'Install'
         run: |
           cmake --build build --target install --config ${{ matrix.config }}
+      - name: 'Test installed flatcc prefix'
+        run: |
+          mkdir user && cd user
+          cmake "${{ github.workspace }}/test/install_test" -A ${{ matrix.arch }} `
+              -DCMAKE_PREFIX_PATH="${{ github.workspace }}/prefix"
+          cmake --build . --config ${{ matrix.config }}
+          ctest . -C ${{ matrix.config }}
+  test_mingw_on_linux:
+    name: 'Test cross building to Windows with CMake'
+    strategy:
+      matrix:
+        config: ['Release']
+        arch: ['x64']
+        shared_build: ['ON']
+        config_build: ['Release']
+        shared_host: ['ON']
+        config_host: ['Release']
+    runs-on: 'ubuntu-latest'
+    steps:
+      - name: 'Install mingw'
+        run: |
+          sudo apt-get install mingw-w64
+      - name: 'Checkout repo'
+        uses: actions/checkout@v2
+      - name: 'CMake configure/build/install build flatcc (native)'
+        run: |
+          mkdir build_native
+          cd build_native
+          cmake .. -DBUILD_SHARED_LIBS=${{ matrix.shared_build }} -DCMAKE_BUILD_TYPE=${{ matrix.config_build }} \
+              -DFLATCC_INSTALL=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/prefix_build
+          cmake --build . --parallel
+          cmake --build . --target install
+      - name: 'CMake configure/build/install host flatcc (cross)'
+        run: |
+          mkdir build_mingw
+          cd build_mingw
+          cmake .. -DCMAKE_TOOLCHAIN_FILE=../test/cmake/x86_64-w64-mingw32-toolchain.cmake \
+              -DBUILD_SHARED_LIBS=${{ matrix.shared_host }} -DFLATCC_INSTALL=ON \
+              -DCMAKE_BUILD_TYPE=${{ matrix.config_host }} \
+              -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/prefix_host \
+              -DFLATCC_ROOT_FOR_BUILD=${{ github.workspace }}/prefix_build
+          cmake --build . --parallel
+          cmake --build . --target install
+      - name: 'Build a flatbuffers project with both native and host flatcc'
+        run: |
+          mkdir project
+          cd project
+          cmake ../test/install_test -DCMAKE_TOOLCHAIN_FILE=../test/cmake/x86_64-w64-mingw32-toolchain.cmake \
+              -DCMAKE_PREFIX_PATH=${{ github.workspace }}/prefix_host \
+              -DFLATCC_ROOT_FOR_BUILD=${{ github.workspace }}/prefix_build
+          cmake --build .
+  test_mingw_on_windows:
+    name: 'Test mingw on Windows'
+    strategy:
+      matrix:
+        shared: ['ON']
+        config: ['Release']
+    runs-on: 'windows-latest'
+    steps:
+      - name: 'Checkout repo'
+        uses: actions/checkout@v2
+      - name: 'CMake configure'
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DBUILD_SHARED_LIBS=${{ matrix.shared }} -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
+              -DFLATCC_INSTALL=ON -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/prefix" `
+              -G "MinGW Makefiles"
+      - name: 'CMake build'
+        run: |
+          cmake --build build --parallel
+      - name: 'CTest'
+        run: |
+          # FIXME: try using https://cmake.org/cmake/help/latest/prop_test/ENVIRONMENT.html on each test
+          $env:Path += ";${{ github.workspace }}/bin"
+          cd build
+          ctest -V -C ${{ matrix.config }}
+      - name: 'Install'
+        run: |
+          cmake --build build --target install
+      - name: 'Test installed flatcc prefix'
+        run: |
+          $env:Path += ";${{ github.workspace }}/prefix/bin"
+          mkdir user && cd user
+          cmake "${{ github.workspace }}/test/install_test" `
+              -DCMAKE_PREFIX_PATH="${{ github.workspace }}/prefix" -G "MinGW Makefiles"
+          cmake --build .
+          ctest .
