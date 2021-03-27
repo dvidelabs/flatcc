@@ -4,14 +4,15 @@
 set(GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/monster_test_cpp")
 set(FBS_DIR "${PROJECT_SOURCE_DIR}/samples/monster")
 
-include_directories("${GEN_DIR}")
-
-flatcc_generate_sources(ALL OUTPUT_DIR "${GEN_DIR}"
-    DEFINITION_FILES "${FBS_DIR}/monster.fbs"
+flatcc_generate_sources(
+    NAME monster_test_cpp
+    SCHEMA_FILES "${FBS_DIR}/monster.fbs"
+    ALL
+    OUTPUT_DIR "${GEN_DIR}"
 )
 
-add_executable(monster_test_cpp monster_test.cpp "${GEN_DIR}/monster_builder.h")
-target_link_libraries(monster_test_cpp flatcc::runtime)
+add_executable(monster_test_cpp monster_test.cpp)
+target_link_libraries(monster_test_cpp PRIVATE flatcc::runtime flatcc_generated::monster_test_cpp)
 
 add_test(NAME monster_test_cpp COMMAND monster_test_cpp)
 
