@@ -1213,7 +1213,7 @@ vector field that we just invented for the occasion):
       Monster_friends_push_create_str(B, "Shrek");
       Monster_friends_push_create_str(B, "Pinnochio");
       Monster_friends_push_create_str(B, "Pinnochio");
-      Monster_friends_push_creae(B, "Hector", 6);
+      Monster_friends_push_create(B, "Hector", 6);
       Monster_friends_push(friend);
       p = Monster_friends_extend(B, 1);
       *p = flatbuffers_string_create_str("Cindarella");
