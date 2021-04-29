@@ -79,6 +79,22 @@ void print_attributes(reflection_KeyValue_vec_t KV)
     printf("]");
 }
 
+void print_documentation(flatbuffers_string_vec_t docs)
+{
+    flatbuffers_string_t doc;
+    size_t i;
+
+    printf("[");
+    for (i = 0; i < flatbuffers_string_vec_len(docs); ++i) {
+        doc = flatbuffers_string_vec_at(docs, i);
+        if (i > 0) {
+            printf(",");
+        }
+        printf("\"%s\"", doc);
+    }
+    printf("]");
+}
+
 void print_object(reflection_Object_table_t O)
 {
     reflection_Field_vec_t Flds;
@@ -114,6 +130,11 @@ void print_object(reflection_Object_table_t O)
             printf(",\"attributes\":");
             print_attributes(reflection_Field_attributes(F));
         }
+        if (reflection_Field_documentation_is_present(F) &&
+            flatbuffers_string_vec_len(reflection_Field_documentation(F)) > 0) {
+            printf(",\"documentation\":");
+            print_documentation(reflection_Field_documentation(F));
+        }
         printf("}");
     }
     printf("]");
@@ -129,6 +150,11 @@ void print_object(reflection_Object_table_t O)
     if (reflection_Object_attributes_is_present(O)) {
         printf(",\"attributes\":");
         print_attributes(reflection_Object_attributes(O));
+    }
+    if (reflection_Object_documentation_is_present(O) &&
+        flatbuffers_string_vec_len(reflection_Object_documentation(O)) > 0) {
+        printf(",\"documentation\":");
+        print_documentation(reflection_Object_documentation(O));
     }
     printf("}");
 }
@@ -159,6 +185,11 @@ void print_enum(reflection_Enum_table_t E)
             printf(",\"union_type\":");
             print_type(reflection_EnumVal_union_type(EV));
         }
+        if (reflection_EnumVal_documentation_is_present(EV) &&
+            flatbuffers_string_vec_len(reflection_EnumVal_documentation(EV)) > 0) {
+            printf(",\"documentation\":");
+            print_documentation(reflection_EnumVal_documentation(EV));
+        }
         printf("}");
     }
     printf("]");
@@ -170,6 +201,11 @@ void print_enum(reflection_Enum_table_t E)
     if (reflection_Enum_attributes_is_present(E)) {
         printf(",\"attributes\":");
         print_attributes(reflection_Enum_attributes(E));
+    }
+    if (reflection_Enum_documentation_is_present(E) &&
+        flatbuffers_string_vec_len(reflection_Enum_documentation(E)) > 0) {
+        printf(",\"documentation\":");
+        print_documentation(reflection_Enum_documentation(E));
     }
     printf("}");
 }
