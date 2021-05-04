@@ -174,10 +174,50 @@ void print_enum(reflection_Enum_table_t E)
     printf("}");
 }
 
+void print_call(reflection_RPCCall_table_t C)
+{
+    printf("{\"name\":\"%s\"", reflection_RPCCall_name(C));
+    printf(",\"request\":");
+    print_object(reflection_RPCCall_request(C));
+    printf(",\"response\":");
+    print_object(reflection_RPCCall_response(C));
+
+    if (reflection_RPCCall_attributes_is_present(C)) {
+        printf(",\"attributes\":");
+        print_attributes(reflection_RPCCall_attributes(C));
+    }
+    printf("}");
+}
+
+void print_service(reflection_Service_table_t S)
+{
+    reflection_RPCCall_vec_t calls;
+    size_t i;
+
+    printf("{\"name\":\"%s\"", reflection_Service_name(S));
+
+    printf(",\"calls\":[");
+    calls = reflection_Service_calls(S);
+    for (i = 0; i < reflection_RPCCall_vec_len(calls); ++i) {
+        if (i > 0) {
+            printf(",");
+        }
+        print_call(reflection_RPCCall_vec_at(calls, i));
+    }
+    printf("]");
+
+    if (reflection_Service_attributes_is_present(S)) {
+        printf(",\"attributes\":");
+        print_attributes(reflection_Service_attributes(S));
+    }
+    printf("}");
+}
+
 void print_schema(reflection_Schema_table_t S)
 {
     reflection_Object_vec_t Objs;
     reflection_Enum_vec_t Enums;
+    reflection_Service_vec_t Services;
     size_t i;
 
     Objs = reflection_Schema_objects(S);
@@ -208,6 +248,17 @@ void print_schema(reflection_Schema_table_t S)
     if (reflection_Schema_root_table_is_present(S)) {
         printf(",\"root_table\":");
         print_object(reflection_Schema_root_table(S));
+    }
+    if (reflection_Schema_services_is_present(S)) {
+        printf(",\"services\":[");
+        Services = reflection_Schema_services(S);
+        for (i = 0; i < reflection_Service_vec_len(Services); ++i) {
+            if (i > 0) {
+                printf(",");
+            }
+            print_service(reflection_Service_vec_at(Services, i));
+        }
+        printf("]");
     }
     printf("}\n");
 }
