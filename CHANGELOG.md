@@ -38,6 +38,7 @@
 - Fix parsing json struct as roort (#157)
 - Add support for optional scalar values (#162)
 - Fix enum out of range (#176)
+- Add stdalign support for TCC compiler (#174)
 
 ## [0.6.0]
 
