@@ -345,6 +345,47 @@ static void export_root_type(flatcc_builder_t *B, fb_symbol_t * root_type,
     }
 }
 
+static void export_call(flatcc_builder_t *B, fb_member_t *member, reflection_Object_ref_t *object_map)
+{
+    reflection_RPCCall_vec_push_start(B);
+    reflection_RPCCall_name_create(B, member->symbol.ident->text, (size_t)member->symbol.ident->len);
+    reflection_RPCCall_request_add(B, object_map[member->req_type.ct->export_index]);
+    reflection_RPCCall_response_add(B, object_map[member->type.ct->export_index]);
+    if (member->metadata) {
+        reflection_RPCCall_attributes_start(B);
+        export_attributes(B, member->metadata);
+        reflection_RPCCall_attributes_end(B);
+    }
+    reflection_RPCCall_vec_push_end(B);
+}
+
+static void export_services(flatcc_builder_t *B, service_entry_t *services, int nservices,
+        reflection_Object_ref_t *object_map)
+{
+    int i;
+    fb_compound_type_t *ct;
+    fb_symbol_t *sym;
+
+    reflection_Schema_services_start(B);
+    for (i = 0; i < nservices; ++i) {
+        ct = services[i].ct;
+        reflection_Service_vec_push_start(B);
+        reflection_Service_name_create_str(B, services[i].name);
+        reflection_Service_calls_start(B);
+        for (sym = ct->members; sym; sym = sym->link) {
+            export_call(B, (fb_member_t *)sym, object_map);
+        }
+        reflection_Service_calls_end(B);
+        if (ct->metadata) {
+            reflection_Service_attributes_start(B);
+            export_attributes(B, ct->metadata);
+            reflection_Service_attributes_end(B);
+        }
+        reflection_Service_vec_push_end(B);
+    }
+    reflection_Schema_services_end(B);
+}
+
 static int export_schema(flatcc_builder_t *B, fb_options_t *opts, fb_schema_t *S)
 {
     catalog_t catalog;
@@ -377,6 +418,7 @@ static int export_schema(flatcc_builder_t *B, fb_options_t *opts, fb_schema_t *S
     export_objects(B, catalog.objects, catalog.nobjects, object_map);
     export_enums(B, catalog.enums, catalog.nenums, object_map);
     export_root_type(B, S->root_type.type, object_map);
+    export_services(B, catalog.services, catalog.nservices, object_map);
 
     reflection_Schema_end_as_root(B);
 

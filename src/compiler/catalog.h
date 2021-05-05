@@ -10,6 +10,7 @@
 typedef struct entry entry_t;
 typedef entry_t object_entry_t;
 typedef entry_t enum_entry_t;
+typedef entry_t service_entry_t;
 typedef struct scope_entry scope_entry_t;
 
 struct entry {
@@ -28,15 +29,20 @@ struct catalog {
     int qualify_names;
     int nobjects;
     int nenums;
+    int nservices;
     size_t name_table_size;
     object_entry_t *objects;
     enum_entry_t *enums;
+    service_entry_t *services;
     char *name_table;
     object_entry_t *next_object;
     enum_entry_t *next_enum;
+    service_entry_t *next_service;
     char *next_name;
     fb_schema_t *schema;
 };
+
+#include <stdio.h>
 
 static void count_symbol(void *context, fb_symbol_t *sym)
 {
@@ -74,6 +80,9 @@ static void count_symbol(void *context, fb_symbol_t *sym)
     case fb_is_union:
     case fb_is_enum:
         ++catalog->nenums;
+        break;
+    case fb_is_rpc_service:
+        ++catalog->nservices;
         break;
     default: return;
     }
@@ -122,6 +131,11 @@ static void install_symbol(void *context, fb_symbol_t *sym)
         catalog->next_enum->name = name;
         catalog->next_enum++;
         break;
+    case fb_is_rpc_service:
+        catalog->next_service->ct = (fb_compound_type_t *)sym;
+        catalog->next_service->name = name;
+        catalog->next_service++;
+        break;
     default: break;
     }
 }
@@ -160,6 +174,9 @@ static void clear_catalog(catalog_t *catalog)
     if (catalog->enums) {
         free(catalog->enums);
     }
+    if (catalog->services) {
+        free(catalog->services);
+    }
     if (catalog->name_table) {
         free(catalog->name_table);
     }
@@ -176,12 +193,15 @@ static int build_catalog(catalog_t *catalog, fb_schema_t *schema, int qualify_na
     fb_scope_table_visit(index, count_symbols, catalog);
     catalog->objects = calloc((size_t)catalog->nobjects, sizeof(catalog->objects[0]));
     catalog->enums = calloc((size_t)catalog->nenums, sizeof(catalog->enums[0]));
+    catalog->services = calloc((size_t)catalog->nservices, sizeof(catalog->services[0]));
     catalog->name_table = malloc(catalog->name_table_size);
     catalog->next_object = catalog->objects;
     catalog->next_enum = catalog->enums;
+    catalog->next_service = catalog->services;
     catalog->next_name = catalog->name_table;
     if ((!catalog->objects && catalog->nobjects > 0) ||
         (!catalog->enums && catalog->nenums > 0) ||
+        (!catalog->services && catalog->nservices > 0) ||
         (!catalog->name_table && catalog->name_table_size > 0)) {
         clear_catalog(catalog);
         return -1;
@@ -190,6 +210,7 @@ static int build_catalog(catalog_t *catalog, fb_schema_t *schema, int qualify_na
     /* Presort objects and enums because the sorted index is required in Type tables. */
     sort_entries(catalog->objects, catalog->nobjects);
     sort_entries(catalog->enums, catalog->nenums);
+    sort_entries(catalog->services, catalog->nservices);
     return 0;
 }
 
