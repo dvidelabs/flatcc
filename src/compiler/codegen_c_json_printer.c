@@ -564,14 +564,13 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
                         member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, snref.text);
                 break;
             case fb_is_enum:
+                tp = scalar_type_prefix(member->type.ct->type.st);
 #if FLATCC_JSON_PRINT_MAP_ENUMS
-                tp = scalar_type_prefix(member->type.st);
                 fprintf(out->fp,
                         "flatcc_json_printer_%s_enum_vector_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRIu64", %s_print_json_enum);",
                         tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, (uint64_t)ct->size, snref.text);
                 break;
 #else
-                tp = scalar_type_prefix(member->type.st);
                 fprintf(out->fp,
                         "flatcc_json_printer_%s_vector_field(ctx, td, %"PRIu64", \"%.*s\", %ld);",
                         tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len);
