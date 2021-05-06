@@ -40,6 +40,7 @@
 - Fix enum out of range (#176).
 - Add stdalign support for TCC compiler (#174).
 - Add RPC data to bfbs binary schema (#181).
+- Fix support for printing JSON enum vectors (#182).
 
 ## [0.6.0]
 
