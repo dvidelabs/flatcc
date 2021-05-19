@@ -89,7 +89,8 @@ const char *test(flatcc_builder_t *B, const char *buf, const char *end, int *ret
     uint64_t w;
     const char *k;
     char *s;
-    char code[4];
+    flatcc_json_parser_escape_buffer_t code;
+
     void *p;
 
     ctx = &parse_ctx;
