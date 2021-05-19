@@ -225,6 +225,10 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
             message(STATUS "Disabling GNU C compiler warnings: -Wstringop-truncation -Wno-format-overflow")
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-stringop-truncation -Wno-format-overflow")
         endif()
+        if (NOT (GCC_VERSION VERSION_LESS 11.0))
+        # Disable warning on misleading indentation it become more aggressive in 11.0
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-misleading-indentation")
+        endif()
         if (FLATCC_GNU_POSIX_MEMALIGN)
             # -std=c11 prevents detection of posix_memalign and aligned_alloc might be missing
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DPORTABLE_POSIX_MEMALIGN=1")

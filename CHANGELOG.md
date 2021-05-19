@@ -41,6 +41,7 @@
 - Add stdalign support for TCC compiler (#174).
 - Add RPC data to bfbs binary schema (#181).
 - Fix support for printing JSON enum vectors (#182).
+- Silence GCC 11 identation warning (#183).
 
 ## [0.6.0]
 
