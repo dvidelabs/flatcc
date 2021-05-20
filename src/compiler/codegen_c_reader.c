@@ -37,6 +37,9 @@ static void print_type_identifier(fb_output_t *out, fb_compound_type_t *ct)
     uint32_t type_hash;
     int conflict = 0;
     fb_symbol_t *sym;
+    const char *file_identifier;
+    int file_identifier_len;
+    const char *quote;
 
     fb_clear(snt);
 
@@ -54,19 +57,28 @@ static void print_type_identifier(fb_output_t *out, fb_compound_type_t *ct)
             break;
         }
     }
+    if (out->S->file_identifier.type == vt_string) {
+        quote = "\"";
+        file_identifier = out->S->file_identifier.s.s;
+        file_identifier_len = out->S->file_identifier.s.len;
+    } else {
+        quote = "";
+        file_identifier = "0";
+        file_identifier_len = 1;
+    }
     fprintf(out->fp,
             "#ifndef %s_file_identifier\n"
-            "#define %s_file_identifier %sidentifier\n"
+            "#define %s_file_identifier %s%.*s%s\n"
             "#endif\n",
-            name, name, nsc);
+            name, name, quote, file_identifier_len, file_identifier, quote);
     if (!conflict) {
         /* For backwards compatibility. */
         fprintf(out->fp,
                 "/* deprecated, use %s_file_identifier */\n"
                 "#ifndef %s_identifier\n"
-                "#define %s_identifier %sidentifier\n"
+                "#define %s_identifier %s%.*s%s\n"
                 "#endif\n",
-                name, name, name, nsc);
+                name, name, name, quote, file_identifier_len, file_identifier, quote);
     }
     fprintf(out->fp,
         "#define %s_type_hash ((%sthash_t)0x%lx)\n",

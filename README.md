@@ -1263,12 +1263,9 @@ defined as the null identifier.
 
 The generated code defines the identifiers for a given table:
 
-    #ifndef MyGame_Example_Monster_identifier
-    #define MyGame_Example_Monster_identifier flatbuffers_identifier
+    #ifndef MyGame_Example_Monster_file_identifier
+    #define MyGame_Example_Monster_file_identifier "MONS"
     #endif
-
-The `flatbuffers_identifier` is the schema specific `file_identifier`
-and is undefined and redefined for each generated `_reader.h` file.
 
 The user can now override the identifier for a given type, for example:
 
