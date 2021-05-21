@@ -1021,12 +1021,11 @@ static void gen_pretext(fb_output_t *out)
     if (out->S->file_extension.type == vt_string) {
         fprintf(out->fp,
             "#undef %sextension\n"
-            "#define %sextension \".%.*s\"\n",
+            "#define %sextension \"%.*s\"\n",
             nsc,
             nsc, out->S->file_extension.s.len, out->S->file_extension.s.s);
     } else {
         fprintf(out->fp,
-            /* Configured extensions include dot, schema does not. */
             "#ifndef %sextension\n"
             "#define %sextension \"%s\"\n"
             "#endif\n",
