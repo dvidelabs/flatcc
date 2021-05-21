@@ -1263,16 +1263,13 @@ defined as the null identifier.
 
 The generated code defines the identifiers for a given table:
 
-    #ifndef MyGame_Example_Monster_identifier
-    #define MyGame_Example_Monster_identifier flatbuffers_identifier
+    #ifndef MyGame_Example_Monster_file_identifier
+    #define MyGame_Example_Monster_file_identifier "MONS"
     #endif
-
-The `flatbuffers_identifier` is the schema specific `file_identifier`
-and is undefined and redefined for each generated `_reader.h` file.
 
 The user can now override the identifier for a given type, for example:
 
-    #define MyGame_Example_Vec3_identifier "VEC3"
+    #define MyGame_Example_Vec3_file_identifier "VEC3"
     #include "monster_test_builder.h"
 
     ...
@@ -1283,8 +1280,8 @@ and so does other `_as_root` methods.
 
 The `file_extension` is handled in a similar manner:
 
-    #ifndef MyGame_Example_Monster_extension
-    #define MyGame_Example_Monster_extension flatbuffers_extension
+    #ifndef MyGame_Example_Monster_file_extension
+    #define MyGame_Example_Monster_file_extension "mon"
     #endif
 
 ### Type Identifiers
