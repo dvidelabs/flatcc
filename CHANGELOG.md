@@ -44,6 +44,11 @@
 - Silence GCC 11 identation warning (#183).
 - Fix type of code field on json test (#184).
 - Add `end_loc` to parser state of root json parsers (#186).
+- BREAKING: Add per table `<name>_file extension` and fixed wrong per table
+  `<name>_file_identifier` assignment when multiple files are included due to
+  macro expansion conflict. Extensions are now specified without extra dot
+  prefix unless specified explicitly in the schema file. The default extension
+  is now 'bin' instead of '.bin' (#187).
 
 ## [0.6.0]
 
