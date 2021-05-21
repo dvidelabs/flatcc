@@ -104,6 +104,30 @@ static void print_type_identifier(fb_output_t *out, fb_compound_type_t *ct)
         name, buf);
 }
 
+static void print_file_extension(fb_output_t *out, fb_compound_type_t *ct)
+{
+    fb_scoped_name_t snt;
+    const char *name;
+
+    fb_clear(snt);
+    fb_compound_name(ct, &snt);
+    name = snt.text;
+
+    if (out->S->file_extension.type == vt_string) {
+        fprintf(out->fp,
+                "#ifndef %s_file_extension\n"
+                "#define %s_file_extension \"%.*s\"\n"
+                "#endif\n",
+                name, name, out->S->file_extension.s.len, out->S->file_extension.s.s);
+    } else {
+        fprintf(out->fp,
+                "#ifndef %s_file_extension\n"
+                "#define %s_file_extension \"%s\"\n"
+                "#endif\n",
+                name, name, out->opts->default_bin_ext);
+    }
+}
+
 /* Finds first occurrence of matching key when vector is sorted on the named field. */
 static void gen_find(fb_output_t *out)
 {
@@ -1859,6 +1883,7 @@ int fb_gen_c_reader(fb_output_t *out)
             /* Fall through. */
         case fb_is_table:
             print_type_identifier(out, (fb_compound_type_t *)sym);
+            print_file_extension(out, (fb_compound_type_t *)sym);
             break;
         }
     }

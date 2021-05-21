@@ -1280,8 +1280,8 @@ and so does other `_as_root` methods.
 
 The `file_extension` is handled in a similar manner:
 
-    #ifndef MyGame_Example_Monster_extension
-    #define MyGame_Example_Monster_extension flatbuffers_extension
+    #ifndef MyGame_Example_Monster_file_extension
+    #define MyGame_Example_Monster_file_extension "mon"
     #endif
 
 ### Type Identifiers
