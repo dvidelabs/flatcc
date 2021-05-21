@@ -43,6 +43,7 @@
 - Fix support for printing JSON enum vectors (#182).
 - Silence GCC 11 identation warning (#183).
 - Fix type of code field on json test (#184).
+- Add `end_loc` to parser state of root json parsers (#186).
 
 ## [0.6.0]
 
