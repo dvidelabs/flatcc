@@ -49,6 +49,7 @@
   macro expansion conflict. Extensions are now specified without extra dot
   prefix unless specified explicitly in the schema file. The default extension
   is now 'bin' instead of '.bin' (#187).
+- Fix buffer overrun when parser reports error on large symbols (#188).
 
 ## [0.6.0]
 
