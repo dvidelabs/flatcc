@@ -103,25 +103,31 @@ void error_ref_sym(fb_parser_t *P, fb_ref_t *ref, const char *msg, fb_symbol_t *
     size_t k = FLATCC_MAX_IDENT_SHOW;
     size_t n = 0;
     size_t n0 = 0;
+    int truncated = 0;
+
     p = ref;
     while (p && k > 0) {
+        if (n0 > 0) {
+            buf[n0] = '.';
+            --k;
+            ++n0;
+        }
         n = (size_t)p->ident->len;
         if (k < n) {
             n = k;
+            truncated = 1;
         }
         memcpy(buf + n0, p->ident->text, n);
         k -= n;
         n0 += n;
-        buf[n0] = '.';
-        --k;
-        ++n0;
         p = p->link;
     }
+    if (p) truncated = 1;
     buf[n0] = '\0';
     if (n0 > 0) {
         --n0;
     }
-    if (k <= 0) {
+    if (truncated) {
         memcpy(buf + FLATCC_MAX_IDENT_SHOW + 1 - 4, "...\0", 4);
         n0 = FLATCC_MAX_IDENT_SHOW;
     }
