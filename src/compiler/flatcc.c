@@ -345,7 +345,6 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
         if (!(buf = fb_read_file(filename, P->opts.max_schema_size, &size))) {
             if (size + P->schema.root_schema->total_source_size > P->opts.max_schema_size && P->opts.max_schema_size > 0) {
                 fb_print_error(P, "input exceeds maximum allowed size\n");
-                ret = -1;
                 goto done;
             }
         } else {
@@ -361,7 +360,6 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
             path = 0;
             if (size > P->opts.max_schema_size && P->opts.max_schema_size > 0) {
                 fb_print_error(P, "input exceeds maximum allowed size\n");
-                ret = -1;
                 goto done;
             }
         }
@@ -375,7 +373,6 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
             path = 0;
             if (size > P->opts.max_schema_size && P->opts.max_schema_size > 0) {
                 fb_print_error(P, "input exceeds maximum allowed size\n");
-                ret = -1;
                 goto done;
             }
         }
@@ -393,7 +390,7 @@ int flatcc_parse_file(flatcc_context_t ctx, const char *filename)
      * need to parse all include files to make sense of the current
      * file.
      */
-    if (!(ret = fb_parse(P, buf, size, 1))) {
+    if (!fb_parse(P, buf, size, 1)) {
         /* Parser owns buffer. */
         buf = 0;
         inc = P->schema.includes;
