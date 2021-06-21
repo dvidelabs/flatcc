@@ -1088,7 +1088,8 @@ In the builder example above, we can apply a verifier to the output:
     int ret;
     ...
     ... finalize
-    if ((ret = ns(Monster_verify_as_root(buffer, size, "MONS")))) {
+    if ((ret = ns(Monster_verify_as_root_with_identifier(buffer, size,
+            "MONS")))) {
         printf("Monster buffer is invalid: %s\n",
         flatcc_verify_error_string(ret));
     }
