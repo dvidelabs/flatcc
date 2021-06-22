@@ -1053,17 +1053,22 @@ type, and because the operations are not type safe (any kind of push
 would be accepted), some vector operations are also mapped to the field
 name:
 
+    uint8_t v;
     Monster_inventory_start(B);
-    Monster_inventory_push(B, 1);
-    Monster_inventory_push(B, 2);
-    Monster_inventory_push(B, 3);
+    v = 1;
+    Monster_inventory_push(B, &v);
+    v = 2;
+    Monster_inventory_push(B, &v);
+    v = 3;
+    Monster_inventory_push(B, &v);
     Monster_inventory_end(B);
 
-Note: vector operations on a type uses the `_vec_<operation>` syntax,
-for example `uint8_vec_push` or `Monster_vec_push` while operations that
-are mapped onto table field names of vector type do not use the `_vec`
-infix because it is not a type name, for example `Monster_inventory_push`.
+The field vector operations always use pointers to element values and cannot push scalars by value as is the case with the typed vector operations.
 
+Vector operations on a type uses the `_vec_<operation>` syntax, for example
+`uint8_vec_push` or `Monster_vec_push` while operations that are mapped onto
+table field names of vector type do not use the `_vec` infix because it is not a
+type name, for example `Monster_inventory_push`.
 
 A slightly faster operation preallocates the vector:
 
@@ -1081,9 +1086,10 @@ with `edit` and `reserved_len` between `start/end` (recalling that pointers
 cannot be reused across buffer calls):
 
     uint8_t *v, i;
+    uint8_t data[] = { 1, 2 };
     Monster_inventory_start(B);
-    Monster_inventory_push(B, 1);
-    Monster_inventory_push(B, 2);
+    Monster_inventory_push(B, data[0]);
+    Monster_inventory_push(B, data[1]);
     v = Monster_inventory_edit(B);
     for (i = 1; i < Monster_inventory_reserved_len(B); ++i) {
         v[i] = v[i - 1] + v[i];
