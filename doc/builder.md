@@ -1046,6 +1046,7 @@ values by pointer, or by reference for offset types like tables and strings.
 or
 
     flatbuffers_uint8_vec_ref_t inv;
+    uint8_t v;
     flatbuffers_uint8_vec_start(B);
     v = 1;
     flatbuffers_uint8_vec_push(B, &v);
