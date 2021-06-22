@@ -422,6 +422,7 @@ static int gen_field_match_handler(fb_output_t *out, fb_compound_type_t *ct, voi
     size_t array_len = 0;
     fb_scalar_type_t st = 0;
     const char *tname_prefix = "n/a", *tname = "n/a"; /* suppress compiler warnigns */
+    fb_literal_t literal;
 
     fb_clear(snref);
 
@@ -604,36 +605,9 @@ repeat_nested:
         if (!is_struct_container && !is_vector && !is_base64 && !is_base64url) {
 #if !FLATCC_JSON_PARSE_FORCE_DEFAULTS
             /* We need to create a check for the default value and create a table field if not the default. */
-            if (!is_optional)
-            switch (member->value.type) {
-            case vt_bool:
-            case vt_uint:
-                println(out, "if (val != %"PRIu64" || (ctx->flags & flatcc_json_parser_f_force_add)) {", member->value.u); indent();
-                break;
-            case vt_int:
-                println(out, "if (val != %"PRId64" || (ctx->flags & flatcc_json_parser_f_force_add)) {", member->value.i); indent();
-                break;
-                /*
-                 * NOTE: We only store default value as a double float -
-                 * if the field type is a 32-bit single precision float
-                 * we might not print the exact value and thus we cannot
-                 * test exactly for default - but then we store a value
-                 * close to the default, or get a default close to the
-                 * value. The same problem exists in the generated
-                 * builder. Regardless, there is also truncation and
-                 * rounding when parsing the original default value from
-                 * the schema, so as long as we are consistent ... The
-                 * flatbuffers reflection schema also only has a real
-                 * type (64-bit double precision float).
-                 * Even with double precision, printing is not an exact
-                 * science and depends on the runtime library.
-                 */
-            case vt_float:
-                println(out, "if (val != %lf || (ctx->flags & flatcc_json_parser_f_force_add)) {", (double)member->value.f); indent();
-                break;
-            default:
-                gen_panic(out, "internal error: unexpected default value type\n");
-                return -1;
+            if (!is_optional) {
+                if (!print_literal(st, &member->value, literal)) return -1;
+                println(out, "if (val != %s || (ctx->flags & flatcc_json_parser_f_force_add)) {", literal); indent();
             }
 #endif
             println(out, "if (!(pval = flatcc_builder_table_add(ctx->ctx, %"PRIu64", %"PRIu64", %hu))) goto failed;",
