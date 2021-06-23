@@ -38,30 +38,31 @@ static int gen_json_printer_enum(fb_output_t *out, fb_compound_type_t *ct)
     const char *tp, *tn, *ns;
     int bit_flags;
     uint64_t mask = 0;
-    char *suffix = "";
+    char *constwrap = "";
     char *ut = "";
+    fb_scalar_type_t st = ct->type.st;
 
     fb_clear(snt);
     fb_clear(snref);
     fb_compound_name(ct, &snt);
-    tp = scalar_type_prefix(ct->type.st);
-    tn = scalar_type_name(ct->type.st);
-    ns = scalar_type_ns(ct->type.st, out->nsc);
+    tp = scalar_type_prefix(st);
+    tn = scalar_type_name(st);
+    ns = scalar_type_ns(st, out->nsc);
 
     bit_flags = !!(ct->metadata_flags & fb_f_bit_flags);
     if (bit_flags) {
         switch (ct->size) {
         case 1:
-            mask = 0xff, suffix = "U", ut = "uint8_t";
+            mask = UINT8_MAX, constwrap = "UINT8_C", ut = "uint8_t";
             break;
         case 2:
-            mask = 0xffff, suffix = "U", ut = "uint16_t";
+            mask = UINT16_MAX, constwrap = "UINT16_C", ut = "uint16_t";
             break;
         case 4:
-            mask = 0xffffffffL, suffix = "UL", ut = "uint32_t";
+            mask = UINT32_MAX, constwrap = "UINT32_C", ut = "uint32_t";
             break;
         default:
-            mask = 0xffffffffffffffffULL, suffix = "ULL", ut = "uint64_t";
+            mask = UINT64_MAX, constwrap = "UINT64_C", ut = "uint64_t";
             break;
         }
         for (sym = ct->members; sym; sym = sym->link) {
@@ -100,11 +101,11 @@ static int gen_json_printer_enum(fb_output_t *out, fb_compound_type_t *ct)
          */
         if (mask) {
             fprintf(out->fp,
-                    "    if ((x & 0x%"PRIx64") || x == 0) {\n"
+                    "    if ((x & %s(0x%"PRIx64")) || x == 0) {\n"
                     "        flatcc_json_printer_%s(ctx, v);\n"
                     "        return;\n"
                     "    }\n",
-                   mask, tp);
+                   constwrap, mask, tp);
         }
         /*
          * Test if multiple bits set. We may have a configuration option
@@ -119,16 +120,16 @@ static int gen_json_printer_enum(fb_output_t *out, fb_compound_type_t *ct)
             member = (fb_member_t *)sym;
             switch (member->value.type) {
             case vt_uint:
-                fprintf(out->fp, "    if (x & 0x%"PRIx64"%s) flatcc_json_printer_enum_flag(ctx, i++, \"%.*s\", %ld);\n",
-                        member->value.u, suffix, (int)sym->ident->len, sym->ident->text, sym->ident->len);
+                fprintf(out->fp, "    if (x & %s(0x%"PRIx64")) flatcc_json_printer_enum_flag(ctx, i++, \"%.*s\", %ld);\n",
+                        constwrap, member->value.u, (int)sym->ident->len, sym->ident->text, sym->ident->len);
                 break;
             case vt_int:
-                fprintf(out->fp, "    if (x & 0x%"PRIx64"%s) flatcc_json_printer_enum_flag(ctx, i++, \"%.*s\", %ld);\n",
-                        (uint64_t)member->value.i, suffix, (int)sym->ident->len, sym->ident->text, sym->ident->len);
+                fprintf(out->fp, "    if (x & %s(0x%"PRIx64")) flatcc_json_printer_enum_flag(ctx, i++, \"%.*s\", %ld);\n",
+                        constwrap, (uint64_t)member->value.i, (int)sym->ident->len, sym->ident->text, sym->ident->len);
                 break;
             case vt_bool:
-                fprintf(out->fp, "    if (x & 0x%"PRIx64"%s) flatcc_json_printer_enum_flag(ctx, i++, \"%.*s\", %ld);\n",
-                        (uint64_t)member->value.b, suffix, (int)sym->ident->len, sym->ident->text, sym->ident->len);
+                fprintf(out->fp, "    if (x & %s(0x%"PRIx64")) flatcc_json_printer_enum_flag(ctx, i++, \"%.*s\", %ld);\n",
+                        constwrap, (uint64_t)member->value.b, (int)sym->ident->len, sym->ident->text, sym->ident->len);
                 break;
             default:
                 gen_panic(out, "internal error: unexpected value type for enum json_print");
@@ -142,16 +143,16 @@ static int gen_json_printer_enum(fb_output_t *out, fb_compound_type_t *ct)
             member = (fb_member_t *)sym;
             switch (member->value.type) {
             case vt_uint:
-                fprintf(out->fp, "    case %"PRIu64": flatcc_json_printer_enum(ctx, \"%.*s\", %ld); break;\n",
-                        member->value.u, (int)sym->ident->len, sym->ident->text, sym->ident->len);
+                fprintf(out->fp, "    case %s(%"PRIu64"): flatcc_json_printer_enum(ctx, \"%.*s\", %ld); break;\n",
+                        constwrap, member->value.u, (int)sym->ident->len, sym->ident->text, sym->ident->len);
                 break;
             case vt_int:
-                fprintf(out->fp, "    case %"PRId64": flatcc_json_printer_enum(ctx, \"%.*s\", %ld); break;\n",
-                        member->value.i, (int)sym->ident->len, sym->ident->text, sym->ident->len);
+                fprintf(out->fp, "    case %s(%"PRId64"): flatcc_json_printer_enum(ctx, \"%.*s\", %ld); break;\n",
+                        constwrap, member->value.i, (int)sym->ident->len, sym->ident->text, sym->ident->len);
                 break;
             case vt_bool:
-                fprintf(out->fp, "    case %u: flatcc_json_printer_enum(ctx, \"%.*s\", %ld); break;\n",
-                        member->value.b, (int)sym->ident->len, sym->ident->text, sym->ident->len);
+                fprintf(out->fp, "    case %s(%u): flatcc_json_printer_enum(ctx, \"%.*s\", %ld); break;\n",
+                        constwrap, member->value.b, (int)sym->ident->len, sym->ident->text, sym->ident->len);
                 break;
             default:
                 gen_panic(out, "internal error: unexpected value type for enum json_print");
@@ -393,44 +394,16 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
         switch (member->type.type) {
         case vt_scalar_type:
             tp = scalar_type_prefix(member->type.st);
-            switch(member->value.type) {
-            case vt_bool:
-            case vt_uint:
-                if (is_optional) {
-                    fprintf( out->fp,
-                        "flatcc_json_printer_%s_optional_field(ctx, td, %"PRIu64", \"%.*s\", %ld);",
-                        tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len);
-                } else {
-                    fprintf( out->fp,
-                        "flatcc_json_printer_%s_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRIu64");",
-                        tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, member->value.u);
-                }
-                break;
-            case vt_int:
-                if (is_optional) {
-                    fprintf( out->fp,
-                        "flatcc_json_printer_%s_optional_field(ctx, td, %"PRIu64", \"%.*s\", %ld);",
-                        tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len);
-                } else {
-                    fprintf( out->fp,
-                        "flatcc_json_printer_%s_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRId64");",
-                        tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, member->value.i);
-                }
-                break;
-            case vt_float:
-                if (is_optional) {
-                    fprintf( out->fp,
-                        "flatcc_json_printer_%s_optional_field(ctx, td, %"PRIu64", \"%.*s\", %ld);",
-                        tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len);
-                } else {
-                    fprintf( out->fp,
-                        "flatcc_json_printer_%s_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %lf);",
-                        tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, member->value.f);
-                }
-                break;
-            default:
-                gen_panic(out, "internal error: unexpected default value type\n");
-                goto fail;
+            if (is_optional) {
+                fprintf( out->fp,
+                    "flatcc_json_printer_%s_optional_field(ctx, td, %"PRIu64", \"%.*s\", %ld);",
+                    tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len);
+            } else {
+                fb_literal_t literal;
+                if (!print_literal(member->type.st, &member->value, literal)) return -1;
+                fprintf( out->fp,
+                    "flatcc_json_printer_%s_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %s);",
+                    tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, literal);
             }
             break;
         case vt_vector_type:
@@ -480,59 +453,31 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
             switch (member->type.ct->symbol.kind) {
             case fb_is_enum:
                 tp = scalar_type_prefix(member->type.ct->type.st);
-                switch(member->value.type) {
-                case vt_bool:
 #if FLATCC_JSON_PRINT_MAP_ENUMS
-                case vt_uint:
-                    if (is_optional) {
-                        fprintf( out->fp,
-                            "flatcc_json_printer_%s_enum_optional_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %s_print_json_enum);",
-                            tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, snref.text);
-                    } else {
-                        fprintf( out->fp,
-                            "flatcc_json_printer_%s_enum_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRIu64", %s_print_json_enum);",
-                            tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, member->value.u, snref.text);
-                    }
-                    break;
-                case vt_int:
-                    if (is_optional) {
-                        fprintf( out->fp,
-                            "flatcc_json_printer_%s_enum_optional_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %s_print_json_enum);",
-                            tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, snref.text);
-                    } else {
-                        fprintf( out->fp,
-                            "flatcc_json_printer_%s_enum_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRId64", %s_print_json_enum);",
-                            tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, member->value.i, snref.text);
-                    }
-                    break;
-#else
-                case vt_uint:
-                    if (is_optional) {
-                        fprintf( out->fp,
-                            "flatcc_json_printer_%s_optional_field(ctx, td, %"PRIu64", \"%.*s\", %ld);",
-                            tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len);
-                    } else {
-                        fprintf( out->fp,
-                            "flatcc_json_printer_%s_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRIu64");",
-                            tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, member->value.u);
-                    }
-                    break;
-                case vt_int:
-                    if (is_optional) {
-                        fprintf( out->fp,
-                            "flatcc_json_printer_%s_optinal_field(ctx, td, %"PRIu64", \"%.*s\", %ld);",
-                            tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len);
-                    } else {
-                        fprintf( out->fp,
-                            "flatcc_json_printer_%s_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %"PRId64");",
-                            tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, member->value.i);
-                    }
-                    break;
-#endif
-                default:
-                    gen_panic(out, "internal error: unexpected default value type for enum\n");
-                    goto fail;
+                if (is_optional) {
+                    fprintf(out->fp,
+                        "flatcc_json_printer_%s_enum_optional_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %s_print_json_enum);",
+                        tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, snref.text);
+                } else {
+                    fb_literal_t literal;
+                    if (!print_literal(member->type.ct->type.st, &member->value, literal)) return -1;
+                    fprintf(out->fp,
+                        "flatcc_json_printer_%s_enum_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %s, %s_print_json_enum);",
+                        tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, literal, snref.text);
                 }
+#else
+                if (is_optional) {
+                    fprintf( out->fp,
+                        "flatcc_json_printer_%s_optional_field(ctx, td, %"PRIu64", \"%.*s\", %ld);",
+                        tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len);
+                } else {
+                    fb_literal_t literal;
+                    if (!print_literal(member->type.ct->type.st, &member->value, literal)) return -1;
+                    fprintf( out->fp,
+                        "flatcc_json_printer_%s_field(ctx, td, %"PRIu64", \"%.*s\", %ld, %s);",
+                        tp, member->id, (int)sym->ident->len, sym->ident->text, sym->ident->len, literal);
+                }
+#endif
                 break;
             case fb_is_struct:
                 fprintf(out->fp,
