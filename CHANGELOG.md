@@ -52,6 +52,7 @@
 - Fix buffer overrun when parser reports error on large symbols (#188).
 - BREAKING: Print --version to stdout, not stderr.
 - Fix schema parser returning on success on some failure modes (#193).
+- Fix larger integer literal types in JSON parser and printer (#194).
 
 ## [0.6.0]
 
