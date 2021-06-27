@@ -22,6 +22,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [Online Forums](#online-forums)
 * [Introduction](#introduction)
 * [Project Details](#project-details)
+* [Use in CMake build](#use-in-cmake-build)
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
@@ -186,6 +187,42 @@ their place.
 
 **NOTE: Big-endian platforms are only supported as of release 0.4.0.**
 
+## Use in CMake build
+
+If your project uses the CMake build system, you can include cmake module
+`cmake/FlatccGenerateSources.cmake` that provides the following cmake
+function:
+
+    flatcc_generate_sources(GENERATED_SOURCE_DIRECTORY <output directory>
+                            GENERATE_BUILDER
+                            GENERATE_VERIFIER
+                            EXPECTED_OUTPUT_FILES <list of expected output files>
+                            DEFINITION_FILES <list of flatbuffer files (.fbs)>
+)
+
+`GENERATE_BUILDER` and `GENERATE_VERIFIER` are boolean options. When specified
+they will instruct flatcc to generate builder / verifier source code.
+
+Optionally you can let cmake know the directory where the flatcc executable
+is located in environment variable `FLATCC_BUILD_BIN_PATH`. This is especially
+usefull when cross-compiling. In that case you should provide the directory
+where the build arch flatcc compiler executable is located.
+
+The flatcc_generate_sources function will create a cmake custom command to
+generate the output files during just before compilation (so in the build
+step, not the configure step).
+
+Example:
+
+    include(FlatccGenerateSources)
+    flatcc_generate_sources(GENERATED_SOURCE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/datadef
+                            GENERATE_BUILDER
+                            GENERATE_VERIFIER
+                            EXPECTED_OUTPUT_FILES datadef/seclif_protocol_reader.h
+                                                  datadef/seclif_protocol_builder.h
+                                                  datadef/seclif_protocol_verifier.h
+                            DEFINITION_FILES ${CMAKE_CURRENT_SOURCE_DIR}/datadef/seclif_protocol.fbs
+    )
 
 ## Poll on Meson Build
 
