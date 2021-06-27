@@ -2,7 +2,7 @@
 #cmake_minimum_required (VERSION 2.8.12.2)
 # Centos 7
 #cmake_minimum_required (VERSION 2.8.11)
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 2.8.12)
 
 # Disable build of tests and samples. Due to custom build step
 # dependency on flatcc tool, some custom build configurations may
@@ -12,15 +12,19 @@ option(FLATCC_TEST "enable tests" ON)
 # Only active if FLATCC_TEST is active. Used to ensure that C++ users
 # can include generatd C source. Old GCC pre 4.7 won't compile C++ test
 # project.
-option(FLATCC_CXX_TEST "enable C++ tests" ON)
+include(CMakeDependentOption)
+cmake_dependent_option(FLATCC_CXX_TEST "enable C++ tests" ON FLATCC_TEST OFF)
 
 # Conditionally set project languages based on FLATCC_TEST, as C++ is
 # only necessary if building the tests.
-if (FLATCC_TEST AND FLATCC_CXX_TEST)
+if (FLATCC_CXX_TEST)
     project (FlatCC C CXX)
 else()
     project (FlatCC C)
 endif()
+
+# Make the cmake scripts inside the cmake subfolder available
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 #
 # NOTE: when changing build options, clean the build using on of:
@@ -107,10 +111,6 @@ if (FLATCC_RTONLY)
     set(FLATCC_TEST off)
 endif()
 
-if (FLATCC_TEST)
-    enable_testing()
-endif()
-
 if (NOT FLATCC_TEST)
     set(FLATCC_COVERAGE off)
 endif()
@@ -151,10 +151,9 @@ if (FLATCC_FAST_DOUBLE)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DGRISU3_PARSE_ALLOW_ERROR -DFLATCC_USE_GRISU3=1")
 endif()
 
-if (NOT DEFINED FLATCC_INSTALL_LIB)
-    set(lib_dir lib)
-else()
-    set(lib_dir ${FLATCC_INSTALL_LIB})
+include(GNUInstallDirs)
+if (FLATCC_INSTALL_LIB)
+    set(CMAKE_INSTALL_LIBDIR ${FLATCC_INSTALL_LIB})
 endif()
 
 # The folder of this directory, as apposed to CMAKE_BINARY_DIR
@@ -163,13 +162,14 @@ set (dist_dir "${PROJECT_SOURCE_DIR}")
 # set (dist_dir "${CMAKE_BINARY_DIR}")
 
 message(STATUS "dist install dir ${dist_dir}")
-message(STATUS "lib install dir ${dist_dir}/${lib_dir}")
+message(STATUS "lib install dir ${dist_dir}/${CMAKE_INSTALL_LIBDIR}")
 
 # Note: for compiling generated C code, warnings of unused functions
 # and constants should be turned off - those are plentiful. They are
 # silenced for Clang, GCC and MSVC in generated headers.headers.
 
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+    set(CLANG_VERSION "${CMAKE_C_COMPILER_VERSION}")
     # Clang or AppleClang
     message(STATUS "Setting Clang compiler options")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes")
@@ -191,8 +191,7 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -save-temps")
 
 elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
-                    OUTPUT_VARIABLE GCC_VERSION)
+    set(GCC_VERSION "${CMAKE_C_COMPILER_VERSION}")
     if (GCC_VERSION VERSION_LESS 4.7)
         message(STATUS "Setting older GNU C compiler options with FLATCC_PORTABLE")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
@@ -278,7 +277,7 @@ elseif (MSVC) # using STREQUAL here conflicts with string interpretation changes
         set (FLATCC_NEED_C89_VAR_DECLS true)
     endif()
     set(FLATCC_PORTABLE true)
- elseif (CMAKE_C_COMPILER_ID STREQUAL "XL")
+elseif (CMAKE_C_COMPILER_ID STREQUAL "XL")
     # IBM's native XLC C compiler in extended C99 mode
 
     message(STATUS "Setting IBM XL C compiler options")
@@ -294,6 +293,11 @@ if (FLATCC_PORTABLE)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_PORTABLE")
 endif()
 
+if(MINGW)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-pedantic-ms-format")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pedantic-ms-format")
+endif()
+
 if (CLANG_VERSION)
     message(STATUS "CLANG_VERSION: ${CLANG_VERSION}")
 endif()
@@ -302,7 +306,7 @@ if (GCC_VERSION)
 endif()
 message(STATUS "Configured C_FLAGS: ${CMAKE_C_FLAGS}")
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/${lib_dir})
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/${CMAKE_INSTALL_LIBDIR})
 
 set(CMAKE_DEBUG_POSTFIX "_d")
 
@@ -310,6 +314,14 @@ if (CMAKE_BUILD_TYPE MATCHES "Debug")
     set(CMAKE_EXECUTABLE_SUFFIX "_d${CMAKE_EXECUTABLE_SUFFIX}")
 endif()
 
+if(BUILD_SHARED_LIBS)
+    if(APPLE)
+        set(CMAKE_INSTALL_RPATH "@executable_path/../${CMAKE_INSTALL_LIBDIR}")
+        set(CMAKE_MACOSX_RPATH 1)
+    elseif(UNIX)
+        set(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+    endif()
+endif()
 
 if (FLATCC_RTONLY)
     # The targets we copy to bin and lib directories, i.e. not tests.
@@ -329,8 +341,18 @@ else()
     add_subdirectory(src/cli)
 endif()
 
+set_target_properties(${dist_targets} PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${dist_dir}/${CMAKE_INSTALL_LIBDIR}"
+    LIBRARY_OUTPUT_DIRECTORY "${dist_dir}/${CMAKE_INSTALL_LIBDIR}"
+    RUNTIME_OUTPUT_DIRECTORY "${dist_dir}/${CMAKE_INSTALL_BINDIR}"
+)
+
+# FindFlatCCNative.cmake creates the flatcc::cli_native target
+find_package(FlatCCNative REQUIRED)
+
 # disabled by FLATCC_RTONLY
 if (FLATCC_TEST)
+    enable_testing()
     add_subdirectory(test)
     add_subdirectory(samples)
 endif()
@@ -341,14 +363,29 @@ if (FLATCC_COVERAGE)
         COMMAND genhtml coverage.info --output-directory coverage)
 endif()
 
-set_target_properties(${dist_targets}
-    PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${dist_dir}/${lib_dir}"
-    LIBRARY_OUTPUT_DIRECTORY "${dist_dir}/${lib_dir}"
-    RUNTIME_OUTPUT_DIRECTORY "${dist_dir}/bin"
-)
-
 if (FLATCC_INSTALL)
     install(DIRECTORY include/flatcc DESTINATION include)
-endif()
+    install(EXPORT flatcc_exports NAMESPACE flatcc:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/flatcc FILE flatcc-targets.cmake)
 
+    file(READ include/flatcc/flatcc_version.h FLATCC_VERSION_H_CONTENT)
+    string(REGEX MATCH "#[ \t]*define[ \t]+FLATCC_VERSION_TEXT[ \t]+\"([^\"]+)\"" version_match "${FLATCC_VERSION_H_CONTENT}")
+    if(NOT version_match)
+        message(FATAL_ERROR "Could not parse the version from include/flatcc/flatcc_version.h")
+    endif()
+    set(FLATCC_VERSION "${CMAKE_MATCH_1}")
+    message(VERBOSE "Extracted version from include/flatcc/flatcc_version.h: ${FLATCC_VERSION}")
+
+    include(CMakePackageConfigHelpers)
+    configure_package_config_file(cmake/flatcc-config.cmake.in flatcc-config.cmake
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/flatcc")
+    write_basic_package_version_file(flatcc-config-version.cmake
+        VERSION "${FLATCC_VERSION}"
+        COMPATIBILITY AnyNewerVersion)
+    install(
+        FILES
+            "${CMAKE_CURRENT_BINARY_DIR}/flatcc-config.cmake"
+            "${CMAKE_CURRENT_BINARY_DIR}/flatcc-config-version.cmake"
+            cmake/FlatccGenerateSources.cmake
+            cmake/FindFlatCCNative.cmake
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/flatcc")
+endif()

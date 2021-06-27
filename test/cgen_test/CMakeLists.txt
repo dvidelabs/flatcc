@@ -1,43 +1,47 @@
-include(CTest)
-
-include_directories (
-    "${PROJECT_SOURCE_DIR}/include"
-)
-
 add_executable(cgen_test
     cgen_test.c
 )
 
 target_link_libraries(cgen_test
-    flatcc
+    flatcc::compiler
 )
 
-add_test(cgen_test cgen_test${CMAKE_EXECUTABLE_SUFFIX})
+add_test(NAME cgen_test COMMAND cgen_test)
 
 
-# Compilation of the generated code tests many import edge cases 
-# in the parser and code generator but due to CMake limitations, 
-# custom target dependencies only work for Make build targets.
-#
-# expansion of flags results in quotes the compiler won't eat,
-# separating arguments should fix this, but not sure how portable it is.
-# see also http://stackoverflow.com/questions/9870162/avoid-quoting-in-cmake-add-custom-command
-separate_arguments(CUSTOM_C_FLAGS UNIX_COMMAND "${CMAKE_C_FLAGS}")
+if(CMAKE_VERSION VERSION_LESS 3.10)
+    message(WARNING "generator test disabled due to old cmake version")
+else()
+    # TODO: the use of generator expressions requires at least cmake versions 3.10 (3.5 does not, 3.10 does)
 
-add_custom_target(test_generated 
-    COMMAND ./cgen_test${CMAKE_EXECUTABLE_SUFFIX} > test_generated${CMAKE_EXECUTABLE_SUFFIX}.c
-    COMMAND ${CMAKE_C_COMPILER} ${CUSTOM_C_FLAGS} test_generated${CMAKE_EXECUTABLE_SUFFIX}.c -c
-        -I${CMAKE_SOURCE_DIR}/include WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test/cgen_test
+    # Compilation of the generated code tests many import edge cases
+    # in the parser and code generator but due to CMake limitations,
+    # custom target dependencies only work for Make build targets.
+    #
+    # expansion of flags results in quotes the compiler won't eat,
+    # separating arguments should fix this, but not sure how portable it is.
+    # see also http://stackoverflow.com/questions/9870162/avoid-quoting-in-cmake-add-custom-command
+
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/test_generated${CMAKE_EXECUTABLE_SUFFIX}.c"
+        COMMAND cgen_test > "${CMAKE_CURRENT_BINARY_DIR}/test_generated${CMAKE_EXECUTABLE_SUFFIX}.c"
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test/cgen_test
+        DEPENDS cgen_test
     )
-add_dependencies(test_generated cgen_test)
 
-# Might be related to:
-# https://cmake.org/Bug/view.php?id=14963#c37230
-# https://github.com/ninja-build/ninja/issues/760
-if(${CMAKE_MAKE_PROGRAM} MATCHES make)
-# this is now also broken for make - the system include path is not
-# visible so build fails on <assert.h> not found in the custom build
-# stage where CMAKE_C_COMPILER uses a compiler call that has this
-# behavior
-#add_test(test_generated ${CMAKE_MAKE_PROGRAM} test_generated)
-endif(${CMAKE_MAKE_PROGRAM} MATCHES make)
+    if(NOT MSVC)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-error=unused-const-variable")
+    endif()
+    add_library(test_generated_objects OBJECT
+        "${CMAKE_CURRENT_BINARY_DIR}/test_generated${CMAKE_EXECUTABLE_SUFFIX}.c"
+    )
+    target_include_directories(test_generated_objects PRIVATE "${PROJECT_SOURCE_DIR}/include")
+    set_target_properties(test_generated_objects PROPERTIES EXCLUDE_FROM_ALL ON)
+
+    add_custom_target(test_generated
+        COMMAND "${CMAKE_COMMAND}" -E remove -f "${CMAKE_CURRENT_BINARY_DIR}/test_generated${CMAKE_EXECUTABLE_SUFFIX}.c" $<TARGET_OBJECTS:test_generated_objects>
+        COMMAND "${CMAKE_COMMAND}" --build "${PROJECT_BINARY_DIR}" --target test_generated_objects --config $<CONFIG> --verbose
+    )
+
+    add_test(NAME test_generated COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}" --target test_generated --config $<CONFIG>)
+endif()

@@ -1,9 +1,3 @@
-include_directories (
-    "${PROJECT_SOURCE_DIR}/external"
-    "${PROJECT_SOURCE_DIR}/include"
-    "${PROJECT_SOURCE_DIR}/config"
-)
-
 set (SOURCES
     ${PROJECT_SOURCE_DIR}/external/hash/cmetrohash64.c
     ${PROJECT_SOURCE_DIR}/external/hash/str_set.c
@@ -33,11 +27,27 @@ set (SOURCES
 )
 
 if (FLATCC_REFLECTION)
-    set (SOURCES ${SOURCES} codegen_schema.c)
+    list(APPEND SOURCES codegen_schema.c)
 endif(FLATCC_REFLECTION)
 
 add_library(flatcc ${SOURCES})
+add_library(flatcc::compiler ALIAS flatcc)
+
+target_include_directories(flatcc
+    PUBLIC
+        "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/external"
+        "${PROJECT_SOURCE_DIR}/config"
+)
+
+set_target_properties(flatcc PROPERTIES EXPORT_NAME compiler)
 
 if (FLATCC_INSTALL)
-    install(TARGETS flatcc DESTINATION ${lib_dir})
+    install(TARGETS flatcc EXPORT flatcc_exports
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    )
 endif()

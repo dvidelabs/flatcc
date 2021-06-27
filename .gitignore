@@ -1,5 +1,6 @@
 build/*
 bin/*
 lib/*
+lib64/*
 release/*
 scripts/build.cfg

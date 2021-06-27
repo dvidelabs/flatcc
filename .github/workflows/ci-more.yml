@@ -1,0 +1,52 @@
+on:
+  schedule:
+    # Run this script every saturday, so you have the whole weekend to fix problems :evil-grin:
+    - cron: '0 0 * * 6'
+jobs:
+  merge_into_ci_more:
+    # Only enable this job on dividelabs' repo to avoid running this job on forks
+    if: ${{ github.repository_owner == 'dividelabs' }}
+    runs-on: 'ubuntu-latest'
+    steps:
+      - name: 'Checkout repo'
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: 'Configure git'
+        run: |
+          git config --global user.name "ci-more cron job"
+          git config --global user.email "ci-more-cron-job@example.com"
+      - name: 'Checkout ci-more'
+        run: |
+          git checkout ci-more
+      - name: 'Backup .travis.yml and appveyor.yml'
+        run: |
+          cp .travis.yml .travis.yml.backup
+          cp appveyor.yml appveyor.yml.backup
+      - name: 'Checkout .travis.yml and appveyor.yml from master'
+        run: |
+          git checkout origin/master -- .travis.yml appveyor.yml
+          git add .travis.yml appveyor.yml
+          git commit -m "Temporarily add .travis.yml and appveyor.yml from master"
+      - name: 'Merge master into ci-more'
+        run: |
+          git merge origin/master -m "Merge master into ci-more"
+      - name: 'Restore .travis.yml and appveyor.yml'
+        run: |
+          mv .travis.yml.backup .travis.yml
+          mv appveyor.yml.backup appveyor.yml
+          git add -- .travis.yml appveyor.yml
+          git commit -m "Restore .travis.yml and appveyor.yml"
+      - name: 'Check whether the working directory is clean'
+        run: |
+          git diff --exit-code
+      - name: 'Check whether only .travis.yml and appveyor.yml differ with master'
+        run: |
+          if test $(git diff origin/master --name-only | wc -l) != 2; then
+            echo "ci-more should diverge from origin/master with exactly 2 files (.travis.yml and appveyor.yml)";
+            git diff origin/master --exit-code;  # origin/master
+            exit 1;
+          fi
+      - name: 'Push ci-more to server'
+        run: |
+          git push origin ci-more

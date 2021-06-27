@@ -1,7 +1,8 @@
+include(FlatccGenerateSources)
+
 # Note: some files under source control may be tested with binary comparison.
 # Under git such files are protected with the `.gitattributes` file.
 # Incorrect line endings may lead to failed tests.
-if (FLATCC_TEST)
 if (FLATCC_CXX_TEST)
     # This is tests is primarly for making sure C++ users can use
     # generated FlatCC code. It fails for pre GCC 4.7 C++ because both
@@ -23,5 +24,4 @@ add_subdirectory(optional_scalars_test)
 # to disable until new reflection code generates cleanly.
 if (FLATCC_REFLECTION)
     add_subdirectory(reflection_test)
-endif()
 endif()

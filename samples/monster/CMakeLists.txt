@@ -1,22 +1,15 @@
-include(CTest)
-
-set(INC_DIR "${PROJECT_SOURCE_DIR}/include")
 set(GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
-set(FBS_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
-include_directories("${GEN_DIR}" "${INC_DIR}")
+# Don't use FBS_DIR to test whether flatcc_generate_sources knows to use the correct file.
 
-add_custom_target(gen_monster_fbs ALL) 
-add_custom_command (
-    TARGET gen_monster_fbs
-    COMMAND cmake -E make_directory "${GEN_DIR}"
-    COMMAND flatcc_cli -a -o "${GEN_DIR}" "${FBS_DIR}/monster.fbs"
-    DEPENDS flatcc_cli "${FBS_DIR}/monster.fbs" 
+flatcc_generate_sources(
+    NAME monster_sample
+    SCHEMA_FILES monster.fbs
+    ALL
+    OUTPUT_DIR "${GEN_DIR}"
 )
-add_executable(monster monster.c)
-add_dependencies(monster gen_monster_fbs)
-target_link_libraries(monster flatccrt)
 
-if (FLATCC_TEST)
-    add_test(monster monster${CMAKE_EXECUTABLE_SUFFIX})
-endif()
+add_executable(monster monster.c)
+target_link_libraries(monster PRIVATE flatcc::runtime flatcc_generated::monster_sample)
+
+add_test(NAME monster COMMAND monster)
