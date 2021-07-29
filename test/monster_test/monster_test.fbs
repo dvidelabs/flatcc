@@ -241,7 +241,7 @@ table TestBase64
 // even if not listed first. A table with a single key field behaves the
 // same as a table with a single primary_key field, so use key for
 // compatiblity in that case.
-// 
+//
 // attribute "primary_key";
 //
 table MultipleKeys

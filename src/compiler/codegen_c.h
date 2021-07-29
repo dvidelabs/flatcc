@@ -7,6 +7,7 @@
 #include "symbols.h"
 #include "parser.h"
 #include "codegen.h"
+#include "flatcc/flatcc_types.h"
 
 /* -DFLATCC_PORTABLE may help if inttypes.h is missing. */
 #ifndef PRId64
@@ -19,6 +20,10 @@
 #define gen_panic(context, msg) fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, msg), assert(0), exit(-1)
 #endif
 
+#ifndef STRINGIZE
+#define STRINGIZE_(x) #x
+#define STRINGIZE(x) STRINGIZE_(x)
+#endif
 
 static inline void token_name(fb_token_t *t, int *n, const char **s) {
     *n = (int)t->len;
@@ -339,6 +344,38 @@ static inline int gen_prologue(fb_output_t *out)
     if (out->opts->cgen_pragmas) {
         fprintf(out->fp, "#include \"flatcc/flatcc_prologue.h\"\n");
     }
+
+    fputs(
+        "#ifndef FLATCC_OFFSET_SIZE\n"
+        "#define FLATCC_OFFSET_SIZE " STRINGIZE(FLATCC_OFFSET_SIZE) "\n"
+        "#endif\n",
+        out->fp);
+
+    fputs(
+          "#ifndef FLATCC_VOFFSET_SIZE\n"
+          "#define FLATCC_VOFFSET_SIZE " STRINGIZE(FLATCC_VOFFSET_SIZE) "\n"
+          "#endif\n",
+          out->fp);
+
+    fputs(
+          "#ifndef FLATBUFFERS_THASH_WIDTH\n"
+          "#define FLATBUFFERS_THASH_WIDTH " STRINGIZE(FLATBUFFERS_THASH_WIDTH) "\n"
+          "#endif\n",
+          out->fp);
+
+    fputs(
+          "#ifndef FLATBUFFERS_IDENTIFIER_SIZE\n"
+          "#define FLATBUFFERS_IDENTIFIER_SIZE " STRINGIZE(FLATBUFFERS_IDENTIFIER_SIZE) "\n"
+          "#endif\n",
+          out->fp);
+
+    fputs(
+          "#ifndef flatbuffers_fid_t_defined\n"
+          "typedef char flatbuffers_fid_t[" STRINGIZE(FLATBUFFERS_IDENTIFIER_SIZE) "];\n"
+          "#define flatbuffers_fid_t_defined\n"
+          "#endif\n",
+          out->fp);
+
     return 0;
 }
 

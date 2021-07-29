@@ -164,13 +164,13 @@ typedef int flatcc_union_verifier_f(flatcc_union_verifier_descriptor_t *ud);
  * require aligned memory addresses. The buffer pointers alignment is
  * not significant to internal verification of the buffer.
  */
-int flatcc_verify_struct_as_root(const void *buf, size_t bufsiz, const char *fid,
+int flatcc_verify_struct_as_root(const void *buf, size_t bufsiz, const flatbuffers_fid_t fid,
         size_t size, uint16_t align);
 
 int flatcc_verify_struct_as_typed_root(const void *buf, size_t bufsiz, flatbuffers_thash_t thash,
         size_t size, uint16_t align);
 
-int flatcc_verify_table_as_root(const void *buf, size_t bufsiz, const char *fid,
+int flatcc_verify_table_as_root(const void *buf, size_t bufsiz, const flatbuffers_fid_t fid,
         flatcc_table_verifier_f *root_tvf);
 
 int flatcc_verify_table_as_typed_root(const void *buf, size_t bufsiz, flatbuffers_thash_t thash,
@@ -179,7 +179,7 @@ int flatcc_verify_table_as_typed_root(const void *buf, size_t bufsiz, flatbuffer
  * The buffer header is verified by any of the `_as_root` verifiers, but
  * this function may be used as a quick sanity check.
  */
-int flatcc_verify_buffer_header(const void *buf, size_t bufsiz, const char *fid);
+int flatcc_verify_buffer_header(const void *buf, size_t bufsiz, const flatbuffers_fid_t fid);
 
 int flatcc_verify_typed_buffer_header(const void *buf, size_t bufsiz, flatbuffers_thash_t type_hash);
 
@@ -204,10 +204,10 @@ int flatcc_verify_table_vector_field(flatcc_table_verifier_descriptor_t *td,
     flatbuffers_voffset_t id, int required, flatcc_table_verifier_f tvf);
 /* Table verifiers pass 0 as fid. */
 int flatcc_verify_struct_as_nested_root(flatcc_table_verifier_descriptor_t *td,
-        flatbuffers_voffset_t id, int required, const char *fid,
+        flatbuffers_voffset_t id, int required, const flatbuffers_fid_t fid,
         size_t size, uint16_t align);
 int flatcc_verify_table_as_nested_root(flatcc_table_verifier_descriptor_t *td,
-        flatbuffers_voffset_t id, int required, const char *fid,
+        flatbuffers_voffset_t id, int required, const flatbuffers_fid_t fid,
         uint16_t align, flatcc_table_verifier_f tvf);
 
 /*

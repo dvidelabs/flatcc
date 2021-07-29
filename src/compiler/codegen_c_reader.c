@@ -62,23 +62,25 @@ static void print_type_identifier(fb_output_t *out, fb_compound_type_t *ct)
         file_identifier = out->S->file_identifier.s.s;
         file_identifier_len = out->S->file_identifier.s.len;
     } else {
-        quote = "";
-        file_identifier = "0";
-        file_identifier_len = 1;
+        quote = "\"";
+        file_identifier = "";
+        file_identifier_len = 0;
     }
     fprintf(out->fp,
             "#ifndef %s_file_identifier\n"
-            "#define %s_file_identifier %s%.*s%s\n"
+            "const flatbuffers_fid_t s_%s_file_identifier = %s%.*s%s;\n"
+            "#define %s_file_identifier s_%s_file_identifier\n"
             "#endif\n",
-            name, name, quote, file_identifier_len, file_identifier, quote);
+            name, name, quote, file_identifier_len, file_identifier, quote, name, name);
     if (!conflict) {
         /* For backwards compatibility. */
         fprintf(out->fp,
                 "/* deprecated, use %s_file_identifier */\n"
                 "#ifndef %s_identifier\n"
-                "#define %s_identifier %s%.*s%s\n"
+                "const flatbuffers_fid_t s_%s_identifier = %s%.*s%s;\n"
+                "#define %s_identifier s_%s_identifier\n"
                 "#endif\n",
-                name, name, name, quote, file_identifier_len, file_identifier, quote);
+                name, name, name, quote, file_identifier_len, file_identifier, quote, name, name);
     }
     fprintf(out->fp,
         "#define %s_type_hash ((%sthash_t)0x%lx)\n",
@@ -900,7 +902,7 @@ static void gen_helpers(fb_output_t *out)
     }
     fprintf(out->fp,
             "/* If fid is null, the function returns true without testing as buffer is not expected to have any id. */\n"
-            "static inline int %shas_identifier(const void *buffer, const char *fid)\n"
+            "static inline int %shas_identifier(const void *buffer, const flatbuffers_fid_t fid)\n"
             "{ %sthash_t id, id2 = 0; if (fid == 0) { return 1; };\n"
             "  id2 = %stype_hash_from_string(fid);\n"
             "  id = __%sthash_read_from_pe(((%suoffset_t *)buffer) + 1);\n"
@@ -916,7 +918,7 @@ static void gen_helpers(fb_output_t *out)
             "{ if (size_out) { *size_out = (size_t)__%suoffset_read_from_pe(b); }\n"
             "  return (uint8_t *)b + sizeof(%suoffset_t); }\n", nsc, nsc, nsc);
     fprintf(out->fp,
-            "/* Null file identifier accepts anything, otherwise fid should be 4 characters. */\n"
+            "/* Null file identifier accepts anything, otherwise fid should be " STRINGIZE(FLATBUFFERS_IDENTIFIER_SIZE) " characters. */\n"
             "#define __%sread_root(T, K, buffer, fid)\\\n"
             "  ((!buffer || !%shas_identifier(buffer, fid)) ? 0 :\\\n"
             "  ((T ## _ ## K ## t)(((uint8_t *)buffer) +\\\n"
@@ -928,23 +930,21 @@ static void gen_helpers(fb_output_t *out)
             nsc, nsc, nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "#define __%snested_buffer_as_root(C, N, T, K)\\\n"
-            "static inline T ## _ ## K ## t C ## _ ## N ## _as_root_with_identifier(C ## _ ## table_t t__tmp, const char *fid__tmp)\\\n"
+            "static inline T ## _ ## K ## t C ## _ ## N ## _as_root_with_identifier(C ## _ ## table_t t__tmp, const flatbuffers_fid_t fid__tmp)\\\n"
             "{ const uint8_t *buffer__tmp = C ## _ ## N(t__tmp); return __%sread_root(T, K, buffer__tmp, fid__tmp); }\\\n"
             "static inline T ## _ ## K ## t C ## _ ## N ## _as_typed_root(C ## _ ## table_t t__tmp)\\\n"
             "{ const uint8_t *buffer__tmp = C ## _ ## N(t__tmp); return __%sread_root(T, K, buffer__tmp, C ## _ ## type_identifier); }\\\n"
             "static inline T ## _ ## K ## t C ## _ ## N ## _as_root(C ## _ ## table_t t__tmp)\\\n"
-            "{ const char *fid__tmp = T ## _file_identifier;\\\n"
-            "  const uint8_t *buffer__tmp = C ## _ ## N(t__tmp); return __%sread_root(T, K, buffer__tmp, fid__tmp); }\n",
+            "{ const uint8_t *buffer__tmp = C ## _ ## N(t__tmp); return __%sread_root(T, K, buffer__tmp, T ## _file_identifier); }\n",
             nsc, nsc, nsc, nsc);
     fprintf(out->fp,
             "#define __%sbuffer_as_root(N, K)\\\n"
-            "static inline N ## _ ## K ## t N ## _as_root_with_identifier(const void *buffer__tmp, const char *fid__tmp)\\\n"
+            "static inline N ## _ ## K ## t N ## _as_root_with_identifier(const void *buffer__tmp, const flatbuffers_fid_t fid__tmp)\\\n"
             "{ return __%sread_root(N, K, buffer__tmp, fid__tmp); }\\\n"
             "static inline N ## _ ## K ## t N ## _as_root_with_type_hash(const void *buffer__tmp, %sthash_t thash__tmp)\\\n"
             "{ return __%sread_typed_root(N, K, buffer__tmp, thash__tmp); }\\\n"
             "static inline N ## _ ## K ## t N ## _as_root(const void *buffer__tmp)\\\n"
-            "{ const char *fid__tmp = N ## _file_identifier;\\\n"
-            "  return __%sread_root(N, K, buffer__tmp, fid__tmp); }\\\n"
+            "{ return __%sread_root(N, K, buffer__tmp, N ## _file_identifier); }\\\n"
             "static inline N ## _ ## K ## t N ## _as_typed_root(const void *buffer__tmp)\\\n"
             "{ return __%sread_typed_root(N, K, buffer__tmp, N ## _type_hash); }\n"
             "#define __%sstruct_as_root(N) __%sbuffer_as_root(N, struct_)\n"

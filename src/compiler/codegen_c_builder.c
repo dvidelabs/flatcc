@@ -884,15 +884,18 @@ static int gen_builder_pretext(fb_output_t *out)
     if (out->S->file_identifier.type == vt_string) {
         fprintf(out->fp,
             "#undef %sidentifier\n"
-            "#define %sidentifier \"%.*s\"\n",
+            "const flatbuffers_fid_t s_%sidentifier = \"%.*s\";\n"
+            "#define %sidentifier s_%sidentifier\n",
             nsc,
-            nsc, out->S->file_identifier.s.len, out->S->file_identifier.s.s);
+            nsc, out->S->file_identifier.s.len, out->S->file_identifier.s.s,
+            nsc, nsc);
     } else {
         fprintf(out->fp,
             "#ifndef %sidentifier\n"
-            "#define %sidentifier 0\n"
+            "const flatbuffers_fid_t s_%sidentifier = \"\";\n"
+            "#define %sidentifier s_%sidentifier\n"
             "#endif\n",
-            nsc, nsc);
+            nsc, nsc, nsc, nsc);
     }
     if (out->S->file_extension.type == vt_string) {
         fprintf(out->fp,

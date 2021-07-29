@@ -220,7 +220,7 @@ static int gen_table_verifier(fb_output_t *out, fb_compound_type_t *ct)
             "{\n    return flatcc_verify_table_as_root(buf, bufsiz, %s_type_identifier, &%s_verify_table);\n}\n\n",
             snt.text, snt.text, snt.text);
     fprintf(out->fp,
-            "static inline int %s_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)\n"
+            "static inline int %s_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const flatbuffers_fid_t fid)\n"
             "{\n    return flatcc_verify_table_as_root(buf, bufsiz, fid, &%s_verify_table);\n}\n\n",
             snt.text, snt.text);
     fprintf(out->fp,
@@ -250,7 +250,7 @@ static int gen_struct_verifier(fb_output_t *out, fb_compound_type_t *ct)
             "{\n    return flatcc_verify_struct_as_typed_root(buf, bufsiz, thash, %"PRIu64", %"PRIu16");\n}\n\n",
             snt.text, out->nsc, ct->size, ct->align);
     fprintf(out->fp,
-            "static inline int %s_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)\n"
+            "static inline int %s_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const flatbuffers_fid_t fid)\n"
             "{\n    return flatcc_verify_struct_as_root(buf, bufsiz, fid, %"PRIu64", %"PRIu16");\n}\n\n",
             snt.text, ct->size, ct->align);
     return 0;

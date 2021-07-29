@@ -743,7 +743,7 @@ flatcc_builder_ref_t flatcc_builder_embed_buffer(flatcc_builder_t *B,
 }
 
 flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
-        const char identifier[identifier_size], uint16_t block_align,
+        const flatbuffers_fid_t identifier, uint16_t block_align,
         flatcc_builder_ref_t object_ref, uint16_t align, int flags)
 {
     flatcc_builder_ref_t buffer_ref;
@@ -808,7 +808,7 @@ flatcc_builder_ref_t flatcc_builder_create_struct(flatcc_builder_t *B, const voi
 }
 
 int flatcc_builder_start_buffer(flatcc_builder_t *B,
-        const char identifier[identifier_size], uint16_t block_align, int flags)
+        const flatbuffers_fid_t identifier, uint16_t block_align, int flags)
 {
     /*
      * This saves the parent `min_align` in the align field since we
@@ -1908,7 +1908,7 @@ void flatcc_builder_set_vtable_cache_limit(flatcc_builder_t *B, size_t size)
     B->vb_flush_limit = size;
 }
 
-void flatcc_builder_set_identifier(flatcc_builder_t *B, const char identifier[identifier_size])
+void flatcc_builder_set_identifier(flatcc_builder_t *B, const flatbuffers_fid_t identifier)
 {
     set_identifier(identifier);
 }

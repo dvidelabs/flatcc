@@ -66,10 +66,24 @@ static inline void flatbuffers_identifier_from_type_hash(flatbuffers_thash_t typ
     out_identifier[0] = (char)(type_hash & 0xff);
     type_hash >>= 8;
     out_identifier[1] = (char)(type_hash & 0xff);
+
+#if FLATBUFFERS_THASH_WIDTH > 16
     type_hash >>= 8;
     out_identifier[2] = (char)(type_hash & 0xff);
     type_hash >>= 8;
     out_identifier[3] = (char)(type_hash & 0xff);
+#endif
+
+#if FLATBUFFERS_THASH_WIDTH > 32
+    type_hash >>= 8;
+    out_identifier[4] = (char)(type_hash & 0xff);
+    type_hash >>= 8;
+    out_identifier[5] = (char)(type_hash & 0xff);
+    type_hash >>= 8;
+    out_identifier[6] = (char)(type_hash & 0xff);
+    type_hash >>= 8;
+    out_identifier[7] = (char)(type_hash & 0xff);
+#endif
 }
 
 /* Native integer encoding of file identifier. */
@@ -77,8 +91,16 @@ static inline flatbuffers_thash_t flatbuffers_type_hash_from_identifier(const fl
 {
     uint8_t *p = (uint8_t *)identifier;
 
-    return identifier ?
-        (uint32_t)p[0] + (((uint32_t)p[1]) << 8) + (((uint32_t)p[2]) << 16) + (((uint32_t)p[3]) << 24) : 0;
+    return !identifier ? 0 :
+
+#if FLATBUFFERS_THASH_WIDTH == 16
+        (uint16_t)p[0] + (((uint16_t)p[1]) << 8);
+#elif FLATBUFFERS_THASH_WIDTH == 32
+        (uint32_t)p[0] + (((uint32_t)p[1]) << 8) + (((uint32_t)p[2]) << 16) + (((uint32_t)p[3]) << 24);
+#elif FLATBUFFERS_THASH_WIDTH == 64
+        (uint64_t)p[0] + (((uint64_t)p[1]) << 8) + (((uint64_t)p[2]) << 16) + (((uint64_t)p[3]) << 24) +
+        (((uint64_t)p[4]) << 32) + (((uint64_t)p[5]) << 40) + (((uint64_t)p[6]) << 48) + (((uint64_t)p[7]) << 56);
+#endif
 }
 
 /*
@@ -91,14 +113,31 @@ static inline flatbuffers_thash_t flatbuffers_type_hash_from_string(const char *
     flatbuffers_thash_t h = 0;
     const uint8_t *p = (const uint8_t *)identifier;
 
+    if (!p) return 0;
+
     if (!p[0]) return h;
     h += ((flatbuffers_thash_t)p[0]);
     if (!p[1]) return h;
     h += ((flatbuffers_thash_t)p[1]) << 8;
+
+#if FLATBUFFERS_THASH_WIDTH > 16
     if (!p[2]) return h;
     h += ((flatbuffers_thash_t)p[2]) << 16;
-    /* No need to test for termination here. */
+    if (!p[3]) return h;
     h += ((flatbuffers_thash_t)p[3]) << 24;
+#endif
+
+#if FLATBUFFERS_THASH_WIDTH > 32
+    if (!p[4]) return h;
+    h += ((flatbuffers_thash_t)p[4]) << 32;
+    if (!p[5]) return h;
+    h += ((flatbuffers_thash_t)p[5]) << 40;
+    if (!p[6]) return h;
+    h += ((flatbuffers_thash_t)p[6]) << 48;
+    if (!p[7]) return h;
+    h += ((flatbuffers_thash_t)p[7]) << 56;
+#endif
+
     return h;
 }
 
@@ -125,21 +164,31 @@ static inline void flatbuffers_identifier_from_name(const char *name, flatbuffer
  * additional information and just complicates matters. Furthermore, the
  * unmodified type hash has the benefit that it can seed a child namespace.
  */
-static inline uint32_t flatbuffers_disperse_type_hash(flatbuffers_thash_t type_hash)
+static inline flatbuffers_thash_t flatbuffers_disperse_type_hash(flatbuffers_thash_t type_hash)
 {
+    flatbuffers_thash_t x = type_hash;
+
+#if FLATBUFFERS_THASH_WIDTH == 32
     /* http://stackoverflow.com/a/12996028 */
-    uint32_t x = type_hash;
 
     x = ((x >> 16) ^ x) * UINT32_C(0x45d9f3b);
     x = ((x >> 16) ^ x) * UINT32_C(0x45d9f3b);
     x = ((x >> 16) ^ x);
+#elif FLATBUFFERS_THASH_WIDTH == 64
+    /* http://stackoverflow.com/a/12996028 */
+
+    x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
+    x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
+    x = x ^ (x >> 31);
+#endif
+
     return x;
 }
 
 
 /* We have hardcoded assumptions about identifier size. */
-static_assert(sizeof(flatbuffers_fid_t) == 4, "unexpected file identifier size");
-static_assert(sizeof(flatbuffers_thash_t) == 4, "unexpected type hash size");
+//static_assert(sizeof(flatbuffers_fid_t) == 4, "unexpected file identifier size");
+//static_assert(sizeof(flatbuffers_thash_t) == 4, "unexpected type hash size");
 
 #ifdef __cplusplus
 }
