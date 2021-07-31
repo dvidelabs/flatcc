@@ -159,7 +159,7 @@ int access_scalar_stuff(const void *buf)
     return 0;
 }
 
-int test()
+int test(void)
 {
     flatcc_builder_t builder;
     void  *buf;
@@ -192,7 +192,7 @@ int print_buffer(const void *buf, size_t size)
 }
 #endif
 
-int test_json_printer()
+int test_json_printer(void)
 {
     flatcc_builder_t builder;
     void  *buf;
@@ -219,7 +219,7 @@ int test_json_printer()
     return 0;
 }
 
-int test_json_parser()
+int test_json_parser(void)
 {
     flatcc_builder_t builder;
     void  *buf;
