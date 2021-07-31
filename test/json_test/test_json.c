@@ -139,7 +139,7 @@ failed:
 #define TEST_ERROR_FLAGS(fparse, fprint, x, err) \
     ret |= test_json(scope, (x), 0, err, (fparse), (fprint), __LINE__);
 
-int edge_case_tests()
+int edge_case_tests(void)
 {
     BEGIN_TEST(Monster);
 /*
@@ -280,7 +280,7 @@ int edge_case_tests()
     END_TEST();
 }
 
-int error_case_tests()
+int error_case_tests(void)
 {
     BEGIN_TEST(Monster);
 
@@ -363,7 +363,7 @@ int error_case_tests()
 #define RANDOM_BASE64URL_NOPAD "zLOuiUjH49tz4Ap2JnmpTX5NqoiMzlD8hSw45QCS2yaSp7UYoA" \
     "oE8KpY_5pKYmk-54NI40hyeyZ1zRUE4vKQT0hEdVl0iXq2fqPamkVD1AZlVvQJ1m00PaoXOSgG-64Zv-Uygw"
 
-int base64_tests()
+int base64_tests(void)
 {
     BEGIN_TEST(Monster);
 
@@ -425,7 +425,7 @@ int base64_tests()
     END_TEST();
 }
 
-int mixed_type_union_tests()
+int mixed_type_union_tests(void)
 {
     BEGIN_TEST(Movie);
 
@@ -479,7 +479,7 @@ int mixed_type_union_tests()
     END_TEST();
 }
 
-int union_vector_tests()
+int union_vector_tests(void)
 {
     BEGIN_TEST(Alt);
     /* Union vector */
@@ -505,7 +505,7 @@ int union_vector_tests()
     END_TEST();
 }
 
-int fixed_array_tests()
+int fixed_array_tests(void)
 {
     BEGIN_TEST(Alt);
     /* Fixed array */

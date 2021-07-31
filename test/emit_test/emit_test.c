@@ -30,7 +30,7 @@ int dbg_emitter(void *emit_context,
     return 0;
 }
 
-int debug_test()
+int debug_test(void)
 {
     flatcc_builder_t builder, *B;
     float x[10] = { 0 };
@@ -48,7 +48,7 @@ int debug_test()
  * this assumes a very simple schema:
  * "table { time: long; device: ubyte; samples: [float]; }"
  */
-int emit_test()
+int emit_test(void)
 {
     /*
      * Note that there is some apparently unnecessary padding after 0x01

@@ -64,7 +64,7 @@ int verify_parse(void *buffer)
 // first iteration. This suggests there is an end check missing somwhere
 // and this needs to be debugged. The input size as of this writing is 701
 // bytes, and the output size is 288 bytes.
-int test_parse()
+int test_parse(void)
 {
 #if FLATCC_BENCHMARK
     double t1, t2;
