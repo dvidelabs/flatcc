@@ -9,7 +9,7 @@ include_directories("${GEN_DIR}" "${INC_DIR}")
 add_custom_target(gen_monster_fbs ALL) 
 add_custom_command (
     TARGET gen_monster_fbs
-    COMMAND cmake -E make_directory "${GEN_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN_DIR}"
     COMMAND flatcc_cli -a -o "${GEN_DIR}" "${FBS_DIR}/monster.fbs"
     DEPENDS flatcc_cli "${FBS_DIR}/monster.fbs" 
 )
