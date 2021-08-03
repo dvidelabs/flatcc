@@ -9,7 +9,7 @@ include_directories("${GEN_DIR}" "${INC_DIR}")
 add_custom_target(gen_emit_test ALL) 
 add_custom_command (
     TARGET gen_emit_test
-    COMMAND cmake -E make_directory "${GEN_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN_DIR}"
     COMMAND flatcc_cli -a -o "${GEN_DIR}" "${FBS_DIR}/emit_test.fbs"
     DEPENDS flatcc_cli "${FBS}"
 )

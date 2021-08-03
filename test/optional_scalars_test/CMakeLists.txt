@@ -9,7 +9,7 @@ include_directories("${GEN_DIR}" "${INC_DIR}")
 add_custom_target(gen_optional_scalars_test ALL) 
 add_custom_command (
     TARGET gen_optional_scalars_test
-    COMMAND cmake -E make_directory "${GEN_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN_DIR}"
     COMMAND flatcc_cli -a --json -o "${GEN_DIR}" "${FBS_DIR}/optional_scalars_test.fbs"
 )
 add_executable(optional_scalars_test optional_scalars_test.c)
