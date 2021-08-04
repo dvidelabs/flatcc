@@ -1367,8 +1367,9 @@ lex_mode_normal:
                  */
             } /* If condition around switch under '0' case. */
             --p;
-            /* Fall through. */
+            goto lex_fallthrough_1; /* silence warning */
 
+        lex_fallthrough_1:
             /* Leading integer digit in C integers. */
         case '1': case '2': case '3': case '4': case '5':
         case '6': case '7': case '8': case '9':
