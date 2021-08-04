@@ -16,6 +16,7 @@
 #include "codegen.h"
 #include "fileio.h"
 #include "pstrutil.h"
+#include "flatcc/portable/pattributes.h" /* fallthrough */
 #include "flatcc/portable/pparseint.h"
 
 void fb_default_error_out(void *err_ctx, const char *buf, size_t len)
@@ -919,6 +920,7 @@ static void parse_enum_decl(fb_parser_t *P, fb_compound_type_t *ct)
             case tok_kw_float32:
             case tok_kw_float64:
                 error_tok(P, ct->type.t, "integral type expected");
+                fallthrough;
             default:
                 break;
             }

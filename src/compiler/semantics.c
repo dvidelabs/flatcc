@@ -11,6 +11,8 @@
 #include <inttypes.h>
 #endif
 
+#include "flatcc/portable/pattributes.h" /* fallthrough */
+
 /* Same order as enum! */
 static const char *fb_known_attribute_names[] = {
     "",
@@ -699,7 +701,7 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
         switch (member->type.type) {
         case vt_fixed_array_type_ref:
             key_ok = 0;
-            /* fall through */
+            fallthrough;
         case vt_type_ref:
             type_sym = lookup_type_reference(P, ct->scope, member->type.ref);
             if (!type_sym) {
