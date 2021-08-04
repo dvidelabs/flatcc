@@ -23,7 +23,7 @@ extern "C" {
 /* Needed by C99 compilers without FLATCC_PORTABLE. */
 #include "flatcc/portable/pstdalign.h"
 
-/* Handle fallthrough attribute in switch statemnents. */
+/* Handle fallthrough attribute in switch statements. */
 #include "flatcc/portable/pattributes.h"
 
 #include "flatcc/flatcc_alloc.h"
