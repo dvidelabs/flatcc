@@ -6,6 +6,8 @@
 #include <inttypes.h>
 #endif
 
+#include "flatcc/portable/pattributes.h" /* fallthrough */
+
 static int gen_json_printer_pretext(fb_output_t *out)
 {
     fprintf(out->fp,
@@ -581,6 +583,7 @@ static int gen_json_printer_prototypes(fb_output_t *out)
     fprintf(out->fp,
             "static int %s_print_json(flatcc_json_printer_t *ctx, const char *buf, size_t bufsiz);\n\n",
             out->S->basename);
+        fallthrough;
     default:
         break;
     }

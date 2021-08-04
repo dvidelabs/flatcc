@@ -8,6 +8,8 @@
 #include <inttypes.h>
 #endif
 
+#include "flatcc/portable/pattributes.h" /* fallthrough */
+
 #define PRINTLN_SPMAX 64
 static char println_spaces[PRINTLN_SPMAX];
 
@@ -1768,6 +1770,7 @@ static int gen_json_parser_prototypes(fb_output_t *out)
     println(out, "const char *buf, size_t bufsiz, int flags);");
     unindent(); unindent();
         println(out, "");
+        fallthrough;
     default:
         break;
     }
