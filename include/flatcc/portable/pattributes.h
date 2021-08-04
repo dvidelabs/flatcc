@@ -1,7 +1,5 @@
 
 /*
- * There are no standard attributes defines as macros.
- *
  * C23 introduces an attributes `[[<attribute>]]`. Priot to that
  * some compiler versions supported the `__attribute__` syntax.
  *
@@ -13,7 +11,7 @@
  * defined for each attribute.
  *
  * The Linux kernel defines certain attributes as macros, such as
- * `fallthrough`. When adding attributes is seems reasonable to follow
+ * `fallthrough`. When adding attributes it seems reasonable to follow
  * the Linux conventions in lack of any official standard. However, it
  * is not the intention that this file should mirror the Linux
  * attributes 1 to 1.
