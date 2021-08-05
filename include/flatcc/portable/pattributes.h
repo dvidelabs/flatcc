@@ -57,21 +57,23 @@ extern "C" {
 
 
 /* https://en.cppreference.com/w/c/language/attributes/fallthrough */
-#ifndef fallthrough
-# if PORTABLE_HAS_C_ATTRIBUTE(__fallthrough__)
-#  define pattribute_fallthrough [[__fallthrough__]]
-# elif PORTABLE_HAS_ATTRIBUTE(__fallthrough__)
-#  define pattribute_fallthrough __attribute__((__fallthrough__))
-# else
-#  define pattribute_fallthrough ((void)0)
-# endif
+#if PORTABLE_HAS_C_ATTRIBUTE(__fallthrough__)
+# define pattribute_fallthrough [[__fallthrough__]]
+#elif PORTABLE_HAS_ATTRIBUTE(__fallthrough__)
+# define pattribute_fallthrough __attribute__((__fallthrough__))
+#else
+# define pattribute_fallthrough ((void)0)
 #endif
 
 
 #define pattribute(x) pattribute_##x
 
 #if PORTABLE_EXPOSE_ATTRIBUTES
-#define fallthrough pattribute(fallthrough)
+
+#ifndef fallthrough
+# define fallthrough pattribute(fallthrough)
+#endif
+
 #endif
 
 
