@@ -190,10 +190,10 @@ static int print_uint16(uint16_t n, char *p)
         switch (k) {
         case 5:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 3:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 1:
             p[-1] = (char)n + '0';
         }
@@ -201,7 +201,7 @@ static int print_uint16(uint16_t n, char *p)
         switch (k) {
         case 4:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 2:
             __print_stage();
         }
@@ -253,16 +253,16 @@ static int print_uint32(uint32_t n, char *p)
         switch (k) {
         case 9:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 7:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 5:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 3:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 1:
             p[-1] = (char)n + '0';
         }
@@ -270,16 +270,16 @@ static int print_uint32(uint32_t n, char *p)
         switch (k) {
         case 10:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 8:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 6:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 4:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 2:
             __print_stage();
         }
@@ -339,16 +339,16 @@ static int print_uint64(uint64_t n, char *p)
         switch (k) {
         case 19:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 17:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 15:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 13:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 11:
             __print_stage()
             __print_short_stage();
@@ -357,19 +357,19 @@ static int print_uint64(uint64_t n, char *p)
         switch (k) {
         case 20:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 18:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 16:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 14:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 12:
             __print_stage();
-	    fallthrough;
+	    pattribute(fallthrough);
         case 10:
             __print_stage();
         }
