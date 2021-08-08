@@ -55,6 +55,11 @@
 - Fix larger integer literal types in JSON parser and printer (#194).
 - Add pattributes.h to portable library and replace GCC fallthrough comments
   with fallthough attribute to also silence clang warnings (#203).
+- Remove misguided include guards from `portable/pdiagnostic_push/pop.h` and fix
+  related and expected warnings in other code. NOTE: End user code might be
+  affected because warnigs were disabled more broadly than intended. Also note
+  that warnings will still be disabled after pop if the compiler does not
+  support push/pop diagnostics (#205).
 
 ## [0.6.0]
 
