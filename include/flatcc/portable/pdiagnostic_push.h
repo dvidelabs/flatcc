@@ -48,8 +48,4 @@
 #define PDIAGNOSTIC_PUSHED_GCC 0
 #endif // defined(__GNUC__) && !defined(__clang__)
 
-/*
- * We cannot handle nested push, but we can add to the parent context
- * so keep this outside the header include guard.
- */
 #include "pdiagnostic.h"
