@@ -1,6 +1,3 @@
-#ifndef PDIAGNOSTIC_PUSH_H
-#define PDIAGNOSTIC_PUSH_H
-
 /*
  * See also comment in "pdiagnostic.h"
  *
@@ -50,8 +47,6 @@
 #else
 #define PDIAGNOSTIC_PUSHED_GCC 0
 #endif // defined(__GNUC__) && !defined(__clang__)
-
-#endif /* PDIAGNOSTIC_PUSH_H */
 
 /*
  * We cannot handle nested push, but we can add to the parent context
