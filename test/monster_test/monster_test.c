@@ -96,6 +96,8 @@ int verify_empty_monster(void *buffer)
 
 int test_enums(flatcc_builder_t *B)
 {
+    (void)B;
+
     if (ns(neg_enum_neg1) != -12) {
         printf("neg_enum_neg1 should be -12, was %d\n", ns(neg_enum_neg1));
         return -1;
@@ -1686,7 +1688,6 @@ int verify_union_vector(void *buffer, size_t size)
     int color;
 
     ns(Monster_table_t) mon;
-    ns(Stat_table_t) stat;
     ns(TestSimpleTableWithEnum_table_t) kermit;
     flatbuffers_generic_vec_t anyvec;
     ns(Any_vec_t) anyvec_type;
@@ -1991,7 +1992,6 @@ int test_recursive_sort(flatcc_builder_t *B)
 
     void *buffer = 0;
     size_t size = 0;
-    size_t n;
     int ret = -1;
     ns(Alt_table_t) alt;
     ns(Any_union_t) any;
@@ -2064,7 +2064,6 @@ int test_mixed_type_union(flatcc_builder_t *B)
 {
     void *buffer;
     size_t size;
-    size_t n;
     int ret = -1;
     /* Builder */
     nsf(Character_union_ref_t) ut;
@@ -2511,6 +2510,8 @@ int test_nested_buffer_using_nest(flatcc_builder_t *B)
 
 int verify_include(void *buffer)
 {
+    (void)buffer;
+
     if (MyGame_OtherNameSpace_FromInclude_Foo != 17) {
         printf("Unexpected enum value `Foo` from included schema\n");
         return -1;
