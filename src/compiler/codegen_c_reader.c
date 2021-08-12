@@ -970,7 +970,7 @@ int fb_gen_common_c_header(fb_output_t *out)
                 " * but find operations are supported on pre-sorted vectors.\n"
                 " */\n");
     }
-    gen_prologue(out);
+    gen_prologue(out, true);
     gen_helpers(out);
     gen_epilogue(out);
     fprintf(out->fp,
@@ -1028,7 +1028,7 @@ static void gen_pretext(fb_output_t *out)
                 "#include <stdalign.h>\n"
                 "#endif\n");
     }
-    gen_prologue(out);
+    gen_prologue(out, false);
     if (out->S->file_identifier.type == vt_string) {
         fprintf(out->fp,
             "#undef %sidentifier\n"

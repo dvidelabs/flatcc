@@ -18,7 +18,7 @@ static int gen_json_printer_pretext(fb_output_t *out)
     fprintf(out->fp, "\n/* " FLATCC_GENERATED_BY " */\n\n");
     fprintf(out->fp, "#include \"flatcc/flatcc_json_printer.h\"\n");
     fb_gen_c_includes(out, "_json_printer.h", "_JSON_PRINTER_H");
-    gen_prologue(out);
+    gen_prologue(out, false);
     fprintf(out->fp, "\n");
     return 0;
 }

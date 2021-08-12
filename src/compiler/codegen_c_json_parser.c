@@ -56,7 +56,7 @@ static int gen_json_parser_pretext(fb_output_t *out)
     println(out, "");
     println(out, "#include \"flatcc/flatcc_json_parser.h\"");
     fb_gen_c_includes(out, "_json_parser.h", "_JSON_PARSER_H");
-    gen_prologue(out);
+    gen_prologue(out, false);
     println(out, "");
     return 0;
 }

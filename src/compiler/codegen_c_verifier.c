@@ -21,7 +21,7 @@ static int gen_verifier_pretext(fb_output_t *out)
     fprintf(out->fp, "#endif\n");
     fprintf(out->fp, "#include \"flatcc/flatcc_verifier.h\"\n");
     fb_gen_c_includes(out, "_verifier.h", "_VERIFIER_H");
-    gen_prologue(out);
+    gen_prologue(out, false);
     fprintf(out->fp, "\n");
     return 0;
 }
