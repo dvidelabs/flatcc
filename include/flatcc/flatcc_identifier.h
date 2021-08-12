@@ -186,9 +186,11 @@ static inline flatbuffers_thash_t flatbuffers_disperse_type_hash(flatbuffers_tha
 }
 
 
-/* We have hardcoded assumptions about identifier size. */
-//static_assert(sizeof(flatbuffers_fid_t) == 4, "unexpected file identifier size");
-//static_assert(sizeof(flatbuffers_thash_t) == 4, "unexpected type hash size");
+/* We have hardcoded assumptions about identifier size when not relaxed. */
+#ifndef FLATCC_RELAXED_IDENTIFIER_SIZE
+static_assert(sizeof(flatbuffers_fid_t) == FLATBUFFERS_IDENTIFIER_SIZE, "unexpected file identifier size");
+static_assert(sizeof(flatbuffers_thash_t) == FLATBUFFERS_THASH_WIDTH/8, "unexpected type hash size");
+#endif
 
 #ifdef __cplusplus
 }

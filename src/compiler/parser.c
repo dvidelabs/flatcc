@@ -1160,7 +1160,7 @@ static void parse_file_identifier(fb_parser_t *P, fb_value_t *v)
     }
     t = P->token;
     parse_string_literal(P, v);
-#ifndef FLATBUFFERS_RELAXED_IDENTIFIER_SIZE
+#ifndef FLATCC_RELAXED_IDENTIFIER_SIZE
     if (v->s.s && v->s.len != FLATBUFFERS_IDENTIFIER_SIZE) {
         v->type = vt_invalid;
         error_tok(P, t, "file_identifier must be " STRINGIZE(FLATBUFFERS_IDENTIFIER_SIZE) " characters");
