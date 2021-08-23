@@ -31,6 +31,7 @@ extern "C" {
  */
 
 #include <stdlib.h>
+#include <assert.h>
 
 /*
  * Define this to see which version is used so the fallback is not
@@ -159,6 +160,11 @@ static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
 
 #else
 
+static inline bool __is_power_of_2(size_t x)
+{
+    return x && ((x & (~(x - 1))) == x);
+}
+
 static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
 {
     char *raw;
@@ -168,6 +174,10 @@ static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
     if (alignment < sizeof(void *)) {
         alignment = sizeof(void *);
     }
+    // alignment must be an integer power of 2.
+    assert(__is_power_of_2(alignment));
+    if (!__is_power_of_2(alignment)) return 0;
+
     raw = (char *)(size_t)malloc(total_size);
     buf = raw + alignment - 1 + sizeof(void *);
     buf = (void *)(((size_t)buf) & ~(alignment - 1));
