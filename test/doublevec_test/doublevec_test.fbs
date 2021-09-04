@@ -1,0 +1,5 @@
+table DoubleVec {
+  a: [double];
+}
+
+root_type DoubleVec;
