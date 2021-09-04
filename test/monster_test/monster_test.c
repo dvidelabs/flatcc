@@ -828,6 +828,9 @@ int gen_monster(flatcc_builder_t *B, int with_size)
 
     ns(Monster_enemy_start(B));
     ns(Monster_name_create_str(B, "the enemy"));
+    
+    // causes alignment problems
+    ns(Monster_vector_of_doubles_create(B, 0, 0));
 
     /* Create array of monsters to test various union constructors. */
     ns(Monster_testarrayoftables_start(B));
