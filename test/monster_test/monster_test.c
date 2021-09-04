@@ -689,6 +689,8 @@ int gen_monster(flatcc_builder_t *B, int with_size)
     } else {
         ns(Monster_start_as_root(B));
     }
+    
+    ns(Monster_vector_of_doubles_create(B, 0, 0));
 
     ns(Monster_hp_add(B, 80));
     vec = ns(Monster_pos_start(B));
