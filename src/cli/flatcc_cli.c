@@ -456,20 +456,20 @@ int main(int argc, const char *argv[])
     }
     if (opts.bgen_bfbs && cgen) {
         if (opts.gen_stdout) {
-            fprintf(stderr, "--stdout cannot be used with mixed text and binary output");
+            fprintf(stderr, "--stdout cannot be used with mixed text and binary output\n");
             goto fail;
         }
         if (opts.gen_outfile) {
-            fprintf(stderr, "--outfile cannot be used with mixed text and binary output");
+            fprintf(stderr, "--outfile cannot be used with mixed text and binary output\n");
             goto fail;
         }
     }
     if (opts.gen_deptarget && !opts.gen_depfile) {
-        fprintf(stderr, "--deptarget cannot be used without --depfile");
+        fprintf(stderr, "--deptarget cannot be used without --depfile\n");
         goto fail;
     }
     if (opts.gen_stdout && opts.gen_outfile) {
-        fprintf(stderr, "--outfile cannot be used with --stdout");
+        fprintf(stderr, "--outfile cannot be used with --stdout\n");
         goto fail;
     }
     for (i = 0, src = opts.srcpaths; i < opts.srcpath_count; ++i, ++src) {

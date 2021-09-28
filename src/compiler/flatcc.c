@@ -472,6 +472,11 @@ int flatcc_generate_files(flatcc_context_t ctx)
     }
 #endif
 
+    if (!(P->opts.cgen_reader | P->opts.cgen_builder | P->opts.cgen_verifier
+        | P->opts.cgen_common_reader | P->opts.cgen_common_builder
+        | P->opts.cgen_json_parser | P->opts.cgen_json_printer)) {
+        return 0;
+    }
     if (fb_init_output_c(out, &P->opts)) {
         return -1;
     }

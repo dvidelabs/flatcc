@@ -478,7 +478,12 @@ static FILE *open_file(fb_options_t *opts, fb_schema_t *S)
     if (opts->gen_stdout) {
         return stdout;
     }
-    checkmem((path = fb_create_join_path_n(prefix, prefix_len, name, len, ext, 1)));
+    if (opts->gen_outfile) {
+        path = fb_create_join_path(prefix, opts->gen_outfile, "", 1);
+    } else {
+        path = fb_create_join_path_n(prefix, prefix_len, name, len, ext, 1);
+    }
+    checkmem(path);
     fp = fopen(path, "wb");
     if (!fp) {
         fprintf(stderr, "error opening file for writing binary schema: %s\n", path);
