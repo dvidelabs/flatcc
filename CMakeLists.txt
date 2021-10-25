@@ -1,8 +1,8 @@
 # Ubuntu 14.04 (Trusty)
-#cmake_minimum_required (VERSION 2.8.12.2)
+cmake_minimum_required (VERSION 2.8.12.2)
 # Centos 7
 #cmake_minimum_required (VERSION 2.8.11)
-cmake_minimum_required (VERSION 2.8)
+#cmake_minimum_required (VERSION 2.8)
 
 # Disable build of tests and samples. Due to custom build step
 # dependency on flatcc tool, some custom build configurations may
