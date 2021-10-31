@@ -1545,7 +1545,7 @@ static int process_enum(fb_parser_t *P, fb_compound_type_t *ct)
     fb_symbol_t *sym, *old, *type_sym;
     fb_member_t *member;
     fb_metadata_t *knowns[KNOWN_ATTR_COUNT];
-    fb_value_t index = { 0 };
+    fb_value_t index = { { { 0 } }, 0, 0 };
     fb_value_t old_index;
     int first = 1;
     int bit_flags = 0;
