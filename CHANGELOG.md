@@ -60,6 +60,7 @@
   affected because warnigs were disabled more broadly than intended. Also note
   that warnings will still be disabled after pop if the compiler does not
   support push/pop diagnostics (#205).
+- Fix verifier crash on malicious string length input (#221).
 
 ## [0.6.0]
 
