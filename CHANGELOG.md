@@ -62,6 +62,8 @@
   support push/pop diagnostics (#205).
 - Fix verifier crash on malicious string length input (#221).
 - Fix potential crash parsing unterminated JSON (#223).
+- Allow 0 (and other unknown values) as schema default value for enums with
+  `bit_flags` attribute.
 
 ## [0.6.0]
 
