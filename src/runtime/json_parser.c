@@ -259,7 +259,7 @@ static inline int decode_utf16_surrogate_pair(uint32_t high, uint32_t low, char 
 }
 
 
-/* 
+/*
  * UTF-8 code points can have up to 4 bytes but JSON can only
  * encode up to 3 bytes via the \uXXXX syntax.
  * To handle the range U+10000..U+10FFFF two UTF-16 surrogate
@@ -329,7 +329,7 @@ const char *flatcc_json_parser_string_escape(flatcc_json_parser_t *ctx, const ch
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
         };
         /* If a high UTF-16 surrogate half pair was detected */
-        if (u >= 0xd800 && u <= 0xdbff && 
+        if (u >= 0xd800 && u <= 0xdbff &&
                 /* and there is space for a matching low half pair */
                 end - buf >= 12 &&
                 /* and there is a second escape following immediately */
@@ -344,7 +344,7 @@ const char *flatcc_json_parser_string_escape(flatcc_json_parser_t *ctx, const ch
                 return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
             }
             return buf + 12;
-            /*  
+            /*
              *  Otherwise decode unmatched surrogate pairs as is any
              *  other UTF-8. Some systems might depend on these surviving.
              *  Leave ignored errors for the next parse step.
@@ -489,7 +489,7 @@ const char *flatcc_json_parser_match_constant(flatcc_json_parser_t *ctx, const c
         *more = 0;
         return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
     case '\"':
-        buf = flatcc_json_parser_space(ctx, buf + 1, 0);
+        buf = flatcc_json_parser_space(ctx, buf + 1, end);
         *more = 0;
         return buf;
     }
@@ -855,7 +855,7 @@ const char *flatcc_json_parser_char_array(flatcc_json_parser_t *ctx,
         if (k > n) {
             if (!(ctx->flags & flatcc_json_parser_f_skip_array_overflow)) {
                 return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_overflow);
-            } 
+            }
             k = n; /* Might truncate UTF-8. */
         }
         memcpy(s, mark, k);
@@ -869,7 +869,7 @@ const char *flatcc_json_parser_char_array(flatcc_json_parser_t *ctx,
         if (k > n) {
             if (!(ctx->flags & flatcc_json_parser_f_skip_array_overflow)) {
                 return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_overflow);
-            } 
+            }
             k = n; /* Might truncate UTF-8. */
         }
         memcpy(s, mark, k);
