@@ -1146,7 +1146,9 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                         member->type.type = vt_invalid;
                         continue;
                     }
-                    if (P->opts.strict_enum_init && !(member->flags & fb_fm_optional)) {
+                    /* Bitflags can have complex combinations of values, and do not nativele have a 0 value. */
+                    if (P->opts.strict_enum_init && !(member->type.ct->metadata_flags & fb_f_bit_flags)
+                            && !(member->flags & fb_fm_optional)) {
                         if (!is_in_value_set(&member->type.ct->value_set, &member->value)) {
                             error_sym(P, sym, "initializer does not match a defined enum value");
                             member->type.type = vt_invalid;
@@ -1164,6 +1166,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                         continue;
                     }
                     if (P->opts.strict_enum_init) {
+                        /* TODO: consider if this error is necessary for bit_flags - flatc 2.0.0 errors on this. */
                         if (!is_in_value_set(&member->type.ct->value_set, &member->value)) {
                             error_sym_2(P, sym,
                                     "enum type requires an explicit initializer because it has no 0 value", type_sym);
