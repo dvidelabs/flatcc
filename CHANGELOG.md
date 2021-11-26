@@ -61,6 +61,7 @@
   that warnings will still be disabled after pop if the compiler does not
   support push/pop diagnostics (#205).
 - Fix verifier crash on malicious string length input (#221).
+- Fix potential crash parsing unterminated JSON (#223).
 
 ## [0.6.0]
 
