@@ -223,7 +223,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
             # GCC 9 warns on mistakenly assumed NULL string when
             # printing from a required FlatBuffer string field.
             #
-            message(STATUS "Disabling GNU C pedantic for GCC < 8.0")
+            message(STATUS "Disabling GNU C pedantic for GCC > 8.0")
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -Wextra")
             message(STATUS "Disabling GNU C compiler warnings: -Wstringop-truncation -Wno-format-overflow")
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-stringop-truncation -Wno-format-overflow")
