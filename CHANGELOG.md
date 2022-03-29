@@ -64,6 +64,8 @@
 - Fix potential crash parsing unterminated JSON (#223).
 - Allow 0 (and other unknown values) as schema default value for enums with
   `bit_flags` attribute.
+- Disable -pedantic flag for GCC >= 8, it just keeps breaking perfectly valid
+  code (#227).
 
 ## [0.6.0]
 
