@@ -210,8 +210,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     else()
         message(STATUS "Setting GNU C compiler options with c11 and Posix")
         if (GCC_VERSION VERSION_LESS 8.0)
-            message(STATUS "Disabling GNU C pedantic for GCC < 8.0")
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -Wextra")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
         elseif (NOT (GCC_VERSION VERSION_LESS 8.0))
             # Disable some GCC checks:
             # (warnings exist since 8.0, but are more aggressive in 9.0)
@@ -224,7 +223,8 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
             # GCC 9 warns on mistakenly assumed NULL string when
             # printing from a required FlatBuffer string field.
             #
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
+            message(STATUS "Disabling GNU C pedantic for GCC < 8.0")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -Wextra")
             message(STATUS "Disabling GNU C compiler warnings: -Wstringop-truncation -Wno-format-overflow")
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-stringop-truncation -Wno-format-overflow")
         endif()
