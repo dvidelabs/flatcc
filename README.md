@@ -1233,6 +1233,16 @@ For advanced debugging the [hexdump.h] file can be used to dump the buffer
 contents. It is used in [test_json.c] and also in [monster_test.c].
 See also [FlatBuffers Binary Format].
 
+As of April 2022, Googles flatc tool has implemented an `--annotate` feature.
+This provides an annotated hex dump given a binary buffer and a schema. The
+output can be used to troubleshoot and rule out or confirm suspected encoding
+bugs in the buffer at hand. The eclectic example in the [FlatBuffers Binary
+Format] document contains a hand written annotated example which inspired the
+`--annotate` feature, but it is not the exact same output format. Note also that
+`flatc` generated buffers tend to have vtables before the table it is referenced
+by, while flatcc normally packs all vtables at the end of the buffer for
+better padding and cache efficiency.
+
 
 ## File and Type Identifiers
 
