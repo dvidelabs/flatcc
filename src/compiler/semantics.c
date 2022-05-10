@@ -617,7 +617,7 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
     }
 
     ct->symbol.flags |= fb_circular_closed;
-    ct->symbol.flags &= ~fb_circular_open;
+    ct->symbol.flags &= (uint16_t)~fb_circular_open;
     ct->order = P->schema.ordered_structs;
     P->schema.ordered_structs = ct;
     return ret;
