@@ -1243,6 +1243,8 @@ Format] document contains a hand written annotated example which inspired the
 by, while flatcc normally packs all vtables at the end of the buffer for
 better padding and cache efficiency.
 
+See also [flatc --annotate].
+
 
 ## File and Type Identifiers
 
@@ -2558,3 +2560,5 @@ See [Benchmarks]
 [hexdump.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/support/hexdump.h
 [readfile.h]: include/flatcc/support/readfile.h
 [Security Considerations]: https://github.com/dvidelabs/flatcc/blob/master/doc/security.md
+[flatc --annotate]: https://github.com/google/flatbuffers/tree/master/tests/annotated_binary
+
