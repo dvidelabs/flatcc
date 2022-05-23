@@ -465,17 +465,15 @@ static void sort_objects(void *buffer)
 static FILE *open_file(fb_options_t *opts, fb_schema_t *S)
 {
     FILE *fp = 0;
-    char *path;
+    char *path = 0, *ext = 0;
     const char *prefix = opts->outpath ? opts->outpath : "";
     size_t len, prefix_len = strlen(prefix);
     const char *name;
-    const char *ext;
 
     name = S->basename;
     len = strlen(name);
 
-    ext = flatbuffers_extension;
-
+    ext = fb_create_path_ext(".", flatbuffers_extension);
     /* We generally should not use cgen options here, but in this case it makes sense. */
     if (opts->gen_stdout) {
         return stdout;
@@ -486,6 +484,7 @@ static FILE *open_file(fb_options_t *opts, fb_schema_t *S)
         fprintf(stderr, "error opening file for writing binary schema: %s\n", path);
     }
     free(path);
+    free(ext);
     return fp;
 }
 

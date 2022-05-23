@@ -25,7 +25,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
-  * [Main features supported as of 0.6.0](#main-features-supported-as-of-060)
+  * [Main features supported as of 0.6.1](#main-features-supported-as-of-061)
   * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
   * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
   * [Portability](#portability)
@@ -292,6 +292,20 @@ fi
 
 ## Status
 
+Release 0.6.1 contains primarily bug fixes and numerous contributions
+from the community to handle platform edge cases. Additionally,
+pendantic GCC warnings are disabled, relying instead on clang, since GCC
+is too aggressive, breaks builds frequently and works against
+portability. An existing C++ test case ensures that C code also works
+with common C++ compilers, but it can break some environments, so there
+is now a flag to disable that test without disabling all tests. Support
+for Optional Scalar Values in the FlatBuffer format has been added.
+There is also improved support for abstracting memory allocation on
+various platforms. `<table>_identifier` has been deprecated in favor
+`<table>_file_identifier` in generated code due to `identifier` easily
+leading to name conflicts. `file_extension` constant in generated code
+is now without prefixed dot (.).
+
 Release 0.6.0 introduces a "primary" attribute to be used together with
 a key attribute to chose default key for finding and sorting. If primary
 is absent, the key with the lowest id becomes primary. Tables and
@@ -339,7 +353,7 @@ low-level union interface so the terms { type, value } are used
 consistently over { type, member } and { types, members }.
 
 
-### Main features supported as of 0.6.0
+### Main features supported as of 0.6.1
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -364,6 +378,7 @@ consistently over { type, member } and { types, members }.
 - base64(url) encoded binary data in JSON.
 - sort fields by primary key (as of 0.6.0)
 - char arrays (as of 0.6.0)
+- optional scalar values (as of 0.6.1)
 
 There are no plans to make frequent updates once the project becomes
 stable, but input from the community will always be welcome and included
