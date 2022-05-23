@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.6.2-pre]
+
+
 ## [0.6.1]
 
 - Add `flatcc_builder_alloc` and `flatcc_builder_free` to handle situations
