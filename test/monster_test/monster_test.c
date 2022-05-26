@@ -1984,6 +1984,104 @@ int test_fixed_length_array(flatcc_builder_t *B)
     return 0;
 }
 
+int verify_nested_struct(const void *buffer, size_t size)
+{
+    ns(Monster_table_t) mon;
+    ns(Alt_table_t) alt;
+    ns(S1_struct_t) s1;
+    ns(S2_struct_t) s2;
+    ns(S1_struct_t) s1v;
+    const uint32_t *quad;
+    ns(S1S2_struct_t) s1s2;
+    int ret;
+
+    if ((ret = ns(Monster_verify_as_root(buffer, size)))) {
+        printf("Monster buffer with nested struct failed to verify, got: %s\n", flatcc_verify_error_string(ret));
+        return -1;
+    }
+
+    mon = ns(Monster_as_root(buffer));
+    if (ns(Monster_test_type(mon)) != ns(Any_Alt)) {
+        printf("test field does not have Alt type");
+        return -1;
+    }
+
+    alt = ns(Monster_test(mon));
+    if (!alt || !ns(Alt_nested_struct_is_present(alt))) {
+        printf("nested struct should be present.\n");
+        return -1;
+    }
+
+    s1s2 = ns(Alt_nested_struct(alt));
+
+    s1 = &s1s2->field1;
+    s2 = &s1s2->field2;
+    s1v = s1s2->field3;
+    quad = s1s2->x2;
+
+    if (s1s2->x1 != 50) {
+        printf("Monster buffer with nested struct has no field with value 50\n");
+        return -1;
+    }
+    if (quad[0] != 10 || quad[1] != 20 || quad[2] != 30 || quad[3] != 40) {
+        printf("Monster buffer with nested struct has no array content of { 10, 20, 30, 40 }\n");
+        return -1;
+    }
+    if (s1->s1f1 != 100 || s1->s1f2 != 200) {
+        printf("Monster buffer with nested struct has no child struct with value { 100, 200 }\n");
+        return -1;
+    }
+    if (s2->s2f1 != 5 || s2->s2f2 != 7) {
+        printf("Monster buffer with nested struct has no child struct with value { 5, 7 }\n");
+        return -1;
+    }
+    if (s1v[0].s1f1 != 1 || s1v[0].s1f2 != 2) {
+        printf("Monster buffer with nested struct has no child struct array with value { 1, 2 }\n");
+        return -1;
+    }
+    if (s1v[1].s1f1 != 3 || s1v[1].s1f2 != 4) {
+        printf("Monster buffer with nested struct has no child struct array with value { 1, 2 }\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int test_nested_struct(flatcc_builder_t *B)
+{
+    void *buffer = 0;
+    size_t size;
+    int ret = -1;
+    ns(S1_t) s1v[2] = { { 1, 2 }, { 3, 4 } };
+    ns(S2_t) s2 = { 5, 7 };
+    ns(S1S2_t) *s1s2;
+    uint32_t quad[4] = { 10, 20, 30, 40 };
+
+    flatcc_builder_reset(B);
+
+    ns(Monster_start_as_root(B));
+    ns(Monster_name_create_str(B, "Monolith"));
+    ns(Monster_test_Alt_start(B));
+
+    s1s2 = ns(Alt_nested_struct_start(B));
+    ns(S1S2_assign_copy)(s1s2, 0, &s2, s1v, 50, quad);
+    ns(S1_assign)(&s1s2->field1, 100, 200);
+    ns(Alt_nested_struct_end(B));
+
+    ns(Monster_test_Alt_end(B));
+    ns(Monster_end_as_root(B));
+
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+
+    hexdump("nested_struct buffer", buffer, size, stderr);
+    ret = verify_nested_struct(buffer, size);
+    flatcc_builder_aligned_free(buffer);
+    if (ret) return -1;
+
+    return 0;
+}
+
+
 #define STR(s) nsc(string_create_str(B, s))
 
 int test_recursive_sort(flatcc_builder_t *B)
@@ -2898,6 +2996,12 @@ int main(int argc, char *argv[])
 #endif
 #if 1
     if (test_fixed_length_array(B)) {
+        printf("TEST FAILED\n");
+        return -1;
+    }
+#endif
+#if 1
+    if (test_nested_struct(B)) {
         printf("TEST FAILED\n");
         return -1;
     }

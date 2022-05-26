@@ -22,7 +22,7 @@ table Strange {}
 // especially for enums and structs.
 // Reserved names can be important in some JSON
 // related use cases.
-table S2 {
+table TS2 {
     namespace : int;
     table : int;
     struct : int;
@@ -171,6 +171,7 @@ struct FooBar {
     text:[char:5];
 }
 
+// nested struct test and _assign_copy new to flatcc 0.6.2
 struct S1
 {
     s1f1:uint32;
@@ -187,7 +188,7 @@ struct S1S2
 {
     field1: S1;
     field2: S2;
-    field3: [S1:4];
+    field3: [S1:2];
     x1:uint32;
     x2:[uint32:4];
 }
