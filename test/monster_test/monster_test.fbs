@@ -171,6 +171,27 @@ struct FooBar {
     text:[char:5];
 }
 
+struct S1
+{
+    s1f1:uint32;
+    s1f2:uint32;
+}
+
+struct S2
+{
+    s2f1:uint32;
+    s2f2:uint32;
+}
+
+struct S1S2
+{
+    field1: S1;
+    field2: S2;
+    field3: [S1:4];
+    x1:uint32;
+    x2:[uint32:4];
+}
+
 // `sorted` attribute new to flatcc 0.6.0, not supported by flatc 1.8.
 // tables with direct or indirect vector content marked as sorted
 // will get a mutable sort operation that recursively sorts all
@@ -187,6 +208,7 @@ table Alt {
   names:[string] (sorted);
   samples:[float32] (sorted);
   fixed_array: FooBar;
+  nested_struct: S1S2;
 }
 
 table TestJSONPrefix {

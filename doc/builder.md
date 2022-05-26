@@ -752,6 +752,49 @@ An existing struct can be added as:
     /* v does not have to be zero padded. */
     Monster_pos_add(B, &v);
 
+If a struct contains nested child structs, the arguments to the children will be
+expanded such that there are no struct pointers in the argument list (except
+when there are arrays of child structs).
+
+If it is desireable to provide arguments to a struct via assign, but use a
+pointer to child structs, then `_assign_copy` can be used in place of assign.
+This method also allows for null pointers to child structs in order to support
+shallow assignments. Null pointer arguments will not overwrite existing child
+struct content. Array arguments can also be null in this method. In this way assign and copy can be mixed to build complex
+structs.
+
+Given the schema:
+
+    struct S1
+    {
+        s1f1:uint32;
+        s1f2:uint32;
+    }
+
+    struct S2
+    {
+        s2f1:uint32;
+        s2f2:uint32;
+    }
+
+    struct S1S2
+    {
+        field1:S1;
+        field2:S2;
+        field3:uint32;
+    }
+
+mixed construction of an S1S2 struct be handled using for example:
+
+    S2_t s2;
+    S12_t s1s2;
+    S2_assign(&s2, 1, 2);
+    S1S2_assign_copy(&s1s2, 0, &s2, 3);
+    S1_assign(&s1s2.field1, 5, 6);
+
+Note the null pointers are not usually permitted, `_assign_copy` is an exception.
+
+
 When adding a struct that is already little endian, presumably from an
 existing buffer, it can be cloned using:
 
@@ -775,6 +818,8 @@ little endian platforms to support byte-swapping. The operations are:
 
 `assign_from_pe`, `assign_to_pe`, `copy`, `copy_from_pe`,
 `copy_to_pe`, `to_pe` and `from_pe`.
+
+Note that `_assign_copy` has no `_pe` variants because it is a high level convenience method.
 
 All the copy operations takes a const pointer as source, and
 `to/from_pe` is just copy with same source and destination:

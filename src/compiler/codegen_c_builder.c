@@ -961,7 +961,7 @@ static inline void gen_comma(fb_output_t *out, int index, int count, int is_macr
     }
 }
 
-static int gen_builder_struct_args(fb_output_t *out, fb_compound_type_t *ct, int index, int len, int is_macro)
+static int gen_builder_struct_args(fb_output_t *out, fb_compound_type_t *ct, int index, int len, int is_macro, int from_ptr)
 {
     const char *nsc = out->nsc;
     fb_member_t *member;
@@ -987,13 +987,17 @@ static int gen_builder_struct_args(fb_output_t *out, fb_compound_type_t *ct, int
             }
             break;
         case vt_compound_type_ref:
-            if (member->type.ct->symbol.kind == fb_is_struct) {
-                index = gen_builder_struct_args(out, member->type.ct, index, len, is_macro);
+            if (member->type.ct->symbol.kind == fb_is_struct && !from_ptr) {
+                index = gen_builder_struct_args(out, member->type.ct, index, len, is_macro, from_ptr);
                 continue;
             }
             gen_comma(out, index, len, is_macro);
             fb_compound_name(member->type.ct, &snref);
-            fprintf(out->fp, "%s_enum_t v%i", snref.text, index++);
+            if (member->type.ct->symbol.kind == fb_is_struct) {
+                fprintf(out->fp, "const %s_t *v%i", snref.text, index++);
+            } else {
+                fprintf(out->fp, "%s_enum_t v%i", snref.text, index++);
+            }
             break;
         case vt_fixed_array_type:
             gen_comma(out, index, len, is_macro);
@@ -1031,7 +1035,7 @@ enum { no_conversion, convert_from_pe, convert_to_pe };
 
 /* Note: returned index is not correct when using from_ptr since it doesn't track arguments, but it shouldn't matter. */
 static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t *ct, int index, int arg_count,
-        int conversion, int from_ptr)
+        int conversion, int from_ptr, int with_opt_child_ptr)
 {
     const char *nsc = out->nsc;
     fb_member_t *member;
@@ -1041,6 +1045,7 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
     int deprecated_index = 0;
     const char *kind, *tprefix;
     fb_scoped_name_t snref;
+    int was_large = 0;
 
     fb_clear(snref);
     switch (conversion) {
@@ -1053,12 +1058,13 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
         symbol_name(sym, &n, &s);
 
         if (index > 0) {
-            if (index % 4 == 0) {
+            if (index % 4 == 0 || was_large) {
                 fprintf(out->fp, ";\n  ");
             } else {
                 fprintf(out->fp, "; ");
             }
         }
+        was_large = 0;
         switch (member->type.type) {
         case vt_fixed_array_compound_type_ref:
             len = (int)member->type.len;
@@ -1074,6 +1080,10 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
                 fprintf(out->fp, "%s_array_copy%s(p->%.*s, p2->%.*s, %d)",
                         snref.text, kind, n, s, n, s, len);
             } else {
+                if (with_opt_child_ptr) {
+                    fprintf(out->fp, "if (v%i) ", index);
+                    was_large = 1;
+                }
                 fprintf(out->fp, "%s_array_copy%s(p->%.*s, v%i, %d)",
                         snref.text, kind, n, s, index, len);
             }
@@ -1093,6 +1103,11 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
                     fprintf(out->fp, "%s_copy%s(&p->%.*s, &p2->%.*s)", snref.text, kind, n, s, n, s);
                     /* `index` does not count children, but it doesn't matter here. */
                     ++index;
+                } else if (with_opt_child_ptr) {
+                    fprintf(out->fp, "if (v%i) %s_copy%s(&p->%.*s, v%i)",
+                            index, snref.text, kind, n, s, index);
+                    ++index;
+                    was_large = 1;
                 } else {
                     fprintf(out->fp, "%s_assign%s(&p->%.*s", snref.text, kind, n, s);
                     index = gen_builder_struct_call_list(out, member->type.ct, index, arg_count, 0);
@@ -1150,6 +1165,10 @@ static int gen_builder_struct_field_assign(fb_output_t *out, fb_compound_type_t 
                 fprintf(out->fp, "%s%s_array_copy%s(p->%.*s, p2->%.*s, %d)",
                         nsc, tprefix, kind, n, s, n, s, len);
             } else {
+                if (with_opt_child_ptr) {
+                    fprintf(out->fp, "if (v%i) ", index);
+                    was_large = 1;
+                }
                 fprintf(out->fp, "%s%s_array_copy%s(p->%.*s, v%i, %d)",
                         nsc, tprefix, kind, n, s, index, len);
             }
@@ -1217,48 +1236,57 @@ static void gen_builder_struct(fb_output_t *out, fb_compound_type_t *ct)
 
     arg_count = get_total_struct_field_count(ct);
     fprintf(out->fp, "#define __%s_formal_args ", snt.text);
-    gen_builder_struct_args(out, ct, 0, arg_count, 1);
+    gen_builder_struct_args(out, ct, 0, arg_count, 1, 0);
     fprintf(out->fp, "\n#define __%s_call_args ", snt.text);
     gen_builder_struct_call_list(out, ct, 0, arg_count, 1);
     fprintf(out->fp, "\n");
     fprintf(out->fp,
             "static inline %s_t *%s_assign(%s_t *p",
             snt.text, snt.text, snt.text);
-    gen_builder_struct_args(out, ct, 0, arg_count, 0);
+    gen_builder_struct_args(out, ct, 0, arg_count, 0, 0);
     fprintf(out->fp, ")\n{ ");
-    gen_builder_struct_field_assign(out, ct, 0, arg_count, no_conversion, 0);
+    gen_builder_struct_field_assign(out, ct, 0, arg_count, no_conversion, 0, 0);
     fprintf(out->fp, "return p; }\n");
+#if 1
+    fprintf(out->fp,
+            "static inline %s_t *%s_assign_copy(%s_t *p",
+            snt.text, snt.text, snt.text);
+    gen_builder_struct_args(out, ct, 0, arg_count, 0, 1);
+    fprintf(out->fp, ")\n{ ");
+    gen_builder_struct_field_assign(out, ct, 0, arg_count, no_conversion, 0, 1);
+    fprintf(out->fp, "return p; }\n");
+#endif
     fprintf(out->fp,
             "static inline %s_t *%s_copy(%s_t *p, const %s_t *p2)\n",
             snt.text, snt.text, snt.text, snt.text);
     fprintf(out->fp, "{ ");
-    gen_builder_struct_field_assign(out, ct, 0, arg_count, no_conversion, 1);
+    gen_builder_struct_field_assign(out, ct, 0, arg_count, no_conversion, 1, 0);
     fprintf(out->fp, "return p; }\n");
     fprintf(out->fp,
             "static inline %s_t *%s_assign_to_pe(%s_t *p",
             snt.text, snt.text, snt.text);
-    gen_builder_struct_args(out, ct, 0, arg_count, 0);
+    gen_builder_struct_args(out, ct, 0, arg_count, 0, 0);
     fprintf(out->fp, ")\n{ ");
-    gen_builder_struct_field_assign(out, ct, 0, arg_count, convert_to_pe, 0);
+    gen_builder_struct_field_assign(out, ct, 0, arg_count, convert_to_pe, 0, 0);
     fprintf(out->fp, "return p; }\n");
     fprintf(out->fp,
             "static inline %s_t *%s_copy_to_pe(%s_t *p, const %s_t *p2)\n",
             snt.text, snt.text, snt.text, snt.text);
     fprintf(out->fp, "{ ");
-    gen_builder_struct_field_assign(out, ct, 0, arg_count, convert_to_pe, 1);
+    gen_builder_struct_field_assign(out, ct, 0, arg_count, convert_to_pe, 1, 0);
     fprintf(out->fp, "return p; }\n");
     fprintf(out->fp,
             "static inline %s_t *%s_assign_from_pe(%s_t *p",
             snt.text, snt.text, snt.text);
-    gen_builder_struct_args(out, ct, 0, arg_count, 0);
+    gen_builder_struct_args(out, ct, 0, arg_count, 0, 0);
     fprintf(out->fp, ")\n{ ");
-    gen_builder_struct_field_assign(out, ct, 0, arg_count, convert_from_pe, 0);
+    gen_builder_struct_field_assign(out, ct, 0, arg_count, convert_from_pe, 0, 0);
     fprintf(out->fp, "return p; }\n");
     fprintf(out->fp,
             "static inline %s_t *%s_copy_from_pe(%s_t *p, const %s_t *p2)\n",
             snt.text, snt.text, snt.text, snt.text);
     fprintf(out->fp, "{ ");
-    gen_builder_struct_field_assign(out, ct, 0, arg_count, convert_from_pe, 1);
+    gen_builder_struct_field_assign(out, ct, 0, arg_count, convert_from_pe, 1, 0);
     fprintf(out->fp, "return p; }\n");
     fprintf(out->fp, "__%sbuild_struct(%s, %s, %"PRIu64", %u, %s_file_identifier, %s_type_identifier)\n",
             nsc, nsc, snt.text, (uint64_t)ct->size, ct->align, snt.text, snt.text);
