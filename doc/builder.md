@@ -787,7 +787,7 @@ Given the schema:
 mixed construction of an S1S2 struct be handled using for example:
 
     S2_t s2;
-    S12_t s1s2;
+    S1S2_t s1s2;
     S2_assign(&s2, 1, 2);
     S1S2_assign_copy(&s1s2, 0, &s2, 3);
     S1_assign(&s1s2.field1, 5, 6);
