@@ -36,7 +36,3 @@ else
     echo "DEBUG TEST PASSED"
 fi
 
-if [ ! -e ${ROOT}/build/reflection_enabled ]; then
-    echo "(reflection disabled, skipping affected test and example)"
-fi
-

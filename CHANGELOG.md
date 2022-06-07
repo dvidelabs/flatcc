@@ -2,6 +2,8 @@
 
 ## [0.6.2-pre]
 
+- CMake: avoid assuming location of build dir during configuration.
+
 
 ## [0.6.1]
 

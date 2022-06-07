@@ -134,12 +134,8 @@ endif()
 
 if (FLATCC_REFLECTION)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_REFLECTION=1")
-    file(WRITE ${PROJECT_SOURCE_DIR}/build/reflection_enabled "REFLECTION=1")
-    file(REMOVE ${PROJECT_SOURCE_DIR}/build/reflection_disabled)
 else()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_REFLECTION=0")
-    file(REMOVE ${PROJECT_SOURCE_DIR}/build/reflection_enabled)
-    file(WRITE ${PROJECT_SOURCE_DIR}/build/reflection_disabled "REFLECTION=0")
 endif()
 
 
