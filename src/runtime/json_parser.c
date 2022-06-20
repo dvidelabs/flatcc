@@ -1258,7 +1258,7 @@ failed:
 }
 
 int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
-        const char *buf, size_t bufsiz, int flags, const char *fid,
+        const char *buf, size_t bufsiz, int flags, const flatbuffers_fid_t fid,
         flatcc_json_parser_table_f *parser)
 {
     flatcc_json_parser_t _ctx;
@@ -1278,7 +1278,7 @@ int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *
 }
 
 int flatcc_json_parser_struct_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
-        const char *buf, size_t bufsiz, int flags, const char *fid,
+        const char *buf, size_t bufsiz, int flags, const flatbuffers_fid_t fid,
         flatcc_json_parser_table_f *parser)
 {
     flatcc_json_parser_t _ctx;

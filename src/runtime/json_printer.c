@@ -1245,7 +1245,7 @@ void flatcc_json_printer_struct_field(flatcc_json_printer_t *ctx,
  * check.
  */
 static int accept_header(flatcc_json_printer_t * ctx,
-        const void *buf, size_t bufsiz, const char *fid)
+        const void *buf, size_t bufsiz, const flatbuffers_fid_t fid)
 {
     flatbuffers_thash_t id, id2 = 0;
 
@@ -1267,7 +1267,7 @@ static int accept_header(flatcc_json_printer_t * ctx,
 }
 
 int flatcc_json_printer_struct_as_root(flatcc_json_printer_t *ctx,
-        const void *buf, size_t bufsiz, const char *fid,
+        const void *buf, size_t bufsiz, const flatbuffers_fid_t fid,
         flatcc_json_printer_struct_f *pf)
 {
     if (!accept_header(ctx, buf, bufsiz, fid)) {
@@ -1281,7 +1281,7 @@ int flatcc_json_printer_struct_as_root(flatcc_json_printer_t *ctx,
 }
 
 int flatcc_json_printer_table_as_root(flatcc_json_printer_t *ctx,
-        const void *buf, size_t bufsiz, const char *fid, flatcc_json_printer_table_f *pf)
+        const void *buf, size_t bufsiz, const flatbuffers_fid_t fid, flatcc_json_printer_table_f *pf)
 {
     if (!accept_header(ctx, buf, bufsiz, fid)) {
         return -1;
@@ -1294,7 +1294,7 @@ int flatcc_json_printer_table_as_root(flatcc_json_printer_t *ctx,
 void flatcc_json_printer_struct_as_nested_root(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
         int id, const char *name, size_t len,
-        const char *fid,
+        const flatbuffers_fid_t fid,
         flatcc_json_printer_struct_f *pf)
 {
     const uoffset_t *buf;
@@ -1320,7 +1320,7 @@ void flatcc_json_printer_struct_as_nested_root(flatcc_json_printer_t *ctx,
 void flatcc_json_printer_table_as_nested_root(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
         int id, const char *name, size_t len,
-        const char *fid,
+        const flatbuffers_fid_t fid,
         flatcc_json_printer_table_f pf)
 {
     const uoffset_t *buf;

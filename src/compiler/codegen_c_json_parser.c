@@ -56,7 +56,7 @@ static int gen_json_parser_pretext(fb_output_t *out)
     println(out, "");
     println(out, "#include \"flatcc/flatcc_json_parser.h\"");
     fb_gen_c_includes(out, "_json_parser.h", "_JSON_PARSER_H");
-    gen_prologue(out);
+    gen_prologue(out, false);
     println(out, "");
     return 0;
 }
@@ -1424,7 +1424,7 @@ static int gen_struct_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);");
     unindent(); println(out, "}");
     println(out, "");
-    println(out, "static inline int %s_parse_json_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx, const char *buf, size_t bufsiz, int flags, const char *fid)", snt.text);
+    println(out, "static inline int %s_parse_json_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx, const char *buf, size_t bufsiz, int flags, const flatbuffers_fid_t fid)", snt.text);
     println(out, "{"); indent();
     println(out, "return flatcc_json_parser_struct_as_root(B, ctx, buf, bufsiz, flags, fid, %s_parse_json_struct);",
             snt.text);
@@ -1527,7 +1527,7 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);");
     unindent(); println(out, "}");
     println(out, "");
-    println(out, "static inline int %s_parse_json_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx, const char *buf, size_t bufsiz, int flags, const char *fid)", snt.text);
+    println(out, "static inline int %s_parse_json_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx, const char *buf, size_t bufsiz, int flags, const flatbuffers_fid_t fid)", snt.text);
     println(out, "{"); indent();
     println(out, "return flatcc_json_parser_table_as_root(B, ctx, buf, bufsiz, flags, fid, %s_parse_json_table);",
             snt.text);
@@ -1664,14 +1664,15 @@ static int gen_root_table_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "const char *buf, size_t bufsiz, int flags)");
     unindent(); unindent();
     println(out, "{"); indent();
+    println(out, "const flatbuffers_fid_t identifier = \"%.*s\";",
+            out->S->file_identifier.s.len, out->S->file_identifier.s.s);
     println(out, "flatcc_json_parser_t parser;");
     println(out, "flatcc_builder_ref_t root;");
     println(out, "");
     println(out, "ctx = ctx ? ctx : &parser;");
     println(out, "flatcc_json_parser_init(ctx, B, buf, buf + bufsiz, flags);");
     if (out->S->file_identifier.type == vt_string) {
-        println(out, "if (flatcc_builder_start_buffer(B, \"%.*s\", 0, 0)) return -1;",
-        out->S->file_identifier.s.len, out->S->file_identifier.s.s);
+        println(out, "if (flatcc_builder_start_buffer(B, identifier, 0, 0)) return -1;");
     } else {
         println(out, "if (flatcc_builder_start_buffer(B, 0, 0, 0)) return -1;");
     }

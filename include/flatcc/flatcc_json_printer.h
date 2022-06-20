@@ -679,11 +679,11 @@ void flatcc_json_printer_uint8_vector_base64_field(flatcc_json_printer_t *ctx,
  * require aligned memory addresses (as always for flatbuffers).
  */
 int flatcc_json_printer_table_as_root(flatcc_json_printer_t *ctx,
-        const void *buf, size_t bufsiz, const char *fid,
+        const void *buf, size_t bufsiz, const flatbuffers_fid_t fid,
         flatcc_json_printer_table_f *pf);
 
 int flatcc_json_printer_struct_as_root(flatcc_json_printer_t *ctx,
-        const void *buf, size_t bufsiz, const char *fid,
+        const void *buf, size_t bufsiz, const flatbuffers_fid_t fid,
         flatcc_json_printer_struct_f *pf);
 
 /*
@@ -756,13 +756,13 @@ void flatcc_json_printer_union_vector_field(flatcc_json_printer_t *ctx,
 void flatcc_json_printer_struct_as_nested_root(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
         int id, const char *name, size_t len,
-        const char *fid,
+        const flatbuffers_fid_t fid,
         flatcc_json_printer_struct_f *pf);
 
 void flatcc_json_printer_table_as_nested_root(flatcc_json_printer_t *ctx,
         flatcc_json_printer_table_descriptor_t *td,
         int id, const char *name, size_t len,
-        const char *fid,
+        const flatbuffers_fid_t fid,
         flatcc_json_printer_table_f pf);
 
 void flatcc_json_printer_union_field(flatcc_json_printer_t *ctx,

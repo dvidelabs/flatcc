@@ -168,7 +168,7 @@ static inline const char *flatcc_json_parser_string_end(flatcc_json_parser_t *ct
  * and raise errors according to overflow/underflow runtime flags. Zero
  * and truncate as needed. A trailing zero is not inserted if the input
  * is at least the same length as the char array.
- * 
+ *
  * Runtime flags: `skip_array_overflow`, `pad_array_underflow`.
  */
 const char *flatcc_json_parser_char_array(flatcc_json_parser_t *ctx,
@@ -875,7 +875,7 @@ const char *flatcc_json_parser_union_type_vector(flatcc_json_parser_t *ctx,
  * `flags` default to 0. See also `flatcc_json_parser_flags`.
  */
 int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
-        const char *buf, size_t bufsiz, int flags, const char *fid,
+        const char *buf, size_t bufsiz, int flags, const flatbuffers_fid_t fid,
         flatcc_json_parser_table_f *parser);
 
 /*
@@ -883,7 +883,7 @@ int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *
  * root.
  */
 int flatcc_json_parser_struct_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
-        const char *buf, size_t bufsiz, int flags, const char *fid,
+        const char *buf, size_t bufsiz, int flags, const flatbuffers_fid_t fid,
         flatcc_json_parser_struct_f *parser);
 
 #include "flatcc/portable/pdiagnostic_pop.h"

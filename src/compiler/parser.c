@@ -18,6 +18,12 @@
 #include "pstrutil.h"
 #include "flatcc/portable/pattributes.h" /* fallthrough */
 #include "flatcc/portable/pparseint.h"
+#include "flatcc/flatcc_types.h"
+
+#ifndef STRINGIZE
+#define STRINGIZE_(x) #x
+#define STRINGIZE(x) STRINGIZE_(x)
+#endif
 
 void fb_default_error_out(void *err_ctx, const char *buf, size_t len)
 {
@@ -1154,10 +1160,17 @@ static void parse_file_identifier(fb_parser_t *P, fb_value_t *v)
     }
     t = P->token;
     parse_string_literal(P, v);
-    if (v->s.s && v->s.len != 4) {
+#ifndef FLATCC_RELAXED_IDENTIFIER_SIZE
+    if (v->s.s && v->s.len != FLATBUFFERS_IDENTIFIER_SIZE) {
         v->type = vt_invalid;
-        error_tok(P, t, "file_identifier must be 4 characters");
+        error_tok(P, t, "file_identifier must be " STRINGIZE(FLATBUFFERS_IDENTIFIER_SIZE) " characters");
     }
+#else
+    if (v->s.s && v->s.len < 1) {
+        v->type = vt_invalid;
+        error_tok(P, t, "file_identifier must be at least 1 character or not specified");
+    }
+#endif
     match(P, ';', "file_identifier expected ';'");
     return;
 fail:

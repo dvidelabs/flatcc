@@ -18,7 +18,7 @@ static int gen_json_printer_pretext(fb_output_t *out)
     fprintf(out->fp, "\n/* " FLATCC_GENERATED_BY " */\n\n");
     fprintf(out->fp, "#include \"flatcc/flatcc_json_printer.h\"\n");
     fb_gen_c_includes(out, "_json_printer.h", "_JSON_PRINTER_H");
-    gen_prologue(out);
+    gen_prologue(out, false);
     fprintf(out->fp, "\n");
     return 0;
 }
@@ -360,7 +360,7 @@ static int gen_json_printer_struct(fb_output_t *out, fb_compound_type_t *ct)
     }
     fprintf(out->fp, "}\n\n");
     fprintf(out->fp,
-            "static inline int %s_print_json_as_root(flatcc_json_printer_t *ctx, const void *buf, size_t bufsiz, const char *fid)\n"
+            "static inline int %s_print_json_as_root(flatcc_json_printer_t *ctx, const void *buf, size_t bufsiz, const char fid[FLATBUFFERS_IDENTIFIER_SIZE])\n"
             "{\n    return flatcc_json_printer_struct_as_root(ctx, buf, bufsiz, fid, %s_print_json_struct);\n}\n\n",
             snt.text, snt.text);
     return 0;
@@ -544,7 +544,7 @@ static int gen_json_printer_table(fb_output_t *out, fb_compound_type_t *ct)
     }
     fprintf(out->fp, "\n}\n\n");
     fprintf(out->fp,
-            "static inline int %s_print_json_as_root(flatcc_json_printer_t *ctx, const void *buf, size_t bufsiz, const char *fid)\n"
+            "static inline int %s_print_json_as_root(flatcc_json_printer_t *ctx, const void *buf, size_t bufsiz, const char fid[FLATBUFFERS_IDENTIFIER_SIZE])\n"
             "{\n    return flatcc_json_printer_table_as_root(ctx, buf, bufsiz, fid, %s_print_json_table);\n}\n\n",
             snt.text, snt.text);
 done:
@@ -680,7 +680,11 @@ static int gen_root_type_printer(fb_output_t *out, fb_compound_type_t *ct)
             out->S->basename);
     fprintf(out->fp,
             "{\n"
-            "    flatcc_json_printer_t printer;\n"
+            "    flatcc_json_printer_t printer;\n");
+    fprintf(out->fp,
+            "    const flatbuffers_fid_t identifier = \"%.*s\";\n",
+            out->S->file_identifier.s.len, out->S->file_identifier.s.s);
+    fprintf(out->fp,
             "\n"
             "    if (ctx == 0) {\n"
             "        ctx = &printer;\n"
@@ -690,11 +694,10 @@ static int gen_root_type_printer(fb_output_t *out, fb_compound_type_t *ct)
             snt.text);
     if (out->S->file_identifier.type == vt_string) {
         fprintf(out->fp,
-                "\"%.*s\");\n",
-                out->S->file_identifier.s.len, out->S->file_identifier.s.s);
+                "identifier);\n");
     } else {
         fprintf(out->fp,
-                "0);");
+                "0);\n");
     }
     fprintf(out->fp,
         "}\n\n");

@@ -448,7 +448,7 @@ int flatcc_verify_union_string(flatcc_union_verifier_descriptor_t *ud)
     return verify_string(ud->buf, ud->end, ud->base, ud->offset);
 }
 
-int flatcc_verify_buffer_header(const void *buf, size_t bufsiz, const char *fid)
+int flatcc_verify_buffer_header(const void *buf, size_t bufsiz, const flatbuffers_fid_t fid)
 {
     thash_t id, id2;
 
@@ -492,7 +492,7 @@ int flatcc_verify_typed_buffer_header(const void *buf, size_t bufsiz, flatbuffer
     return flatcc_verify_ok;
 }
 
-int flatcc_verify_struct_as_root(const void *buf, size_t bufsiz, const char *fid, size_t size, uint16_t align)
+int flatcc_verify_struct_as_root(const void *buf, size_t bufsiz, const flatbuffers_fid_t fid, size_t size, uint16_t align)
 {
     check_result(flatcc_verify_buffer_header(buf, bufsiz, fid));
     return verify_struct((uoffset_t)bufsiz, 0, read_uoffset(buf, 0), (uoffset_t)size, align);
@@ -504,7 +504,7 @@ int flatcc_verify_struct_as_typed_root(const void *buf, size_t bufsiz, flatbuffe
     return verify_struct((uoffset_t)bufsiz, 0, read_uoffset(buf, 0), (uoffset_t)size, align);
 }
 
-int flatcc_verify_table_as_root(const void *buf, size_t bufsiz, const char *fid, flatcc_table_verifier_f *tvf)
+int flatcc_verify_table_as_root(const void *buf, size_t bufsiz, const flatbuffers_fid_t fid, flatcc_table_verifier_f *tvf)
 {
     check_result(flatcc_verify_buffer_header(buf, (uoffset_t)bufsiz, fid));
     return verify_table(buf, (uoffset_t)bufsiz, 0, read_uoffset(buf, 0), FLATCC_VERIFIER_MAX_LEVELS, tvf);
@@ -517,7 +517,7 @@ int flatcc_verify_table_as_typed_root(const void *buf, size_t bufsiz, flatbuffer
 }
 
 int flatcc_verify_struct_as_nested_root(flatcc_table_verifier_descriptor_t *td,
-        voffset_t id, int required, const char *fid, size_t size, uint16_t align)
+        voffset_t id, int required, const flatbuffers_fid_t fid, size_t size, uint16_t align)
 {
     const uoffset_t *buf;
     uoffset_t bufsiz;
@@ -533,7 +533,7 @@ int flatcc_verify_struct_as_nested_root(flatcc_table_verifier_descriptor_t *td,
 }
 
 int flatcc_verify_table_as_nested_root(flatcc_table_verifier_descriptor_t *td,
-        voffset_t id, int required, const char *fid,
+        voffset_t id, int required, const flatbuffers_fid_t fid,
         uint16_t align, flatcc_table_verifier_f tvf)
 {
     const uoffset_t *buf;

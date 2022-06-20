@@ -11,7 +11,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
     fprintf(out->fp, "#define %s_COMMON_BUILDER_H\n", nscup);
     fprintf(out->fp, "\n/* " FLATCC_GENERATED_BY " */\n\n");
     fprintf(out->fp, "/* Common FlatBuffers build functionality for C. */\n\n");
-    gen_prologue(out);
+    gen_prologue(out, true);
 
     fprintf(out->fp, "#ifndef FLATBUILDER_H\n");
     fprintf(out->fp, "#include \"flatcc/flatcc_builder.h\"\n");
@@ -875,7 +875,7 @@ static int gen_builder_pretext(fb_output_t *out)
 
     fb_gen_c_includes(out, "_builder.h", "_BUILDER_H");
 
-    gen_prologue(out);
+    gen_prologue(out, false);
 
     /*
      * Even if defined in the reader header, we must redefine it here
@@ -884,15 +884,18 @@ static int gen_builder_pretext(fb_output_t *out)
     if (out->S->file_identifier.type == vt_string) {
         fprintf(out->fp,
             "#undef %sidentifier\n"
-            "#define %sidentifier \"%.*s\"\n",
+            "const flatbuffers_fid_t s_%sidentifier = \"%.*s\";\n"
+            "#define %sidentifier s_%sidentifier\n",
             nsc,
-            nsc, out->S->file_identifier.s.len, out->S->file_identifier.s.s);
+            nsc, out->S->file_identifier.s.len, out->S->file_identifier.s.s,
+            nsc, nsc);
     } else {
         fprintf(out->fp,
             "#ifndef %sidentifier\n"
-            "#define %sidentifier 0\n"
+            "const flatbuffers_fid_t s_%sidentifier = \"\";\n"
+            "#define %sidentifier s_%sidentifier\n"
             "#endif\n",
-            nsc, nsc);
+            nsc, nsc, nsc, nsc);
     }
     if (out->S->file_extension.type == vt_string) {
         fprintf(out->fp,

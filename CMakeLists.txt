@@ -103,6 +103,23 @@ option (FLATCC_ALLOW_WERROR "allow -Werror to be configured" ON)
 # try using this option.
 option (FLATCC_IGNORE_CONST_COND "silence const condition warnings" OFF)
 
+# Enforces parsing of identifier size per the spec of 4 characters.
+# FLATCC_STRICT_IDENTIFIER_SIZE has no effect if the identifier
+# size is 4.
+# Note: Encoded identifiers will still be padded when FLATCC_OFFSET_SIZE
+# is greater than 4 and truncated when offset size is less than 4.
+option (FLATCC_STRICT_IDENTIFIER_SIZE
+        "enforce identifier size being offset size" OFF)
+
+# Relaxes the size specification for file identifier sizes to allow them
+# to be padded if shorter or truncated if longer.
+# The restriction prohibits interpreting schema oriented at other offset
+# sizes, so this is implied when FLATCC_OFFSET_SIZE is not 4.
+# This option expects FLATCC_STRICT_IDENTIFIER_SIZE to be OFF.
+option (FLATCC_RELAXED_IDENTIFIER_SIZE
+        "identifier will be padded if too short or truncated if too long"
+        OFF)
+
 if (FLATCC_RTONLY)
     set(FLATCC_TEST off)
 endif()
@@ -291,6 +308,20 @@ endif()
 
 if (FLATCC_PORTABLE)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_PORTABLE")
+endif()
+
+if (DEFINED FLATCC_OFFSET_SIZE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_OFFSET_SIZE=${FLATCC_OFFSET_SIZE}")
+endif()
+
+if (DEFINED FLATCC_VOFFSET_SIZE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_VOFFSET_SIZE=${FLATCC_VOFFSET_SIZE}")
+endif()
+
+if (DEFINED FLATCC_OFFSET_SIZE AND NOT FLATCC_OFFSET_SIZE EQUAL 4 AND NOT DEFINED FLATCC_STRICT_IDENTIFIER_SIZE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_RELAXED_IDENTIFIER_SIZE")
+elseif(DEFINED FLATCC_RELAXED_IDENTIFIER_SIZE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_RELAXED_IDENTIFIER_SIZE")
 endif()
 
 if (CLANG_VERSION)
