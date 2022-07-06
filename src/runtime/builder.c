@@ -205,7 +205,9 @@ static inline void refresh_ds(flatcc_builder_t *B, uoffset_t type_limit)
 {
     iovec_t *buf = B->buffers + flatcc_builder_alloc_ds;
 
-    B->ds = ds_ptr(B->ds_first);
+    if (B->buffers[flatcc_builder_alloc_ds].iov_base) {
+        B->ds = ds_ptr(B->ds_first);
+    }
     B->ds_limit = (uoffset_t)buf->iov_len - B->ds_first;
     /*
      * So we don't allocate outside tables representation size, nor our

@@ -1273,7 +1273,9 @@ static void push_token(fb_parser_t *P, long id, const char *first, const char *l
     size_t offset;
     fb_token_t *t;
 
-    P->te = P->ts + P->tcapacity;
+    if (P->tcapacity) {
+        P->te = P->ts + P->tcapacity;
+    }
     if (P->token == P->te) {
         offset = (size_t)(P->token - P->ts);
         P->tcapacity = P->tcapacity ? 2 * P->tcapacity : 1024;

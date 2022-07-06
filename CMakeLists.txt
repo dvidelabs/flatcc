@@ -182,6 +182,10 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     if (FLATCC_IGNORE_CONST_COND)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-constant-out-of-range-compare")
     endif()
+    if (CMAKE_BUILD_TYPE MATCHES Debug)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+    endif()
 
     # To get assembly output
     # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -save-temps")
@@ -350,4 +354,3 @@ set_target_properties(${dist_targets}
 if (FLATCC_INSTALL)
     install(DIRECTORY include/flatcc DESTINATION include)
 endif()
-

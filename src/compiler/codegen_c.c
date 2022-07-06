@@ -165,7 +165,9 @@ int fb_copy_scope(fb_scope_t *scope, char *buf)
         return -1;
     }
     len = (size_t)scope->prefix.len;
-    memcpy(buf, scope->prefix.s, len);
+    if (len > 0) {
+        memcpy(buf, scope->prefix.s, len);
+    }
     for (name = scope->name; name; name = name->link) {
         n = (size_t)name->ident->len;
         memcpy(buf + len, name->ident->text, n);
