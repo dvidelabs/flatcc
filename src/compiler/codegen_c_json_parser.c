@@ -1424,7 +1424,7 @@ static int gen_struct_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);");
     unindent(); println(out, "}");
     println(out, "");
-    println(out, "static inline int %s_parse_json_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx, const char *buf, size_t bufsiz, int flags, const char *fid)", snt.text);
+    println(out, "static inline int %s_parse_json_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx, const char *buf, size_t bufsiz, flatcc_json_parser_flags_t flags, const char *fid)", snt.text);
     println(out, "{"); indent();
     println(out, "return flatcc_json_parser_struct_as_root(B, ctx, buf, bufsiz, flags, fid, %s_parse_json_struct);",
             snt.text);
@@ -1527,7 +1527,7 @@ static int gen_table_parser(fb_output_t *out, fb_compound_type_t *ct)
     println(out, "return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_runtime);");
     unindent(); println(out, "}");
     println(out, "");
-    println(out, "static inline int %s_parse_json_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx, const char *buf, size_t bufsiz, int flags, const char *fid)", snt.text);
+    println(out, "static inline int %s_parse_json_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx, const char *buf, size_t bufsiz, flatcc_json_parser_flags_t flags, const char *fid)", snt.text);
     println(out, "{"); indent();
     println(out, "return flatcc_json_parser_table_as_root(B, ctx, buf, bufsiz, flags, fid, %s_parse_json_table);",
             snt.text);
@@ -1661,7 +1661,7 @@ static int gen_root_table_parser(fb_output_t *out, fb_compound_type_t *ct)
 
     println(out, "static int %s_parse_json(flatcc_builder_t *B, flatcc_json_parser_t *ctx,", out->S->basename);
     indent(); indent();
-    println(out, "const char *buf, size_t bufsiz, int flags)");
+    println(out, "const char *buf, size_t bufsiz, flatcc_json_parser_flags_t flags)");
     unindent(); unindent();
     println(out, "{"); indent();
     println(out, "flatcc_json_parser_t parser;");
@@ -1767,7 +1767,7 @@ static int gen_json_parser_prototypes(fb_output_t *out)
     println(out, "static int %s_parse_json(flatcc_builder_t *B, flatcc_json_parser_t *ctx,",
             out->S->basename);
     indent(); indent();
-    println(out, "const char *buf, size_t bufsiz, int flags);");
+    println(out, "const char *buf, size_t bufsiz, flatcc_json_parser_flags_t flags);");
     unindent(); unindent();
         println(out, "");
         fallthrough;

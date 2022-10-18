@@ -47,7 +47,7 @@ static const struct test_scope Movie = {
 
 int test_json(const struct test_scope *scope, char *json,
         char *expect, int expect_err,
-        int parse_flags, flatcc_json_printer_flags_t print_flags, int line)
+        flatcc_json_parser_flags_t parse_flags, flatcc_json_printer_flags_t print_flags, int line)
 {
     int ret = -1;
     int err;
