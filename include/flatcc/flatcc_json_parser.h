@@ -22,13 +22,12 @@ extern "C" {
 #define PDIAGNOSTIC_IGNORE_UNUSED
 #include "flatcc/portable/pdiagnostic_push.h"
 
-enum flatcc_json_parser_flags {
-    flatcc_json_parser_f_skip_unknown = 1,
-    flatcc_json_parser_f_force_add = 2,
-    flatcc_json_parser_f_with_size = 4,
-    flatcc_json_parser_f_skip_array_overflow = 8,
-    flatcc_json_parser_f_reject_array_underflow = 16
-};
+typedef uint32_t flatcc_json_parser_flags_t;
+static const flatcc_json_parser_flags_t flatcc_json_parser_f_skip_unknown = 1;
+static const flatcc_json_parser_flags_t flatcc_json_parser_f_force_add = 2;
+static const flatcc_json_parser_flags_t flatcc_json_parser_f_with_size = 4;
+static const flatcc_json_parser_flags_t flatcc_json_parser_f_skip_array_overflow = 8;
+static const flatcc_json_parser_flags_t flatcc_json_parser_f_reject_array_underflow = 16;
 
 #define FLATCC_JSON_PARSE_ERROR_MAP(XX)                                     \
     XX(ok,                      "ok")                                       \
@@ -92,7 +91,7 @@ typedef struct flatcc_json_parser_ctx flatcc_json_parser_t;
 struct flatcc_json_parser_ctx {
     flatcc_builder_t *ctx;
     const char *line_start;
-    int flags;
+    flatcc_json_parser_flags_t flags;
 #if FLATCC_JSON_PARSE_ALLOW_UNQUOTED
     int unquoted;
 #endif
@@ -111,7 +110,7 @@ static inline int flatcc_json_parser_get_error(flatcc_json_parser_t *ctx)
     return ctx->error;
 }
 
-static inline void flatcc_json_parser_init(flatcc_json_parser_t *ctx, flatcc_builder_t *B, const char *buf, const char *end, int flags)
+static inline void flatcc_json_parser_init(flatcc_json_parser_t *ctx, flatcc_builder_t *B, const char *buf, const char *end, flatcc_json_parser_flags_t flags)
 {
     memset(ctx, 0, sizeof(*ctx));
     ctx->ctx = B;
@@ -872,10 +871,10 @@ const char *flatcc_json_parser_union_type_vector(flatcc_json_parser_t *ctx,
  * `buf`, `bufsiz` may be larger than the parsed json if trailing
  * space or zeroes are expected, but they must represent a valid memory buffer.
  * `fid` must be null, or a valid file identifier.
- * `flags` default to 0. See also `flatcc_json_parser_flags`.
+ * `flags` default to 0. See also `flatcc_json_parser_f_` constants.
  */
 int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
-        const char *buf, size_t bufsiz, int flags, const char *fid,
+        const char *buf, size_t bufsiz, flatcc_json_parser_flags_t flags, const char *fid,
         flatcc_json_parser_table_f *parser);
 
 /*
@@ -883,7 +882,7 @@ int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *
  * root.
  */
 int flatcc_json_parser_struct_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
-        const char *buf, size_t bufsiz, int flags, const char *fid,
+        const char *buf, size_t bufsiz, flatcc_json_parser_flags_t flags, const char *fid,
         flatcc_json_parser_struct_f *parser);
 
 #include "flatcc/portable/pdiagnostic_pop.h"
