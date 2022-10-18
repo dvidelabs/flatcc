@@ -1263,7 +1263,7 @@ int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *
 {
     flatcc_json_parser_t _ctx;
     flatcc_builder_ref_t root;
-    int builder_flags = flags & flatcc_json_parser_f_with_size ? flatcc_builder_with_size : 0;
+    flatcc_builder_buffer_flags_t builder_flags = flags & flatcc_json_parser_f_with_size ? flatcc_builder_with_size : 0;
 
     ctx = ctx ? ctx : &_ctx;
     flatcc_json_parser_init(ctx, B, buf, buf + bufsiz, flags);
@@ -1283,7 +1283,7 @@ int flatcc_json_parser_struct_as_root(flatcc_builder_t *B, flatcc_json_parser_t 
 {
     flatcc_json_parser_t _ctx;
     flatcc_builder_ref_t root;
-    int builder_flags = flags & flatcc_json_parser_f_with_size ? flatcc_builder_with_size : 0;
+    flatcc_builder_buffer_flags_t builder_flags = flags & flatcc_json_parser_f_with_size ? flatcc_builder_with_size : 0;
 
     ctx = ctx ? ctx : &_ctx;
     flatcc_json_parser_init(ctx, B, buf, buf + bufsiz, flags);
