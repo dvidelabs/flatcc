@@ -3,6 +3,8 @@
 ## [0.6.2-pre]
 
 - CMake: avoid assuming location of build dir during configuration.
+- Use untyped integer constants in place of enums for public interface flags to
+  allow for safe bit masking operations (PR 248).
 
 
 ## [0.6.1]
