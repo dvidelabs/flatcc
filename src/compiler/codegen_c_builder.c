@@ -356,7 +356,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "{ return flatcc_builder_create_offset_vector(B, data, len); }\\\n"
         "__%sbuild_offset_vector_ops(NS, N ## _vec, N, N)\\\n"
         "static inline N ## _vec_ref_t N ## _vec_clone(NS ## builder_t *B, N ##_vec_t vec)\\\n"
-        "{ N ## _ref_t _e; size_t _i, _len; __%smemoize_begin(B, vec);\n"
+        "{ N ## _ref_t _e; size_t _i, _len; __%smemoize_begin(B, vec);\\\n"
         " _len = N ## _vec_len(vec); if (flatcc_builder_start_offset_vector(B)) return 0;\\\n"
         "  for (_i = 0; _i < _len; ++_i) { if (!(_e = N ## _clone(B, N ## _vec_at(vec, _i)))) return 0;\\\n"
         "    if (!flatcc_builder_offset_vector_push(B, _e)) return 0; }\\\n"
