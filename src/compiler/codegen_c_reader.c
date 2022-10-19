@@ -295,7 +295,7 @@ static void gen_union(fb_output_t *out)
         "{ T ## _union_vec_t uv__tmp; uv__tmp.type = N ## _ ## NK ## _type_get(t__tmp);\\\n"
         "  uv__tmp.value = N ## _ ## NK(t__tmp);\\\n"
         "  FLATCC_ASSERT(NS ## vec_len(uv__tmp.type) == NS ## vec_len(uv__tmp.value)\\\n"
-        "  && (NULL != (__ASSERT_REASON__ = \"union vector type length mismatch\"); return uv__tmp; }\n",
+        "  && (NULL != (__ASSERT_REASON__ = \"union vector type length mismatch\"))); return uv__tmp; }\n",
         nsc);
 }
 
@@ -643,7 +643,7 @@ static void gen_helpers(fb_output_t *out)
     fprintf(out->fp,
         /* Tb is the base type for loads. */
         "#define __%sscalar_vec_at(N, vec, i)\\\n"
-        "{ FLATCC_ASSERT(%svec_len(vec) > (i) && (NULL != (__ASSERT_REASON__ =  \"index out of range\");\\\n"
+        "{ FLATCC_ASSERT(%svec_len(vec) > (i) && (NULL != (__ASSERT_REASON__ = \"index out of range\")));\\\n"
         "  return __%sread_scalar(N, &(vec)[i]); }\n",
         nsc, nsc, nsc);
     fprintf(out->fp,
@@ -654,7 +654,7 @@ static void gen_helpers(fb_output_t *out)
         "/* `adjust` skips past the header for string vectors. */\n"
         "#define __%soffset_vec_at(T, vec, i, adjust)\\\n"
         "{ const %suoffset_t *elem__tmp = (vec) + (i);\\\n"
-        "  FLATCC_ASSERT(%svec_len(vec) > (i) && NULL != (__ASSERT_REASON__ = \"index out of range\")));\\\n"
+        "  FLATCC_ASSERT(%svec_len(vec) > (i) && (NULL != (__ASSERT_REASON__ = \"index out of range\")));\\\n"
         "  return (T)((uint8_t *)(elem__tmp) + (size_t)__%suoffset_read_from_pe(elem__tmp) + (adjust)); }\n",
         nsc, nsc, nsc, nsc);
     fprintf(out->fp,
