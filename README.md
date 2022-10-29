@@ -1260,6 +1260,13 @@ better padding and cache efficiency.
 
 See also [flatc --annotate].
 
+Note: There is experimental support for text editor that supports
+clangd language server or similar. You can edit `CMakeList.txt`
+to generate `build/Debug/compile_comands.json`, at least when
+using clang as a compiler, and copy or symlink it from root. Or
+come with a better suggestion. There are `.gitignore` entries for
+`compile_flags.txt` and `compile_commands.json` in project root.
+
 
 ## File and Type Identifiers
 

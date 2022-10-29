@@ -4,6 +4,12 @@
 #cmake_minimum_required (VERSION 2.8.11)
 cmake_minimum_required (VERSION 2.8)
 
+# Experimental for generating compile_commands.json so editors with
+# clangd language server support can use it. Symlink
+# build/Debug/compile_commands.json to project root where it is
+# gitignored.
+#set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
 # Disable build of tests and samples. Due to custom build step
 # dependency on flatcc tool, some custom build configurations may
 # experience issues, and this option can then help.
