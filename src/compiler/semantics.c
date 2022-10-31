@@ -131,10 +131,11 @@ static inline void set_type_hash(fb_compound_type_t *ct)
     uint32_t hash;
 
     hash = fb_hash_fnv1a_32_init();
-    if (ct->scope)
-    for (name = ct->scope->name; name; name = name->link) {
-        hash = fb_hash_fnv1a_32_append(hash, name->ident->text, (size_t)name->ident->len);
-        hash = fb_hash_fnv1a_32_append(hash, ".", 1);
+    if (ct->scope) {
+        for (name = ct->scope->name; name; name = name->link) {
+            hash = fb_hash_fnv1a_32_append(hash, name->ident->text, (size_t)name->ident->len);
+            hash = fb_hash_fnv1a_32_append(hash, ".", 1);
+        }
     }
     sym = &ct->symbol;
     hash = fb_hash_fnv1a_32_append(hash, sym->ident->text, (size_t)sym->ident->len);
