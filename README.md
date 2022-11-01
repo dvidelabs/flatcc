@@ -81,6 +81,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [Using the Compiler and Builder library](#using-the-compiler-and-builder-library)
 * [FlatBuffers Binary Format](#flatbuffers-binary-format)
 * [Security Considerations](#security-considerations)
+* [Style Guide](#style-guide)
 * [Benchmarks](#benchmarks)
 
 <!-- vim-markdown-toc -->
@@ -2561,6 +2562,31 @@ Mostly for implementers: [FlatBuffers Binary Format]
 See [Security Considerations].
 
 
+## Style Guide
+
+FlatCC coding style is largely similar to the [WebKit Style], with the following notable exceptions:
+
+* Syntax requiring C99 or later is avoided, except `<stdint.h>` types are made available.
+* If conditions always use curly brackets.
+* NULL and nullptr are generally just represented as `0`.
+* Comments are old-school C-style (pre C99). Text is generally cased with punctuation: `/* A comment. */`
+* `true` and `false` keywords are not used (pre C99).
+* In code generation there is essentially no formatting to avoid excessive bloat.
+* Struct names and other types is lower case since this is C, not C++.
+* `snake_case` is used over `camelCase`.
+* Header guards are used over `#pragma once` because it is non-standard and not always reliable in filesystems with ambigious paths.
+* Comma is not placed first in multi-line calls (but maybe that would be a good idea for diff stability).
+* `config.h` inclusion might be handled differently in that `flatbuffers.h` includes the config file.
+* `unsigned` is not used without `int` for historical reasons. Generally a type like `uint32_t` is preferred.
+* Use `TODO:` instead of `FIXME:` in comments for historical reasons.
+
+All the main source code in compiler and runtime aim to be C11 compatible and
+uses many C11 constructs. This is made possible through the included portable
+library such that older compilers can also function. Therefore any platform specific adaptations will be provided by updating
+the portable library rather than introducing compile time flags in the main
+source code.
+
+
 ## Benchmarks
 
 See [Benchmarks]
@@ -2583,4 +2609,4 @@ See [Benchmarks]
 [readfile.h]: include/flatcc/support/readfile.h
 [Security Considerations]: https://github.com/dvidelabs/flatcc/blob/master/doc/security.md
 [flatc --annotate]: https://github.com/google/flatbuffers/tree/master/tests/annotated_binary
-
+[WebKit Style]: https://webkit.org/code-style-guidelines/
