@@ -4,9 +4,10 @@
 
 - CMake: avoid assuming location of build dir during configuration.
 - Use untyped integer constants in place of enums for public interface flags to
-  allow for safe bit masking operations (PR 248).
+  allow for safe bit masking operations (PR #248).
 - Added experimental support for generating `compile_commands.json` via
   `CMakeList.txt` for use with clangd.
+- Remove `fallthrough` macro for improved portability (#247, #252).
 
 
 ## [0.6.1]
