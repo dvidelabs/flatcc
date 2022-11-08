@@ -141,11 +141,10 @@ descend:
         ++buf;
     }
     while (buf != end && *buf <= 0x20) {
-        /* Fall through comments needed to silence gcc 7 warnings. */
         switch (*buf) {
         case 0x0d: buf += (end - buf > 1 && buf[1] == 0x0a);
             /* Consume following LF or treating CR as LF. */
-            fallthrough;
+            ++ctx->line; ctx->line_start = ++buf; continue;
         case 0x0a: ++ctx->line; ctx->line_start = ++buf; continue;
         case 0x09: ++buf; continue;
         case 0x20: goto again; /* Don't consume here, sync with power of 2 spaces. */
