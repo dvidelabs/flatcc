@@ -2567,7 +2567,7 @@ See [Security Considerations].
 FlatCC coding style is largely similar to the [WebKit Style], with the following notable exceptions:
 
 * Syntax requiring C99 or later is avoided, except `<stdint.h>` types are made available.
-* If conditions always use curly brackets.
+* If conditions always use curly brackets, or single line statements without linebreak: `if (err) return -1;`.
 * NULL and nullptr are generally just represented as `0`.
 * Comments are old-school C-style (pre C99). Text is generally cased with punctuation: `/* A comment. */`
 * `true` and `false` keywords are not used (pre C99).
