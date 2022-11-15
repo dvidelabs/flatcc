@@ -188,6 +188,10 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     if (FLATCC_IGNORE_CONST_COND)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-constant-out-of-range-compare")
     endif()
+    # Suppress warning relaxed in clang-6, see https://reviews.llvm.org/D28148
+    if (CMAKE_C_COMPILER_VERSION VERSION_LESS 6)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-missing-field-initializers")
+    endif()
 
     # To get assembly output
     # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -save-temps")
