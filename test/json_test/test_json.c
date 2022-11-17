@@ -582,7 +582,7 @@ int fixed_array_tests(void)
  * covered in the printer and parser tests using the golden data
  * set.
  */
-int main()
+int main(void)
 {
     BEGIN_TEST(Monster);
 
