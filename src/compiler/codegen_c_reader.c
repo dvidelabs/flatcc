@@ -1593,7 +1593,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
     const char *nsc = out->nsc;
     fb_scoped_name_t snt;
     fb_scoped_name_t snref;
-    uint64_t present_id;
     fb_literal_t literal;
     int is_optional;
 
@@ -1629,7 +1628,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
     for (sym = ct->members; sym; sym = sym->link) {
         current_key_processed = 0;
         member = (fb_member_t *)sym;
-        present_id = member->id;
         is_primary_key = ct->primary_key == member;
         is_optional = !!(member->flags & fb_fm_optional);
         print_doc(out, "", member->doc);
@@ -1807,7 +1805,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 }
                 break;
             case fb_is_union:
-                present_id--;
                 fprintf(out->fp,
                     "__%sdefine_union_field(%s, %"PRIu64", %s, %.*s, %s, %u)\n",
                     nsc, nsc, (uint64_t)member->id, snt.text, n, s, snref.text, r);
@@ -1833,7 +1830,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 break;
             }
             if (member->type.ct->symbol.kind == fb_is_union) {
-                present_id--;
                 fprintf(out->fp,
                     "__%sdefine_union_vector_field(%s, %"PRIu64", %s, %.*s, %s, %u)\n",
                     nsc, nsc, (uint64_t)member->id, snt.text, n, s, snref.text, r);
