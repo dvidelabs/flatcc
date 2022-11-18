@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <string.h> /* memcpy */
+
 /*
  * Parses a float or double number and returns the length parsed if
  * successful. The length argument is of limited value due to dependency
@@ -34,7 +36,7 @@ extern "C" {
  * Other compilers such as xlc may require linking with -lm which may not
  * be convienent so a default isinf is provided. If isinf is available
  * and there is a noticable performance issue, define
- * `PORTABLE_USE_ISINF`.
+ * `PORTABLE_USE_ISINF`. This flag also affects isnan.
  */
 #if defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER) || defined(PORTABLE_USE_ISINF)
 #include <math.h>
@@ -48,8 +50,9 @@ extern "C" {
  * loss warning with -Wconversion flag when cast is absent.
  */
 #if defined(__clang__)
-#if __clang_major__ >= 5 && __clang_major__ <= 8
+#if __clang_major__ >= 3 && __clang_major__ <= 8
 #define parse_double_isinf(x) isinf((float)x)
+#define parse_double_isnan(x) isnan((float)x)
 #endif
 #endif
 #if !defined(parse_double_isinf)
@@ -64,19 +67,29 @@ extern "C" {
 #endif
 
 /* Avoid linking with libmath but depends on float/double being IEEE754 */
-static inline int parse_double_isinf(double x)
+static inline int parse_double_isinf(const double x)
 {
-    union { uint64_t u64; double f64; } v;
-    v.f64 = x;
-    return (v.u64 & 0x7fffffff00000000ULL) == 0x7ff0000000000000ULL;
+    uint64_t u64x;
+
+    memcpy(&u64x, &x, sizeof(u64x));
+    return (u64x & 0x7fffffff00000000ULL) == 0x7ff0000000000000ULL;
 }
 
 static inline int parse_float_isinf(float x)
 {
-    union { uint32_t u32; float f32; } v;
-    v.f32 = x;
-    return (v.u32 & 0x7fffffff) == 0x7f800000;
+    uint32_t u32x;
+
+    memcpy(&u32x, &x, sizeof(u32x));
+    return (u32x & 0x7fffffff) == 0x7f800000;
 }
+
+#endif
+
+#if !defined(parse_double_isnan)
+#define parse_double_isnan isnan
+#endif
+#if !defined(parse_float_isnan)
+#define parse_float_isnan isnan
 #endif
 
 /* Returns 0 when in range, 1 on overflow, and -1 on underflow. */
@@ -129,6 +142,37 @@ static inline const char *parse_float(const char *buf, size_t len, float *result
         return buf;
     }
     return end;
+}
+
+/* Inspired by https://bitbashing.io/comparing-floats.html */
+static inline int parse_double_compare(const double x, const double y)
+{
+    /* This also handles NaN */
+    if (x == y) return 0;
+    return x < y ? -1 : 1;
+}
+
+static inline int parse_float_compare(const float x, const float y)
+{
+    int32_t i32x, i32y;
+    
+    if (x == y) return 0;
+    if (parse_float_isnan(x)) return 1;
+    if (parse_float_isnan(y)) return 1;
+    memcpy(&i32x, &x, sizeof(i32x));
+    memcpy(&i32y, &y, sizeof(i32y));
+    return i32x < i32y ? -1 : 1;
+}
+
+int parse_double_is_equal(const double x, const double y)
+{
+    return x == y;
+}
+
+/* Works around GCC double precisoni conversion of floats. */
+static inline int parse_float_is_equal(const float x, const float y)
+{
+    return parse_float_compare(x, y) == 0;
 }
 
 #include "pdiagnostic_pop.h"
