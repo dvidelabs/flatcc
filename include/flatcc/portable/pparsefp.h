@@ -145,34 +145,76 @@ static inline const char *parse_float(const char *buf, size_t len, float *result
 }
 
 /* Inspired by https://bitbashing.io/comparing-floats.html */
-static inline int parse_double_compare(const double x, const double y)
+
+/* Return signed ULP distance or INT64_MAX if any value is nan. */
+static inline int64_t parse_double_compare(const double x, const double y)
 {
-    /* This also handles NaN */
+    int64_t i64x, i64y;
+    
     if (x == y) return 0;
-    return x < y ? -1 : 1;
+    if (parse_double_isnan(x)) return INT64_MAX;
+    if (parse_double_isnan(y)) return INT64_MAX;
+    memcpy(&i64x, &x, sizeof(i64x));
+    memcpy(&i64y, &y, sizeof(i64y));
+    if ((i64x < 0) != (i64y < 0)) return INT64_MAX;
+    return i64x - i64y;
 }
 
-static inline int parse_float_compare(const float x, const float y)
+/* Same as double, but INT32_MAX if nan. */
+static inline int32_t parse_float_compare(const float x, const float y)
 {
     int32_t i32x, i32y;
     
     if (x == y) return 0;
-    if (parse_float_isnan(x)) return 1;
-    if (parse_float_isnan(y)) return 1;
+    if (parse_float_isnan(x)) return INT32_MAX;
+    if (parse_float_isnan(y)) return INT32_MAX;
     memcpy(&i32x, &x, sizeof(i32x));
     memcpy(&i32y, &y, sizeof(i32y));
-    return i32x < i32y ? -1 : 1;
+    if ((i32x < 0) != (i32y < 0)) return INT32_MAX;
+    return i32x - i32y;
 }
 
-int parse_double_is_equal(const double x, const double y)
+/* 
+ * Returns the absolute distance in flaoting point ULP (representational bit difference).
+ * Uses signed return value so that INT64_MAX and INT32_MAX indicates NaN similar to
+ * the compare function.
+ */
+static inline int64_t parse_double_dist(const double x, const double y)
 {
-    return x == y;
+    uint64_t m64;
+    int64_t i64;
+    
+    i64 = parse_double_compare(x, y);
+    /* Absolute integer value of compare. */
+    m64 = -(uint64_t)(i64 < 0);
+    return (int64_t)(((uint64_t)i64 + m64) ^ m64);
 }
 
-/* Works around GCC double precisoni conversion of floats. */
+/* Same as double, but INT32_MAX if NaN. */
+static inline int32_t parse_float_dist(const float x, const float y)
+{
+    uint32_t m32;
+    int32_t i32;
+    
+    i32 = parse_float_compare(x, y);
+    /* Absolute integer value of compare. */
+    m32 = -(uint32_t)(i32 < 0);
+    return (int32_t)(((uint32_t)i32 + m32) ^ m32);
+}
+
+/* 
+ * Returns 1 if no value is NaN, and the difference is at most one ULP (1 bit), and the
+ * sign is the same, and 0 otherwise.
+ */
+static inline int parse_double_is_equal(const double x, const double y)
+{
+    return parse_double_dist(x, y) >> 1 == 0;
+}
+
+/* Same as double, but at lower precision. */
 static inline int parse_float_is_equal(const float x, const float y)
 {
-    return parse_float_compare(x, y) == 0;
+    return parse_float_dist(x, y) >> 1 == 0;
 }
 
 #include "pdiagnostic_pop.h"
