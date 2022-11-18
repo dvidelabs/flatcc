@@ -8,6 +8,9 @@
 - Added experimental support for generating `compile_commands.json` via
   `CMakeList.txt` for use with clangd.
 - Remove `fallthrough` macro for improved portability (#247, #252).
+- Added `parse_float/double_compare`, `parse_float/double_is_equal` to
+  portable library, and added `parse_float/double_isnan` to mirror isinf.
+  This should help with GCC 32-bit double precision conversion issue.
 
 
 ## [0.6.1]
