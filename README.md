@@ -1,5 +1,6 @@
-OS-X & Ubuntu: [![Build Status](https://travis-ci.org/dvidelabs/flatcc.svg?branch=master)](https://travis-ci.org/dvidelabs/flatcc)
+Ubuntu, macOS and Windows: [![Build Status](https://github.com/dvidelabs/flatcc/actions/workflows/ci.yml/badge.svg)](https://github.com/dvidelabs/flatcc/actions/workflows/ci.yml)
 Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/dvidelabs/flatcc?branch=master&svg=true)](https://ci.appveyor.com/project/dvidelabs/flatcc)
+Weekly: [![Build Status](https://github.com/dvidelabs/flatcc/actions/workflows/weekly.yml/badge.svg)](https://github.com/dvidelabs/flatcc/actions/workflows/weekly.yml)
 
 
 _The JSON parser may change the interface for parsing union vectors in a
@@ -2226,8 +2227,15 @@ Optionally switch to a different build tool by choosing one of:
     scripts/initbuild.sh make-concurrent
     scripts/initbuild.sh ninja
 
-where `ninja` is the default and `make-concurrent` is `make` with the `-j`
-flag. A custom build configuration `X` can be added by adding a
+where `ninja` is the default and `make-concurrent` is `make` with the `-j` flag.
+
+To enforce a 32-bit build on a 64-bit machine the following configuration
+can be used:
+
+    scripts/initbuild.sh make-32bit
+
+which uses `make` and provides the `-m32` flag to the compiler.
+A custom build configuration `X` can be added by adding a
 `scripts/build.cfg.X` file.
 
 `scripts/initbuild.sh` cleans the build if a specific build

@@ -1,8 +1,8 @@
 # Ubuntu 14.04 (Trusty)
-#cmake_minimum_required (VERSION 2.8.12.2)
+cmake_minimum_required (VERSION 2.8.12.2)
 # Centos 7
 #cmake_minimum_required (VERSION 2.8.11)
-cmake_minimum_required (VERSION 2.8)
+#cmake_minimum_required (VERSION 2.8)
 
 # Experimental for generating compile_commands.json so editors with
 # clangd language server support can use it. Symlink
@@ -187,6 +187,10 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     endif()
     if (FLATCC_IGNORE_CONST_COND)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-constant-out-of-range-compare")
+    endif()
+    # Suppress warning relaxed in clang-6, see https://reviews.llvm.org/D28148
+    if (CMAKE_C_COMPILER_VERSION VERSION_LESS 6)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-missing-field-initializers")
     endif()
 
     # To get assembly output

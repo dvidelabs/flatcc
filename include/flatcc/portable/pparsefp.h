@@ -46,7 +46,7 @@ extern "C" {
 #define isinf(x) (!_finite(x))
 #endif
 /*
- * clang-5 through clang-8 but not clang-9 issues incorrect precision
+ * clang-3 through clang-8 but not clang-9 issues incorrect precision
  * loss warning with -Wconversion flag when cast is absent.
  */
 #if defined(__clang__)
