@@ -11,6 +11,10 @@
 - Added `parse_float/double_compare`, `parse_float/double_is_equal` to
   portable library, and added `parse_float/double_isnan` to mirror isinf.
   This should help with GCC 32-bit double precision conversion issue.
+- Add Github Actions builds to replace stale Travis CI build. This also
+  includes source code fixes for some build variants. Although
+  Windows build is included it only covers recent 64-bit Windows. More
+  work is need for older Windows variants. (#250).
 
 
 ## [0.6.1]
