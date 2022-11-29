@@ -15,6 +15,7 @@
   includes source code fixes for some build variants. Although
   Windows build is included it only covers recent 64-bit Windows. More
   work is need for older Windows variants. (#250).
+- Increase maximum allowed schema file size from 64 KiB to 1 MB (#256).
 
 
 ## [0.6.1]

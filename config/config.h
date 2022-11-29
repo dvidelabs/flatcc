@@ -54,7 +54,7 @@
  * is covers the accumulated size of all included files. 0 is unlimited.
  */
 #ifndef FLATCC_MAX_SCHEMA_SIZE
-#define FLATCC_MAX_SCHEMA_SIZE 64 * 1024
+#define FLATCC_MAX_SCHEMA_SIZE 1000000
 #endif
 
 /*
