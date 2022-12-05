@@ -879,7 +879,7 @@ const char *flatcc_json_parser_char_array(flatcc_json_parser_t *ctx,
         if (ctx->flags & flatcc_json_parser_f_reject_array_underflow) {
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_underflow);
         }
-        memset(s, 0, n - k);
+        memset(s, 0, n);
     }
     return flatcc_json_parser_string_end(ctx, buf, end);
 }
