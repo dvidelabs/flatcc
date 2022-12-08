@@ -175,7 +175,7 @@ static inline int32_t parse_float_compare(const float x, const float y)
 }
 
 /* 
- * Returns the absolute distance in flaoting point ULP (representational bit difference).
+ * Returns the absolute distance in floating point ULP (representational bit difference).
  * Uses signed return value so that INT64_MAX and INT32_MAX indicates NaN similar to
  * the compare function.
  */
@@ -186,7 +186,7 @@ static inline int64_t parse_double_dist(const double x, const double y)
     
     i64 = parse_double_compare(x, y);
     /* Absolute integer value of compare. */
-    m64 = -(uint64_t)(i64 < 0);
+    m64 = (uint64_t)-(i64 < 0);
     return (int64_t)(((uint64_t)i64 + m64) ^ m64);
 }
 
@@ -198,7 +198,7 @@ static inline int32_t parse_float_dist(const float x, const float y)
     
     i32 = parse_float_compare(x, y);
     /* Absolute integer value of compare. */
-    m32 = -(uint32_t)(i32 < 0);
+    m32 = (uint32_t)-(i32 < 0);
     return (int32_t)(((uint32_t)i32 + m32) ^ m32);
 }
 
