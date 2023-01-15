@@ -57,4 +57,18 @@ jobs:
         run: |
           cmake .
           msbuild FlatCC.sln /m /property:Configuration=Release
-          ctest -VV
+
+  cmake-minimum-required:
+     name: CMake 3.18.4 (min. required)
+     runs-on: ubuntu-20.04
+     steps:
+       - name: Setup cmake
+         uses: jwlawson/actions-setup-cmake@v1
+         with:
+           cmake-version: 3.18.4
+       - uses: actions/checkout@v3
+       - name: Build and run tests
+         run: |
+           cmake --version
+           scripts/initbuild.sh make-concurrent
+           scripts/test.sh         ctest -VV
