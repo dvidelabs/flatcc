@@ -171,7 +171,7 @@ message(STATUS "lib install dir ${dist_dir}/${lib_dir}")
 # and constants should be turned off - those are plentiful. They are
 # silenced for Clang, GCC and MSVC in generated headers.headers.
 
-if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+if (CMAKE_C_COMPILER_ID MATCHES "Clang" AND NOT "${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
     # Clang or AppleClang
     message(STATUS "Setting Clang compiler options")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes")
