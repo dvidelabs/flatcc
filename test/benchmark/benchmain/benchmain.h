@@ -23,6 +23,10 @@ int main(int argc, char *argv[])
     /* Use volatie to prevent over optimization. */
     volatile int64_t total = 0;
     int i, ret = 0;
+
+    (void)(argc);
+    (void)(argv);
+
     DECLARE_BENCHMARK(BM);
 
     buf = malloc(bufsize);

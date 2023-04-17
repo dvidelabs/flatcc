@@ -70,6 +70,7 @@ int64_t decode(flatcc_builder_t *B, void *buffer, size_t size, int64_t sum)
     Foo(struct_t) foo;
 
     (void)B;
+    (void)size;
 
     foobarcontainer = C(as_root(buffer));
     sum += C(initialized(foobarcontainer));

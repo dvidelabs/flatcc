@@ -91,6 +91,7 @@ int64_t decode(void *bench, void *buffer, size_t size, int64_t sum)
     struct Bar *bar;
 
     (void)bench;
+    (void)size;
 
     foobarcontainer = buffer;
     sum += foobarcontainer->initialized;

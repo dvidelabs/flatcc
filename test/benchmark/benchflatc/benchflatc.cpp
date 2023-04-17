@@ -46,6 +46,8 @@ int64_t decode(void *bench, void *buffer, size_t size, int64_t sum)
     auto foobarcontainer = GetFooBarContainer(buffer);
 
     (void)bench;
+    (void)size;
+
     sum += foobarcontainer->initialized();
     sum += foobarcontainer->location()->Length();
     sum += foobarcontainer->fruit();
