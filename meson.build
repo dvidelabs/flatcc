@@ -41,6 +41,7 @@ endif
 if cc_id == 'mvsc'
 
   has_c99_var_decl = cc_version.version_compare('>=18')
+  c_args += '-W3'
 
 elif cc_id == 'clang'
 
@@ -89,6 +90,10 @@ elif cc_id == 'gcc'
 
 endif
 
+if build_machine.system() == 'windows'
+  c_args += '-D_CRT_SECURE_NO_WARNINGS'
+endif
+
 if allow_werror
  c_args += '-Werror'
 endif
@@ -102,22 +107,6 @@ endif
 
 add_project_arguments(cc.get_supported_arguments(c_args), language: 'c')
 add_project_arguments(cxx.get_supported_arguments(c_args), language: 'cpp')
-
-if get_option('xflatcc_gen_version')
-  revisition_tag = vcs_tag(
-    input: 'config/version.in',
-    output: 'revision',
-    command: ['git', 'rev-parse', 'HEAD'],
-    fallback: 'n/a'
-  )
-
-  version_tag = vcs_tag(
-    input: 'config/version.in',
-    output: 'version',
-    command: ['git', 'describe', '--abbrev=0', '--tags'],
-    fallback: 'n/a'
-  )
-endif
 
 inc_dir = include_directories('include', 'config', 'external')
 
@@ -163,11 +152,10 @@ flatcc_src = [
 flatccrt_name = 'flatccrt'
 flatcc_name = 'flatcc'
 
-if buildtype == 'debug'
+if buildtype == 'debug' and build_machine.system() != 'windows'
   flatccrt_name = 'flatccrt_d'
   flatcc_name = 'flatcc_d'
 endif
-
 
 libflatccrt = library(flatccrt_name,
   sources: flatccrt_src,
@@ -188,7 +176,7 @@ flatcc = executable(flatcc_name,
   install: not meson.is_subproject()
 )
 
-if not meson.is_subproject()
+if not meson.is_subproject() and build_machine.system() != 'windows'
 
   mkdir_command = find_program('mkdir')
   cp_command = find_program('cp')
