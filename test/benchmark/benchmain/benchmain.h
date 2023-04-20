@@ -61,6 +61,12 @@ int main(int argc, char *argv[])
     show_benchmark(BENCH_TITLE " decode/traverse " COMPILE_TYPE, t2, t3, size, rep, "1M");
     printf("----\n");
     ret = 0;
+
+#ifdef NDEBUG
+    // Silence warnings in optimised builds.
+    (void)ret;
+#endif
+
 done:
     if (buf) {
         free(buf);

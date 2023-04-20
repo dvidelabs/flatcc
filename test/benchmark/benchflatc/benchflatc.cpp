@@ -23,10 +23,17 @@ int encode(void *bench, void *buffer, size_t *size)
     for (int i = 0; i < veclen; i++) {
         // We add + i to not make these identical copies for a more realistic
         // compression test.
-        auto const &foo = Foo(0xABADCAFEABADCAFE + i, 10000 + i, '@' + i, 1000000 + i);
-        auto const &bar = Bar(foo, 123456 + i, 3.14159f + i, 10000 + i);
+        auto const &foo = Foo(0xABADCAFEABADCAFE + static_cast<uint32_t>(i),
+            10000 + static_cast<int16_t>(i),
+            '@' + static_cast<int8_t>(i),
+            1000000 + static_cast<uint32_t>(i)
+        );
+        auto const &bar = Bar(foo, 123456 + i,
+            3.14159f + static_cast<float>(i),
+            10000 + static_cast<uint16_t>(i)
+        );
         auto name = fbb.CreateString("Hello, World!");
-        auto foobar = CreateFooBar(fbb, &bar, name, 3.1415432432445543543 + i, '!' + i);
+        auto foobar = CreateFooBar(fbb, &bar, name, 3.1415432432445543543 + i, '!' + static_cast<uint8_t>(i));
         vec[i] = foobar;
     }
     auto location = fbb.CreateString("https://www.example.com/myurl/");
