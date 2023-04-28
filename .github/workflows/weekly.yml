@@ -148,6 +148,9 @@ jobs:
         gcc-version: [9, 12]
     steps:
       - uses: actions/checkout@v3
+      - name: Prepare
+        run: |
+          brew install gcc@${{ matrix.gcc-version }}
       - name: Build and run tests
         env:
           CC: gcc-${{ matrix.gcc-version }}
