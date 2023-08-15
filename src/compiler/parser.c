@@ -1069,7 +1069,7 @@ static void parse_namespace(fb_parser_t *P)
 
     if (optional(P, ';') && t) {
         /* Revert to global namespace. */
-        P->current_scope = 0;
+        P->current_scope = P->root_scope;
         return;
     }
     if (P->token->id != LEX_TOK_ID) {
@@ -1436,7 +1436,8 @@ int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
         P->schema.prefix.s = (char *)opts->ns;
         P->schema.prefix.len = (int)strlen(opts->ns);
     }
-    P->current_scope = fb_add_scope(P, 0);
+    P->root_scope = fb_add_scope(P, 0);
+    P->current_scope = P->root_scope;
     assert(P->current_scope == fb_scope_table_find(&P->schema.root_schema->scope_index, 0, 0));
     return 0;
 }
