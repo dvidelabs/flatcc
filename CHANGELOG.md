@@ -18,6 +18,8 @@
 - Increase maximum allowed schema file size from 64 KiB to 1 MB (#256).
 - Fix seg fault in json parser while adding null characters to a too
   short input string for a fixed length char array struct field (#257).
+- Fix regression where empty namespace in schema does not reset root scope
+  correctly in parser (#265).
 
 ## [0.6.1]
 
