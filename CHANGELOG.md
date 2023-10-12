@@ -20,6 +20,7 @@
   short input string for a fixed length char array struct field (#257).
 - Fix regression where empty namespace in schema does not reset root scope
   correctly in parser (#265).
+- Fix lexer checks that breaks with UTF-8, notably UTF-8 schema comments (#267).
 
 ## [0.6.1]
 
