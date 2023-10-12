@@ -155,8 +155,6 @@ void error_ref_sym(fb_parser_t *P, fb_ref_t *ref, const char *msg, fb_symbol_t *
 /* Accept numbers like -0x42 as integer literals. */
 #define LEX_HEX_NUMERIC
 
-#define lex_isblank(c) ((c) == ' ' || (c) == '\t')
-
 #include "parser.h"
 
 #ifdef LEX_DEBUG
@@ -1335,10 +1333,10 @@ static void inject_token(fb_token_t *t, const char *lex, long id)
     push_token((fb_parser_t*)context, LEX_TOK_COMMENT_UNTERMINATED, pos, pos)
 
 #define lex_emit_comment_ctrl(pos)                                          \
-    if (lex_isblank(*pos)) {                                                \
+    if (lex_isblank(*pos) || !lex_isctrl(*pos)) {                           \
         push_comment((fb_parser_t*)context, pos, pos + 1);                  \
     } else {                                                                \
-        push_token((fb_parser_t*)context, LEX_TOK_COMMENT_CTRL,             \
+        push_token((fb_parser_t*)context, LEX_TOK_CTRL,                     \
                 pos, pos + 1);                                              \
     }
 
