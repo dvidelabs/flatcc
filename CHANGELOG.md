@@ -21,6 +21,7 @@
 - Fix regression where empty namespace in schema does not reset root scope
   correctly in parser (#265).
 - Fix lexer checks that breaks with UTF-8, notably UTF-8 schema comments (#267).
+- Fix UB in memcpy(p, 0, 0) by initializing scope prefix (mostly to silence sanitizers).
 
 ## [0.6.1]
 

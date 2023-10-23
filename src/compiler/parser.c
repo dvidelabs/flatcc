@@ -1430,6 +1430,8 @@ int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
     P->schema.name.name.s.s = s;
     P->schema.name.name.s.len = (int)n;
     checkmem((P->schema.errorname = fb_create_basename(name, name_len, "")));
+    P->schema.prefix.s = "";
+    P->schema.prefix.len = 0;
     if (opts->ns) {
         P->schema.prefix.s = (char *)opts->ns;
         P->schema.prefix.len = (int)strlen(opts->ns);
