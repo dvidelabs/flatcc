@@ -71,6 +71,7 @@ struct fb_parser {
     int has_schema;
     fb_options_t opts;
     fb_schema_t schema;
+    fb_scope_t *root_scope;
     fb_scope_t *current_scope;
     char *path;
     char *referer_path;

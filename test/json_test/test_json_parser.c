@@ -80,7 +80,7 @@ int test_parse(void)
     flatcc_builder_t builder;
     flatcc_builder_t *B = &builder;
     int ret = -1;
-    int flags = 0;
+    flatcc_json_parser_flags_t flags = 0;
 
     flatcc_builder_init(B);
 

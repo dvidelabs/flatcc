@@ -3,7 +3,25 @@
 ## [0.6.2-pre]
 
 - CMake: avoid assuming location of build dir during configuration.
-
+- Use untyped integer constants in place of enums for public interface flags to
+  allow for safe bit masking operations (PR #248).
+- Added experimental support for generating `compile_commands.json` via
+  `CMakeList.txt` for use with clangd.
+- Remove `fallthrough` macro for improved portability (#247, #252).
+- Added `parse_float/double_compare`, `parse_float/double_is_equal` to
+  portable library, and added `parse_float/double_isnan` to mirror isinf.
+  This should help with GCC 32-bit double precision conversion issue.
+- Add Github Actions builds to replace stale Travis CI build. This also
+  includes source code fixes for some build variants. Although
+  Windows build is included it only covers recent 64-bit Windows. More
+  work is need for older Windows variants. (#250).
+- Increase maximum allowed schema file size from 64 KiB to 1 MB (#256).
+- Fix seg fault in json parser while adding null characters to a too
+  short input string for a fixed length char array struct field (#257).
+- Fix regression where empty namespace in schema does not reset root scope
+  correctly in parser (#265).
+- Fix lexer checks that breaks with UTF-8, notably UTF-8 schema comments (#267).
+- Add sanitizer flag for clang debug and related warnings (input from several PRs incl. #237)
 
 ## [0.6.1]
 
