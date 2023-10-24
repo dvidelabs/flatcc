@@ -173,8 +173,8 @@ int set_opt(flatcc_options_t *opts, const char *s, const char *a)
         exit(0);
     }
     if (0 == strcmp("-version", s)) {
-        fprintf(stderr, "%s\n", TITLE);
-        fprintf(stderr, "version: %s\n", VERSION);
+        fprintf(stdout, "%s\n", TITLE);
+        fprintf(stdout, "version: %s\n", VERSION);
         exit(0);
     }
     if (0 == strcmp("-stdout", s)) {
@@ -425,7 +425,7 @@ int main(int argc, const char *argv[])
         free((void *)opts.inpaths);
         exit(-1);
     }
- 
+
     parse_opts(argc, argv, &opts);
     if (opts.cgen_builder && opts.cgen_common_reader) {
         opts.cgen_common_builder = 1;

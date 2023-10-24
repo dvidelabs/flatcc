@@ -5,6 +5,7 @@
 
 #include "flatcc/support/hexdump.h"
 #include "flatcc/support/elapsed.h"
+#include "flatcc/portable/pparsefp.h"
 #include "../../config/config.h"
 
 /*
@@ -96,6 +97,8 @@ int verify_empty_monster(void *buffer)
 
 int test_enums(flatcc_builder_t *B)
 {
+    (void)B;
+
     if (ns(neg_enum_neg1) != -12) {
         printf("neg_enum_neg1 should be -12, was %d\n", ns(neg_enum_neg1));
         return -1;
@@ -160,8 +163,8 @@ int test_type_aliases(flatcc_builder_t *B)
     if (ns(TypeAliases_u16(ta)) != UINT16_MAX) goto failed;
     if (ns(TypeAliases_u32(ta)) != UINT32_MAX) goto failed;
     if (ns(TypeAliases_u64(ta)) != UINT64_MAX) goto failed;
-    if (ns(TypeAliases_f32(ta)) != 2.3f) goto failed;
-    if (ns(TypeAliases_f64(ta)) != 2.3) goto failed;
+    if (!parse_float_is_equal(ns(TypeAliases_f32(ta)), 2.3f)) goto failed;
+    if (!parse_double_is_equal(ns(TypeAliases_f64(ta)), 2.3)) goto failed;
     if (sizeof(ns(TypeAliases_i8(ta))) != 1) goto failed;
     if (sizeof(ns(TypeAliases_i16(ta))) != 2) goto failed;
     if (sizeof(ns(TypeAliases_i32(ta))) != 4) goto failed;
@@ -369,13 +372,17 @@ int verify_monster(void *buffer)
     if ((size_t)vec & 15) {
         printf("Force align of Vec3 struct not correct\n");
     }
-    /* -3.2f is actually -3.20000005 and not -3.2 due to representation loss. */
-    if (ns(Vec3_z(vec)) != -3.2f) {
+    /* -3.2f is actually -3.20000005 and not -3.2 due to representation loss.
+     * For 32-bit GCC compilers, -3.2f might be another value, so use lower
+     * precision portable comparison. */
+    if (!parse_float_is_equal(ns(Vec3_z(vec)), -3.2f)) {
         printf("Position failing on z coordinate\n");
         return -1;
     }
     if (nsc(is_native_pe())) {
-        if (vec->x != 1.0f || vec->y != 2.0f || vec->z != -3.2f) {
+        if (!parse_float_is_equal(vec->x, 1.0f) ||
+            !parse_float_is_equal(vec->y, 2.0f) ||
+            !parse_float_is_equal(vec->z, -3.2f)) {
             printf("Position is incorrect\n");
             return -1;
         }
@@ -394,7 +401,9 @@ int verify_monster(void *buffer)
      */
     ns(Vec3_clear(&v)); /* Not strictly needed here. */
     ns(Vec3_copy_from_pe(&v, vec));
-    if (v.x != 1.0f || v.y != 2.0f || v.z != -3.2f) {
+    if (!parse_float_is_equal(v.x, 1.0f) ||
+        !parse_float_is_equal(v.y, 2.0f) ||
+        !parse_float_is_equal(v.z, -3.2f)) {
         printf("Position is incorrect after copy\n");
         return -1;
     }
@@ -1599,7 +1608,7 @@ int test_clone_slice(flatcc_builder_t *B)
         printf("sliced bool has wrong content\n");
         goto done;
     }
-    if (ns(Monster_pos(mon2)->x != -42.3f)) {
+    if (!parse_float_is_equal(ns(Monster_pos(mon2))->x, -42.3f)) {
         printf("cloned pos struct failed\n");
         goto done;
     };
@@ -1686,7 +1695,6 @@ int verify_union_vector(void *buffer, size_t size)
     int color;
 
     ns(Monster_table_t) mon;
-    ns(Stat_table_t) stat;
     ns(TestSimpleTableWithEnum_table_t) kermit;
     flatbuffers_generic_vec_t anyvec;
     ns(Any_vec_t) anyvec_type;
@@ -1991,7 +1999,6 @@ int test_recursive_sort(flatcc_builder_t *B)
 
     void *buffer = 0;
     size_t size = 0;
-    size_t n;
     int ret = -1;
     ns(Alt_table_t) alt;
     ns(Any_union_t) any;
@@ -2064,7 +2071,6 @@ int test_mixed_type_union(flatcc_builder_t *B)
 {
     void *buffer;
     size_t size;
-    size_t n;
     int ret = -1;
     /* Builder */
     nsf(Character_union_ref_t) ut;
@@ -2511,6 +2517,8 @@ int test_nested_buffer_using_nest(flatcc_builder_t *B)
 
 int verify_include(void *buffer)
 {
+    (void)buffer;
+
     if (MyGame_OtherNameSpace_FromInclude_Foo != 17) {
         printf("Unexpected enum value `Foo` from included schema\n");
         return -1;
@@ -2560,8 +2568,8 @@ int test_struct_buffer(flatcc_builder_t *B)
     /* Convert buffer to native in place - a nop on native platform. */
     v = (ns(Vec3_t) *)vec3;
     ns(Vec3_from_pe(v));
-    if (v->x != 1.0f || v->y != 2.0f || v->z != 3.0f
-        || v->test1 != 4.2 || v->test2 != ns(Color_Blue)
+    if (!parse_float_is_equal(v->x, 1.0f) || !parse_float_is_equal(v->y, 2.0f) || !parse_float_is_equal(v->z, 3.0f)
+        || !parse_double_is_equal(v->test1, 4.2) || v->test2 != ns(Color_Blue)
         || v->test3.a != 2730 || v->test3.b != -17
        ) {
         printf("struct buffer not valid\n");
@@ -2625,8 +2633,8 @@ int test_typed_struct_buffer(flatcc_builder_t *B)
     /* Convert buffer to native in place - a nop on native platform. */
     v = (ns(Vec3_t) *)vec3;
     ns(Vec3_from_pe(v));
-    if (v->x != 1.0f || v->y != 2.0f || v->z != 3.0f
-        || v->test1 != 4.2 || v->test2 != ns(Color_Blue)
+    if (!parse_float_is_equal(v->x, 1.0f) || !parse_float_is_equal(v->y, 2.0f) || !parse_float_is_equal(v->z, 3.0f)
+        || !parse_double_is_equal(v->test1, 4.2) || v->test2 != ns(Color_Blue)
         || v->test3.a != 2730 || v->test3.b != -17
        ) {
         printf("struct buffer not valid\n");

@@ -2,8 +2,13 @@
 #include <assert.h>
 #include "emit_test_builder.h"
 #include "flatcc/support/hexdump.h"
+#include "flatcc/portable/pparsefp.h"
 
 #define test_assert(x) do { if (!(x)) { assert(0); return -1; }} while(0)
+/* Direct floating point comparisons are not always directly comparable,
+ * especially not for GCC 32-bit compilers. */
+#define test_assert_floateq(x, y) test_assert(parse_float_is_equal((x), (y)))
+#define test_assert_doubleeq(x, y) test_assert(parse_double_is_equal((x), (y)))
 
 int dbg_emitter(void *emit_context,
         const flatcc_iovec_t *iov, int iov_count,
@@ -30,7 +35,7 @@ int dbg_emitter(void *emit_context,
     return 0;
 }
 
-int debug_test()
+int debug_test(void)
 {
     flatcc_builder_t builder, *B;
     float x[10] = { 0 };
@@ -48,7 +53,7 @@ int debug_test()
  * this assumes a very simple schema:
  * "table { time: long; device: ubyte; samples: [float]; }"
  */
-int emit_test()
+int emit_test(void)
 {
     /*
      * Note that there is some apparently unnecessary padding after 0x01
@@ -112,7 +117,7 @@ int emit_test()
     test_assert(time == 42);
     test_assert(main_device(mt) == 1);
     test_assert(flatbuffers_float_vec_len(main_samples(mt)) == 4);
-    test_assert(flatbuffers_float_vec_at(main_samples(mt), 2) == 1.2f);
+    test_assert_floateq(flatbuffers_float_vec_at(main_samples(mt), 2), 1.2f);
 
     /* We use get_direct_buffer, so we can't clear the builder until last. */
     flatcc_builder_clear(B);

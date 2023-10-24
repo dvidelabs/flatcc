@@ -1,8 +1,14 @@
 # Ubuntu 14.04 (Trusty)
-#cmake_minimum_required (VERSION 2.8.12.2)
+cmake_minimum_required (VERSION 2.8.12.2)
 # Centos 7
 #cmake_minimum_required (VERSION 2.8.11)
-cmake_minimum_required (VERSION 2.8)
+#cmake_minimum_required (VERSION 2.8)
+
+# Experimental for generating compile_commands.json so editors with
+# clangd language server support can use it. Symlink
+# build/Debug/compile_commands.json to project root where it is
+# gitignored.
+#set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 # Disable build of tests and samples. Due to custom build step
 # dependency on flatcc tool, some custom build configurations may
@@ -134,12 +140,8 @@ endif()
 
 if (FLATCC_REFLECTION)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_REFLECTION=1")
-    file(WRITE ${PROJECT_SOURCE_DIR}/build/reflection_enabled "REFLECTION=1")
-    file(REMOVE ${PROJECT_SOURCE_DIR}/build/reflection_disabled)
 else()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_REFLECTION=0")
-    file(REMOVE ${PROJECT_SOURCE_DIR}/build/reflection_enabled)
-    file(WRITE ${PROJECT_SOURCE_DIR}/build/reflection_disabled "REFLECTION=0")
 endif()
 
 
@@ -169,7 +171,7 @@ message(STATUS "lib install dir ${dist_dir}/${lib_dir}")
 # and constants should be turned off - those are plentiful. They are
 # silenced for Clang, GCC and MSVC in generated headers.headers.
 
-if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+if (CMAKE_C_COMPILER_ID MATCHES "Clang" AND NOT "${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
     # Clang or AppleClang
     message(STATUS "Setting Clang compiler options")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes")
@@ -179,12 +181,20 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -Wextra")
     # Fix broken C++ alignas - either will do
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPORTABLE_PATCH_CPLUSPLUS_STDALIGN") 
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPORTABLE_PATCH_CPLUSPLUS_STDALIGN")
     if (FLATCC_ALLOW_WERROR)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
     endif()
     if (FLATCC_IGNORE_CONST_COND)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-constant-out-of-range-compare")
+    endif()
+    if (CMAKE_BUILD_TYPE MATCHES Debug)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+    endif()
+    # Suppress warning relaxed in clang-6, see https://reviews.llvm.org/D28148
+    if (CMAKE_C_COMPILER_VERSION VERSION_LESS 6)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-missing-field-initializers")
     endif()
 
     # To get assembly output
@@ -209,8 +219,9 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
         endif()
     else()
         message(STATUS "Setting GNU C compiler options with c11 and Posix")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
-        if (NOT (GCC_VERSION VERSION_LESS 8.0))
+        if (GCC_VERSION VERSION_LESS 8.0)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -pedantic -Wall -Wextra")
+        elseif (NOT (GCC_VERSION VERSION_LESS 8.0))
             # Disable some GCC checks:
             # (warnings exist since 8.0, but are more aggressive in 9.0)
             #
@@ -219,11 +230,17 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
             # structs, but these are valid as zero-paddded, not zero terminated.
             #
             # -Wno-format-overflow:
-            # GCC 9 warns on mistakenly assumed NULL string when 
+            # GCC 9 warns on mistakenly assumed NULL string when
             # printing from a required FlatBuffer string field.
             #
+            message(STATUS "Disabling -pedantic for GCC >= 8.0")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -Wextra")
             message(STATUS "Disabling GNU C compiler warnings: -Wstringop-truncation -Wno-format-overflow")
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-stringop-truncation -Wno-format-overflow")
+        endif()
+        if (NOT (GCC_VERSION VERSION_LESS 11.0))
+        # Disable warning on misleading indentation it become more aggressive in 11.0
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-misleading-indentation")
         endif()
         if (FLATCC_GNU_POSIX_MEMALIGN)
             # -std=c11 prevents detection of posix_memalign and aligned_alloc might be missing

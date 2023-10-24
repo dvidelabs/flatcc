@@ -37,6 +37,9 @@ static void print_type_identifier(fb_output_t *out, fb_compound_type_t *ct)
     uint32_t type_hash;
     int conflict = 0;
     fb_symbol_t *sym;
+    const char *file_identifier;
+    int file_identifier_len;
+    const char *quote;
 
     fb_clear(snt);
 
@@ -54,19 +57,28 @@ static void print_type_identifier(fb_output_t *out, fb_compound_type_t *ct)
             break;
         }
     }
+    if (out->S->file_identifier.type == vt_string) {
+        quote = "\"";
+        file_identifier = out->S->file_identifier.s.s;
+        file_identifier_len = out->S->file_identifier.s.len;
+    } else {
+        quote = "";
+        file_identifier = "0";
+        file_identifier_len = 1;
+    }
     fprintf(out->fp,
             "#ifndef %s_file_identifier\n"
-            "#define %s_file_identifier %sidentifier\n"
+            "#define %s_file_identifier %s%.*s%s\n"
             "#endif\n",
-            name, name, nsc);
+            name, name, quote, file_identifier_len, file_identifier, quote);
     if (!conflict) {
         /* For backwards compatibility. */
         fprintf(out->fp,
                 "/* deprecated, use %s_file_identifier */\n"
                 "#ifndef %s_identifier\n"
-                "#define %s_identifier %sidentifier\n"
+                "#define %s_identifier %s%.*s%s\n"
                 "#endif\n",
-                name, name, name, nsc);
+                name, name, name, quote, file_identifier_len, file_identifier, quote);
     }
     fprintf(out->fp,
         "#define %s_type_hash ((%sthash_t)0x%lx)\n",
@@ -90,6 +102,30 @@ static void print_type_identifier(fb_output_t *out, fb_compound_type_t *ct)
     fprintf(out->fp,
         "#define %s_type_identifier \"%s\"\n",
         name, buf);
+}
+
+static void print_file_extension(fb_output_t *out, fb_compound_type_t *ct)
+{
+    fb_scoped_name_t snt;
+    const char *name;
+
+    fb_clear(snt);
+    fb_compound_name(ct, &snt);
+    name = snt.text;
+
+    if (out->S->file_extension.type == vt_string) {
+        fprintf(out->fp,
+                "#ifndef %s_file_extension\n"
+                "#define %s_file_extension \"%.*s\"\n"
+                "#endif\n",
+                name, name, out->S->file_extension.s.len, out->S->file_extension.s.s);
+    } else {
+        fprintf(out->fp,
+                "#ifndef %s_file_extension\n"
+                "#define %s_file_extension \"%s\"\n"
+                "#endif\n",
+                name, name, out->opts->default_bin_ext);
+    }
 }
 
 /* Finds first occurrence of matching key when vector is sorted on the named field. */
@@ -1009,12 +1045,11 @@ static void gen_pretext(fb_output_t *out)
     if (out->S->file_extension.type == vt_string) {
         fprintf(out->fp,
             "#undef %sextension\n"
-            "#define %sextension \".%.*s\"\n",
+            "#define %sextension \"%.*s\"\n",
             nsc,
             nsc, out->S->file_extension.s.len, out->S->file_extension.s.s);
     } else {
         fprintf(out->fp,
-            /* Configured extensions include dot, schema does not. */
             "#ifndef %sextension\n"
             "#define %sextension \"%s\"\n"
             "#endif\n",
@@ -1222,8 +1257,8 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
             fprintf(out->fp, "#pragma pack()\n");
         }
         fprintf(out->fp,
-                "static_assert(sizeof(%s_t) == %llu, \"struct size mismatch\");\n\n",
-                snt.text, llu(ct->size));
+                "static_assert(sizeof(%s_t) == %"PRIu64", \"struct size mismatch\");\n\n",
+                snt.text, (uint64_t)ct->size);
         fprintf(out->fp,
                 "static inline const %s_t *%s__const_ptr_add(const %s_t *p, size_t i) { return p + i; }\n", snt.text, snt.text, snt.text);
         fprintf(out->fp,
@@ -1234,8 +1269,8 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
                 snt.text, snt.text, snt.text,
                 nsc);
     }
-    fprintf(out->fp, "static inline size_t %s__size(void) { return %llu; }\n",
-            snt.text, llu(ct->size));
+    fprintf(out->fp, "static inline size_t %s__size(void) { return %"PRIu64"; }\n",
+            snt.text, (uint64_t)ct->size);
     fprintf(out->fp,
             "static inline size_t %s_vec_len(%s_vec_t vec)\n"
             "__%svec_len(vec)\n",
@@ -1558,7 +1593,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
     const char *nsc = out->nsc;
     fb_scoped_name_t snt;
     fb_scoped_name_t snref;
-    uint64_t present_id;
     fb_literal_t literal;
     int is_optional;
 
@@ -1594,7 +1628,6 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
     for (sym = ct->members; sym; sym = sym->link) {
         current_key_processed = 0;
         member = (fb_member_t *)sym;
-        present_id = member->id;
         is_primary_key = ct->primary_key == member;
         is_optional = !!(member->flags & fb_fm_optional);
         print_doc(out, "", member->doc);
@@ -1619,12 +1652,12 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             print_literal(member->type.st, &member->value, literal);
             if (is_optional) {
                 fprintf(out->fp,
-                    "__%sdefine_scalar_optional_field(%llu, %s, %.*s, %s%s, %s%s, %s)\n",
-                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, literal);
+                    "__%sdefine_scalar_optional_field(%"PRIu64", %s, %.*s, %s%s, %s%s, %s)\n",
+                    nsc, (uint64_t)member->id, snt.text, n, s, nsc, tname_prefix, tname_ns, tname, literal);
             } else {
                 fprintf(out->fp,
-                    "__%sdefine_scalar_field(%llu, %s, %.*s, %s%s, %s%s, %s)\n",
-                    nsc, llu(member->id), snt.text, n, s, nsc, tname_prefix, tname_ns, tname, literal);
+                    "__%sdefine_scalar_field(%"PRIu64", %s, %.*s, %s%s, %s%s, %s)\n",
+                    nsc, (uint64_t)member->id, snt.text, n, s, nsc, tname_prefix, tname_ns, tname, literal);
             }
             if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                 fprintf(out->fp,
@@ -1665,16 +1698,16 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             tname = scalar_vector_type_name(member->type.st);
             tname_ns = nsc;
             fprintf(out->fp,
-                "__%sdefine_vector_field(%llu, %s, %.*s, %s%s, %u)\n",
-                nsc, llu(member->id), snt.text, n, s, tname_ns, tname, r);
+                "__%sdefine_vector_field(%"PRIu64", %s, %.*s, %s%s, %u)\n",
+                nsc, (uint64_t)member->id, snt.text, n, s, tname_ns, tname, r);
             if (member->nest) {
                 gen_nested_root(out, &member->nest->symbol, &ct->symbol, &member->symbol);
             }
             break;
         case vt_string_type:
             fprintf(out->fp,
-                "__%sdefine_string_field(%llu, %s, %.*s, %u)\n",
-                nsc, llu(member->id), snt.text, n, s, r);
+                "__%sdefine_string_field(%"PRIu64", %s, %.*s, %u)\n",
+                nsc, (uint64_t)member->id, snt.text, n, s, r);
             if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                 fprintf(out->fp,
                     "__%sdefine_scan_by_string_field(%s, %.*s)\n",
@@ -1710,32 +1743,32 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
             break;
         case vt_vector_string_type:
             fprintf(out->fp,
-                "__%sdefine_vector_field(%llu, %s, %.*s, %sstring_vec_t, %u)\n",
-                nsc, llu(member->id), snt.text, n, s, nsc, r);
+                "__%sdefine_vector_field(%"PRIu64", %s, %.*s, %sstring_vec_t, %u)\n",
+                nsc, (uint64_t)member->id, snt.text, n, s, nsc, r);
             break;
         case vt_compound_type_ref:
             fb_compound_name(member->type.ct, &snref);
             switch (member->type.ct->symbol.kind) {
             case fb_is_struct:
                 fprintf(out->fp,
-                    "__%sdefine_struct_field(%llu, %s, %.*s, %s_struct_t, %u)\n",
-                    nsc, llu(member->id), snt.text, n, s, snref.text, r);
+                    "__%sdefine_struct_field(%"PRIu64", %s, %.*s, %s_struct_t, %u)\n",
+                    nsc, (uint64_t)member->id, snt.text, n, s, snref.text, r);
                 break;
             case fb_is_table:
                 fprintf(out->fp,
-                    "__%sdefine_table_field(%llu, %s, %.*s, %s_table_t, %u)\n",
-                    nsc, llu(member->id), snt.text, n, s, snref.text, r);
+                    "__%sdefine_table_field(%"PRIu64", %s, %.*s, %s_table_t, %u)\n",
+                    nsc, (uint64_t)member->id, snt.text, n, s, snref.text, r);
                 break;
             case fb_is_enum:
                 print_literal(member->type.ct->type.st, &member->value, literal);
                 if (is_optional) {
                     fprintf(out->fp,
-                        "__%sdefine_scalar_optional_field(%llu, %s, %.*s, %s, %s_enum_t, %s)\n",
-                        nsc, llu(member->id), snt.text, n, s, snref.text, snref.text, literal);
+                        "__%sdefine_scalar_optional_field(%"PRIu64", %s, %.*s, %s, %s_enum_t, %s)\n",
+                        nsc, (uint64_t)member->id, snt.text, n, s, snref.text, snref.text, literal);
                 } else {
                     fprintf(out->fp,
-                        "__%sdefine_scalar_field(%llu, %s, %.*s, %s, %s_enum_t, %s)\n",
-                        nsc, llu(member->id), snt.text, n, s, snref.text, snref.text, literal);
+                        "__%sdefine_scalar_field(%"PRIu64", %s, %.*s, %s, %s_enum_t, %s)\n",
+                        nsc, (uint64_t)member->id, snt.text, n, s, snref.text, snref.text, literal);
                 }
                 if (!out->opts->allow_scan_for_all_fields && (member->metadata_flags & fb_f_key)) {
                     fprintf(out->fp,
@@ -1772,10 +1805,9 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 }
                 break;
             case fb_is_union:
-                present_id--;
                 fprintf(out->fp,
-                    "__%sdefine_union_field(%s, %llu, %s, %.*s, %s, %u)\n",
-                    nsc, nsc, llu(member->id), snt.text, n, s, snref.text, r);
+                    "__%sdefine_union_field(%s, %"PRIu64", %s, %.*s, %s, %u)\n",
+                    nsc, nsc, (uint64_t)member->id, snt.text, n, s, snref.text, r);
                 break;
             default:
                 gen_panic(out, "internal error: unexpected compound type in table during code generation");
@@ -1798,14 +1830,13 @@ static void gen_table(fb_output_t *out, fb_compound_type_t *ct)
                 break;
             }
             if (member->type.ct->symbol.kind == fb_is_union) {
-                present_id--;
                 fprintf(out->fp,
-                    "__%sdefine_union_vector_field(%s, %llu, %s, %.*s, %s, %u)\n",
-                    nsc, nsc, llu(member->id), snt.text, n, s, snref.text, r);
+                    "__%sdefine_union_vector_field(%s, %"PRIu64", %s, %.*s, %s, %u)\n",
+                    nsc, nsc, (uint64_t)member->id, snt.text, n, s, snref.text, r);
             } else {
                 fprintf(out->fp,
-                    "__%sdefine_vector_field(%llu, %s, %.*s, %s_vec_t, %u)\n",
-                    nsc, llu(member->id), snt.text, n, s, snref.text, r);
+                    "__%sdefine_vector_field(%"PRIu64", %s, %.*s, %s_vec_t, %u)\n",
+                    nsc, (uint64_t)member->id, snt.text, n, s, snref.text, r);
             }
             break;
         default:
@@ -1848,6 +1879,7 @@ int fb_gen_c_reader(fb_output_t *out)
             /* Fall through. */
         case fb_is_table:
             print_type_identifier(out, (fb_compound_type_t *)sym);
+            print_file_extension(out, (fb_compound_type_t *)sym);
             break;
         }
     }

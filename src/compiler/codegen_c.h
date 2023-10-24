@@ -8,14 +8,17 @@
 #include "parser.h"
 #include "codegen.h"
 
+/* -DFLATCC_PORTABLE may help if inttypes.h is missing. */
+#ifndef PRId64
+#include <inttypes.h>
+#endif
+
 #define __FLATCC_ERROR_TYPE "INTERNAL_ERROR_UNEXPECTED_TYPE"
 
 #ifndef gen_panic
 #define gen_panic(context, msg) fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, msg), assert(0), exit(-1)
 #endif
 
-#define llu(x) (long long unsigned int)(x)
-#define lld(x) (long long int)(x)
 
 static inline void token_name(fb_token_t *t, int *n, const char **s) {
     *n = (int)t->len;
@@ -251,18 +254,18 @@ static inline size_t print_literal(fb_scalar_type_t scalar_type, const fb_value_
     switch (value->type) {
     case vt_uint:
         cast = scalar_cast(scalar_type);
-        return (size_t)sprintf(literal, "%s(%llu)", cast, llu(value->u));
+        return (size_t)sprintf(literal, "%s(%"PRIu64")", cast, (uint64_t)value->u);
         break;
     case vt_int:
         cast = scalar_cast(scalar_type);
-        return (size_t)sprintf(literal, "%s(%lld)", cast, lld(value->i));
+        return (size_t)sprintf(literal, "%s(%"PRId64")", cast, (int64_t)value->i);
         break;
     case vt_bool:
         cast = scalar_cast(scalar_type);
         return (size_t)sprintf(literal, "%s(%u)", cast, (unsigned)value->b);
         break;
     case vt_float:
-        /* 
+        /*
          * .9g ensures sufficient precision in 32-bit floats and
          * .17g ensures sufficient precision for 64-bit floats (double).
          * The '#' forces a decimal point that would not be printed

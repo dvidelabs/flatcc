@@ -2,7 +2,11 @@
 #include "flatcc/reflection/reflection_reader.h"
 #include "flatcc/portable/pcrt.h"
 
-#define lld(x) (long long int)(x)
+/* -DFLATCC_PORTABLE may help if inttypes.h is missing. */
+#ifndef PRId64
+#include <inttypes.h>
+#endif
+
 
 /* This is not an exhaustive test. */
 int test_schema(const char *monster_bfbs)
@@ -17,6 +21,12 @@ int test_schema(const char *monster_bfbs)
     reflection_Field_table_t F;
     reflection_Type_table_t T;
     size_t k, monster_index;
+    reflection_Service_vec_t Svcs;
+    reflection_Service_table_t Svc;
+    reflection_RPCCall_vec_t Calls;
+    reflection_RPCCall_table_t Call;
+    size_t call_index;
+    const char *strval;
 
     buffer = readfile(monster_bfbs, 100000, &size);
     if (!buffer) {
@@ -50,7 +60,7 @@ int test_schema(const char *monster_bfbs)
     if (reflection_Field_default_integer(F) != 150) {
         printf("mana field has wrong default value\n");
         printf("field name: %s\n", reflection_Field_name(F));
-        printf("%lld\n", lld(reflection_Field_default_integer(F)));
+        printf("%"PRId64"\n", (int64_t)reflection_Field_default_integer(F));
         goto done;
     }
     T = reflection_Field_type(F);
@@ -94,7 +104,66 @@ int test_schema(const char *monster_bfbs)
         printf("array of tables is not a monster vector\n");
         goto done;
     }
-
+    /* list services and calls */
+    Svcs = reflection_Schema_services(S);
+    for (k = 0; k < reflection_Service_vec_len(Svcs); ++k) {
+        Svc = reflection_Service_vec_at(Svcs, k);
+        printf("dbg: svc #%d : %s\n", (int)k,
+                reflection_Service_name(Svc));
+        Calls = reflection_Service_calls(Svc);
+        for (call_index = 0 ;
+             call_index < reflection_RPCCall_vec_len(Calls) ;
+             call_index++) {
+            Call = reflection_RPCCall_vec_at(Calls, call_index);
+            printf("dbg:    call %d : %s\n", (int)call_index,
+                reflection_RPCCall_name(Call));
+        }
+    }
+    /* Within service MyGame.Example.MonsterStorage ... */
+    k = reflection_Service_vec_find(Svcs, "MyGame.Example.MonsterStorage");
+    if (k == flatbuffers_not_found) {
+        printf("Could not find MonsterStorage service in schema\n");
+        goto done;
+    }
+    Svc = reflection_Service_vec_at(Svcs, k);
+    /* ... search the RPC call Store */
+    Calls = reflection_Service_calls(Svc);
+    k = reflection_RPCCall_vec_find(Calls, "Store");
+    if (k == flatbuffers_not_found) {
+        printf("Could not find call Store in service\n");
+        goto done;
+    }
+    Call = reflection_RPCCall_vec_at(Calls, k);
+    /* Ensure request type is MyGame.Example.Monster */
+    Obj = reflection_Object_vec_at(Objs, monster_index);
+    if (Obj != reflection_RPCCall_request(Call)) {
+        printf("Wrong request type of rpc call\n");
+        goto done;
+    }
+    /* Ensure response type is MyGame.Example.Stat */
+    k = reflection_Object_vec_find(Objs, "MyGame.Example.Stat");
+    if (k == flatbuffers_not_found) {
+        printf("Could not find Stat in schema\n");
+        goto done;
+    }
+    Obj = reflection_Object_vec_at(Objs, k);
+    if (Obj != reflection_RPCCall_response(Call)) {
+        printf("Wrong response type of rpc call\n");
+        goto done;
+    }
+    /* check the call has an attribute "streaming" */
+    k = reflection_KeyValue_vec_scan(reflection_RPCCall_attributes(Call), "streaming");
+    if (k == flatbuffers_not_found) {
+        printf("Could not find attribute in call\n");
+        goto done;
+    }
+    /* check the attribute value is "none" */
+    strval = reflection_KeyValue_value(
+                reflection_KeyValue_vec_at(reflection_RPCCall_attributes(Call), k));
+    if (!strval || 0 != strcmp("none", strval)) {
+        printf("Wrong attribute value in call\n");
+        goto done;
+    }
     ret = 0;
 done:
     if (buffer) {

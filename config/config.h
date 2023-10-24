@@ -54,7 +54,7 @@
  * is covers the accumulated size of all included files. 0 is unlimited.
  */
 #ifndef FLATCC_MAX_SCHEMA_SIZE
-#define FLATCC_MAX_SCHEMA_SIZE 64 * 1024
+#define FLATCC_MAX_SCHEMA_SIZE 1000000
 #endif
 
 /*
@@ -337,8 +337,9 @@
 #define FLATCC_DEFAULT_BIN_SCHEMA_EXT ".bfbs"
 #endif
 
+/* Schema file extensions do not carry a dot by convention, do the same here. */
 #ifndef FLATCC_DEFAULT_BIN_EXT
-#define FLATCC_DEFAULT_BIN_EXT ".bin"
+#define FLATCC_DEFAULT_BIN_EXT "bin"
 #endif
 
 #ifndef FLATCC_DEFAULT_DEP_EXT

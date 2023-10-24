@@ -103,25 +103,31 @@ void error_ref_sym(fb_parser_t *P, fb_ref_t *ref, const char *msg, fb_symbol_t *
     size_t k = FLATCC_MAX_IDENT_SHOW;
     size_t n = 0;
     size_t n0 = 0;
+    int truncated = 0;
+
     p = ref;
     while (p && k > 0) {
+        if (n0 > 0) {
+            buf[n0] = '.';
+            --k;
+            ++n0;
+        }
         n = (size_t)p->ident->len;
         if (k < n) {
             n = k;
+            truncated = 1;
         }
         memcpy(buf + n0, p->ident->text, n);
         k -= n;
         n0 += n;
-        buf[n0] = '.';
-        --k;
-        ++n0;
         p = p->link;
     }
+    if (p) truncated = 1;
     buf[n0] = '\0';
     if (n0 > 0) {
         --n0;
     }
-    if (k <= 0) {
+    if (truncated) {
         memcpy(buf + FLATCC_MAX_IDENT_SHOW + 1 - 4, "...\0", 4);
         n0 = FLATCC_MAX_IDENT_SHOW;
     }
@@ -148,8 +154,6 @@ void error_ref_sym(fb_parser_t *P, fb_ref_t *ref, const char *msg, fb_symbol_t *
 
 /* Accept numbers like -0x42 as integer literals. */
 #define LEX_HEX_NUMERIC
-
-#define lex_isblank(c) ((c) == ' ' || (c) == '\t')
 
 #include "parser.h"
 
@@ -913,6 +917,7 @@ static void parse_enum_decl(fb_parser_t *P, fb_compound_type_t *ct)
             case tok_kw_float32:
             case tok_kw_float64:
                 error_tok(P, ct->type.t, "integral type expected");
+                break;
             default:
                 break;
             }
@@ -1062,7 +1067,7 @@ static void parse_namespace(fb_parser_t *P)
 
     if (optional(P, ';') && t) {
         /* Revert to global namespace. */
-        P->current_scope = 0;
+        P->current_scope = P->root_scope;
         return;
     }
     if (P->token->id != LEX_TOK_ID) {
@@ -1265,7 +1270,6 @@ static void push_token(fb_parser_t *P, long id, const char *first, const char *l
     size_t offset;
     fb_token_t *t;
 
-    P->te = P->ts + P->tcapacity;
     if (P->token == P->te) {
         offset = (size_t)(P->token - P->ts);
         P->tcapacity = P->tcapacity ? 2 * P->tcapacity : 1024;
@@ -1328,10 +1332,10 @@ static void inject_token(fb_token_t *t, const char *lex, long id)
     push_token((fb_parser_t*)context, LEX_TOK_COMMENT_UNTERMINATED, pos, pos)
 
 #define lex_emit_comment_ctrl(pos)                                          \
-    if (lex_isblank(*pos)) {                                                \
+    if (lex_isblank(*pos) || !lex_isctrl(*pos)) {                           \
         push_comment((fb_parser_t*)context, pos, pos + 1);                  \
     } else {                                                                \
-        push_token((fb_parser_t*)context, LEX_TOK_COMMENT_CTRL,             \
+        push_token((fb_parser_t*)context, LEX_TOK_CTRL,                     \
                 pos, pos + 1);                                              \
     }
 
@@ -1425,11 +1429,14 @@ int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
     P->schema.name.name.s.s = s;
     P->schema.name.name.s.len = (int)n;
     checkmem((P->schema.errorname = fb_create_basename(name, name_len, "")));
+    P->schema.prefix.s = "";
+    P->schema.prefix.len = 0;
     if (opts->ns) {
         P->schema.prefix.s = (char *)opts->ns;
         P->schema.prefix.len = (int)strlen(opts->ns);
     }
-    P->current_scope = fb_add_scope(P, 0);
+    P->root_scope = fb_add_scope(P, 0);
+    P->current_scope = P->root_scope;
     assert(P->current_scope == fb_scope_table_find(&P->schema.root_schema->scope_index, 0, 0));
     return 0;
 }

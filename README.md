@@ -1,5 +1,6 @@
-OS-X & Ubuntu: [![Build Status](https://travis-ci.org/dvidelabs/flatcc.svg?branch=master)](https://travis-ci.org/dvidelabs/flatcc)
+Ubuntu, macOS and Windows: [![Build Status](https://github.com/dvidelabs/flatcc/actions/workflows/ci.yml/badge.svg)](https://github.com/dvidelabs/flatcc/actions/workflows/ci.yml)
 Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/dvidelabs/flatcc?branch=master&svg=true)](https://ci.appveyor.com/project/dvidelabs/flatcc)
+Weekly: [![Build Status](https://github.com/dvidelabs/flatcc/actions/workflows/weekly.yml/badge.svg)](https://github.com/dvidelabs/flatcc/actions/workflows/weekly.yml)
 
 
 _The JSON parser may change the interface for parsing union vectors in a
@@ -25,7 +26,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [Poll on Meson Build](#poll-on-meson-build)
 * [Reporting Bugs](#reporting-bugs)
 * [Status](#status)
-  * [Main features supported as of 0.6.0](#main-features-supported-as-of-060)
+  * [Main features supported as of 0.6.1](#main-features-supported-as-of-061)
   * [Supported platforms (CI tested)](#supported-platforms-ci-tested)
   * [Platforms reported to work by users](#platforms-reported-to-work-by-users)
   * [Portability](#portability)
@@ -81,6 +82,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [Using the Compiler and Builder library](#using-the-compiler-and-builder-library)
 * [FlatBuffers Binary Format](#flatbuffers-binary-format)
 * [Security Considerations](#security-considerations)
+* [Style Guide](#style-guide)
 * [Benchmarks](#benchmarks)
 
 <!-- vim-markdown-toc -->
@@ -292,6 +294,20 @@ fi
 
 ## Status
 
+Release 0.6.1 contains primarily bug fixes and numerous contributions
+from the community to handle platform edge cases. Additionally,
+pendantic GCC warnings are disabled, relying instead on clang, since GCC
+is too aggressive, breaks builds frequently and works against
+portability. An existing C++ test case ensures that C code also works
+with common C++ compilers, but it can break some environments, so there
+is now a flag to disable that test without disabling all tests. Support
+for Optional Scalar Values in the FlatBuffer format has been added.
+There is also improved support for abstracting memory allocation on
+various platforms. `<table>_identifier` has been deprecated in favor
+`<table>_file_identifier` in generated code due to `identifier` easily
+leading to name conflicts. `file_extension` constant in generated code
+is now without prefixed dot (.).
+
 Release 0.6.0 introduces a "primary" attribute to be used together with
 a key attribute to chose default key for finding and sorting. If primary
 is absent, the key with the lowest id becomes primary. Tables and
@@ -339,7 +355,7 @@ low-level union interface so the terms { type, value } are used
 consistently over { type, member } and { types, members }.
 
 
-### Main features supported as of 0.6.0
+### Main features supported as of 0.6.1
 
 - generated FlatBuffers reader and builder headers for C
 - generated FlatBuffers verifier headers for C
@@ -364,6 +380,7 @@ consistently over { type, member } and { types, members }.
 - base64(url) encoded binary data in JSON.
 - sort fields by primary key (as of 0.6.0)
 - char arrays (as of 0.6.0)
+- optional scalar values (as of 0.6.1)
 
 There are no plans to make frequent updates once the project becomes
 stable, but input from the community will always be welcome and included
@@ -461,7 +478,7 @@ may be higher but eventually smaller buffers will be hit by call
 overhead and thus we get down to 300MB/s at about 150ns/op encoding
 small buffers. These numbers are just a rough guideline - they obviously
 depend on hardware, compiler, and data encoded. Measurements are
-excluding an ininitial warmup step.
+excluding an initial warmup step.
 
 The generated JSON parsers are roughly 4 times slower than building a
 FlatBuffer directly in C or C++, or about 2200ns vs 600ns for a 700 byte
@@ -542,7 +559,7 @@ schema. It requires a `flatbuffers_common_builder.h` file also generated
 by the compiler and a small runtime library `libflatccrt.a`. It is
 because of this requirement that the reader and builder generated code
 is kept separate. Typical uses can be seen in the [monster_test.c] file.
-The builder allows of repeated pushing of content to a vector or a
+The builder allows for repeated pushing of content to a vector or a
 string while a containing table is being updated which simplifies
 parsing of external formats. It is also possible to build nested buffers
 in-line - at first this may sound excessive but it is useful when
@@ -1088,7 +1105,8 @@ In the builder example above, we can apply a verifier to the output:
     int ret;
     ...
     ... finalize
-    if ((ret = ns(Monster_verify_as_root(buffer, size, "MONS")))) {
+    if ((ret = ns(Monster_verify_as_root_with_identifier(buffer, size,
+            "MONS")))) {
         printf("Monster buffer is invalid: %s\n",
         flatcc_verify_error_string(ret));
     }
@@ -1232,6 +1250,25 @@ For advanced debugging the [hexdump.h] file can be used to dump the buffer
 contents. It is used in [test_json.c] and also in [monster_test.c].
 See also [FlatBuffers Binary Format].
 
+As of April 2022, Googles flatc tool has implemented an `--annotate` feature.
+This provides an annotated hex dump given a binary buffer and a schema. The
+output can be used to troubleshoot and rule out or confirm suspected encoding
+bugs in the buffer at hand. The eclectic example in the [FlatBuffers Binary
+Format] document contains a hand written annotated example which inspired the
+`--annotate` feature, but it is not the exact same output format. Note also that
+`flatc` generated buffers tend to have vtables before the table it is referenced
+by, while flatcc normally packs all vtables at the end of the buffer for
+better padding and cache efficiency.
+
+See also [flatc --annotate].
+
+Note: There is experimental support for text editor that supports
+clangd language server or similar. You can edit `CMakeList.txt`
+to generate `build/Debug/compile_comands.json`, at least when
+using clang as a compiler, and copy or symlink it from root. Or
+come with a better suggestion. There are `.gitignore` entries for
+`compile_flags.txt` and `compile_commands.json` in project root.
+
 
 ## File and Type Identifiers
 
@@ -1263,16 +1300,13 @@ defined as the null identifier.
 
 The generated code defines the identifiers for a given table:
 
-    #ifndef MyGame_Example_Monster_identifier
-    #define MyGame_Example_Monster_identifier flatbuffers_identifier
+    #ifndef MyGame_Example_Monster_file_identifier
+    #define MyGame_Example_Monster_file_identifier "MONS"
     #endif
-
-The `flatbuffers_identifier` is the schema specific `file_identifier`
-and is undefined and redefined for each generated `_reader.h` file.
 
 The user can now override the identifier for a given type, for example:
 
-    #define MyGame_Example_Vec3_identifier "VEC3"
+    #define MyGame_Example_Vec3_file_identifier "VEC3"
     #include "monster_test_builder.h"
 
     ...
@@ -1283,8 +1317,8 @@ and so does other `_as_root` methods.
 
 The `file_extension` is handled in a similar manner:
 
-    #ifndef MyGame_Example_Monster_extension
-    #define MyGame_Example_Monster_extension flatbuffers_extension
+    #ifndef MyGame_Example_Monster_file_extension
+    #define MyGame_Example_Monster_file_extension "mon"
     #endif
 
 ### Type Identifiers
@@ -2193,8 +2227,15 @@ Optionally switch to a different build tool by choosing one of:
     scripts/initbuild.sh make-concurrent
     scripts/initbuild.sh ninja
 
-where `ninja` is the default and `make-concurrent` is `make` with the `-j`
-flag. A custom build configuration `X` can be added by adding a
+where `ninja` is the default and `make-concurrent` is `make` with the `-j` flag.
+
+To enforce a 32-bit build on a 64-bit machine the following configuration
+can be used:
+
+    scripts/initbuild.sh make-32bit
+
+which uses `make` and provides the `-m32` flag to the compiler.
+A custom build configuration `X` can be added by adding a
 `scripts/build.cfg.X` file.
 
 `scripts/initbuild.sh` cleans the build if a specific build
@@ -2529,6 +2570,31 @@ Mostly for implementers: [FlatBuffers Binary Format]
 See [Security Considerations].
 
 
+## Style Guide
+
+FlatCC coding style is largely similar to the [WebKit Style], with the following notable exceptions:
+
+* Syntax requiring C99 or later is avoided, except `<stdint.h>` types are made available.
+* If conditions always use curly brackets, or single line statements without linebreak: `if (err) return -1;`.
+* NULL and nullptr are generally just represented as `0`.
+* Comments are old-school C-style (pre C99). Text is generally cased with punctuation: `/* A comment. */`
+* `true` and `false` keywords are not used (pre C99).
+* In code generation there is essentially no formatting to avoid excessive bloat.
+* Struct names and other types is lower case since this is C, not C++.
+* `snake_case` is used over `camelCase`.
+* Header guards are used over `#pragma once` because it is non-standard and not always reliable in filesystems with ambigious paths.
+* Comma is not placed first in multi-line calls (but maybe that would be a good idea for diff stability).
+* `config.h` inclusion might be handled differently in that `flatbuffers.h` includes the config file.
+* `unsigned` is not used without `int` for historical reasons. Generally a type like `uint32_t` is preferred.
+* Use `TODO:` instead of `FIXME:` in comments for historical reasons.
+
+All the main source code in compiler and runtime aim to be C11 compatible and
+uses many C11 constructs. This is made possible through the included portable
+library such that older compilers can also function. Therefore any platform specific adaptations will be provided by updating
+the portable library rather than introducing compile time flags in the main
+source code.
+
+
 ## Benchmarks
 
 See [Benchmarks]
@@ -2550,3 +2616,5 @@ See [Benchmarks]
 [hexdump.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/support/hexdump.h
 [readfile.h]: include/flatcc/support/readfile.h
 [Security Considerations]: https://github.com/dvidelabs/flatcc/blob/master/doc/security.md
+[flatc --annotate]: https://github.com/google/flatbuffers/tree/master/tests/annotated_binary
+[WebKit Style]: https://webkit.org/code-style-guidelines/

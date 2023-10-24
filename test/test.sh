@@ -83,13 +83,13 @@ $CC -O3 -DNDEBUG -DFLATBUFFERS_BENCHMARK -I ${ROOT}/include monster_test.c \
 echo "running optimized version of main monster test"
 ./monster_test
 
-if [ -e ${ROOT}/build/reflection_enabled ]; then
-    echo "running reflection test"
-    ${ROOT}/test/reflection_test//reflection_test.sh
+# This may fail if reflection feature is disabled
+echo "running reflection test"
+${ROOT}/test/reflection_test/reflection_test.sh
 
-    echo "running reflection sample"
-    ${ROOT}/samples/reflection/build.sh
-fi
+# This may fail if reflection feature is disabled
+echo "running reflection sample"
+${ROOT}/samples/reflection/build.sh
 
 echo "running monster sample"
 ${ROOT}/samples/monster/build.sh
@@ -101,6 +101,3 @@ echo "running load test with large buffer"
 ${ROOT}/test/load_test/load_test.sh
 
 echo "TEST PASSED"
-if [ ! -e ${ROOT}/build/reflection_enabled ]; then
-    echo "(reflection disabled, skipping affected test and example)"
-fi

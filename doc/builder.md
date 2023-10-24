@@ -1030,21 +1030,30 @@ without being concerned with the underlying integer type, for example:
 ## Vectors
 
 Vectors can be created independently, or directly when updating a table - the
-end result is the same.
+end result is the same. Builder vector operations always reference element
+values by pointer, or by reference for offset types like tables and strings.
 
+    uint8_t v;
     Monster_inventory_start(B);
-    flatbuffers_uint8_vec_push(B, 1);
-    flatbuffers_uint8_vec_push(B, 2);
-    flatbuffers_uint8_vec_push(B, 3);
+    v = 1;
+    flatbuffers_uint8_vec_push(B, &v);
+    v = 2;
+    flatbuffers_uint8_vec_push(B, &v);
+    v = 3;
+    flatbuffers_uint8_vec_push(B, &v);
     Monster_inventory_end(B);
 
 or
 
     flatbuffers_uint8_vec_ref_t inv;
+    uint8_t v;
     flatbuffers_uint8_vec_start(B);
-    flatbuffers_uint8_vec_push(B, 1);
-    flatbuffers_uint8_vec_push(B, 2);
-    flatbuffers_uint8_vec_push(B, 3);
+    v = 1;
+    flatbuffers_uint8_vec_push(B, &v);
+    v = 2;
+    flatbuffers_uint8_vec_push(B, &v);
+    v = 3;
+    flatbuffers_uint8_vec_push(B, &v);
     inv = flatbuffers_uint8_vec_end(B);
     Monster_inventory_add(B, inv);
 
@@ -1053,17 +1062,20 @@ type, and because the operations are not type safe (any kind of push
 would be accepted), some vector operations are also mapped to the field
 name:
 
+    uint8_t v;
     Monster_inventory_start(B);
-    Monster_inventory_push(B, 1);
-    Monster_inventory_push(B, 2);
-    Monster_inventory_push(B, 3);
+    v = 1;
+    Monster_inventory_push(B, &v);
+    v = 2;
+    Monster_inventory_push(B, &v);
+    v = 3;
+    Monster_inventory_push(B, &v);
     Monster_inventory_end(B);
 
-Note: vector operations on a type uses the `_vec_<operation>` syntax,
-for example `uint8_vec_push` or `Monster_vec_push` while operations that
-are mapped onto table field names of vector type do not use the `_vec`
-infix because it is not a type name, for example `Monster_inventory_push`.
-
+Note: vector operations on a type uses the `_vec_<operation>` syntax, for
+example `uint8_vec_push` or `Monster_vec_push` while operations that are mapped
+onto table field names of vector type do not use the `_vec` infix because it is
+not a type name, for example `Monster_inventory_push`.
 
 A slightly faster operation preallocates the vector:
 
@@ -1081,9 +1093,10 @@ with `edit` and `reserved_len` between `start/end` (recalling that pointers
 cannot be reused across buffer calls):
 
     uint8_t *v, i;
+    uint8_t data[] = { 1, 2 };
     Monster_inventory_start(B);
-    Monster_inventory_push(B, 1);
-    Monster_inventory_push(B, 2);
+    Monster_inventory_push(B, &data[0]);
+    Monster_inventory_push(B, &data[1]);
     v = Monster_inventory_edit(B);
     for (i = 1; i < Monster_inventory_reserved_len(B); ++i) {
         v[i] = v[i - 1] + v[i];
@@ -1123,7 +1136,7 @@ translated into similar calls prefixed with the field name instead of
 `vector` and except for `start`, the calls also add the vector to the
 table if successful, for example:
 
-    uint8_t data[] = [1, 2, 3];
+    uint8_t data[] = { 1, 2, 3 };
     Monster_inventory_create(B, data, 3);
     Monster_breadcrumbs_slice(B, some_other_breadcrumbs, 0, 10);
 
@@ -1169,7 +1182,7 @@ on all platforms if `vec_end_pe` is used at the end.
 
 A vector may also be created from an existing array:
 
-    uint8_t data[] = {1, 2, 3};
+    uint8_t data[] = { 1, 2, 3 };
     Monster_inventory_add(B, flatbuffers_uint8_vec_create(B, data, 3));
 
 This also applies to arrays of structs as long as they are properly zero
@@ -1213,7 +1226,7 @@ vector field that we just invented for the occasion):
       Monster_friends_push_create_str(B, "Shrek");
       Monster_friends_push_create_str(B, "Pinnochio");
       Monster_friends_push_create_str(B, "Pinnochio");
-      Monster_friends_push_creae(B, "Hector", 6);
+      Monster_friends_push_create(B, "Hector", 6);
       Monster_friends_push(friend);
       p = Monster_friends_extend(B, 1);
       *p = flatbuffers_string_create_str("Cindarella");

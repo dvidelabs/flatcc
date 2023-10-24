@@ -176,16 +176,16 @@ static const char lex_alnum[256] = {
 #endif
 
 #ifndef lex_isdigit
-#define lex_isdigit(c) ((c) >= '0' && (c) <= '9')
+#define lex_isdigit(c) ((unsigned)(c) >= '0' && (unsigned)(c) <= '9')
 #endif
 
 #ifndef lex_ishexdigit
-#define lex_ishexdigit(c) (((c) >= '0' && (c) <= '9') || ((c | 0x20) >= 'a' && (c | 0x20) <= 'f'))
+#define lex_ishexdigit(c) (((c) >= '0' && ((unsigned)c) <= '9') || ((unsigned)(c | 0x20) >= 'a' && (unsigned)(c | 0x20) <= 'f'))
 #endif
 
 #ifndef lex_isctrl
 #include <ctype.h>
-#define lex_isctrl(c) ((c) < 0x20 || (c) == 0x7f)
+#define lex_isctrl(c) (((unsigned)c) < 0x20 || (c) == 0x7f)
 #endif
 
 #ifndef lex_isblank
@@ -1367,8 +1367,9 @@ lex_mode_normal:
                  */
             } /* If condition around switch under '0' case. */
             --p;
-            /* Fall through. */
+            goto lex_fallthrough_1; /* silence warning */
 
+        lex_fallthrough_1:
             /* Leading integer digit in C integers. */
         case '1': case '2': case '3': case '4': case '5':
         case '6': case '7': case '8': case '9':

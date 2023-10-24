@@ -141,11 +141,10 @@ descend:
         ++buf;
     }
     while (buf != end && *buf <= 0x20) {
-        /* Fall through comments needed to silence gcc 7 warnings. */
         switch (*buf) {
         case 0x0d: buf += (end - buf > 1 && buf[1] == 0x0a);
-            /* Fall through */
             /* Consume following LF or treating CR as LF. */
+            ++ctx->line; ctx->line_start = ++buf; continue;
         case 0x0a: ++ctx->line; ctx->line_start = ++buf; continue;
         case 0x09: ++buf; continue;
         case 0x20: goto again; /* Don't consume here, sync with power of 2 spaces. */
@@ -259,7 +258,7 @@ static inline int decode_utf16_surrogate_pair(uint32_t high, uint32_t low, char 
 }
 
 
-/* 
+/*
  * UTF-8 code points can have up to 4 bytes but JSON can only
  * encode up to 3 bytes via the \uXXXX syntax.
  * To handle the range U+10000..U+10FFFF two UTF-16 surrogate
@@ -329,7 +328,7 @@ const char *flatcc_json_parser_string_escape(flatcc_json_parser_t *ctx, const ch
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
         };
         /* If a high UTF-16 surrogate half pair was detected */
-        if (u >= 0xd800 && u <= 0xdbff && 
+        if (u >= 0xd800 && u <= 0xdbff &&
                 /* and there is space for a matching low half pair */
                 end - buf >= 12 &&
                 /* and there is a second escape following immediately */
@@ -344,7 +343,7 @@ const char *flatcc_json_parser_string_escape(flatcc_json_parser_t *ctx, const ch
                 return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
             }
             return buf + 12;
-            /*  
+            /*
              *  Otherwise decode unmatched surrogate pairs as is any
              *  other UTF-8. Some systems might depend on these surviving.
              *  Leave ignored errors for the next parse step.
@@ -489,7 +488,7 @@ const char *flatcc_json_parser_match_constant(flatcc_json_parser_t *ctx, const c
         *more = 0;
         return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_escape);
     case '\"':
-        buf = flatcc_json_parser_space(ctx, buf + 1, 0);
+        buf = flatcc_json_parser_space(ctx, buf + 1, end);
         *more = 0;
         return buf;
     }
@@ -855,7 +854,7 @@ const char *flatcc_json_parser_char_array(flatcc_json_parser_t *ctx,
         if (k > n) {
             if (!(ctx->flags & flatcc_json_parser_f_skip_array_overflow)) {
                 return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_overflow);
-            } 
+            }
             k = n; /* Might truncate UTF-8. */
         }
         memcpy(s, mark, k);
@@ -869,7 +868,7 @@ const char *flatcc_json_parser_char_array(flatcc_json_parser_t *ctx,
         if (k > n) {
             if (!(ctx->flags & flatcc_json_parser_f_skip_array_overflow)) {
                 return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_overflow);
-            } 
+            }
             k = n; /* Might truncate UTF-8. */
         }
         memcpy(s, mark, k);
@@ -880,7 +879,7 @@ const char *flatcc_json_parser_char_array(flatcc_json_parser_t *ctx,
         if (ctx->flags & flatcc_json_parser_f_reject_array_underflow) {
             return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_array_underflow);
         }
-        memset(s, 0, n - k);
+        memset(s, 0, n);
     }
     return flatcc_json_parser_string_end(ctx, buf, end);
 }
@@ -1258,17 +1257,17 @@ failed:
 }
 
 int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
-        const char *buf, size_t bufsiz, int flags, const char *fid,
+        const char *buf, size_t bufsiz, flatcc_json_parser_flags_t flags, const char *fid,
         flatcc_json_parser_table_f *parser)
 {
     flatcc_json_parser_t _ctx;
     flatcc_builder_ref_t root;
-    int builder_flags = flags & flatcc_json_parser_f_with_size ? flatcc_builder_with_size : 0;
+    flatcc_builder_buffer_flags_t builder_flags = flags & flatcc_json_parser_f_with_size ? flatcc_builder_with_size : 0;
 
     ctx = ctx ? ctx : &_ctx;
     flatcc_json_parser_init(ctx, B, buf, buf + bufsiz, flags);
     if (flatcc_builder_start_buffer(B, fid, 0, builder_flags)) return -1;
-    parser(ctx, buf, buf + bufsiz, &root);
+    buf = parser(ctx, buf, buf + bufsiz, &root);
     if (ctx->error) {
         return ctx->error;
     }
@@ -1278,17 +1277,17 @@ int flatcc_json_parser_table_as_root(flatcc_builder_t *B, flatcc_json_parser_t *
 }
 
 int flatcc_json_parser_struct_as_root(flatcc_builder_t *B, flatcc_json_parser_t *ctx,
-        const char *buf, size_t bufsiz, int flags, const char *fid,
+        const char *buf, size_t bufsiz, flatcc_json_parser_flags_t flags, const char *fid,
         flatcc_json_parser_table_f *parser)
 {
     flatcc_json_parser_t _ctx;
     flatcc_builder_ref_t root;
-    int builder_flags = flags & flatcc_json_parser_f_with_size ? flatcc_builder_with_size : 0;
+    flatcc_builder_buffer_flags_t builder_flags = flags & flatcc_json_parser_f_with_size ? flatcc_builder_with_size : 0;
 
     ctx = ctx ? ctx : &_ctx;
     flatcc_json_parser_init(ctx, B, buf, buf + bufsiz, flags);
     if (flatcc_builder_start_buffer(B, fid, 0, builder_flags)) return -1;
-    parser(ctx, buf, buf + bufsiz, &root);
+    buf = parser(ctx, buf, buf + bufsiz, &root);
     if (ctx->error) {
         return ctx->error;
     }

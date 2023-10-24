@@ -23,7 +23,7 @@ const char *filename = 0; /* "monsterdata_test.mon"; */
 const char *golden_filename = "monsterdata_test.golden";
 const char *target_filename = "monsterdata_test.json.txt";
 
-int test_print()
+int test_print(void)
 {
     int ret = 0;
     const char *buf = 0;

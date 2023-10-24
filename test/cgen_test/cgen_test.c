@@ -41,7 +41,7 @@
 #include <string.h>
 #include "flatcc/flatcc.h"
 
-int main()
+int main(void)
 {
     const char *name = "../xyzzy.fbs";
 

@@ -62,8 +62,10 @@ char *fb_create_join_path_n(const char *prefix, size_t prefix_len,
         return 0;
     }
     n = 0;
-    memcpy(path, prefix, prefix_len);
-    n += prefix_len;
+    if (prefix_len > 0) {
+        memcpy(path, prefix, prefix_len);
+        n += prefix_len;
+    }
     if (path_sep) {
         path[n++] = '/';
     }
