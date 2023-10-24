@@ -177,7 +177,7 @@ int flatcc_builder_default_alloc(void *alloc_context, iovec_t *b, size_t request
     return 0;
 }
 
-#define T_ptr(base, pos) ((void *)((uint8_t *)(base) + (uoffset_t)(pos)))
+#define T_ptr(base, pos) ((void *)((size_t)(base) + (size_t)(pos)))
 #define ds_ptr(pos) (T_ptr(B->buffers[flatcc_builder_alloc_ds].iov_base, (pos)))
 #define vs_ptr(pos) (T_ptr(B->buffers[flatcc_builder_alloc_vs].iov_base, (pos)))
 #define pl_ptr(pos) (T_ptr(B->buffers[flatcc_builder_alloc_pl].iov_base, (pos)))
