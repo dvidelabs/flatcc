@@ -20,6 +20,10 @@ option(FLATCC_TEST "enable tests" ON)
 # project.
 option(FLATCC_CXX_TEST "enable C++ tests" ON)
 
+# Note that linking with flatcc debug libraries may require souce code to also use
+# the sanitize flag.
+option(FLATCC_DEBUG_CLANG_SANITIZE "enable clang sanitize flag for debug build" ON)
+
 # Conditionally set project languages based on FLATCC_TEST, as C++ is
 # only necessary if building the tests.
 if (FLATCC_TEST AND FLATCC_CXX_TEST)
@@ -188,9 +192,11 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang" AND NOT "${CMAKE_CXX_SIMULATE_ID}" STREQ
     if (FLATCC_IGNORE_CONST_COND)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-constant-out-of-range-compare")
     endif()
-    if (CMAKE_BUILD_TYPE MATCHES Debug)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+    if (FLATCC_DEBUG_CLANG_SANITIZE)
+        if (CMAKE_BUILD_TYPE MATCHES Debug)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+        endif()
     endif()
     # Suppress warning relaxed in clang-6, see https://reviews.llvm.org/D28148
     if (CMAKE_C_COMPILER_VERSION VERSION_LESS 6)

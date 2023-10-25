@@ -294,6 +294,13 @@ fi
 
 ## Status
 
+Release 0.6.2 (in development) is primarily a bug fix release, refer
+to CHANGELOG for details.
+Note that for clang debug builds, -fsanitize=undefined has been
+added and this may require dependent source code to also use
+that flag to avoid missing linker symbols. The feature can be disabled
+in CMakeLists.txt.
+
 Release 0.6.1 contains primarily bug fixes and numerous contributions
 from the community to handle platform edge cases. Additionally,
 pendantic GCC warnings are disabled, relying instead on clang, since GCC
@@ -389,6 +396,11 @@ different target platforms.
 
 
 ### Supported platforms (CI tested)
+
+This list is somewhat outdated, more recent compiler versions are added and
+some old ones are removed when CI platforms no longer supported but largely
+the supported targets remain unchanged. MSVC 2010 might become deprecated
+in the future.
 
 The ci-more branch tests additional compilers:
 
