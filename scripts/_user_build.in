@@ -21,7 +21,7 @@ compiler_info="$($CC --version 2>&1)"
 echo "using compiler: $compiler_info"
 if echo $compiler_info | grep -q -i "clang"; then
     SANFLAG_DEBUG="-fsanitize=undefined"
-    echo "sanitizer flag: $SANFLAG_DEBUG"
+    echo "debug sanitizer flag: $SANFLAG_DEBUG"
 fi
 
 if [[ "$FLATCC_PORTABLE" = "yes" ]]; then
@@ -39,5 +39,3 @@ $CC $CFLAGS $CFLAGS_DEBUG ${ROOT}/src/*.c ${ROOT}/lib/libflatccrt_d.a -o ${NAME}
 
 echo "building '$NAME' for release"
 $CC $CFLAGS $CFLAGS_RELEASE ${ROOT}/src/*.c ${ROOT}/lib/libflatccrt.a -o ${NAME}
-
-echo using compiler $CC
