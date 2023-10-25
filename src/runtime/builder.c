@@ -1327,6 +1327,7 @@ flatcc_builder_ref_t flatcc_builder_end_table(flatcc_builder_t *B)
     flatcc_builder_ref_t table_ref, vt_ref;
     int pl_count;
     voffset_t *pl;
+    size_t tsize;
 
     check(frame(type) == flatcc_builder_table, "expected table frame");
 
@@ -1341,7 +1342,14 @@ flatcc_builder_ref_t flatcc_builder_end_table(flatcc_builder_t *B)
      * initial vtable offset field. Therefore `field_size` is added here
      * to the total table size in the vtable.
      */
-    vt[1] = (voffset_t)(B->ds_offset + field_size);
+    tsize = (size_t)(B->ds_offset + field_size);
+    /*
+     * Tables are limited to 64K in standard FlatBuffers format due to the voffset
+     * 16 bit size, but we must also be able to store the table size, so the
+     * table payload has to be slightly less than that.
+     */
+    check(tsize <= FLATBUFFERS_VOFFSET_MAX, "table too large"); 
+    vt[1] = (voffset_t)tsize;
     FLATCC_BUILDER_UPDATE_VT_HASH(B->vt_hash, (uint32_t)vt[0], (uint32_t)vt[1]);
     /* Find already emitted vtable, or emit a new one. */
     if (!(vt_ref = flatcc_builder_create_cached_vtable(B, vt, vt_size, B->vt_hash))) {

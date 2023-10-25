@@ -21,7 +21,9 @@
 - Fix regression where empty namespace in schema does not reset root scope
   correctly in parser (#265).
 - Fix lexer checks that breaks with UTF-8, notably UTF-8 schema comments (#267).
-- Add sanitizer flag for clang debug and related warnings (input from several PRs incl. #237)
+- Add sanitizer flag for clang debug and related warnings (input from several
+  PRs incl. #237).
+- Fix missing runtime check for building too large tables (#235).
 
 ## [0.6.1]
 
