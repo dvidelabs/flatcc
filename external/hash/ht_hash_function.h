@@ -13,7 +13,33 @@
 #define HT_HASH_SEED UINT32_C(0x2f693b52)
 #endif
 
+#ifndef HT_HASH_FALLBACK
+
+/*
+ * Currently xxhash 0.8.0 with XXH3 class hash functions is the clear leader.
+ */
+#define XXH_INLINE_ALL
+#include "xxhash.h"
+
+static inline size_t ht_default_hash_function(const void *key, size_t len)
+{
+#ifdef HT_HASH_32
+    return (size_t)XXH32(key, len, (unsigned int)(HT_HASH_SEED));
+#else
+#      ifdef HT_HASH_USES_DEFAULT_SEED
+            /* This is slightly faster so do not impose a seed in the default case. */
+           return (size_t)XXH3_64bits(key, len);
+#      else
+           return (size_t)XXH3_64bits_withSeed(key, len, (XXH64_hash_t)(HT_HASH_SEED));
+#      endif
+#endif
+}
+
+#else /* HT_HASH_FALLBACK */
+
 #ifndef HT_HASH_32
+
+/* Note: link with cmetrohash.c */
 
 #include "cmetrohash.h"
 
@@ -24,6 +50,22 @@ static inline size_t ht_default_hash_function(const void *key, size_t len)
     cmetrohash64_1((const uint8_t *)key, len, HT_HASH_SEED, (uint8_t *)&out);
     return (unsigned int)out;
 }
+
+#else /* HT_HASH_32 */
+
+#include "PMurHash.h"
+
+static inline size_t ht_default_hash_function(const void *key, size_t len)
+{
+    return (size_t)PMurHash32((HT_HASH_SEED), key, (int)len);
+}
+
+#endif /* HT_HASH_32 */
+
+#endif /* HT_HASH_FALLBACK */
+
+
+#ifndef HT_HASH_32
 
 /* When using the pointer directly as a hash key. */
 static inline size_t ht_ptr_hash_function(const void *key, size_t len)
@@ -43,14 +85,7 @@ static inline size_t ht_ptr_hash_function(const void *key, size_t len)
     return (size_t)x;
 }
 
-#else
-
-#include "PMurHash.h"
-
-static inline size_t ht_default_hash_function(const void *key, size_t len)
-{
-    return (size_t)PMurHash32((HT_HASH_SEED), key, (int)len);
-}
+#else /* HT_HASH_32 */
 
 /* When using the pointer directly as a hash key. */
 static inline size_t ht_ptr_hash_function(const void *key, size_t len)
@@ -67,7 +102,6 @@ static inline size_t ht_ptr_hash_function(const void *key, size_t len)
 }
 
 #endif /* HT_HASH_32 */
-
 
 /* This assumes the key points to a 32-bit aligned random value that is its own hash function. */
 static inline size_t ht_uint32_identity_hash_function(const void *key, size_t len)

@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <string.h>
+
 /* We use the same define for all implementations */
 #ifdef HASH_TABLE_IMPL
 #error "cannot have multiple implementations in same compilation unit"

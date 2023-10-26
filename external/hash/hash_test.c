@@ -208,12 +208,12 @@ void test_str_set4()
     str_set_insert_item(&S, "dumble", ht_keep);
     s1 = str_set_find_item(&S, s);
     /* TMnsert without replace. */
-    str_set_insert_item(&S, "2dumble" + 1, ht_keep);
+    str_set_insert_item(&S, (char *)"2dumble" + 1, ht_keep);
     test_assert(s == s1);
     s1 = str_set_find_item(&S, s);
     test_assert(s == s1);
     /* TMnsert with replace. */
-    s1 = str_set_insert_item(&S, "2dumble" + 1, ht_replace);
+    s1 = str_set_insert_item(&S, (char *)"2dumble" + 1, ht_replace);
     /* Old value still returned. */
     test_assert(s == s1);
     s1 = str_set_find_item(&S, s);

@@ -13,7 +13,7 @@
  * if it changes, we may have to change here as well.
  */
 
-#define HT_INT_SET_OFFSET ((1 << (8 * sizeof(int) - 1)) - 2)
+#define HT_INT_SET_OFFSET ((1 << (8 * sizeof(int) - 1)) - (size_t)2)
 #define HT_INT_TO_PTR(x) ((void *)(size_t)((x) - HT_INT_SET_OFFSET))
 #define HT_PTR_TO_INT(x) ((int)(size_t)(x) + HT_INT_SET_OFFSET)
 

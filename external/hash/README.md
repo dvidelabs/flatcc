@@ -156,3 +156,7 @@ environment, but xxHash32 may also be worth considering.
 
 See also <http://www.strchr.com/hash_functions>
 
+xxhash.h was added in 2023 to replace Metrohash and Murmurhash by default.
+See file header for credits.
+Define the symbol HT_HASH_FALLBACK to revert back to the old hash functions.
+The cmetrohash.c file does not need to be linked unless fallback is enabled.

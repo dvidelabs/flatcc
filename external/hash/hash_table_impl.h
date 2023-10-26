@@ -32,6 +32,8 @@
  * probing.
  */
 
+#include <string.h>
+
 #ifdef HASH_TABLE_IMPL
 #error "cannot have multiple implementations in same compilation unit"
 #endif
