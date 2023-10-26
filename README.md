@@ -295,7 +295,10 @@ fi
 ## Status
 
 Release 0.6.2 (in development) is primarily a bug fix release, refer
-to CHANGELOG for details.
+to CHANGELOG for details. A long standing bug has been fixed where
+where objects created before a call to _create_as_root would not be
+properly aligned, and buffer end is now also padded to largest object
+seen within the buffer.
 Note that for clang debug builds, -fsanitize=undefined has been
 added and this may require dependent source code to also use
 that flag to avoid missing linker symbols. The feature can be disabled
