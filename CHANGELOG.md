@@ -24,6 +24,7 @@
 - Add sanitizer flag for clang debug and related warnings (input from several
   PRs incl. #237).
 - Fix missing runtime check for building too large tables (#235).
+- Fix alignment of large objects created outside root buffer (#127).
 
 ## [0.6.1]
 

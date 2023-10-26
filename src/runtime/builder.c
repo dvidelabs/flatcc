@@ -820,7 +820,11 @@ int flatcc_builder_start_buffer(flatcc_builder_t *B,
         return -1;
     }
     /* B->align now has parent min_align, and child frames will save it. */
-    B->min_align = 1;
+    /* Since we allow objects to be created before the buffer at top level,
+       we need to respect min_align in that case. */
+    if (!is_top_buffer(B) || B->min_align == 0) {
+        B->min_align = 1;
+    }
     /* Save the parent block align, and set proper defaults for this buffer. */
     frame(container.buffer.block_align) = B->block_align;
     B->block_align = block_align;
@@ -859,6 +863,8 @@ flatcc_builder_ref_t flatcc_builder_end_buffer(flatcc_builder_t *B, flatcc_build
     B->nest_id = frame(container.buffer.nest_id);
     B->identifier = frame(container.buffer.identifier);
     B->buffer_flags = frame(container.buffer.flags);
+    B->block_align = frame(container.buffer.block_align);
+
     exit_frame(B);
     return buffer_ref;
 }
