@@ -406,7 +406,7 @@ int main(int argc, const char *argv[])
 {
     flatcc_options_t opts;
     flatcc_context_t ctx = 0;
-    int i, ret, cgen;
+    int i, ret;
     const char **src;
 
     ctx = 0;
@@ -447,14 +447,15 @@ int main(int argc, const char *argv[])
         ctx = 0;
         goto done;
     }
-    cgen = opts.cgen_reader || opts.cgen_builder || opts.cgen_verifier
+    opts.cgen = opts.cgen_reader || opts.cgen_builder || opts.cgen_verifier
         || opts.cgen_common_reader || opts.cgen_common_builder
         || opts.cgen_json_parser || opts.cgen_json_printer;
-    if (!opts.bgen_bfbs && (!cgen || opts.cgen_builder || opts.cgen_verifier)) {
+    if (!opts.bgen_bfbs && (!opts.cgen || opts.cgen_builder || opts.cgen_verifier)) {
         /* Assume default if no other output specified when deps required it. */
         opts.cgen_reader = 1;
+        opts.cgen = 1;
     }
-    if (opts.bgen_bfbs && cgen) {
+    if (opts.bgen_bfbs && opts.cgen) {
         if (opts.gen_stdout) {
             fprintf(stderr, "--stdout cannot be used with mixed text and binary output\n");
             goto fail;
