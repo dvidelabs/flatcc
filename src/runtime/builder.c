@@ -698,7 +698,8 @@ static inline flatcc_builder_ref_t emit_back(flatcc_builder_t *B, iov_state_t *i
     return ref + 1;
 }
 
-static int align_to_block(flatcc_builder_t *B, uint16_t *align, uint16_t block_align, int is_nested)
+/* If nested we cannot pad the end of the buffer without moving the entire buffer, so we don't. */
+static int align_buffer_end(flatcc_builder_t *B, uint16_t *align, uint16_t block_align, int is_nested)
 {
     size_t end_pad;
     iov_state_t iov;
@@ -708,7 +709,7 @@ static int align_to_block(flatcc_builder_t *B, uint16_t *align, uint16_t block_a
     get_min_align(align, block_align);
     /* Pad end of buffer to multiple. */
     if (!is_nested) {
-        end_pad = back_pad(B, block_align);
+        end_pad = back_pad(B, *align);
         if (end_pad) {
             init_iov();
             push_iov(_pad, end_pad);
@@ -729,7 +730,7 @@ flatcc_builder_ref_t flatcc_builder_embed_buffer(flatcc_builder_t *B,
     iov_state_t iov;
     int with_size = (flags & flatcc_builder_with_size) != 0;
 
-    if (align_to_block(B, &align, block_align, !is_top_buffer(B))) {
+    if (align_buffer_end(B, &align, block_align, !is_top_buffer(B))) {
         return 0;
     }
     pad = front_pad(B, (uoffset_t)(size + (with_size ? field_size : 0)), align);
@@ -754,7 +755,7 @@ flatcc_builder_ref_t flatcc_builder_create_buffer(flatcc_builder_t *B,
     int is_nested = (flags & flatcc_builder_is_nested) != 0;
     int with_size = (flags & flatcc_builder_with_size) != 0;
 
-    if (align_to_block(B, &align, block_align, is_nested)) {
+    if (align_buffer_end(B, &align, block_align, is_nested)) {
         return 0;
     }
     set_min_align(B, align);

@@ -25,6 +25,7 @@
   PRs incl. #237).
 - Fix missing runtime check for building too large tables (#235).
 - Fix alignment of large objects created outside root buffer (#127).
+- Pad top level buffer end to largest object in buffer (discussed in #127).
 
 ## [0.6.1]
 
