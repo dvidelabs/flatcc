@@ -5,7 +5,9 @@ include_directories (
 )
 
 set (SOURCES
-    ${PROJECT_SOURCE_DIR}/external/hash/cmetrohash64.c
+    # metrohash is not needed unless HT_HASH_FALLBACK is defined.
+    # xxhash inline header is now used by default.
+    # ${PROJECT_SOURCE_DIR}/external/hash/cmetrohash64.c
     ${PROJECT_SOURCE_DIR}/external/hash/str_set.c
     ${PROJECT_SOURCE_DIR}/external/hash/ptr_set.c
     hash_tables/symbol_table.c

@@ -22,6 +22,7 @@
   correctly in parser (#265).
 - Fix lexer checks that breaks with UTF-8, notably UTF-8 schema comments (#267).
 - Add sanitizer flag for clang debug and related warnings (input from several PRs incl. #237)
+- Replace cmetrohash and murmur hash with xxhash.
 
 ## [0.6.1]
 
