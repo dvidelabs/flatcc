@@ -11,8 +11,6 @@
 #include <inttypes.h>
 #endif
 
-#include "flatcc/portable/pattributes.h" /* fallthrough */
-
 /* Same order as enum! */
 static const char *fb_known_attribute_names[] = {
     "",
@@ -131,10 +129,11 @@ static inline void set_type_hash(fb_compound_type_t *ct)
     uint32_t hash;
 
     hash = fb_hash_fnv1a_32_init();
-    if (ct->scope)
-    for (name = ct->scope->name; name; name = name->link) {
-        hash = fb_hash_fnv1a_32_append(hash, name->ident->text, (size_t)name->ident->len);
-        hash = fb_hash_fnv1a_32_append(hash, ".", 1);
+    if (ct->scope) {
+        for (name = ct->scope->name; name; name = name->link) {
+            hash = fb_hash_fnv1a_32_append(hash, name->ident->text, (size_t)name->ident->len);
+            hash = fb_hash_fnv1a_32_append(hash, ".", 1);
+        }
     }
     sym = &ct->symbol;
     hash = fb_hash_fnv1a_32_append(hash, sym->ident->text, (size_t)sym->ident->len);
@@ -524,7 +523,6 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
         member = (fb_member_t *)sym;
         switch (member->type.type) {
         case vt_fixed_array_type:
-            /* fall through */
         case vt_scalar_type:
             t = member->type.t;
             member->type.st = map_scalar_token_type(t);
@@ -537,7 +535,6 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
             member->size = size * member->type.len;
             break;
         case vt_fixed_array_compound_type_ref:
-            /* fall through */
         case vt_compound_type_ref:
             /* Enums might not be valid, but then it would be detected earlier. */
             if (member->type.ct->symbol.kind == fb_is_enum) {
@@ -701,8 +698,9 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
         switch (member->type.type) {
         case vt_fixed_array_type_ref:
             key_ok = 0;
-            fallthrough;
+            goto lbl_type_ref;
         case vt_type_ref:
+lbl_type_ref:
             type_sym = lookup_type_reference(P, ct->scope, member->type.ref);
             if (!type_sym) {
                 error_ref_sym(P, member->type.ref, "unknown type reference used with struct field", sym);

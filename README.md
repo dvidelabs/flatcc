@@ -1,5 +1,6 @@
-OS-X & Ubuntu: [![Build Status](https://travis-ci.org/dvidelabs/flatcc.svg?branch=master)](https://travis-ci.org/dvidelabs/flatcc)
+Ubuntu, macOS and Windows: [![Build Status](https://github.com/dvidelabs/flatcc/actions/workflows/ci.yml/badge.svg)](https://github.com/dvidelabs/flatcc/actions/workflows/ci.yml)
 Windows: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/dvidelabs/flatcc?branch=master&svg=true)](https://ci.appveyor.com/project/dvidelabs/flatcc)
+Weekly: [![Build Status](https://github.com/dvidelabs/flatcc/actions/workflows/weekly.yml/badge.svg)](https://github.com/dvidelabs/flatcc/actions/workflows/weekly.yml)
 
 
 _The JSON parser may change the interface for parsing union vectors in a
@@ -81,6 +82,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [Using the Compiler and Builder library](#using-the-compiler-and-builder-library)
 * [FlatBuffers Binary Format](#flatbuffers-binary-format)
 * [Security Considerations](#security-considerations)
+* [Style Guide](#style-guide)
 * [Benchmarks](#benchmarks)
 
 <!-- vim-markdown-toc -->
@@ -292,6 +294,13 @@ fi
 
 ## Status
 
+Release 0.6.2 (in development) is primarily a bug fix release, refer
+to CHANGELOG for details.
+Note that for clang debug builds, -fsanitize=undefined has been
+added and this may require dependent source code to also use
+that flag to avoid missing linker symbols. The feature can be disabled
+in CMakeLists.txt.
+
 Release 0.6.1 contains primarily bug fixes and numerous contributions
 from the community to handle platform edge cases. Additionally,
 pendantic GCC warnings are disabled, relying instead on clang, since GCC
@@ -387,6 +396,11 @@ different target platforms.
 
 
 ### Supported platforms (CI tested)
+
+This list is somewhat outdated, more recent compiler versions are added and
+some old ones are removed when CI platforms no longer supported but largely
+the supported targets remain unchanged. MSVC 2010 might become deprecated
+in the future.
 
 The ci-more branch tests additional compilers:
 
@@ -1259,6 +1273,13 @@ by, while flatcc normally packs all vtables at the end of the buffer for
 better padding and cache efficiency.
 
 See also [flatc --annotate].
+
+Note: There is experimental support for text editor that supports
+clangd language server or similar. You can edit `CMakeList.txt`
+to generate `build/Debug/compile_comands.json`, at least when
+using clang as a compiler, and copy or symlink it from root. Or
+come with a better suggestion. There are `.gitignore` entries for
+`compile_flags.txt` and `compile_commands.json` in project root.
 
 
 ## File and Type Identifiers
@@ -2218,8 +2239,15 @@ Optionally switch to a different build tool by choosing one of:
     scripts/initbuild.sh make-concurrent
     scripts/initbuild.sh ninja
 
-where `ninja` is the default and `make-concurrent` is `make` with the `-j`
-flag. A custom build configuration `X` can be added by adding a
+where `ninja` is the default and `make-concurrent` is `make` with the `-j` flag.
+
+To enforce a 32-bit build on a 64-bit machine the following configuration
+can be used:
+
+    scripts/initbuild.sh make-32bit
+
+which uses `make` and provides the `-m32` flag to the compiler.
+A custom build configuration `X` can be added by adding a
 `scripts/build.cfg.X` file.
 
 `scripts/initbuild.sh` cleans the build if a specific build
@@ -2554,6 +2582,31 @@ Mostly for implementers: [FlatBuffers Binary Format]
 See [Security Considerations].
 
 
+## Style Guide
+
+FlatCC coding style is largely similar to the [WebKit Style], with the following notable exceptions:
+
+* Syntax requiring C99 or later is avoided, except `<stdint.h>` types are made available.
+* If conditions always use curly brackets, or single line statements without linebreak: `if (err) return -1;`.
+* NULL and nullptr are generally just represented as `0`.
+* Comments are old-school C-style (pre C99). Text is generally cased with punctuation: `/* A comment. */`
+* `true` and `false` keywords are not used (pre C99).
+* In code generation there is essentially no formatting to avoid excessive bloat.
+* Struct names and other types is lower case since this is C, not C++.
+* `snake_case` is used over `camelCase`.
+* Header guards are used over `#pragma once` because it is non-standard and not always reliable in filesystems with ambigious paths.
+* Comma is not placed first in multi-line calls (but maybe that would be a good idea for diff stability).
+* `config.h` inclusion might be handled differently in that `flatbuffers.h` includes the config file.
+* `unsigned` is not used without `int` for historical reasons. Generally a type like `uint32_t` is preferred.
+* Use `TODO:` instead of `FIXME:` in comments for historical reasons.
+
+All the main source code in compiler and runtime aim to be C11 compatible and
+uses many C11 constructs. This is made possible through the included portable
+library such that older compilers can also function. Therefore any platform specific adaptations will be provided by updating
+the portable library rather than introducing compile time flags in the main
+source code.
+
+
 ## Benchmarks
 
 See [Benchmarks]
@@ -2576,4 +2629,4 @@ See [Benchmarks]
 [readfile.h]: include/flatcc/support/readfile.h
 [Security Considerations]: https://github.com/dvidelabs/flatcc/blob/master/doc/security.md
 [flatc --annotate]: https://github.com/google/flatbuffers/tree/master/tests/annotated_binary
-
+[WebKit Style]: https://webkit.org/code-style-guidelines/

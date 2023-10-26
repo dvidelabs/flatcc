@@ -176,16 +176,16 @@ static const char lex_alnum[256] = {
 #endif
 
 #ifndef lex_isdigit
-#define lex_isdigit(c) ((c) >= '0' && (c) <= '9')
+#define lex_isdigit(c) ((unsigned)(c) >= '0' && (unsigned)(c) <= '9')
 #endif
 
 #ifndef lex_ishexdigit
-#define lex_ishexdigit(c) (((c) >= '0' && (c) <= '9') || ((c | 0x20) >= 'a' && (c | 0x20) <= 'f'))
+#define lex_ishexdigit(c) (((c) >= '0' && ((unsigned)c) <= '9') || ((unsigned)(c | 0x20) >= 'a' && (unsigned)(c | 0x20) <= 'f'))
 #endif
 
 #ifndef lex_isctrl
 #include <ctype.h>
-#define lex_isctrl(c) ((c) < 0x20 || (c) == 0x7f)
+#define lex_isctrl(c) (((unsigned)c) < 0x20 || (c) == 0x7f)
 #endif
 
 #ifndef lex_isblank

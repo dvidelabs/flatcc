@@ -1,0 +1,60 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+
+jobs:
+  ubuntu-ninja-clang:
+    name: Ubuntu (ninja, clang)
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Prepare
+        run: |
+          sudo apt update
+          sudo apt install ninja-build
+      - uses: actions/checkout@v3
+      - name: Build and run tests
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          scripts/test.sh
+
+  ubuntu-make-gcc:
+    name: Ubuntu (make, gcc)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and run tests
+        env:
+          CC: gcc
+          CXX: g++
+        run: |
+          scripts/initbuild.sh make
+          scripts/test.sh
+
+  macos:
+    name: macOS
+    runs-on: macos-12
+    steps:
+      - name: Prepare
+        run: |
+          brew install cmake ninja
+      - uses: actions/checkout@v3
+      - name: Build and run tests
+        run: |
+          scripts/test.sh
+
+  windows:
+    name: Windows
+    runs-on: windows-2022
+    steps:
+      - uses: microsoft/setup-msbuild@v1.1
+      - uses: actions/checkout@v3
+      - name: Build and run tests
+        run: |
+          cmake .
+          msbuild FlatCC.sln /m /property:Configuration=Release
+          ctest -VV

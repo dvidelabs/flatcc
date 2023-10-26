@@ -1,8 +1,14 @@
 # Ubuntu 14.04 (Trusty)
-#cmake_minimum_required (VERSION 2.8.12.2)
+cmake_minimum_required (VERSION 2.8.12.2)
 # Centos 7
 #cmake_minimum_required (VERSION 2.8.11)
-cmake_minimum_required (VERSION 2.8)
+#cmake_minimum_required (VERSION 2.8)
+
+# Experimental for generating compile_commands.json so editors with
+# clangd language server support can use it. Symlink
+# build/Debug/compile_commands.json to project root where it is
+# gitignored.
+#set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 # Disable build of tests and samples. Due to custom build step
 # dependency on flatcc tool, some custom build configurations may
@@ -13,6 +19,10 @@ option(FLATCC_TEST "enable tests" ON)
 # can include generatd C source. Old GCC pre 4.7 won't compile C++ test
 # project.
 option(FLATCC_CXX_TEST "enable C++ tests" ON)
+
+# Note that linking with flatcc debug libraries may require souce code to also use
+# the sanitize flag.
+option(FLATCC_DEBUG_CLANG_SANITIZE "enable clang sanitize flag for debug build" ON)
 
 # Conditionally set project languages based on FLATCC_TEST, as C++ is
 # only necessary if building the tests.
@@ -165,7 +175,7 @@ message(STATUS "lib install dir ${dist_dir}/${lib_dir}")
 # and constants should be turned off - those are plentiful. They are
 # silenced for Clang, GCC and MSVC in generated headers.headers.
 
-if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+if (CMAKE_C_COMPILER_ID MATCHES "Clang" AND NOT "${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
     # Clang or AppleClang
     message(STATUS "Setting Clang compiler options")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes")
@@ -181,6 +191,16 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     endif()
     if (FLATCC_IGNORE_CONST_COND)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-constant-out-of-range-compare")
+    endif()
+    if (FLATCC_DEBUG_CLANG_SANITIZE)
+        if (CMAKE_BUILD_TYPE MATCHES Debug)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+        endif()
+    endif()
+    # Suppress warning relaxed in clang-6, see https://reviews.llvm.org/D28148
+    if (CMAKE_C_COMPILER_VERSION VERSION_LESS 6)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-missing-field-initializers")
     endif()
 
     # To get assembly output

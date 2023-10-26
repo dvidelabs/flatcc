@@ -3,3 +3,6 @@ bin/*
 lib/*
 release/*
 scripts/build.cfg
+compile_flags.txt
+compile_commands.json
+.cache
