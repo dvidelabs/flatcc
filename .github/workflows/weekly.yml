@@ -1,0 +1,193 @@
+name: Weekly
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 10 * * 1' # Mon 10.00 UTC
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+
+jobs:
+  clang:
+    name: Clang ${{ matrix.clang-version }}
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        clang-version: [5, 7, 9, 11, 13, 15]
+    steps:
+      - name: Setup Clang
+        uses: aminya/setup-cpp@v1
+        with:
+          llvm: ${{ matrix.clang-version }}
+      - uses: actions/checkout@v3
+      - name: Build and run tests
+        run: |
+          scripts/initbuild.sh make-concurrent
+          scripts/test.sh
+
+  clang-32bit:
+    name: Clang 32bit
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Prepare
+        run: |
+          sudo apt update
+          sudo apt install gcc-multilib g++-multilib
+      - uses: actions/checkout@v3
+      - name: Build and run tests
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          scripts/initbuild.sh make-32bit
+          scripts/test.sh
+
+  gcc-old:
+    name: GCC 4.4
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Setup GCC
+        run: |
+          wget http://launchpadlibrarian.net/336269522/libmpfr4_3.1.6-1_amd64.deb
+          wget http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-4.4/gcc-4.4-base_4.4.7-8ubuntu1_amd64.deb
+          wget http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-4.4/cpp-4.4_4.4.7-8ubuntu1_amd64.deb
+          wget http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-4.4/gcc-4.4_4.4.7-8ubuntu1_amd64.deb
+          wget http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-4.4/libstdc++6-4.4-dev_4.4.7-8ubuntu1_amd64.deb
+          wget http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-4.4/g++-4.4_4.4.7-8ubuntu1_amd64.deb
+          sudo dpkg -i ./libmpfr4_3.1.6-1_amd64.deb
+          sudo dpkg -i ./gcc-4.4-base_4.4.7-8ubuntu1_amd64.deb
+          sudo dpkg -i ./cpp-4.4_4.4.7-8ubuntu1_amd64.deb
+          sudo dpkg -i ./gcc-4.4_4.4.7-8ubuntu1_amd64.deb
+          sudo dpkg -i ./libstdc++6-4.4-dev_4.4.7-8ubuntu1_amd64.deb ./g++-4.4_4.4.7-8ubuntu1_amd64.deb
+      - uses: actions/checkout@v3
+      - name: Build and run tests
+        env:
+          CC: gcc-4.4
+          CXX: g++-4.4
+        run: |
+          scripts/initbuild.sh make-concurrent
+          scripts/test.sh
+
+  gcc:
+    name: GCC ${{ matrix.gcc-version }}
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        gcc-version: [7, 9, 11]
+    steps:
+      - name: Setup GCC
+        uses: aminya/setup-cpp@v1
+        with:
+          gcc: ${{ matrix.gcc-version }}
+      - uses: actions/checkout@v3
+      - name: Build and run tests
+        run: |
+          scripts/initbuild.sh make-concurrent
+          scripts/test.sh
+
+  gcc-32bit:
+    name: GCC 32bit
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Prepare
+        run: |
+          sudo apt update
+          sudo apt install gcc-multilib g++-multilib
+      - uses: actions/checkout@v3
+      - name: Build and run tests
+        run: |
+          scripts/initbuild.sh make-32bit
+          scripts/test.sh
+
+  intel:
+    name: Intel ${{ matrix.compiler }}
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [icc, icx]
+    steps:
+      - name: Prepare
+        run: |
+          wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | \
+            gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | \
+            sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt update
+          sudo apt install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-2021.4.0
+      - name: Setup Intel oneAPI
+        run: |
+          source /opt/intel/oneapi/setvars.sh
+          printenv >> $GITHUB_ENV
+      - uses: actions/checkout@v3
+      - name: Build and run tests
+        env:
+          CC: ${{ matrix.compiler }}
+          CXX: ${{ matrix.compiler }}
+        run: |
+          scripts/initbuild.sh make-concurrent
+          scripts/test.sh
+
+  macos-clang:
+    name: macOS Clang
+    runs-on: macos-11
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and run tests
+        run: |
+          scripts/initbuild.sh make-concurrent
+          scripts/test.sh
+
+  macos-gcc:
+    name: macOS GCC ${{ matrix.gcc-version }}
+    runs-on: macos-11
+    strategy:
+      fail-fast: false
+      matrix:
+        gcc-version: [9, 12]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Prepare
+        run: |
+          brew install gcc@${{ matrix.gcc-version }}
+      - name: Build and run tests
+        env:
+          CC: gcc-${{ matrix.gcc-version }}
+          CXX: g++-${{ matrix.gcc-version }}
+        run: |
+          scripts/initbuild.sh make-concurrent
+          scripts/test.sh
+
+  windows:
+    name: Windows Visual Studio ${{ matrix.version }}
+    runs-on: windows-${{ matrix.version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [2019, 2022]
+    steps:
+      - uses: microsoft/setup-msbuild@v1.1
+      - uses: actions/checkout@v3
+      - name: Build and run tests
+        run: |
+          cmake .
+          msbuild FlatCC.sln /m /property:Configuration=Release
+          ctest -VV
+
+  cmake-minimum-required:
+    name: CMake 2.8.12 (min. required)
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1
+        with:
+          cmake-version: 2.8.12
+      - uses: actions/checkout@v3
+      - name: Build and run tests
+        run: |
+          cmake --version
+          scripts/initbuild.sh make-concurrent
+          scripts/test.sh

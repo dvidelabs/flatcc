@@ -2,8 +2,13 @@
 #include <assert.h>
 #include "emit_test_builder.h"
 #include "flatcc/support/hexdump.h"
+#include "flatcc/portable/pparsefp.h"
 
 #define test_assert(x) do { if (!(x)) { assert(0); return -1; }} while(0)
+/* Direct floating point comparisons are not always directly comparable,
+ * especially not for GCC 32-bit compilers. */
+#define test_assert_floateq(x, y) test_assert(parse_float_is_equal((x), (y)))
+#define test_assert_doubleeq(x, y) test_assert(parse_double_is_equal((x), (y)))
 
 int dbg_emitter(void *emit_context,
         const flatcc_iovec_t *iov, int iov_count,
@@ -61,13 +66,13 @@ int emit_test(void)
         "\x04\x00\x00\x00\xd4\xff\xff\xff\x2a\x00\x00\x00\x00\x00\x00\x00"
         "\x0c\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00"
         "\x00\x00\x80\x3f\xcd\xcc\x8c\x3f\x9a\x99\x99\x3f\x66\x66\xa6\x3f"
-        "\x0a\x00\x11\x00\x04\x00\x10\x00\x0c\x00";
+        "\x0a\x00\x11\x00\x04\x00\x10\x00\x0c\x00\x00\x00";
 #else
 
         "\x00\x00\x00\x04\xff\xff\xff\xd4\x00\x00\x00\x00\x00\x00\x00\x2a"
         "\x00\x00\x00\x0c\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04"
         "\x3f\x80\x00\x00\x3f\x8c\xcc\xcd\x3f\x99\x99\x9a\x3f\xa6\x66\x66"
-        "\x00\x0a\x00\x11\x00\x04\x00\x10\x00\x0c";
+        "\x00\x0a\x00\x11\x00\x04\x00\x10\x00\x0c\x00\x00";
 #endif
 
     size_t size;
@@ -103,7 +108,8 @@ int emit_test(void)
     fprintf(stderr, "buffer size: %d\n", (int)size);
     hexdump("emit_test", buf, size, stderr);
 
-    test_assert(size == 58);
+    /* 58 without tail padding, 60 with padding to 4 byte alignment. */
+    test_assert(size == 60);
     test_assert(sizeof(expect) - 1 == size);
     test_assert(0 == memcmp(buf, expect, size));
 
@@ -112,7 +118,7 @@ int emit_test(void)
     test_assert(time == 42);
     test_assert(main_device(mt) == 1);
     test_assert(flatbuffers_float_vec_len(main_samples(mt)) == 4);
-    test_assert(flatbuffers_float_vec_at(main_samples(mt), 2) == 1.2f);
+    test_assert_floateq(flatbuffers_float_vec_at(main_samples(mt), 2), 1.2f);
 
     /* We use get_direct_buffer, so we can't clear the builder until last. */
     flatcc_builder_clear(B);

@@ -15,12 +15,21 @@ mkdir -p generated
 
 cd build
 
+# we cannot link with debug library unless we use the sanitize flag.
+SANFLAG_DEBUG=""
+compiler_info="$($CC --version 2>&1)"
+echo "using compiler: $compiler_info"
+if echo $compiler_info | grep -q -i "clang"; then
+    SANFLAG_DEBUG="-fsanitize=undefined"
+    echo "debug sanitizer flag: $SANFLAG_DEBUG"
+fi
+
 if [[ "$FLATCC_PORTABLE" = "yes" ]]; then
     CFLAGS="$CFLAGS -DFLATCC_PORTABLE"
 fi
 
 CFLAGS="$CFLAGS -I ${ROOT}/include -I ${ROOT}/generated"
-CFLAGS_DEBUG=${CFLAGS_DEBUG:--g}
+CFLAGS_DEBUG=${CFLAGS_DEBUG:--g $SANFLAG_DEBUG}
 CFLAGS_RELEASE=${CFLAGS_RELEASE:--O2 -DNDEBUG}
 
 ${ROOT}/bin/flatcc -a -o ${ROOT}/generated ${ROOT}/src/*.fbs

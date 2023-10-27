@@ -277,7 +277,7 @@ fail:
     return buf;
 }
 
-int main()
+int main(void)
 {
     int ret = -1;
     flatcc_builder_t builder;

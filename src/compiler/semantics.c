@@ -11,8 +11,6 @@
 #include <inttypes.h>
 #endif
 
-#include "flatcc/portable/pattributes.h" /* fallthrough */
-
 /* Same order as enum! */
 static const char *fb_known_attribute_names[] = {
     "",
@@ -131,10 +129,11 @@ static inline void set_type_hash(fb_compound_type_t *ct)
     uint32_t hash;
 
     hash = fb_hash_fnv1a_32_init();
-    if (ct->scope)
-    for (name = ct->scope->name; name; name = name->link) {
-        hash = fb_hash_fnv1a_32_append(hash, name->ident->text, (size_t)name->ident->len);
-        hash = fb_hash_fnv1a_32_append(hash, ".", 1);
+    if (ct->scope) {
+        for (name = ct->scope->name; name; name = name->link) {
+            hash = fb_hash_fnv1a_32_append(hash, name->ident->text, (size_t)name->ident->len);
+            hash = fb_hash_fnv1a_32_append(hash, ".", 1);
+        }
     }
     sym = &ct->symbol;
     hash = fb_hash_fnv1a_32_append(hash, sym->ident->text, (size_t)sym->ident->len);
@@ -524,7 +523,6 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
         member = (fb_member_t *)sym;
         switch (member->type.type) {
         case vt_fixed_array_type:
-            /* fall through */
         case vt_scalar_type:
             t = member->type.t;
             member->type.st = map_scalar_token_type(t);
@@ -537,7 +535,6 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
             member->size = size * member->type.len;
             break;
         case vt_fixed_array_compound_type_ref:
-            /* fall through */
         case vt_compound_type_ref:
             /* Enums might not be valid, but then it would be detected earlier. */
             if (member->type.ct->symbol.kind == fb_is_enum) {
@@ -617,7 +614,7 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
     }
 
     ct->symbol.flags |= fb_circular_closed;
-    ct->symbol.flags &= ~fb_circular_open;
+    ct->symbol.flags &= (uint16_t)~fb_circular_open;
     ct->order = P->schema.ordered_structs;
     P->schema.ordered_structs = ct;
     return ret;
@@ -701,8 +698,9 @@ static int process_struct(fb_parser_t *P, fb_compound_type_t *ct)
         switch (member->type.type) {
         case vt_fixed_array_type_ref:
             key_ok = 0;
-            fallthrough;
+            goto lbl_type_ref;
         case vt_type_ref:
+lbl_type_ref:
             type_sym = lookup_type_reference(P, ct->scope, member->type.ref);
             if (!type_sym) {
                 error_ref_sym(P, member->type.ref, "unknown type reference used with struct field", sym);
@@ -1146,7 +1144,9 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                         member->type.type = vt_invalid;
                         continue;
                     }
-                    if (P->opts.strict_enum_init && !(member->flags & fb_fm_optional)) {
+                    /* Bitflags can have complex combinations of values, and do not nativele have a 0 value. */
+                    if (P->opts.strict_enum_init && !(member->type.ct->metadata_flags & fb_f_bit_flags)
+                            && !(member->flags & fb_fm_optional)) {
                         if (!is_in_value_set(&member->type.ct->value_set, &member->value)) {
                             error_sym(P, sym, "initializer does not match a defined enum value");
                             member->type.type = vt_invalid;
@@ -1164,6 +1164,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                         continue;
                     }
                     if (P->opts.strict_enum_init) {
+                        /* TODO: consider if this error is necessary for bit_flags - flatc 2.0.0 errors on this. */
                         if (!is_in_value_set(&member->type.ct->value_set, &member->value)) {
                             error_sym_2(P, sym,
                                     "enum type requires an explicit initializer because it has no 0 value", type_sym);
@@ -1545,7 +1546,7 @@ static int process_enum(fb_parser_t *P, fb_compound_type_t *ct)
     fb_symbol_t *sym, *old, *type_sym;
     fb_member_t *member;
     fb_metadata_t *knowns[KNOWN_ATTR_COUNT];
-    fb_value_t index = { 0 };
+    fb_value_t index = { { { 0 } }, 0, 0 };
     fb_value_t old_index;
     int first = 1;
     int bit_flags = 0;

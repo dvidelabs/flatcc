@@ -265,7 +265,7 @@ static inline int verify_string(const void *buf, uoffset_t end, uoffset_t base, 
     base += offset;
     n = read_uoffset(buf, base);
     base += offset_size;
-    verify(end - base >= n + 1, flatcc_verify_error_string_out_of_range);
+    verify(end - base > n, flatcc_verify_error_string_out_of_range);
     verify(((uint8_t *)buf + base)[n] == 0, flatcc_verify_error_string_not_zero_terminated);
     return flatcc_verify_ok;
 }

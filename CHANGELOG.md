@@ -1,9 +1,36 @@
 # Change Log
 
-## [0.6.1-pre]
+## [0.6.2-pre]
+
+- CMake: avoid assuming location of build dir during configuration.
+- Use untyped integer constants in place of enums for public interface flags to
+  allow for safe bit masking operations (PR #248).
+- Added experimental support for generating `compile_commands.json` via
+  `CMakeList.txt` for use with clangd.
+- Remove `fallthrough` macro for improved portability (#247, #252).
+- Added `parse_float/double_compare`, `parse_float/double_is_equal` to
+  portable library, and added `parse_float/double_isnan` to mirror isinf.
+  This should help with GCC 32-bit double precision conversion issue.
+- Add Github Actions builds to replace stale Travis CI build. This also
+  includes source code fixes for some build variants. Although
+  Windows build is included it only covers recent 64-bit Windows. More
+  work is need for older Windows variants. (#250).
+- Increase maximum allowed schema file size from 64 KiB to 1 MB (#256).
+- Fix seg fault in json parser while adding null characters to a too
+  short input string for a fixed length char array struct field (#257).
+- Fix regression where empty namespace in schema does not reset root scope
+  correctly in parser (#265).
+- Fix lexer checks that breaks with UTF-8, notably UTF-8 schema comments (#267).
+- Add sanitizer flag for clang debug and related warnings (input from several
+  PRs incl. #237).
+- Fix missing runtime check for building too large tables (#235).
+- Fix alignment of large objects created outside root buffer (#127).
+- Pad top level buffer end to largest object in buffer
+
+## [0.6.1]
 
 - Add `flatcc_builder_alloc` and `flatcc_builder_free` to handle situations
-  where stanard allocation has been redefined via macros so `free` is no longer
+  where standard allocation has been redefined via macros so `free` is no longer
   safe to use. These are similar to the existing `aligned_alloc/free` functions.
 - Fix a potential, but never seen, low level race condition in the builder when
   writing a union field because the builder might reallocate between type
@@ -60,6 +87,12 @@
   affected because warnigs were disabled more broadly than intended. Also note
   that warnings will still be disabled after pop if the compiler does not
   support push/pop diagnostics (#205).
+- Fix verifier crash on malicious string length input (#221).
+- Fix potential crash parsing unterminated JSON (#223).
+- Allow 0 (and other unknown values) as schema default value for enums with
+  `bit_flags` attribute.
+- Disable -pedantic flag for GCC >= 8, it just keeps breaking perfectly valid
+  code (#227).
 
 ## [0.6.0]
 
