@@ -10,7 +10,7 @@ extern "C" {
 /* Based on http://stackoverflow.com/a/8583395 */
 #if !defined(_WIN32)
 #include <sys/time.h>
-static double elapsed_realtime(void) { // returns 0 seconds first time called
+static inline double elapsed_realtime(void) { // returns 0 seconds first time called
     static struct timeval t0;
     struct timeval tv;
     gettimeofday(&tv, 0);
@@ -23,7 +23,7 @@ static double elapsed_realtime(void) { // returns 0 seconds first time called
 #ifndef FatalError
 #define FatalError(s) do { perror(s); exit(-1); } while(0)
 #endif
-static double elapsed_realtime(void) { // granularity about 50 microsecs on my machine
+static inline double elapsed_realtime(void) { // granularity about 50 microsecs on my machine
 	static LARGE_INTEGER freq, start;
     LARGE_INTEGER count;
     if (!QueryPerformanceCounter(&count))
@@ -39,7 +39,7 @@ static double elapsed_realtime(void) { // granularity about 50 microsecs on my m
 
 /* end Based on stackoverflow */
 
-static int show_benchmark(const char *descr, double t1, double t2, size_t size, int rep, const char *reptext)
+static inline int show_benchmark(const char *descr, double t1, double t2, size_t size, int rep, const char *reptext)
 {
     double tdiff = t2 - t1;
     double nstime;
