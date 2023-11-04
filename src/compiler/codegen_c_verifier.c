@@ -216,16 +216,32 @@ static int gen_table_verifier(fb_output_t *out, fb_compound_type_t *ct)
             "{\n    return flatcc_verify_table_as_root(buf, bufsiz, %s_identifier, &%s_verify_table);\n}\n\n",
             snt.text, snt.text, snt.text);
     fprintf(out->fp,
+            "static inline int %s_verify_as_root_with_size(const void *buf, size_t bufsiz)\n"
+            "{\n    return flatcc_verify_table_as_root_with_size(buf, bufsiz, %s_identifier, &%s_verify_table);\n}\n\n",
+            snt.text, snt.text, snt.text);
+    fprintf(out->fp,
             "static inline int %s_verify_as_typed_root(const void *buf, size_t bufsiz)\n"
             "{\n    return flatcc_verify_table_as_root(buf, bufsiz, %s_type_identifier, &%s_verify_table);\n}\n\n",
+            snt.text, snt.text, snt.text);
+    fprintf(out->fp,
+            "static inline int %s_verify_as_typed_root_with_size(const void *buf, size_t bufsiz)\n"
+            "{\n    return flatcc_verify_table_as_root_with_size(buf, bufsiz, %s_type_identifier, &%s_verify_table);\n}\n\n",
             snt.text, snt.text, snt.text);
     fprintf(out->fp,
             "static inline int %s_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)\n"
             "{\n    return flatcc_verify_table_as_root(buf, bufsiz, fid, &%s_verify_table);\n}\n\n",
             snt.text, snt.text);
     fprintf(out->fp,
+            "static inline int %s_verify_as_root_with_identifier_and_size(const void *buf, size_t bufsiz, const char *fid)\n"
+            "{\n    return flatcc_verify_table_as_root_with_size(buf, bufsiz, fid, &%s_verify_table);\n}\n\n",
+            snt.text, snt.text);
+    fprintf(out->fp,
             "static inline int %s_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, %sthash_t thash)\n"
             "{\n    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &%s_verify_table);\n}\n\n",
+            snt.text, nsc, snt.text);
+    fprintf(out->fp,
+            "static inline int %s_verify_as_root_with_type_hash_and_size(const void *buf, size_t bufsiz, %sthash_t thash)\n"
+            "{\n    return flatcc_verify_table_as_typed_root_with_size(buf, bufsiz, thash, &%s_verify_table);\n}\n\n",
             snt.text, nsc, snt.text);
     return 0;
 }
@@ -242,16 +258,32 @@ static int gen_struct_verifier(fb_output_t *out, fb_compound_type_t *ct)
             "{\n    return flatcc_verify_struct_as_root(buf, bufsiz, %s_identifier, %"PRIu64", %"PRIu16");\n}\n\n",
             snt.text, snt.text, ct->size, ct->align);
     fprintf(out->fp,
+            "static inline int %s_verify_as_root_with_size(const void *buf, size_t bufsiz)\n"
+            "{\n    return flatcc_verify_struct_as_root_with_size(buf, bufsiz, %s_identifier, %"PRIu64", %"PRIu16");\n}\n\n",
+            snt.text, snt.text, ct->size, ct->align);
+    fprintf(out->fp,
             "static inline int %s_verify_as_typed_root(const void *buf, size_t bufsiz)\n"
             "{\n    return flatcc_verify_struct_as_typed_root(buf, bufsiz, %s_type_hash, %"PRIu64", %"PRIu16");\n}\n\n",
+            snt.text, snt.text, ct->size, ct->align);
+    fprintf(out->fp,
+            "static inline int %s_verify_as_typed_root_with_size(const void *buf, size_t bufsiz)\n"
+            "{\n    return flatcc_verify_struct_as_typed_root_with_size(buf, bufsiz, %s_type_hash, %"PRIu64", %"PRIu16");\n}\n\n",
             snt.text, snt.text, ct->size, ct->align);
     fprintf(out->fp,
             "static inline int %s_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, %sthash_t thash)\n"
             "{\n    return flatcc_verify_struct_as_typed_root(buf, bufsiz, thash, %"PRIu64", %"PRIu16");\n}\n\n",
             snt.text, out->nsc, ct->size, ct->align);
     fprintf(out->fp,
+            "static inline int %s_verify_as_root_with_type_hash_and_size(const void *buf, size_t bufsiz, %sthash_t thash)\n"
+            "{\n    return flatcc_verify_struct_as_typed_root_with_size(buf, bufsiz, thash, %"PRIu64", %"PRIu16");\n}\n\n",
+            snt.text, out->nsc, ct->size, ct->align);
+    fprintf(out->fp,
             "static inline int %s_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)\n"
             "{\n    return flatcc_verify_struct_as_root(buf, bufsiz, fid, %"PRIu64", %"PRIu16");\n}\n\n",
+            snt.text, ct->size, ct->align);
+    fprintf(out->fp,
+            "static inline int %s_verify_as_root_with_identifier_and_size(const void *buf, size_t bufsiz, const char *fid)\n"
+            "{\n    return flatcc_verify_struct_as_root_with_size(buf, bufsiz, fid, %"PRIu64", %"PRIu16");\n}\n\n",
             snt.text, ct->size, ct->align);
     return 0;
 }

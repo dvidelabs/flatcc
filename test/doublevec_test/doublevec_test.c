@@ -54,28 +54,28 @@ int test_doublevec(flatcc_builder_t *B)
 
 int test_doublevec_with_size(flatcc_builder_t *B)
 {
-    void *buffer, *frame;
-    size_t size, size2, esize;
+    void *buffer;
+    size_t size;
     int ret;
 
     gen_doublevec_with_size(B);
 
-    frame = flatcc_builder_finalize_aligned_buffer(B, &size);
-    hexdump("doublevec table with size", frame, size, stderr);
+    buffer = flatcc_builder_finalize_aligned_buffer(B, &size);
+    hexdump("doublevec table with size", buffer, size, stderr);
 
-    buffer = flatbuffers_read_size_prefix(frame, &size2);
-    esize = size - sizeof(flatbuffers_uoffset_t);
-    if (size2 != esize) {
-        printf("Size prefix has unexpected size, got %i, expected %i\n", (int)size2, (int)esize);
-        return -1;
-    }
-
-    if ((ret = DoubleVec_verify_as_root(buffer, size))) {
+    /* Verifiers `_with_size` were introduced in v0.6.2. Previously verifiers would have to skip the size field and verify
+       the buffer after the size field, but this can lead to misalignment for fields larger than the uoffset_t type
+       so the buffer would have to be copied to be copied down to to overwrite the size field for this to work.
+       The `_with_size` verifier handles this problem better.
+       The header size field was not part of the original Flatbuffers design, and remains optional.
+       Note that there is nothing special about vectors, they differentiating part is the double type that
+       can trigger this issue because it has an 8 byte alignment. */
+    if ((ret = DoubleVec_verify_as_root_with_size(buffer, size))) {
         printf("doublevec buffer failed to verify, got: %s\n", flatcc_verify_error_string(ret));
         return -1;
     }
 
-    flatcc_builder_aligned_free(frame);
+    flatcc_builder_aligned_free(buffer);
     return ret;
 }
 

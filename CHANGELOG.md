@@ -26,6 +26,11 @@
 - Fix missing runtime check for building too large tables (#235).
 - Fix alignment of large objects created outside root buffer (#127).
 - Pad top level buffer end to largest object in buffer
+- Add `_with_size` verifiers to enable verification of size prefixed buffers
+  that are aligned above 4 bytes (sizeof(uoffset_t)) (#210, PR #213).
+  Also fixes a (uoffset_t) cast that would truncate very large verifier `bufsiz`
+  arguments above 4GB before the verifier checked for argument overflow
+  (not expected to be a practical problem, but could be abused).
 
 ## [0.6.1]
 
