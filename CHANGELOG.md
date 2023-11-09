@@ -31,6 +31,9 @@
   Also fixes a (uoffset_t) cast that would truncate very large verifier `bufsiz`
   arguments above 4GB before the verifier checked for argument overflow
   (not expected to be a practical problem, but could be abused).
+- Fix `__[portable_aligned_alloc,` the fallback implementation of `aligned_alloc`
+  so returns null proper and not a small offset on alloc failure. Most
+  platforms do not depend on this function (#269).
 
 ## [0.6.1]
 
