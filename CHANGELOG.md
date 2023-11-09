@@ -34,6 +34,7 @@
 - Fix `__[portable_aligned_alloc,` the fallback implementation of `aligned_alloc`
   so returns null proper and not a small offset on alloc failure. Most
   platforms do not depend on this function (#269).
+  Also fix equivalent FLATCC_ALIGNED_ALLOC that does not necesserily use malloc.
 
 ## [0.6.1]
 
