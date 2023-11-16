@@ -240,39 +240,40 @@ static inline uint64_t flatcc_json_parser_symbol_part_ext(const char *buf, const
     if (n > 8) {
         n = 8;
     }
+    /* uint8_t cast is needed to avoid sign extension for utf8 symbols */
     /* This can bloat inlining for a rarely executed case. */
 #if 1
     switch (n) {
     case 8:
-        w |= ((uint64_t)buf[7]) << (0 * 8);
+        w |= ((uint64_t)(uint8_t)buf[7]) << (0 * 8);
         goto lbl_n_7;
     case 7:
 lbl_n_7:
-        w |= ((uint64_t)buf[6]) << (1 * 8);
+        w |= ((uint64_t)(uint8_t)buf[6]) << (1 * 8);
         goto lbl_n_6;
     case 6:
 lbl_n_6:
-        w |= ((uint64_t)buf[5]) << (2 * 8);
+        w |= ((uint64_t)(uint8_t)buf[5]) << (2 * 8);
         goto lbl_n_5;
     case 5:
 lbl_n_5:
-        w |= ((uint64_t)buf[4]) << (3 * 8);
+        w |= ((uint64_t)(uint8_t)buf[4]) << (3 * 8);
         goto lbl_n_4;
     case 4:
 lbl_n_4:
-        w |= ((uint64_t)buf[3]) << (4 * 8);
+        w |= ((uint64_t)(uint8_t)buf[3]) << (4 * 8);
         goto lbl_n_3;
     case 3:
 lbl_n_3:
-        w |= ((uint64_t)buf[2]) << (5 * 8);
+        w |= ((uint64_t)(uint8_t)buf[2]) << (5 * 8);
         goto lbl_n_2;
     case 2:
 lbl_n_2:
-        w |= ((uint64_t)buf[1]) << (6 * 8);
+        w |= ((uint64_t)(uint8_t)buf[1]) << (6 * 8);
         goto lbl_n_1;
     case 1:
 lbl_n_1:
-        w |= ((uint64_t)buf[0]) << (7 * 8);
+        w |= ((uint64_t)(uint8_t)buf[0]) << (7 * 8);
         break;
     case 0:
         break;
@@ -284,7 +285,7 @@ lbl_n_1:
         for (i = 0; i < n; ++i) {
             w <<= 8;
             if (i < n) {
-                w = buf[i];
+                w = (uint8_t)buf[i];
             }
         }
     }
