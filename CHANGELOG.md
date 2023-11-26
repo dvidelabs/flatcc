@@ -35,6 +35,9 @@
   so returns null proper and not a small offset on alloc failure. Most
   platforms do not depend on this function (#269).
   Also fix equivalent FLATCC_ALIGNED_ALLOC that does not necesserily use malloc.
+- Fix flatcc compiler error message when schema has a union as first table field
+  with explicit id attribute 1. Explict id must leave space for the hidden type
+  field, but id 1 is valid since id 0 is valid for the type field id. (#271).
 
 ## [0.6.1]
 
