@@ -89,10 +89,8 @@ executable also handle optional json parsing or printing in less than 2 us for a
 
 ## Online Forums
 
-- [Google Groups - FlatBuffers](https://groups.google.com/forum/#!forum/flatbuffers)
 - [Discord - FlatBuffers](https://discord.gg/6qgKs3R)
-- [Gitter - FlatBuffers](https://gitter.im/google/flatbuffers)
-
+- [Github - FlatCC Discussions](https://github.com/dvidelabs/flatcc/discussions)
 
 ## Introduction
 
