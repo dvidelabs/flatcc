@@ -9,7 +9,16 @@ extern "C" {
 #include <stdint.h>
 #endif
 
+
+/* __flatcc_copy_word defined in flatcc_flatbuffers.h, can be redefined.
+   Used for handling strict aliasing memory access.
+   Note that type punning via union casts is valid in C, but not in C++. */
+
 #define __flatcc_basic_scalar_accessors_impl(N, T, W, E)                    \
+static inline T N ##  _read(const void *p)                                  \
+{ T v; __flatcc_copy_word(&v, p, sizeof(T)); return v; }                    \
+static inline void N ##  _write(void *p, T v)                               \
+{ __flatcc_copy_word(p, &v, sizeof(T)); }                                   \
 static inline size_t N ## __size(void)                                      \
 { return sizeof(T); }                                                       \
 static inline T *N ## __ptr_add(T *p, size_t i)                             \
@@ -17,19 +26,15 @@ static inline T *N ## __ptr_add(T *p, size_t i)                             \
 static inline const T *N ## __const_ptr_add(const T *p, size_t i)           \
 { return p + i; }                                                           \
 static inline T N ## _read_from_pe(const void *p)                           \
-{ return N ## _cast_from_pe(*(T *)p); }                                     \
+{ return N ## _cast_from_pe(N ## _read(p)); }                               \
 static inline T N ## _read_to_pe(const void *p)                             \
-{ return N ## _cast_to_pe(*(T *)p); }                                       \
-static inline T N ## _read(const void *p)                                   \
-{ return *(T *)p; }                                                         \
+{ return N ## _cast_to_pe(N ## _read(p)); }                                 \
 static inline void N ## _write_from_pe(void *p, T v)                        \
-{ *(T *)p = N ## _cast_from_pe(v); }                                        \
+{ N ## _write(p, N ## _cast_from_pe(v)); }                                  \
 static inline void N ## _write_to_pe(void *p, T v)                          \
-{ *(T *)p = N ## _cast_to_pe(v); }                                          \
-static inline void N ## _write(void *p, T v)                                \
-{ *(T *)p = v; }                                                            \
+{ N ## _write(p, N ## _cast_to_pe(v)); }                                    \
 static inline T N ## _read_from_le(const void *p)                           \
-{ return N ## _cast_from_le(*(T *)p); }                                     \
+{ return N ## _cast_from_le(N ## _read(p)); }                               \
 typedef struct { int is_null; T value; } N ## _option_t;
 
 #define __flatcc_define_integer_accessors_impl(N, T, W, E)                  \

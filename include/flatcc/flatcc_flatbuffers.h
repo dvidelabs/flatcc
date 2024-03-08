@@ -38,6 +38,15 @@ extern "C" {
  * or compatible definitions.
  */
 #include "flatcc/portable/pendian.h"
+
+/* Needed by flatcc_accessors.h to handle strict aliasing rules.
+   Option to configure own implementation if target has better solution.  */
+#ifndef __flatcc_copy_word
+#include "flatcc/portable/pmemaccess.h"
+/* Fast memcpy for memory words. */
+#define __flatcc_copy_word(dest, src, len) mem_copy_word(dest, src, len)
+#endif
+
 #include "flatcc/flatcc_types.h"
 #include "flatcc/flatcc_endian.h"
 #include "flatcc/flatcc_identifier.h"
