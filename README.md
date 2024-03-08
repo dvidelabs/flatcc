@@ -2333,6 +2333,14 @@ Docker image:
 Users have been reporting some degree of success using cross compiles
 from Linux x86 host to embedded ARM Linux devices.
 
+2024-03-08: WARNING:
+-O2 -mcpu=cortex-m7 targets using the arm-none-eabi 13.2.Rel1 toolchain
+can result in uninitialized stack access when not compiled with
+`-fno-strict-aliasing`
+-mcpu=cortex-m0 and -mcpu=cortex-m1 appears to be unaffected.
+See also [issue #274](https://github.com/dvidelabs/flatcc/issues/274).
+
+
 For this to work, `FLATCC_TEST` option should be disabled in part
 because cross-compilation cannot run the cross-compiled flatcc tool, and
 in part because there appears to be some issues with CMake custom build
