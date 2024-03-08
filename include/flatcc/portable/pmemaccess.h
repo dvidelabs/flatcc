@@ -73,7 +73,8 @@ extern "C" {
     /* Sometimes memcpy is a call, unnecessarily, so this is more likely to be optimized. */
     static inline void mem_copy_word(void * restrict dest, const void * restrict src, size_t len)
     {
-        const char *d = dest, *s = src;
+        char *d = dest;
+        const char *s = src;
         while(len--) *d++ = *s++;
     }
 #endif
