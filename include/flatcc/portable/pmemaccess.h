@@ -60,8 +60,10 @@ extern "C" {
    We do not require alignment because it isn't possible with strict C aliasing rules.
    Everything must be funneled through a char or "similar narrow" type. */
 #ifndef mem_copy_word
-#if defined(__has_builtin) && __has_builtin(__builtin_memcpy)
-    #define mem_copy_word(d, s, n) __builtin_memcpy((d), (s), (n))
+#if defined(__has_builtin)
+#  if __has_builtin(__builtin_memcpy)
+#    define mem_copy_word(d, s, n) __builtin_memcpy((d), (s), (n))
+#  endif
 #endif
 #endif
 
