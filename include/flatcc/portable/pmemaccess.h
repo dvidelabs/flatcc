@@ -19,13 +19,23 @@
  *   Software.
  */
 
+/* Provide strict aliasing safe portable access to reading and writing integer and
+   floating point values from memory buffers of size 1, 2, 4, and 8 bytes, and also
+   for casting between integers and floats at the binary level, e.g.
+   mem_read_float32(&myuint32), which can be necessary for endian conversions.
 
-/* Provide protable access to read and write memory buffers of 1, 2, 4, and 8 bytes.
+   It is often suggested to use memcpy for this purpose, that is not an ideal
+   solution. See comments below.
+
    While this is intended to be aligned access, the strict C aliasing rules forces
-   this to be the same as unaligned access. On x86/64 we be more relaxed both
+   this to be the same as unaligned access. On x86/64 we can be more relaxed both
    with aliasing and alignment, but if at some point a compiler starts to
    modify this behaviour, the header can be updated or PORTABLE_MEM_PTR_ACCESS
-   can be defined to 0 in the build configuration. */
+   can be defined to 0 in the build configuration, or this file can be updated. */
+
+
+/* NOTE: for best performance, `__builtin_memcpy` should be detectable, but
+   the current detection logic is not ideal for older compilers. See below. */
 
 
 #ifndef PMEMACCESS_H
@@ -42,9 +52,14 @@ extern "C" {
 #define PORTABLE_MEM_ACCESS_DEBUG 0
 #endif
 
-/* MEM_PTR_ACCESS (*(T *)p) is not strictly valid for strict aliasing, but is widely supported on x86/64
-   but not always on ARM even if memory is aligned, so just opt out and hope for fast __builin_memcpy.
-   This also sidesteps the requirement for aligned memory. */
+/* MEM_PTR_ACCESS (aka pointer casts) (*(T *)p) is not formally valid for strict aliasing.
+   It works in most cases, but not always. It may be the best option for older
+   compilers that do not optimize well and which don't care about strict aliazing.
+   x86/64 platforms appears to work well with this, while it only sometimes work
+   on other platforms.
+
+   NOTE: this might change as compiler updates their optimization strategies. */
+
 #ifndef PORTABLE_MEM_PTR_ACCESS
 
 #if (defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64))
@@ -60,12 +75,27 @@ extern "C" {
 #  include <stdint.h>
 #endif
 
-/* `mem_copy_word` is intended to support non-overlapping memory copies of 0 to 8 bytes optimized.
-   It is not necessarily defined above length 8, but it must adhere to strict aliasing rules.
-   If a platform has a better option, it can be defined prior to inclusion of this header,
-   and if so, the strict requirement may be relaxed based on platform knowledge and build flags.
-   We do not require alignment because it is not possible with strict C aliasing rules.
-   Everything must be funneled through a char or "similar narrow" type when formally strict. */
+/* `mem_copy_word` implements optimized non-overlapping memory copies of 1, 2, 4, or 8.
+   16 byte words are not guaranteed to be supported, but might be in the future.
+
+   Ideally call `mem_copy_word` with known constant lengths for best optimization.
+
+   The objective is both to support type punning where a binary representation is
+   reinterpreted, and to read and write integers and floats safely from memory without
+   risking undefined behaviour from strict aliasing rules.
+
+   `memcpy` is supposed to handle this efficiently given small constant powers of 2, but
+   this evidently fails on some platforms since even small constants lengths with -O2
+   level optimization can issue a function call. On such platforms, `__builtin_memcpy`
+   tends to work better, if it can be detected.
+
+   A pointer cast can and will, albeit uncommon, lead to undefined behaviour
+   such as reading from uninitialized stack memory when strict aliasing is the default
+   optimization strategy.
+
+   Note: __has_builtin is not necessarily defined on platforms with __builtin_memcpy support,
+   so detection can be improved. Feel free to contribute. */
+
 #ifndef mem_copy_word
 #  if defined(__has_builtin)
 #    if __has_builtin(__builtin_memcpy)
@@ -80,8 +110,12 @@ extern "C" {
 #ifndef mem_copy_word
     #include "pinline.h"
     #include "prestrict.h"
-    /* Sometimes memcpy is a call, unnecessesarily, so this is more likely to be optimized.
-       Use int for size to avoid stddef.h dependency. */
+    /* Sometimes `memcpy` is a call even when optimized and given small constant length arguments,
+       so this is more likely to be optimized. `int len` is used to avoid <stddef.h> dependency.
+       Also, by not using `memcpy`, we avoid depending on <stdlib.h>.
+
+      As an alternative consider PORTABLE_MEM_PTR_ACCESS=1 with `mem_read/write_nn` for some older
+      platforms that might not care about strict aliasing, and which also might not optimize well. */
     static inline void mem_copy_word(void * restrict dest, const void * restrict src, int len)
     {
         char *d = (char *)dest;
