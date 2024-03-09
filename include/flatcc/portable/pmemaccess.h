@@ -20,8 +20,9 @@
  */
 
 /* Provide strict aliasing safe portable access to reading and writing integer and
-   floating point values from memory buffers of size 1, 2, 4, and 8 bytes, and also
-   for casting between integers and floats at the binary level, e.g.
+   floating point values from memory buffers of size 1, 2, 4, and 8 bytes, and
+   optionally 16 bytes when C23 uint128_t is available.
+   Also supports casting between integers and floats at the binary level, e.g.
    mem_read_float32(&myuint32), which can be necessary for endian conversions.
 
    It is often suggested to use memcpy for this purpose, that is not an ideal
@@ -146,6 +147,14 @@ extern "C" {
 #define mem_write_float_32(p, v) ((void)(*(float*)(p) = (float)(v)))
 #define mem_write_float_64(p, v) ((void)(*(double*)(p) = (double)(v)))
 
+#ifdef UINT128_MAX
+
+#define mem_read_128(p) (*(uint128_t*)(p))
+
+#define mem_write_128(p, v) ((void)(*(uint128_t*)(p) = (uint128_t)(v)))
+
+#endif
+
 #if PORTABLE_MEM_ACCESS_DEBUG
 #  error mem_read/write_nn using: pointer cast
 #endif
@@ -169,6 +178,14 @@ static inline double mem_read_float_64(const void *p) { double v; mem_copy_word(
 #define mem_write_float_32(p, v) do { const float x = (float)(v); mem_copy_word((p), &x, 4); } while(0)
 #define mem_write_float_64(p, v) do { const double x = (double)(v); mem_copy_word((p), &x, 8); } while(0)
 
+#ifdef UINT128_MAX
+
+static inline uint128_t mem_read_128(const void *p) { uint128_t v; mem_copy_word(&v, p, 16); return v; }
+
+#define mem_write_128(p, v) do { const uint128_t x = (uint128_t)(v); mem_copy_word((p), &x, 128); } while(0)
+
+#endif
+   
 #if PORTABLE_MEM_ACCESS_DEBUG
 #  error mem_read/write_nn using: mem_copy_word
 #endif
