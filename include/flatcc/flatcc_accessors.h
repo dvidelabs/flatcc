@@ -10,10 +10,6 @@ extern "C" {
 #endif
 
 
-/* __flatcc_copy_word defined in flatcc_flatbuffers.h, can be redefined.
-   Used for handling strict aliasing memory access.
-   Note that type punning via union casts is valid in C, but not in C++. */
-
 #define __flatcc_basic_scalar_accessors_impl(N, T, W, E)                    \
 static inline size_t N ## __size(void)                                      \
 { return sizeof(T); }                                                       \
