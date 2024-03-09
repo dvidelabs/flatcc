@@ -106,6 +106,12 @@ extern "C" {
 #define mem_write_32(p, v) ((void)(*(uint32_t*)(p) = (uint32_t)(v)))
 #define mem_write_64(p, v) ((void)(*(uint64_t*)(p) = (uint64_t)(v)))
 
+#define mem_read_float_32(p) (*(float*)(p))
+#define mem_read_float_64(p) (*(double*)(p))
+
+#define mem_write_float_32(p, v) ((void)(*(float*)(p) = (float)(v)))
+#define mem_write_float_64(p, v) ((void)(*(double*)(p) = (double)(v)))
+
 #if PORTABLE_MEM_ACCESS_DEBUG
 #  error mem_read/write_nn using: pointer cast
 #endif
@@ -122,6 +128,12 @@ static inline uint64_t mem_read_64(const void *p) { uint64_t v; mem_copy_word(&v
 #define mem_write_16(p, v) do { const uint16_t x = (uint16_t)(v); mem_copy_word((p), &x, 2); } while(0)
 #define mem_write_32(p, v) do { const uint32_t x = (uint32_t)(v); mem_copy_word((p), &x, 4); } while(0)
 #define mem_write_64(p, v) do { const uint64_t x = (uint64_t)(v); mem_copy_word((p), &x, 8); } while(0)
+
+static inline float mem_read_float_32(const void *p) { float v; mem_copy_word(&v, p, 4); return v; }
+static inline double mem_read_float_64(const void *p) { double v; mem_copy_word(&v, p, 8); return v; }
+
+#define mem_write_float_32(p, v) do { const float x = (float)(v); mem_copy_word((p), &x, 4); } while(0)
+#define mem_write_float_64(p, v) do { const double x = (double)(v); mem_copy_word((p), &x, 8); } while(0)
 
 #if PORTABLE_MEM_ACCESS_DEBUG
 #  error mem_read/write_nn using: mem_copy_word
