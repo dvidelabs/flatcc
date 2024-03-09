@@ -38,6 +38,7 @@
 - Fix flatcc compiler error message when schema has a union as first table field
   with explicit id attribute 1. Explict id must leave space for the hidden type
   field, but id 1 is valid since id 0 is valid for the type field id. (#271).
+- Add C23 support for "pstdbool.h" header.
 
 ## [0.6.1]
 
