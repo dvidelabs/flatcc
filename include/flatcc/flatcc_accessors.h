@@ -10,12 +10,11 @@ extern "C" {
 #endif
 
 
+/* __flatcc_copy_word defined in flatcc_flatbuffers.h, can be redefined.
+   Used for handling strict aliasing memory access.
+   Note that type punning via union casts is valid in C, but not in C++. */
+
 #define __flatcc_basic_scalar_accessors_impl(N, T, W, E)                    \
-static_assert((sizeof(T)) * 8 == (W), "type size does not match bit width");\
-static inline T N ##  _read(const void *p)                                  \
-{ return (T) mem_read_ ## W(p); }                                           \
-static inline void N ##  _write(void *p, T v)                               \
-{ mem_write_ ## W(p, v); }                                                  \
 static inline size_t N ## __size(void)                                      \
 { return sizeof(T); }                                                       \
 static inline T *N ## __ptr_add(T *p, size_t i)                             \
@@ -35,6 +34,10 @@ static inline T N ## _read_from_le(const void *p)                           \
 typedef struct { int is_null; T value; } N ## _option_t;
 
 #define __flatcc_define_integer_accessors_impl(N, T, W, E)                  \
+static inline T N ##  _read(const void *p)                                  \
+{ return (T) mem_read_ ## W(p); }                                           \
+static inline void N ##  _write(void *p, T v)                               \
+{ mem_write_ ## W(p, v); }                                                  \
 static inline T N ## _cast_from_pe(T v)                                     \
 { return (T) E ## W ## toh((uint ## W ## _t)v); }                           \
 static inline T N ## _cast_to_pe(T v)                                       \
@@ -50,6 +53,10 @@ static inline T N ## _cast_to_be(T v)                                       \
 __flatcc_basic_scalar_accessors_impl(N, T, W, E)
 
 #define __flatcc_define_real_accessors_impl(N, T, W, E)                     \
+static inline T N ##  _read(const void *p)                                  \
+{ return (T) mem_read_float_ ## W(p); }                                     \
+static inline void N ##  _write(void *p, T v)                               \
+{ mem_write_float_ ## W(p, v); }                                            \
 union __ ## N ## _cast { T v; uint ## W ## _t u; };                         \
 static inline T N ## _cast_from_pe(T v)                                     \
 { union __ ## N ## _cast x;                                                 \
