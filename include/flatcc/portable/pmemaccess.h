@@ -76,8 +76,10 @@ extern "C" {
 #  include <stdint.h>
 #endif
 
-/* `mem_copy_word` implements optimized non-overlapping memory copies of 1, 2, 4, or 8.
-   16 byte words are not guaranteed to be supported, but might be in the future.
+/* `mem_copy_word` implements optimized non-overlapping memory copies of
+   1, 2, 4, 8, or 16 bytes, noting that C23 introduces uin128_t.
+   Other sizes are not defined even if some implementation might support them.
+   `mem_copy_word` of 16 bytes are supported even if uint128_t is not available.
 
    Ideally call `mem_copy_word` with known constant lengths for best optimization.
 
