@@ -39,6 +39,18 @@
   with explicit id attribute 1. Explict id must leave space for the hidden type
   field, but id 1 is valid since id 0 is valid for the type field id. (#271).
 - Add C23 support for "pstdbool.h" header.
+- Fix strict aliasing UB. In the vast majority of cases `*(T *)p` style
+  memory access is supported by compilers, but as of this writing, at least
+  arm-none-eabi with gcc -O2 -mcpu=cortex-m7 will default to an aggressive
+  optimization that leads to uninitialized stack access when not adding
+  -fno-strict-aliasing. Other testet targets, incl. m0 and m1, and compilers, do
+  no exhibit this behaviour at this point time. For more details see
+  `include/flatcc/portable/pmemaccess.h` and `include/flatcc/flatcc_accessors.h`
+  (`_read`, `_write`)`. Flatcc never guaranteed strict aliasing but it appears
+  to be more robust now. Note that the default is still pointer casts on x86/64
+  to avoid performance hits and because it is not usually a problem.
+  It should also be noted that observed issue is with a literal buffer array
+  on local stack. The issue is less likely with dynamically allocated memory. (#274).
 
 ## [0.6.1]
 
