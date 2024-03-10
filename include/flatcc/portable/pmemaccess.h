@@ -97,7 +97,12 @@ extern "C" {
    optimization strategy.
 
    Note: __has_builtin is not necessarily defined on platforms with __builtin_memcpy support,
-   so detection can be improved. Feel free to contribute. */
+   so detection can be improved. Feel free to contribute.
+
+   Note: `mem_copy_word_` is a macro that may call `mem_copy_word` but it is guaranteed to
+   be called with a literal length argument, so it could be redefined to forward calls
+   to e.g. my_mem_copy_word_2 via token pasting. It is used with the `mem_read/write_nn`
+   functions below.  */
 
 #ifndef mem_copy_word
 #  if defined(__has_builtin)
@@ -163,28 +168,34 @@ extern "C" {
 
 #else /* PORTABLE_MEM_PTR_ACCESS */
 
+/* mem_copy_word_ is guaranteed to receive literal `n` arguments
+   so operations can be optimized via token pasting if necessary. */
+#ifndef mem_copy_word_
+#define mem_copy_word_(d, s, n) mem_copy_word(d, s, n)
+#endif
+
 #define mem_read_8(p)  (*(uint8_t*)(p))
 #define mem_write_8(p, v)  ((void)(*(uint8_t*)(p) = (uint8_t)(v)))
 
-static inline uint16_t mem_read_16(const void *p) { uint16_t v; mem_copy_word(&v, p, 2); return v; }
-static inline uint32_t mem_read_32(const void *p) { uint32_t v; mem_copy_word(&v, p, 4); return v; }
-static inline uint64_t mem_read_64(const void *p) { uint64_t v; mem_copy_word(&v, p, 8); return v; }
+static inline uint16_t mem_read_16(const void *p) { uint16_t v; mem_copy_word_(&v, p, 2); return v; }
+static inline uint32_t mem_read_32(const void *p) { uint32_t v; mem_copy_word_(&v, p, 4); return v; }
+static inline uint64_t mem_read_64(const void *p) { uint64_t v; mem_copy_word_(&v, p, 8); return v; }
 
-#define mem_write_16(p, v) do { const uint16_t x = (uint16_t)(v); mem_copy_word((p), &x, 2); } while(0)
-#define mem_write_32(p, v) do { const uint32_t x = (uint32_t)(v); mem_copy_word((p), &x, 4); } while(0)
-#define mem_write_64(p, v) do { const uint64_t x = (uint64_t)(v); mem_copy_word((p), &x, 8); } while(0)
+#define mem_write_16(p, v) do { const uint16_t x = (uint16_t)(v); mem_copy_word_((p), &x, 2); } while(0)
+#define mem_write_32(p, v) do { const uint32_t x = (uint32_t)(v); mem_copy_word_((p), &x, 4); } while(0)
+#define mem_write_64(p, v) do { const uint64_t x = (uint64_t)(v); mem_copy_word_((p), &x, 8); } while(0)
 
-static inline float mem_read_float_32(const void *p) { float v; mem_copy_word(&v, p, 4); return v; }
-static inline double mem_read_float_64(const void *p) { double v; mem_copy_word(&v, p, 8); return v; }
+static inline float mem_read_float_32(const void *p) { float v; mem_copy_word_(&v, p, 4); return v; }
+static inline double mem_read_float_64(const void *p) { double v; mem_copy_word_(&v, p, 8); return v; }
 
-#define mem_write_float_32(p, v) do { const float x = (float)(v); mem_copy_word((p), &x, 4); } while(0)
-#define mem_write_float_64(p, v) do { const double x = (double)(v); mem_copy_word((p), &x, 8); } while(0)
+#define mem_write_float_32(p, v) do { const float x = (float)(v); mem_copy_word_((p), &x, 4); } while(0)
+#define mem_write_float_64(p, v) do { const double x = (double)(v); mem_copy_word_((p), &x, 8); } while(0)
 
 #ifdef UINT128_MAX
 
-static inline uint128_t mem_read_128(const void *p) { uint128_t v; mem_copy_word(&v, p, 16); return v; }
+static inline uint128_t mem_read_128(const void *p) { uint128_t v; mem_copy_word_(&v, p, 16); return v; }
 
-#define mem_write_128(p, v) do { const uint128_t x = (uint128_t)(v); mem_copy_word((p), &x, 128); } while(0)
+#define mem_write_128(p, v) do { const uint128_t x = (uint128_t)(v); mem_copy_word_((p), &x, 128); } while(0)
 
 #endif
    
