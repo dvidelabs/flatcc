@@ -9,6 +9,7 @@ extern "C" {
 #include <stdint.h>
 #endif
 
+
 #define __flatcc_basic_scalar_accessors_impl(N, T, W, E)                    \
 static inline size_t N ## __size(void)                                      \
 { return sizeof(T); }                                                       \
@@ -17,22 +18,22 @@ static inline T *N ## __ptr_add(T *p, size_t i)                             \
 static inline const T *N ## __const_ptr_add(const T *p, size_t i)           \
 { return p + i; }                                                           \
 static inline T N ## _read_from_pe(const void *p)                           \
-{ return N ## _cast_from_pe(*(T *)p); }                                     \
+{ return N ## _cast_from_pe(N ## _read(p)); }                               \
 static inline T N ## _read_to_pe(const void *p)                             \
-{ return N ## _cast_to_pe(*(T *)p); }                                       \
-static inline T N ## _read(const void *p)                                   \
-{ return *(T *)p; }                                                         \
+{ return N ## _cast_to_pe(N ## _read(p)); }                                 \
 static inline void N ## _write_from_pe(void *p, T v)                        \
-{ *(T *)p = N ## _cast_from_pe(v); }                                        \
+{ N ## _write(p, N ## _cast_from_pe(v)); }                                  \
 static inline void N ## _write_to_pe(void *p, T v)                          \
-{ *(T *)p = N ## _cast_to_pe(v); }                                          \
-static inline void N ## _write(void *p, T v)                                \
-{ *(T *)p = v; }                                                            \
+{ N ## _write(p, N ## _cast_to_pe(v)); }                                    \
 static inline T N ## _read_from_le(const void *p)                           \
-{ return N ## _cast_from_le(*(T *)p); }                                     \
+{ return N ## _cast_from_le(N ## _read(p)); }                               \
 typedef struct { int is_null; T value; } N ## _option_t;
 
 #define __flatcc_define_integer_accessors_impl(N, T, W, E)                  \
+static inline T N ##  _read(const void *p)                                  \
+{ return (T) mem_read_ ## W(p); }                                           \
+static inline void N ##  _write(void *p, T v)                               \
+{ mem_write_ ## W(p, v); }                                                  \
 static inline T N ## _cast_from_pe(T v)                                     \
 { return (T) E ## W ## toh((uint ## W ## _t)v); }                           \
 static inline T N ## _cast_to_pe(T v)                                       \
@@ -48,6 +49,10 @@ static inline T N ## _cast_to_be(T v)                                       \
 __flatcc_basic_scalar_accessors_impl(N, T, W, E)
 
 #define __flatcc_define_real_accessors_impl(N, T, W, E)                     \
+static inline T N ##  _read(const void *p)                                  \
+{ return (T) mem_read_float_ ## W(p); }                                     \
+static inline void N ##  _write(void *p, T v)                               \
+{ mem_write_float_ ## W(p, v); }                                            \
 union __ ## N ## _cast { T v; uint ## W ## _t u; };                         \
 static inline T N ## _cast_from_pe(T v)                                     \
 { union __ ## N ## _cast x;                                                 \
