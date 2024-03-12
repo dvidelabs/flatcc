@@ -32,7 +32,22 @@
    this to be the same as unaligned access. On x86/64 we can be more relaxed both
    with aliasing and alignment, but if at some point a compiler starts to
    modify this behaviour, the header can be updated or PORTABLE_MEM_PTR_ACCESS
-   can be defined to 0 in the build configuration, or this file can be updated. */
+   can be defined to 0 in the build configuration, or this file can be updated.
+
+   The balance is betweem knowing memcpy or __builtin_memcpy is fast,
+   and knowing that pointer casts do not break.
+
+   Known targets that require PORTABLE_MEM_PTR_ACCESS=0 for at least some version:
+
+      - ARM cross compiler: arm-none-eabi, -O2, -mcpu=cortext-m7,
+        breaks on PORTABLE_MEM_PTR_ACCESS=0
+        slow memcpy, has fast __builtin_memcpy
+
+      - Intel ICC -O3 on x86/64 (that compiler is deprecated by Intel).
+        breaks on PORTABLE_MEM_PTR_ACCESS=0
+        has __builtin_memcpy, performance unknown, memcpy perforamnce unknown.
+
+ */
 
 
 /* NOTE: for best performance, `__builtin_memcpy` should be detectable, but
@@ -63,7 +78,11 @@ extern "C" {
 
 #ifndef PORTABLE_MEM_PTR_ACCESS
 
-#if (defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64))
+#if defined(__INTEL_COMPILER)
+#  /* Prevents Intel ICC compiler from breaking on -O3 on x86/64 target,
+      likely due to strict aliasing rules. */
+#  define PORTABLE_MEM_PTR_ACCESS 0
+#elif (defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64))
 #  define PORTABLE_MEM_PTR_ACCESS 1
 #else
 #  define PORTABLE_MEM_PTR_ACCESS 0
