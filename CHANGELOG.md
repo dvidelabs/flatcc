@@ -50,7 +50,10 @@
   to be more robust now. Note that the default is still pointer casts on x86/64
   to avoid performance hits and because it is not usually a problem.
   It should also be noted that observed issue is with a literal buffer array
-  on local stack. The issue is less likely with dynamically allocated memory. (#274).
+  on local stack. The issue is less likely with dynamically allocated memory.
+  The ICC -O3 x86/64 target is also fixed, but the ICC compiler will not
+  not be supported by future FlatCC releases as it has been deprecated by Intel.
+  (#274).
 
 ## [0.6.1]
 
