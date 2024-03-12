@@ -281,8 +281,16 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     endif()
 
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Intel")
-    message(STATUS "Setting Intel C compiler options")
+    message(STATUS "Setting Intel C (ICC) compiler options")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -Wextra")
+    # warning #169: expected a declaration
+    # Fallthrough attribute does not like semicolon.
+    # this is fixed in Intel ICC 2021.5.0, but we only have 2021.4.0 in current CI build.
+    # warning #279: controlling expression is constant
+    # We have these everywhere in flatcc generated code.
+    # warning #188: enumerated type mixed with another type
+    # This is not very noisy, but still annoying, e.g. when zeroing an enum.
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -wd169 -wd279 -wd188")
 elseif (MSVC) # using STREQUAL here conflicts with string interpretation changes in CMake
     message(STATUS "Setting MSVC C compiler options")
     # -DFLATCC_PORTABLE also required, but set earlier
