@@ -1256,7 +1256,7 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
                 field_marker[member->id] = normal_field;
             }
             if (!id_failed && type_sym && type_sym->kind == fb_is_union) {
-                if (member->id <= 1) {
+                if (member->id <= 0) {
                     error_tok(P, m->ident, is_union_vector ?
                             "id attribute value should be larger to accommodate hidden union vector type field" :
                             "id attribute value should be larger to accommodate hidden union type field");

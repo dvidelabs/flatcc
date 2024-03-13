@@ -90,7 +90,9 @@ extern "C" {
     XX(union_element_present_with_type_NONE, "union element present with type NONE")\
     XX(union_vector_length_mismatch, "union type and table vectors have different lengths")\
     XX(union_vector_verification_not_supported, "union vector verification not supported")\
+    XX(runtime_buffer_size_less_than_size_field, "runtime buffer size less than buffer headers size field")\
     XX(not_supported, "not supported")
+
 
 
 enum flatcc_verify_error_no {
@@ -163,18 +165,34 @@ typedef int flatcc_union_verifier_f(flatcc_union_verifier_descriptor_t *ud);
  * The buffer must at least be aligned to uoffset_t on systems that
  * require aligned memory addresses. The buffer pointers alignment is
  * not significant to internal verification of the buffer.
+ *
+ * The `_with_size` variant handles size prefixed buffers which aligns slighly differently
+ * due to the size prefix, notably for buffers with alignment above the uoffset_t type.
  */
 int flatcc_verify_struct_as_root(const void *buf, size_t bufsiz, const char *fid,
+        size_t size, uint16_t align);
+
+int flatcc_verify_struct_as_root_with_size(const void *buf, size_t bufsiz, const char *fid,
         size_t size, uint16_t align);
 
 int flatcc_verify_struct_as_typed_root(const void *buf, size_t bufsiz, flatbuffers_thash_t thash,
         size_t size, uint16_t align);
 
+int flatcc_verify_struct_as_typed_root_with_size(const void *buf, size_t bufsiz, flatbuffers_thash_t thash,
+        size_t size, uint16_t align);
+
 int flatcc_verify_table_as_root(const void *buf, size_t bufsiz, const char *fid,
+        flatcc_table_verifier_f *root_tvf);
+
+int flatcc_verify_table_as_root_with_size(const void *buf, size_t bufsiz, const char *fid,
         flatcc_table_verifier_f *root_tvf);
 
 int flatcc_verify_table_as_typed_root(const void *buf, size_t bufsiz, flatbuffers_thash_t thash,
         flatcc_table_verifier_f *root_tvf);
+
+int flatcc_verify_table_as_typed_root_with_size(const void *buf, size_t bufsiz, flatbuffers_thash_t thash,
+        flatcc_table_verifier_f *root_tvf);
+
 /*
  * The buffer header is verified by any of the `_as_root` verifiers, but
  * this function may be used as a quick sanity check.
@@ -182,6 +200,16 @@ int flatcc_verify_table_as_typed_root(const void *buf, size_t bufsiz, flatbuffer
 int flatcc_verify_buffer_header(const void *buf, size_t bufsiz, const char *fid);
 
 int flatcc_verify_typed_buffer_header(const void *buf, size_t bufsiz, flatbuffers_thash_t type_hash);
+
+/*
+ * Verifies size prefixed buffer headers. The `bufsiz` argument is a pointer that will be updated
+ * with the size stored in the buffer header iff it is no larger than the input argument, and
+ * otherwise the verifer fails. The updated size field adds sizeof(flatbuffers_uoffset_t) to the size
+ * to be compatible with bufsiz since the header size field does not include itself.
+ */
+int flatcc_verify_buffer_header_with_size(const void *buf, size_t *bufsiz, const char *fid);
+
+int flatcc_verify_typed_buffer_header_with_size(const void *buf, size_t *bufsiz, flatbuffers_thash_t type_hash);
 
 /*
  * The following functions are typically called by a generated table

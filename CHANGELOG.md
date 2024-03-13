@@ -24,6 +24,28 @@
 - Add sanitizer flag for clang debug and related warnings (input from several
   PRs incl. #237).
 - Fix missing runtime check for building too large tables (#235).
+- Fix alignment of large objects created outside root buffer (#127).
+- Pad top level buffer end to largest object in buffer
+- Add `_with_size` verifiers to enable verification of size prefixed buffers
+  that are aligned above 4 bytes (sizeof(uoffset_t)) (#210, PR #213).
+  Also fixes a (uoffset_t) cast that would truncate very large verifier `bufsiz`
+  arguments above 4GB before the verifier checked for argument overflow
+  (not expected to be a practical problem, but could be abused).
+- Fix `__[portable_aligned_alloc,` the fallback implementation of `aligned_alloc`
+  so returns null proper and not a small offset on alloc failure. Most
+  platforms do not depend on this function (#269).
+  Also fix equivalent FLATCC_ALIGNED_ALLOC that does not necesserily use malloc.
+- Fix flatcc compiler error message when schema has a union as first table field
+  with explicit id attribute 1. Explict id must leave space for the hidden type
+  field, but id 1 is valid since id 0 is valid for the type field id. (#271).
+- Add C23 support for "pstdbool.h" header.
+- Fix strict aliasing UB. In the vast majority of cases `*(T *)p` style memory
+  access is supported by compilers, but some both enable strict aliasing by
+  default while being very aggressive with strict aliasing. This can lead to
+  reading uninitialized memory and/or segfaults in the monster_test test case,
+  but is less likely problematic in dynamically allocated memory buffers.
+  For performance reasons this fix is not universally applied when deemed
+  unnecessary. Added README section "Strict Aliasing". (#274).
 
 ## [0.6.1]
 

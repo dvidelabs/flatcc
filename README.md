@@ -48,7 +48,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
   * [Type Identifiers](#type-identifiers)
 * [JSON Parsing and Printing](#json-parsing-and-printing)
   * [Base64 Encoding](#base64-encoding)
-  * [Fixed Length Arrays](#fixed-length-arrays)
+  * [Parsing Fixed Length Arrays](#parsing-fixed-length-arrays)
   * [Runtime Flags](#runtime-flags)
   * [Generic Parsing and Printing.](#generic-parsing-and-printing)
   * [Performance Notes](#performance-notes)
@@ -58,7 +58,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
 * [Types](#types)
 * [Unions](#unions)
   * [Union Scope Resolution](#union-scope-resolution)
-* [Fixed Length Arrays](#fixed-length-arrays-1)
+* [Fixed Length Arrays](#fixed-length-arrays)
 * [Optional Fields](#optional-fields)
 * [Endianness](#endianness)
 * [Pitfalls in Error Handling](#pitfalls-in-error-handling)
@@ -73,6 +73,7 @@ executable also handle optional json parsing or printing in less than 2 us for a
   * [Custom Allocation](#custom-allocation)
   * [Custom Asserts](#custom-asserts)
   * [Shared Libraries](#shared-libraries)
+  * [Strict Aliasing](#strict-aliasing)
 * [Distribution](#distribution)
   * [Unix Files](#unix-files)
   * [Windows Files](#windows-files)
@@ -89,10 +90,8 @@ executable also handle optional json parsing or printing in less than 2 us for a
 
 ## Online Forums
 
-- [Google Groups - FlatBuffers](https://groups.google.com/forum/#!forum/flatbuffers)
 - [Discord - FlatBuffers](https://discord.gg/6qgKs3R)
-- [Gitter - FlatBuffers](https://gitter.im/google/flatbuffers)
-
+- [Github - FlatCC Discussions](https://github.com/dvidelabs/flatcc/discussions)
 
 ## Introduction
 
@@ -295,7 +294,10 @@ fi
 ## Status
 
 Release 0.6.2 (in development) is primarily a bug fix release, refer
-to CHANGELOG for details.
+to CHANGELOG for details. A long standing bug has been fixed where
+where objects created before a call to _create_as_root would not be
+properly aligned, and buffer end is now also padded to largest object
+seen within the buffer.
 Note that for clang debug builds, -fsanitize=undefined has been
 added and this may require dependent source code to also use
 that flag to avoid missing linker symbols. The feature can be disabled
@@ -1612,7 +1614,7 @@ possible, but it is recognized that a `(force_align: n)` attribute on
 `[ubyte]` vectors could be useful, but it can also be handled via nested
 flatbuffers which also align data.
 
-### Fixed Length Arrays
+### Parsing Fixed Length Arrays
 
 Fixed length arrays introduced in 0.6.0 allow for structs containing arrays
 of fixed length scalars, structs and chars. Arrays are parsed like vectors
@@ -2016,7 +2018,7 @@ optional scalar fields, please refer to [optional_scalars_test.fbs] and [optiona
 
 ## Endianness
 
-The `include/flatcc/portable/pendian_detect.h` file detects endianness
+The [pendian_detect.h]` file detects endianness
 for popular compilers and provides a runtime fallback detection for
 others. In most cases even the runtime detection will be optimized out
 at compile time in release builds.
@@ -2036,7 +2038,7 @@ runtime library with flatbuffers encoded in big endian format regardless
 of the host platforms endianness. Longer term this should probably be
 placed in a separate library with separate name prefixes or suffixes,
 but it is usable as is. Redefine `FLATBUFFERS_PROTOCOL_IS_LE/BE`
-accordingly in `include/flatcc/flatcc_types.h`. This is already done in
+accordingly in [flatcc_types.h]. This is already done in
 the `be` branch. This branch is not maintained but the master branch can
 be merged into it as needed.
 
@@ -2218,8 +2220,10 @@ If a specific platform has been tested, it would be good with feedback
 and possibly patches to the portability layer so these can be made
 available to other users.
 
-
 ## Building
+
+Note: if a test fails, see [Strict Aliasing](#strict-aliasing)
+for a possible resolution.
 
 ### Unix Build (OS-X, Linux, related)
 
@@ -2337,6 +2341,16 @@ because cross-compilation cannot run the cross-compiled flatcc tool, and
 in part because there appears to be some issues with CMake custom build
 steps needed when building test and sample projects.
 
+2024-03-08: WARNING:
+-O2 -mcpu=cortex-m7 targets using the arm-none-eabi 13.2.Rel1 toolchain
+can result in uninitialized stack access when not compiled with
+`-fno-strict-aliasing`
+-mcpu=cortex-m0 and -mcpu=cortex-m1 appears to be unaffected.
+See also [issue #274](https://github.com/dvidelabs/flatcc/issues/274).
+2024-10-03: Fix available on flatcc master branch when you read this.
+See also CHANGELOG comments for release 0.6.2.
+
+
 The option `FLATCC_RTONLY` will disable tests and only build the runtime
 library.
 
@@ -2415,6 +2429,60 @@ standard library name using the following option:
     CMAKE ... -DBUILD_SHARED_LIBS=ON ...
 
 See also [CMake Gold: Static + shared](http://cgold.readthedocs.io/en/latest/tutorials/libraries/static-shared.html).
+
+
+## Strict Aliasing
+
+The Flatcc build files should take care of strict aliasing issues on
+common platforms, but it is not a solved problem, so here is some background
+information.
+
+In most cases this is a non-issue with the current flatcc code
+base, but that does not help in the cases where it is an issue.
+
+Compilers have become increasingly aggressive with applying, and defaulting
+to, strict aliasing rules.
+
+FlatCC does not guarantee that strict aliasing rules are followed, but
+the code base is updated as issues are detected. If a test fails or segfaults
+the first thing to check is `-fno-strict-aliasing`, or the platform equivalent,
+or to disable pointer casts, as discussed below.
+
+Strict aliasing means that a cast like `p2 = *(T *)p1` is not valid because the
+compiler thinks that p2 does not depend on data pointed to by p1. In most cases
+compilers are sensible enough to handle this, but not always. It can, and
+will, lead to reading from uninitialized memory or segfaults. There are two ways
+around this, one is to use unions to convert from integer to float, which is
+valid in C, but not in C++, and the other is to use `memcpy` for small constant
+sizes, which is guaranteed safe, but can be slow if not optimized, and it is
+not always optimized.
+
+FlatCC manages this in [flatcc_accessors.h] which forwards to platform dependent
+code in [pmemaccess.h]. Note that is applies to the runtime code base only. For
+compile time the only issue should be hash tables and these should be using
+safe unaligned read methods.
+
+FlatCC either uses optimized `memcpy` or non-compliant pointer casts depending on
+the platform. Essentially, buffer memory is first copied, or pointer cast, into
+an unsigned integer of a given size. This integer is then endian converted into
+another unsigned integer. Then that integer is converted into a final integer
+type or floating point type using union casts. This generally optimizes out to
+very few assembly instructions, but when it does not, code size and execution
+time can grow significantly.
+
+It has been observed that targets both default to strict aliasing with
+-O2 optimization, and at the same to uses a function call for
+`memcpy(dest, src, sizeof(uint32_t))`, but where `__builtin_memcpy`
+does optimize well, hence requiring detection of a fast `memcpy` operation.
+
+This is a game between being reasonably performant and compliant.
+
+`-DPORTABLE_MEM_PTR_ACCESS=0` will force the runtime code to not use
+pointer casts but it can potentially generate suboptimal code and
+can be set 1 if the compiler and build configuration is known to not
+have issues with strict aliasing. It is set to 1 for most x86/64 targets
+since this has been working for a long time in FlatCC builds and tests,
+while memcpy might not work efficient.
 
 
 ## Distribution
@@ -2629,4 +2697,8 @@ See [Benchmarks]
 [readfile.h]: include/flatcc/support/readfile.h
 [Security Considerations]: https://github.com/dvidelabs/flatcc/blob/master/doc/security.md
 [flatc --annotate]: https://github.com/google/flatbuffers/tree/master/tests/annotated_binary
+[flatcc_accessors.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/flatcc_accessors.h
+[pmemaccess.h]: https://github.com/dvidelabs/flatcc/blob/master/include/flatcc/portable/pmemaccess.h
+[pendian_detect.h]: include/flatcc/portable/pendian_detect.h`
+[flatcc_types.h]: include/flatcc/flatcc_types.h
 [WebKit Style]: https://webkit.org/code-style-guidelines/
