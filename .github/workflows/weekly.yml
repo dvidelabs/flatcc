@@ -182,7 +182,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.14
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: 2.8.12
       - uses: actions/checkout@v4
