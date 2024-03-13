@@ -2450,10 +2450,10 @@ or to disable pointer casts, as discussed below.
 
 Strict aliasing means that a cast like `p2 = *(T *)p1` is not valid because the
 compiler thinks that p2 does not depend on data pointed to by p1. In most cases
-compilers are sensible enough to handle this, but not allways. It can, and
+compilers are sensible enough to handle this, but not always. It can, and
 will, lead to reading from uninitialized memory or segfaults. There are two ways
 around this, one is to use unions to convert from integer to float, which is
-valid in C but not in C++, and the other is to use `memcpy` for small constant
+valid in C, but not in C++, and the other is to use `memcpy` for small constant
 sizes, which is guaranteed safe, but can be slow if not optimized, and it is
 not always optimized.
 
@@ -2463,11 +2463,12 @@ compile time the only issue should be hash tables and `xxhash` should be robust
 even if it might use a potentially slow `memcpy` as a fallback.
 
 Flatcc either uses optimized memcpy or non-compliant pointer casts depending on
-the platform. Essentially, buffer memory is first copied, or pointer cast,
-into an unsigned integer of a given size. Then the integer is converted to
-a final integer type or floating point type using union casts. This generally
-optimizes out to very few assembly instructions, but if it does not, code
-size and execution time can grow significantly.
+the platform. Essentially, buffer memory is first copied, or pointer cast, into
+an unsigned integer of a given size. This integer is then endian converted into
+another unsigned integer. Then that integer is converted into a final integer
+type or floating point type using union casts. This generally optimizes out to
+very few assembly instructions, but if it does not, code size and execution time
+can grow significantly.
 
 It has been observed that targets both default to strict aliasing with
 -O2 optimization, and at the same to uses a function call for
