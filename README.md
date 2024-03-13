@@ -2459,21 +2459,21 @@ not always optimized.
 
 FlatCC manages this in [flatcc_accessors.h] which forwards to platform dependent
 code in [pmemaccess.h]. Note that is applies to the runtime code base only. For
-compile time the only issue should be hash tables and `xxhash` should be robust
-even if it might use a potentially slow `memcpy` as a fallback.
+compile time the only issue should be hash tables and these should be using
+safe unaligned read methods.
 
-Flatcc either uses optimized memcpy or non-compliant pointer casts depending on
+FlatCC either uses optimized `memcpy` or non-compliant pointer casts depending on
 the platform. Essentially, buffer memory is first copied, or pointer cast, into
 an unsigned integer of a given size. This integer is then endian converted into
 another unsigned integer. Then that integer is converted into a final integer
 type or floating point type using union casts. This generally optimizes out to
-very few assembly instructions, but if it does not, code size and execution time
-can grow significantly.
+very few assembly instructions, but when it does not, code size and execution
+time can grow significantly.
 
 It has been observed that targets both default to strict aliasing with
 -O2 optimization, and at the same to uses a function call for
 `memcpy(dest, src, sizeof(uint32_t))`, but where `__builtin_memcpy`
-does optimize well.
+does optimize well, hence requiring detection of a fast `memcpy` operation.
 
 This is a game between being reasonably performant and compliant.
 
