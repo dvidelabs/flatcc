@@ -2459,8 +2459,7 @@ not always optimized.
 
 FlatCC manages this in [flatcc_accessors.h] which forwards to platform dependent
 code in [pmemaccess.h]. Note that is applies to the runtime code base only. For
-compile time the only issue should be hash tables and these should be using
-safe unaligned read methods.
+compile time the only issue should be hash tables and these should also be safe.
 
 FlatCC either uses optimized `memcpy` or non-compliant pointer casts depending on
 the platform. Essentially, buffer memory is first copied, or pointer cast, into
