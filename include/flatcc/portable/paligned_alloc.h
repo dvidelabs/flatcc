@@ -171,6 +171,7 @@ static inline void *__portable_aligned_alloc(size_t alignment, size_t size)
         alignment = sizeof(void *);
     }
     raw = (char *)(size_t)malloc(total_size);
+    if (!raw) return 0;
     buf = raw + alignment - 1 + sizeof(void *);
     buf = (void *)(((size_t)buf) & ~(alignment - 1));
     ((void **)buf)[-1] = raw;

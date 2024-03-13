@@ -21,7 +21,7 @@ jobs:
         uses: aminya/setup-cpp@v1
         with:
           llvm: ${{ matrix.clang-version }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build and run tests
         run: |
           scripts/initbuild.sh make-concurrent
@@ -35,7 +35,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install gcc-multilib g++-multilib
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build and run tests
         env:
           CC: clang
@@ -61,7 +61,7 @@ jobs:
           sudo dpkg -i ./cpp-4.4_4.4.7-8ubuntu1_amd64.deb
           sudo dpkg -i ./gcc-4.4_4.4.7-8ubuntu1_amd64.deb
           sudo dpkg -i ./libstdc++6-4.4-dev_4.4.7-8ubuntu1_amd64.deb ./g++-4.4_4.4.7-8ubuntu1_amd64.deb
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build and run tests
         env:
           CC: gcc-4.4
@@ -82,7 +82,7 @@ jobs:
         uses: aminya/setup-cpp@v1
         with:
           gcc: ${{ matrix.gcc-version }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build and run tests
         run: |
           scripts/initbuild.sh make-concurrent
@@ -96,7 +96,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install gcc-multilib g++-multilib
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build and run tests
         run: |
           scripts/initbuild.sh make-32bit
@@ -122,7 +122,7 @@ jobs:
         run: |
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build and run tests
         env:
           CC: ${{ matrix.compiler }}
@@ -135,7 +135,7 @@ jobs:
     name: macOS Clang
     runs-on: macos-11
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build and run tests
         run: |
           scripts/initbuild.sh make-concurrent
@@ -149,7 +149,7 @@ jobs:
       matrix:
         gcc-version: [9, 12]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Prepare
         run: |
           brew install gcc@${{ matrix.gcc-version }}
@@ -169,8 +169,8 @@ jobs:
       matrix:
         version: [2019, 2022]
     steps:
-      - uses: microsoft/setup-msbuild@v1.1
-      - uses: actions/checkout@v3
+      - uses: microsoft/setup-msbuild@v2
+      - uses: actions/checkout@v4
       - name: Build and run tests
         run: |
           cmake .
@@ -182,10 +182,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1
+        uses: jwlawson/actions-setup-cmake@v1.14
         with:
           cmake-version: 2.8.12
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build and run tests
         run: |
           cmake --version

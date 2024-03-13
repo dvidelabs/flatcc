@@ -125,7 +125,7 @@ extern "C" {
         ((uint8_t *)(p))[3] = (uint8_t)(((uint32_t)(v)) >> 24);             \
         } while (0)
 
-#define unaligned_write_htole64(p) do {                                     \
+#define unaligned_write_htole64(p, v) do {                                  \
         ((uint8_t *)(p))[0] = (uint8_t)(((uint64_t)(v)) >>  0);             \
         ((uint8_t *)(p))[1] = (uint8_t)(((uint64_t)(v)) >>  8);             \
         ((uint8_t *)(p))[2] = (uint8_t)(((uint64_t)(v)) >> 16);             \

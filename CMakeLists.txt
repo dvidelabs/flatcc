@@ -20,6 +20,10 @@ option(FLATCC_TEST "enable tests" ON)
 # project.
 option(FLATCC_CXX_TEST "enable C++ tests" ON)
 
+# Note that linking with flatcc debug libraries may require souce code to also use
+# the sanitize flag.
+option(FLATCC_DEBUG_CLANG_SANITIZE "enable clang sanitize flag for debug build" ON)
+
 # Conditionally set project languages based on FLATCC_TEST, as C++ is
 # only necessary if building the tests.
 if (FLATCC_TEST AND FLATCC_CXX_TEST)
@@ -188,9 +192,11 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang" AND NOT "${CMAKE_CXX_SIMULATE_ID}" STREQ
     if (FLATCC_IGNORE_CONST_COND)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-tautological-constant-out-of-range-compare")
     endif()
-    if (CMAKE_BUILD_TYPE MATCHES Debug)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+    if (FLATCC_DEBUG_CLANG_SANITIZE)
+        if (CMAKE_BUILD_TYPE MATCHES Debug)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+        endif()
     endif()
     # Suppress warning relaxed in clang-6, see https://reviews.llvm.org/D28148
     if (CMAKE_C_COMPILER_VERSION VERSION_LESS 6)
@@ -275,8 +281,16 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     endif()
 
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Intel")
-    message(STATUS "Setting Intel C compiler options")
+    message(STATUS "Setting Intel C (ICC) compiler options")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -Wextra")
+    # warning #169: expected a declaration
+    # Fallthrough attribute does not like semicolon.
+    # this is fixed in Intel ICC 2021.5.0, but we only have 2021.4.0 in current CI build.
+    # warning #279: controlling expression is constant
+    # We have these everywhere in flatcc generated code.
+    # warning #188: enumerated type mixed with another type
+    # This is not very noisy, but still annoying, e.g. when zeroing an enum.
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -wd169 -wd279 -wd188")
 elseif (MSVC) # using STREQUAL here conflicts with string interpretation changes in CMake
     message(STATUS "Setting MSVC C compiler options")
     # -DFLATCC_PORTABLE also required, but set earlier

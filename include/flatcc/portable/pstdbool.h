@@ -7,9 +7,18 @@
 
 #include <stdbool.h>
 
-#elif (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
-/* C99 or newer */
+#elif (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202300L)
 
+/* C23 changed the bool type. */
+#define true  true
+#define false false
+#define bool  bool
+
+#define __bool_true_false_are_defined 1
+
+#elif (defined(__STDC__) && __STDC__ && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+
+/* C99 or newer, and older than C23  */
 #define bool _Bool
 #define true 1
 #define false 0
