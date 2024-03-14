@@ -2455,7 +2455,8 @@ will, lead to reading from uninitialized memory or segfaults. There are two ways
 around this, one is to use unions to convert from integer to float, which is
 valid in C, but not in C++, and the other is to use `memcpy` for small constant
 sizes, which is guaranteed safe, but can be slow if not optimized, and it is
-not always optimized.
+not always optimized. (Not strictly `memcpy` but access via cast to `char *` or
+other "narrow" type).
 
 FlatCC manages this in [flatcc_accessors.h] which forwards to platform dependent
 code in [pmemaccess.h]. Note that is applies to the runtime code base only. For
