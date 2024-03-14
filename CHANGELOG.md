@@ -47,7 +47,7 @@
   For performance reasons this fix is not universally applied when deemed
   unnecessary. Added README section "Strict Aliasing". (#274).
 - Fix flatcc cli flags for --schema --outfile. (#216).
-- Replace cmetrohash and murmur hash with xxhash.
+- Replace cmetrohash and murmur hash with xxhash. (#238).
 
 ## [0.6.1]
 
