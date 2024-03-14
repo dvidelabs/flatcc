@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        clang-version: [5, 7, 9, 11, 13, 15]
+        clang-version: [5, 7, 9, 11, 13, 15, 17]
     steps:
       - name: Setup Clang
         uses: aminya/setup-cpp@v1
@@ -76,7 +76,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gcc-version: [7, 9, 11]
+        gcc-version: [7, 9, 11, 13]
     steps:
       - name: Setup GCC
         uses: aminya/setup-cpp@v1
@@ -182,7 +182,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.14
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: 2.8.12
       - uses: actions/checkout@v4
