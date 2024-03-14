@@ -15,15 +15,21 @@ set(FBS_DIR "${PROJECT_SOURCE_DIR}/samples/monster")
 
 include_directories("${GEN_DIR}" "${INC_DIR}")
 
-add_custom_target(gen_monster_bfbs ALL)
+file(GLOB FBS_FS ${FBS_DIR}/*.fbs)
+list(TRANSFORM FBS_FS
+    REPLACE "${FBS_DIR}/(.*)\\.fbs$" "${GEN_DIR}/\\1.bfbs"
+    OUTPUT_VARIABLE FBS_BFBS
+)
+
 add_custom_command (
-    TARGET gen_monster_bfbs
+    OUTPUT ${FBS_BFBS}
     COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN_DIR}"
     COMMAND flatcc_cli --schema -o "${GEN_DIR}" "${FBS_DIR}/monster.fbs"
-    DEPENDS flatcc_cli "${FBS_DIR}/monster.fbs"
+    DEPENDS flatcc_cli "${FBS_FS}"
+    COMMENT "Generate bfbs2json fbs headers"
 )
-add_executable(bfbs2json bfbs2json.c)
-add_dependencies(bfbs2json gen_monster_bfbs)
+
+add_executable(bfbs2json bfbs2json.c ${FBS_BFBS})
 target_link_libraries(bfbs2json flatccrt)
 
 if (FLATCC_TEST)
