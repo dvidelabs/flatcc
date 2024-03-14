@@ -55,24 +55,24 @@ int encode(void *bench, void *buffer, size_t *size)
     (void)bench;
 
     strcpy(fbc.location, "https://www.example.com/myurl/");
-    fbc.location_len = strlen(fbc.location);
+    fbc.location_len = (int)strlen(fbc.location);
     fbc.fruit = Bananas;
     fbc.initialized = 1;
     for (i = 0; i < VEC_LEN; ++i) {
       foobar = &fbc.list[i];
       foobar->rating = 3.1415432432445543543 + i;
-      foobar->postfix = '!' + i;
+      foobar->postfix = '!' + (unsigned char)i;
       strcpy(foobar->name, "Hello, World!");
-      foobar->name_len = strlen(foobar->name);
+      foobar->name_len = (int)strlen(foobar->name);
       bar = &foobar->sibling;
-      bar->ratio = 3.14159f + i;
-      bar->size = 10000 + i;
+      bar->ratio = 3.14159f + (float)i;
+      bar->size = 10000 + (unsigned short)i;
       bar->time = 123456 + i;
       foo = &bar->parent;
-      foo->id = 0xABADCAFEABADCAFE + i;
-      foo->count = 10000 + i;
+      foo->id = (int64_t)0xABADCAFEABADCAFE + i;
+      foo->count = 10000 + (short)i;
       foo->length = 1000000 + i;
-      foo->prefix = '@' + i;
+      foo->prefix = '@' + (char)i;
     }
     if (*size < sizeof(struct FooBarContainer)) {
         return -1;
@@ -91,6 +91,7 @@ int64_t decode(void *bench, void *buffer, size_t size, int64_t sum)
     struct Bar *bar;
 
     (void)bench;
+    (void)size;
 
     foobarcontainer = buffer;
     sum += foobarcontainer->initialized;
