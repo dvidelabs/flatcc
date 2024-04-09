@@ -8,6 +8,9 @@ on:
 env:
   CTEST_OUTPUT_ON_FAILURE: 1
 
+permissions:
+  contents: read
+
 jobs:
   clang:
     name: Clang ${{ matrix.clang-version }}
