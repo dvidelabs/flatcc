@@ -24,7 +24,7 @@ jobs:
         uses: aminya/setup-cpp@290824452986e378826155f3379d31bce8753d76 # v0.37.0
         with:
           llvm: ${{ matrix.clang-version }}
-      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Build and run tests
         run: |
           scripts/initbuild.sh make-concurrent
@@ -38,7 +38,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install gcc-multilib g++-multilib
-      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Build and run tests
         env:
           CC: clang
@@ -64,7 +64,7 @@ jobs:
           sudo dpkg -i ./cpp-4.4_4.4.7-8ubuntu1_amd64.deb
           sudo dpkg -i ./gcc-4.4_4.4.7-8ubuntu1_amd64.deb
           sudo dpkg -i ./libstdc++6-4.4-dev_4.4.7-8ubuntu1_amd64.deb ./g++-4.4_4.4.7-8ubuntu1_amd64.deb
-      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Build and run tests
         env:
           CC: gcc-4.4
@@ -85,7 +85,7 @@ jobs:
         uses: aminya/setup-cpp@290824452986e378826155f3379d31bce8753d76 # v0.37.0
         with:
           gcc: ${{ matrix.gcc-version }}
-      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Build and run tests
         run: |
           scripts/initbuild.sh make-concurrent
@@ -99,7 +99,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install gcc-multilib g++-multilib
-      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Build and run tests
         run: |
           scripts/initbuild.sh make-32bit
@@ -125,7 +125,7 @@ jobs:
         run: |
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
-      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Build and run tests
         env:
           CC: ${{ matrix.compiler }}
@@ -138,7 +138,7 @@ jobs:
     name: macOS Clang
     runs-on: macos-12
     steps:
-      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Build and run tests
         run: |
           scripts/initbuild.sh make-concurrent
@@ -152,7 +152,7 @@ jobs:
       matrix:
         gcc-version: [10, 13]
     steps:
-      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Prepare
         run: |
           brew install gcc@${{ matrix.gcc-version }}
@@ -173,7 +173,7 @@ jobs:
         version: [2019, 2022]
     steps:
       - uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
-      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Build and run tests
         run: |
           cmake .
@@ -188,7 +188,7 @@ jobs:
         uses: jwlawson/actions-setup-cmake@802fa1a2c4e212495c05bf94dba2704a92a472be # v2.0.2
         with:
           cmake-version: 2.8.12
-      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Build and run tests
         run: |
           cmake --version
