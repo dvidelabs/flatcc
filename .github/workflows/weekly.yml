@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        clang-version: [5, 7, 9, 11, 13, 15, 17]
+        clang-version: [5, 7, 9, 11, 13, 15, 17, 18]
     steps:
       - name: Setup Clang
         uses: aminya/setup-cpp@290824452986e378826155f3379d31bce8753d76 # v0.37.0
@@ -136,7 +136,7 @@ jobs:
 
   macos-clang:
     name: macOS Clang
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
       - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
       - name: Build and run tests
@@ -146,11 +146,11 @@ jobs:
 
   macos-gcc:
     name: macOS GCC ${{ matrix.gcc-version }}
-    runs-on: macos-11
+    runs-on: macos-12
     strategy:
       fail-fast: false
       matrix:
-        gcc-version: [9, 12]
+        gcc-version: [10, 13]
     steps:
       - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
       - name: Prepare
