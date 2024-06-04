@@ -155,7 +155,11 @@ jobs:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Prepare
         run: |
-          brew install gcc@${{ matrix.gcc-version }}
+          # Install gcc if not already available.
+          brew list gcc@${{ matrix.gcc-version }} &>/dev/null || \
+            brew install gcc@${{ matrix.gcc-version }}
+          # Switch to a working Xcode version.
+          sudo xcode-select -s /Applications/Xcode_14.0.app/Contents/Developer
       - name: Build and run tests
         env:
           CC: gcc-${{ matrix.gcc-version }}
