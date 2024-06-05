@@ -135,8 +135,12 @@ jobs:
           scripts/test.sh
 
   macos-clang:
-    name: macOS Clang
-    runs-on: macos-12
+    name: macOS Clang (${{ matrix.runner == 'macos-13' && 'x86_64' || 'arm64' }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-13, macos-14]
     steps:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Build and run tests
@@ -145,12 +149,23 @@ jobs:
           scripts/test.sh
 
   macos-gcc:
-    name: macOS GCC ${{ matrix.gcc-version }}
-    runs-on: macos-12
+    name: macOS GCC ${{ matrix.gcc-version }} (${{ matrix.runner == 'macos-13' && 'x86_64' || 'arm64' }})
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        gcc-version: [10, 13]
+        include:
+          - runner: macos-13
+            gcc-version: 10
+          - runner: macos-13
+            gcc-version: 13
+            xcode-version: 14.3 # Required by prebuilt GCC 13.3 (15.0 default)
+
+          - runner: macos-14
+            gcc-version: 11 # First version available on arm64
+          - runner: macos-14
+            gcc-version: 13
+            xcode-version: 15.3 # Required by prebuilt GCC 13.3 (15.0 default)
     steps:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Prepare
@@ -158,8 +173,10 @@ jobs:
           # Install gcc if not already available.
           brew list gcc@${{ matrix.gcc-version }} &>/dev/null || \
             brew install gcc@${{ matrix.gcc-version }}
-          # Switch to a working Xcode version.
-          sudo xcode-select -s /Applications/Xcode_14.0.app/Contents/Developer
+      - name: Switch to a working Xcode version
+        if: ${{ matrix.xcode-version }}
+        run: |
+          sudo xcode-select -s /Applications/Xcode_${{ matrix.xcode-version }}.app/Contents/Developer
       - name: Build and run tests
         env:
           CC: gcc-${{ matrix.gcc-version }}
