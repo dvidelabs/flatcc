@@ -167,8 +167,7 @@ jobs:
         run: |
           # Install gcc if not already available.
           brew list gcc@${{ matrix.gcc-version }} &>/dev/null || \
-            brew update && \
-            brew install gcc@${{ matrix.gcc-version }}
+            (brew update && brew install gcc@${{ matrix.gcc-version }})
       - name: Build and run tests
         env:
           CC: gcc-${{ matrix.gcc-version }}
@@ -190,8 +189,7 @@ jobs:
         run: |
           # Install gcc if not already available.
           brew list gcc@${{ matrix.gcc-version }} &>/dev/null || \
-            brew update && \
-            brew install gcc@${{ matrix.gcc-version }}
+            (brew update && brew install gcc@${{ matrix.gcc-version }})
       - name: Build and run tests
         env:
           CC: gcc-${{ matrix.gcc-version }}

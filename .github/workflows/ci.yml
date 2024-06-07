@@ -40,11 +40,11 @@ jobs:
 
   macos:
     name: macOS
-    runs-on: macos-12
+    runs-on: macos-14
     steps:
       - name: Prepare
         run: |
-          brew install cmake ninja
+          brew install ninja
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Build and run tests
         run: |
