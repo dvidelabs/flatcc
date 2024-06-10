@@ -136,7 +136,17 @@ jobs:
 
   macos-clang:
     name: macOS Clang
-    runs-on: macos-12
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - name: Build and run tests
+        run: |
+          scripts/initbuild.sh make-concurrent
+          scripts/test.sh
+
+  macos-clang-x86:
+    name: macOS Clang (x86)
+    runs-on: macos-13 # Last macos x86 runner
     steps:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Build and run tests
@@ -146,16 +156,40 @@ jobs:
 
   macos-gcc:
     name: macOS GCC ${{ matrix.gcc-version }}
-    runs-on: macos-12
+    runs-on: macos-14
     strategy:
       fail-fast: false
       matrix:
-        gcc-version: [10, 13]
+        gcc-version: [11, 14]
     steps:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Prepare
         run: |
-          brew install gcc@${{ matrix.gcc-version }}
+          # Install gcc if not already available.
+          brew list gcc@${{ matrix.gcc-version }} &>/dev/null || \
+            (brew update && brew install gcc@${{ matrix.gcc-version }})
+      - name: Build and run tests
+        env:
+          CC: gcc-${{ matrix.gcc-version }}
+          CXX: g++-${{ matrix.gcc-version }}
+        run: |
+          scripts/initbuild.sh make-concurrent
+          scripts/test.sh
+
+  macos-gcc-x86:
+    name: macOS GCC ${{ matrix.gcc-version }} (x86)
+    runs-on: macos-13 # Last macos x86 runner
+    strategy:
+      fail-fast: false
+      matrix:
+        gcc-version: [10, 14]
+    steps:
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - name: Prepare
+        run: |
+          # Install gcc if not already available.
+          brew list gcc@${{ matrix.gcc-version }} &>/dev/null || \
+            (brew update && brew install gcc@${{ matrix.gcc-version }})
       - name: Build and run tests
         env:
           CC: gcc-${{ matrix.gcc-version }}
