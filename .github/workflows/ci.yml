@@ -61,3 +61,45 @@ jobs:
           cmake .
           msbuild FlatCC.sln /m /property:Configuration=Release
           ctest -VV
+
+  meson-build:
+    name: Meson (${{matrix.os}})
+    runs-on: ${{matrix.os}}
+    continue-on-error: true
+    strategy:
+      matrix:
+        os: [ ubuntu-22.04, macos-12, windows-2022 ]
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: microsoft/setup-msbuild@v1.1
+        if: runner.os == 'windows'
+      - uses: actions/setup-python@v2
+        if: runner.os == 'windows'
+      - name: Prepare MSVC
+        uses: bus1/cabuild/action/msdevshell@v1
+        with:
+          architecture: x64
+        if: runner.os == 'windows'
+      - name: Install dependencies (windows)
+        if: runner.os == 'windows'
+        run: |
+          pip install meson
+
+      - name: Install dependencies (ubuntu)
+        if: runner.os == 'linux'
+        run: |
+          sudo apt update -y
+          sudo apt install ninja-build meson
+
+      - name: Install dependencies (macos)
+        if: runner.os == 'macos'
+        run: |
+          brew install meson ninja
+
+      - name: Build and run tests
+        run: |
+          meson setup build --buildtype release
+          meson compile -C build
+          meson test -C build --verbose
+          meson test -C build --benchmark --verbose

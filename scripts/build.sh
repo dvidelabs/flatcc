@@ -10,9 +10,11 @@ CFGFILE=${ROOT}/scripts/build.cfg
 
 if [ -e $CFGFILE ]; then
     . $CFGFILE
+else
+    # Default build system is cmake/ninja
+    ${ROOT}/scripts/initbuild.sh cmake
+    . $CFGFILE
 fi
-
-FLATCC_BUILD_CMD=${FLATCC_BUILD_CMD:-ninja}
 
 mkdir -p ${ROOT}/bin
 mkdir -p ${ROOT}/lib
@@ -24,8 +26,8 @@ rm -f ${ROOT}/libflatcc_d.a
 rm -f ${ROOT}/libflatccrt.a
 rm -f ${ROOT}/libflatccrt_d.a
 
-if [ ! -d ${ROOT}/build/Debug ] || [ ! -d  ${ROOT}/build/Release ]; then
-    ${ROOT}/scripts/initbuild.sh
+if [ ! -d ${ROOT}/build/Debug ] || [ ! -d ${ROOT}/build/Release ]; then
+    ${ROOT}/scripts/initbuild.sh $FLATCC_BUILD_CONFIG
 fi
 
 echo "building Debug" 1>&2
