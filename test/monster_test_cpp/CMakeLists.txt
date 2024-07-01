@@ -9,16 +9,32 @@ set(FBS_DIR "${PROJECT_SOURCE_DIR}/samples/monster")
 
 include_directories("${GEN_DIR}" "${INC_DIR}")
 
-add_custom_target(gen_monster_test_cpp ALL)
-add_custom_command (
-    TARGET gen_monster_test_cpp
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN_DIR}"
-    COMMAND flatcc_cli -a -o "${GEN_DIR}" "${FBS_DIR}/monster.fbs"
-    DEPENDS flatcc_cli "${FBS_DIR}/monster.fbs"
+file(GLOB FBS_FS ${FBS_DIR}/*.fbs)
+list(TRANSFORM FBS_FS
+    REPLACE "${FBS_DIR}/(.*)\\.fbs$" "${GEN_DIR}/\\1_builder.h"
+    OUTPUT_VARIABLE FBS_B_HS
+)
+list(TRANSFORM FBS_FS
+    REPLACE "${FBS_DIR}/(.*)\\.fbs$" "${GEN_DIR}/\\1_reader.h"
+    OUTPUT_VARIABLE FBS_R_HS
+)
+list(TRANSFORM FBS_FS
+    REPLACE "${FBS_DIR}/(.*)\\.fbs$" "${GEN_DIR}/\\1_verifier.h"
+    OUTPUT_VARIABLE FBS_V_HS
 )
 
-add_executable(monster_test_cpp monster_test.cpp)
-add_dependencies(monster_test_cpp gen_monster_test_cpp)
+list(APPEND FBS_R_HS ${GEN_DIR}/flatbuffers_common_reader.h)
+list(APPEND FBS_B_HS ${GEN_DIR}/flatbuffers_common_builder.h)
+
+add_custom_command (
+    OUTPUT ${FBS_B_HS} ${FBS_R_HS} ${FBS_V_HS}
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${GEN_DIR}"
+    COMMAND flatcc_cli -a -o "${GEN_DIR}" "${FBS_DIR}/monster.fbs"
+    DEPENDS flatcc_cli "${FBS_FS}"
+    COMMENT "Generate monster_test_cpp fbs headers"
+)
+
+add_executable(monster_test_cpp monster_test.cpp ${FBS_B_HS} ${FBS_R_HS} ${FBS_V_HS})
 target_link_libraries(monster_test_cpp flatccrt)
 
 add_test(monster_test_cpp monster_test_cpp${CMAKE_EXECUTABLE_SUFFIX})
