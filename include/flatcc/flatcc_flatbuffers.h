@@ -48,6 +48,23 @@ extern "C" {
 #define FLATBUFFERS_WRAP_NAMESPACE(ns, x) ns ## _ ## x
 #endif
 
+#include <stddef.h>
+
+/*
+ * Produce a pointer with maximum alignment to use as
+ * a placeholder when FLATCC_TOLERATE_MISALIGNED_EMPTY_VECTORS
+ * is specified.
+ */
+static inline const void* max_aligned_ptr(void)
+{
+#ifdef __cplusplus
+    static const max_align_t m{};
+#else
+    static const max_align_t m;
+#endif
+    return &m;
+}
+
 #endif /* flatcc_flatbuffers_defined */
 
 #ifdef __cplusplus

@@ -278,9 +278,19 @@ static inline int verify_vector(const void *buf, uoffset_t end, uoffset_t base, 
 {
     uoffset_t n;
 
+#if FLATCC_TOLERATE_MISALIGNED_EMPTY_VECTORS
+    base += offset;
+    verify(end - base >= sizeof(n), flatcc_verify_error_vector_header_out_of_range_or_unaligned);
+    n = read_uoffset(buf, base);
+    if (n == 0) {
+        return flatcc_verify_ok;
+    }
+    verify(check_aligned_header(end, base - offset, offset, align), flatcc_verify_error_vector_header_out_of_range_or_unaligned);
+#else
     verify(check_aligned_header(end, base, offset, align), flatcc_verify_error_vector_header_out_of_range_or_unaligned);
     base += offset;
     n = read_uoffset(buf, base);
+#endif
     base += offset_size;
     /* `n * elem_size` can overflow uncontrollably otherwise. */
     verify(n <= max_count, flatcc_verify_error_vector_count_exceeds_representable_vector_size);

@@ -63,6 +63,19 @@ extern "C" {
 #define FLATCC_TRACE_VERIFY 0
 #endif
 
+/*
+ * Some producers allow empty vectors to be misaligned.
+ * The following setting will cause the verifier to check for an
+ * empty vector before checking alignment. This option will also
+ * ensure accesses to a vector field never materializes misaligned
+ * pointers.
+ *
+ * NOTE: enabling this means empty vectors will not have distinct
+ * pointer identity.
+ */
+#if !defined(FLATCC_TOLERATE_MISALIGNED_EMPTY_VECTORS)
+#define FLATCC_TOLERATE_MISALIGNED_EMPTY_VECTORS 0
+#endif
 
 /*
  * Limit recursion level for tables. Actual level may be deeper

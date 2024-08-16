@@ -5,6 +5,8 @@
 #include "codegen_c.h"
 #include "codegen_c_sort.h"
 
+#include "flatcc/flatcc_rtconfig.h"
+
 static inline int match_kw_identifier(fb_symbol_t *sym)
 {
     return (sym->ident->len == 10 &&
@@ -618,10 +620,34 @@ static void gen_helpers(fb_output_t *out)
         "    return 0;\\\n"
         "}\n",
         nsc, nsc, nsc, nsc, nsc);
+#if FLATCC_TOLERATE_MISALIGNED_EMPTY_VECTORS
     fprintf(out->fp,
-        "#define __%svector_field(T, ID, t, r) __%soffset_field(T, ID, t, r, sizeof(%suoffset_t))\n"
-        "#define __%stable_field(T, ID, t, r) __%soffset_field(T, ID, t, r, 0)\n",
+        "#include <stdio.h>\n"
+        "#define __%svector_field(T, ID, t, r)\\\n"
+        "{\\\n"
+        "    T out__tmp;\\\n"
+        "    __%sread_vt(ID, offset__tmp, t)\\\n"
+        "    if (offset__tmp) {\\\n"
+        "        offset__tmp += __%suoffset_read_from_pe((uint8_t *)(t) + offset__tmp);\\\n"
+        "        if (__%suoffset_read_from_pe((uint8_t *)(t) + offset__tmp) == 0) {\\\n"
+        "            printf(\"Falling back for empty vector...\");\\\n"
+        "            return (T)max_aligned_ptr();\\\n"
+        "        }\\\n"
+        "        offset__tmp += sizeof(%suoffset_t);\\\n"
+        "        return (T)((uint8_t *)(t) + offset__tmp);\\\n"
+        "    }\\\n"
+        "    FLATCC_ASSERT(!(r) && \"required field missing\");\\\n"
+        "    return 0;\\\n"
+        "}\n",
         nsc, nsc, nsc, nsc, nsc);
+#else
+    fprintf(out->fp,
+        "#define __%svector_field(T, ID, t, r) __%soffset_field(T, ID, t, r, sizeof(%suoffset_t))\n",
+        nsc, nsc, nsc);
+#endif
+    fprintf(out->fp,
+        "#define __%stable_field(T, ID, t, r) __%soffset_field(T, ID, t, r, 0)\n",
+        nsc, nsc);
     fprintf(out->fp,
         "#define __%sdefine_struct_field(ID, N, NK, T, r)\\\n"
         "static inline T N ## _ ## NK ## _get(N ## _table_t t__tmp)\\\n"
