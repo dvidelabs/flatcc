@@ -136,8 +136,6 @@ int main(int argc, char *argv[])
         create_root_monster(B);
         flatcc_builder_copy_buffer(B, buffer, size);
         mon = ns(Monster_as_root(buffer));
-        char const *name = ns(Monster_name(mon));
-    printf("Name was %s\n", name ? name : "<NULL>");
         ret |= strcmp(ns(Monster_name(mon)), "root_monster");
         assert(ret == 0);
         mv = ns(Monster_testarrayoftables(mon));

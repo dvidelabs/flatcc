@@ -79,12 +79,7 @@ option (FLATCC_TRACE_VERIFY
 
 # Some producers allow empty vectors to be misaligned.
 # The following setting will cause the verifier to check for an
-# empty vector before checking alignment. This option will also
-# ensure accesses to a vector field never materializes misaligned
-# pointers.
-#
-# NOTE: enabling this means empty vectors will not have distinct
-# pointer identity.
+# empty vector before checking alignment of the vector's elements.
 option (FLATCC_TOLERATE_MISALIGNED_EMPTY_VECTORS
     "don't fail verification if empty vectors are misaligned" OFF)
 
