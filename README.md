@@ -1163,19 +1163,18 @@ sufficient, but for example standard 32-bit Windows only allocates on an
 8-byte boundary and can break the monster schema because it has 16-byte
 aligned fields.
 
-NOTE: as Aug 2024 it has been discovered that C++ writer code has been
-aligning empty vectors to size 4 (for the size field) even if elements
-where larger, like the double type. This causes the flatcc verifier to
-(correctly) reject these vectors because it would result in an invalid
-C pointer type on some architectures. However, because this has been
-in effect for over 10 years, the consensus is to have verifiers tolerate
-this behaviour even if C++ will eventually fix this issue. As of now
-flatcc verifier remains as is but should eventually be updated with
-compile time flag to allow this behaviour. It is expected that the
-issues will have no practical implications on any readers in any language
-but in principle it could least to undefined behaviour in C and C++
-due to incorrect pointer alignment. Thus, readers should be OK, but
-verifiers could report errors where it should tolerate the misalignment.
+NOTE: as of August 2024 it has been discovered that C++ writer code has been
+aligning empty vectors to the size field only, even if elements where larger,
+like the double type of size 8. This would cause the FlatCC verifier to
+(correctly) reject these vectors because it would result in an invalid C pointer
+type on some architectures. However, because this has been in effect for over
+10 years, the consensus is to have verifiers tolerate this behaviour even if
+C++ will eventually fix this issue. The FlatCC verifier will be updated to
+accept such buffers by default with a compile time flag to enforce the strict
+behaviour as well. In principle the misaligned vectors can lead potentially
+lead to undefined behaviour in agressively optimized C compilers. As of now
+it appears to be safe to read such buffers on common platforms and it is
+preferably to avoid additional runtime reader overhead to deal with this.
 For more, see [FlatCC #287], [Google Flatbuffers #8374].
 
 

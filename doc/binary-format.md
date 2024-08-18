@@ -877,6 +877,18 @@ Note that it is not entirely trivial to check vector lengths because the
 element size must be mulplied by the stored element count. For large
 elements this can lead to overflows.
 
+NOTE: as of August 2024 it was discovered that a decode long bug in the
+C++ builder could result in misaligned vectors when the the length
+of the vector was zero and the alignment size larger than the header
+fields alignment. In praxis this has not cause any known issues except
+that the FlatCC verifier has rejected such buffers. However, it is
+problemetatic because it can result in pointers that are not correctly
+aligned in C/C++, which is undefined behaviour. Because there are too
+presumably too many comprimised buffers in the wild at this point,
+combined with the fact that they are currently mostly harmless,
+it it recommended to have an option to tolerate misaligned zero-length
+vectors as long as the length field is still properly aligned.
+
 
 ## Risks
 
