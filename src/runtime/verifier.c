@@ -270,13 +270,11 @@ static inline int verify_vector(const void *buf, uoffset_t end, uoffset_t base, 
     n = read_uoffset(buf, base);
     base += offset_size;
 
-#if FLATCC_TOLERATE_MISALIGNED_EMPTY_VECTORS
+#if !FLATCC_ENFORCE_ALIGNED_EMPTY_VECTORS
     /* This is due to incorrect buffers from other builders than cannot easily be ignored. */
     align = n == 0 ? uoffset_size : align;
 #endif
-    align = align < uoffset_size ? uoffset_size : align;
-    verify(!(base & (align - 1u)),flatcc_verify_error_vector_header_out_of_range_or_unaligned);
-
+    verify(!(base & ((align - 1u) | (uoffset_size - 1u))), flatcc_verify_error_vector_header_out_of_range_or_unaligned);
     /* `n * elem_size` can overflow uncontrollably otherwise. */
     verify(n <= max_count, flatcc_verify_error_vector_count_exceeds_representable_vector_size);
     verify(end - base >= n * elem_size, flatcc_verify_error_vector_out_of_range);

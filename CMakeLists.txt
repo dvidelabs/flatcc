@@ -78,10 +78,11 @@ option (FLATCC_TRACE_VERIFY
     "assert on verify failure in runtime lib" OFF)
 
 # Some producers allow empty vectors to be misaligned.
-# The following setting will cause the verifier to check for an
-# empty vector before checking alignment of the vector's elements.
-option (FLATCC_TOLERATE_MISALIGNED_EMPTY_VECTORS
-    "don't fail verification if empty vectors are misaligned" OFF)
+# The following setting will cause the verifier to require the index 0
+# position to be element aligned even if the vector is empty (otherwise that
+# position is only required to be aligned to the preceding size field).
+option (FLATCC_ENFORCE_ALIGNED_EMPTY_VECTORS
+    "verify includes full alignment check for empty vectors" OFF)
 
 # Reflection is the compilers ability to generate binary schema output
 # (.bfbs files). This requires using generated code from
@@ -147,8 +148,8 @@ if (FLATCC_TRACE_VERIFY)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_TRACE_VERIFY=1")
 endif()
 
-if (FLATCC_TOLERATE_MISALIGNED_EMPTY_VECTORS)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_TOLERATE_MISALIGNED_EMPTY_VECTORS=1")
+if (FLATCC_ENFORCE_ALIGNED_EMPTY_VECTORS)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLATCC_ENFORCE_ALIGNED_EMPTY_VECTORS=1")
 endif()
 
 

@@ -65,11 +65,12 @@ extern "C" {
 
 /*
  * Some producers allow empty vectors to be misaligned.
- * The following setting will cause the verifier to check for an
- * empty vector before checking alignment of the vector's elements.
+ * The following setting will cause the verifier to require the index 0
+ * position to be element aligned even if the vector is empty (otherwise that
+ * position is only required to be aligned to the preceding size field).
  */
-#if !defined(FLATCC_TOLERATE_MISALIGNED_EMPTY_VECTORS)
-#define FLATCC_TOLERATE_MISALIGNED_EMPTY_VECTORS 0
+#if !defined(FLATCC_ENFORCE_ALIGNED_EMPTY_VECTORS)
+#define FLATCC_ENFORCE_ALIGNED_EMPTY_VECTORS 0
 #endif
 
 /*
