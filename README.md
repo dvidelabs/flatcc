@@ -1173,7 +1173,7 @@ this behaviour even if C++ will eventually fix this issue. The FlatCC
 verifier has been updated to accept such buffers by default with an optional
 compile time flag to enforce the strict behaviour as well
 (`FLATCC_ENFORCE_ALIGNED_EMPTY_VECTORS`). In principle the misaligned vectors
-can lead potentially lead to undefined behaviour in agressively optimized C
+can potentially lead to undefined behaviour in agressively optimized C
 compilers. As of now it appears to be safe to read such buffers on common
 platforms and it is preferable to avoid additional runtime reader overhead to
 deal with this. For more, see [FlatCC #287], [Google Flatbuffers #8374],
