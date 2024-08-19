@@ -262,13 +262,16 @@ static inline int verify_string(const void *buf, uoffset_t end, uoffset_t base, 
  */
 static inline int verify_vector(const void *buf, uoffset_t end, uoffset_t base, uoffset_t offset, uoffset_t elem_size, uint16_t align, uoffset_t max_count)
 {
+    uoffset_t n;
+
     verify(check_header(end, base, offset), flatcc_verify_error_vector_header_out_of_range_or_unaligned);
     base += offset;
 
-    uoffset_t n = read_uoffset(buf, base);
+    n = read_uoffset(buf, base);
     base += offset_size;
 
 #if FLATCC_TOLERATE_MISALIGNED_EMPTY_VECTORS
+    /* This is due to incorrect buffers from other builders than cannot easily be ignored. */
     align = n == 0 ? uoffset_size : align;
 #endif
     align = align < uoffset_size ? uoffset_size : align;
