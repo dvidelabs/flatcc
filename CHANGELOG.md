@@ -48,6 +48,9 @@
   unnecessary. Added README section "Strict Aliasing". (#274).
 - Fix flatcc cli flags for --schema --outfile. (#216).
 - Replace cmetrohash and murmur hash with xxhash. (#238).
+- Update verifier to accept buffers with misaligned empty vectors because C++
+  has been discovered to be doing this for 10 years by now. The original
+  stricter verifier can be activated with a compile time flag (#287, #289).
 
 ## [0.6.1]
 
