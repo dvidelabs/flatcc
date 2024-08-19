@@ -1164,18 +1164,20 @@ sufficient, but for example standard 32-bit Windows only allocates on an
 aligned fields.
 
 NOTE: as of August 2024 it has been discovered that C++ writer code has been
-aligning empty vectors to the size field only, even if elements where larger,
-like the double type of size 8. This would cause the FlatCC verifier to
-(correctly) reject these vectors because it would result in an invalid C pointer
-type on some architectures. However, because this has been in effect for over
-10 years, the consensus is to have verifiers tolerate this behaviour even if
-C++ will eventually fix this issue. The FlatCC verifier will be updated to
-accept such buffers by default with a compile time flag to enforce the strict
-behaviour as well. In principle the misaligned vectors can lead potentially
-lead to undefined behaviour in agressively optimized C compilers. As of now
-it appears to be safe to read such buffers on common platforms and it is
-preferably to avoid additional runtime reader overhead to deal with this.
-For more, see [FlatCC #287], [Google Flatbuffers #8374].
+aligning empty vectors to the size field only, even if elements require
+greater alignment like the double type which requires 8. This would cause the
+FlatCC verifier to (correctly) reject these vectors because it would result
+in an invalid C pointer type on some architectures. However, because this has
+been in effect for over 10 years, the consensus is to have verifiers tolerate
+this behaviour even if C++ will eventually fix this issue. The FlatCC
+verifier has been updated to accept such buffers by default with an optional
+compile time flag to enforce the strict behaviour as well
+(`FLATCC_ENFORCE_ALIGNED_EMPTY_VECTORS`). In principle the misaligned vectors
+can lead potentially lead to undefined behaviour in agressively optimized C
+compilers. As of now it appears to be safe to read such buffers on common
+platforms and it is preferable to avoid additional runtime reader overhead to
+deal with this. For more, see [FlatCC #287], [Google Flatbuffers #8374],
+[FlatCC #289].
 
 
 ### Potential Name Conflicts
@@ -2718,3 +2720,4 @@ See [Benchmarks]
 [WebKit Style]: https://webkit.org/code-style-guidelines/
 [FlatCC #287]: https://github.com/dvidelabs/flatcc/issues/287
 [Google Flatbuffers #8374]: https://github.com/google/flatbuffers/issues/8374
+[FlatCC #289]: https://github.com/dvidelabs/flatcc/issues/289
