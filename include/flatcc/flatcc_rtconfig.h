@@ -63,6 +63,15 @@ extern "C" {
 #define FLATCC_TRACE_VERIFY 0
 #endif
 
+/*
+ * Some producers allow empty vectors to be misaligned.
+ * The following setting will cause the verifier to require the index 0
+ * position to be element aligned even if the vector is empty (otherwise that
+ * position is only required to be aligned to the preceding size field).
+ */
+#if !defined(FLATCC_ENFORCE_ALIGNED_EMPTY_VECTORS)
+#define FLATCC_ENFORCE_ALIGNED_EMPTY_VECTORS 0
+#endif
 
 /*
  * Limit recursion level for tables. Actual level may be deeper

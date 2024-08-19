@@ -135,20 +135,6 @@ static inline int check_header(uoffset_t end, uoffset_t base, uoffset_t offset)
     return k > base && k + offset_size <= end && !(k & (offset_size - 1));
 }
 
-static inline int check_aligned_header(uoffset_t end, uoffset_t base, uoffset_t offset, uint16_t align)
-{
-    uoffset_t k = base + offset;
-
-    if (uoffset_size <= voffset_size && k + offset_size < k) {
-        return 0;
-    }
-    /* Alignment refers to element 0 and header must also be aligned. */
-    align = align < uoffset_size ? uoffset_size : align;
-
-    /* Note to self: the builder can also use the mask OR trick to propagate `min_align`. */
-    return k > base && k + offset_size <= end && !((k + offset_size) & ((offset_size - 1) | (align - 1u)));
-}
-
 static inline int verify_struct(uoffset_t end, uoffset_t base, uoffset_t offset, uoffset_t size, uint16_t align)
 {
     /* Structs can have zero size so `end` is a valid value. */
@@ -278,10 +264,17 @@ static inline int verify_vector(const void *buf, uoffset_t end, uoffset_t base, 
 {
     uoffset_t n;
 
-    verify(check_aligned_header(end, base, offset, align), flatcc_verify_error_vector_header_out_of_range_or_unaligned);
+    verify(check_header(end, base, offset), flatcc_verify_error_vector_header_out_of_range_or_unaligned);
     base += offset;
+
     n = read_uoffset(buf, base);
     base += offset_size;
+
+#if !FLATCC_ENFORCE_ALIGNED_EMPTY_VECTORS
+    /* This is due to incorrect buffers from other builders than cannot easily be ignored. */
+    align = n == 0 ? uoffset_size : align;
+#endif
+    verify(!(base & ((align - 1u) | (uoffset_size - 1u))), flatcc_verify_error_vector_header_out_of_range_or_unaligned);
     /* `n * elem_size` can overflow uncontrollably otherwise. */
     verify(n <= max_count, flatcc_verify_error_vector_count_exceeds_representable_vector_size);
     verify(end - base >= n * elem_size, flatcc_verify_error_vector_out_of_range);
