@@ -21,7 +21,7 @@ jobs:
         clang-version: [5, 7, 9, 11, 13, 15, 17, 18]
     steps:
       - name: Setup Clang
-        uses: aminya/setup-cpp@6827680827d3638bbf0bf654901b95f16258a412 # v0.39.0
+        uses: aminya/setup-cpp@5f4f319fe8905945207f66b0a8e62e64d90ab225 # v0.43.0
         with:
           llvm: ${{ matrix.clang-version }}
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -82,7 +82,7 @@ jobs:
         gcc-version: [7, 9, 11, 13]
     steps:
       - name: Setup GCC
-        uses: aminya/setup-cpp@6827680827d3638bbf0bf654901b95f16258a412 # v0.39.0
+        uses: aminya/setup-cpp@5f4f319fe8905945207f66b0a8e62e64d90ab225 # v0.43.0
         with:
           gcc: ${{ matrix.gcc-version }}
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
