@@ -100,8 +100,8 @@ C given a FlatBuffer schema file. This introduction also creates a separate test
 project with the traditional monster example, here in a C version.
 
 For now assume a Unix like system although that is not a general requirement -
-see also [Building](#building). You will need git, cmake, bash, a C compiler,
-and either the ninja build system, or make.
+see also [Building](#building). You will need git, either cmake or meson, bash,
+a C compiler, and either the ninja build system, or make.
 
     git clone https://github.com/dvidelabs/flatcc.git
     cd flatcc
@@ -116,7 +116,7 @@ and either the ninja build system, or make.
     ls generated
 
 `scripts/initbuild.sh` is optional and chooses the build backend, which defaults
-to ninja.
+to ninja via CMake.
 
 The setup script builds flatcc using CMake, then creates a test project
 directory with the monster example, and a build script which is just a small
@@ -2250,16 +2250,17 @@ To initialize and run the build (see required build tools below):
 The `bin` and `lib` folders will be created with debug and release
 build products.
 
-The build depends on `CMake`. By default the `Ninja` build tool is also required,
-but alternatively `make` can be used.
+The build depends on either `CMake` or `Meson`. By default the `Ninja` build tool
+is also required, but alternatively `make` can be used.
 
 Optionally switch to a different build tool by choosing one of:
 
+    scripts/initbuild.sh cmake
+    scripts/initbuild.sh meson
     scripts/initbuild.sh make
     scripts/initbuild.sh make-concurrent
-    scripts/initbuild.sh ninja
 
-where `ninja` is the default and `make-concurrent` is `make` with the `-j` flag.
+where `cmake` is the default and `make-concurrent` is `make` with the `-j` flag.
 
 To enforce a 32-bit build on a 64-bit machine the following configuration
 can be used:
@@ -2409,7 +2410,7 @@ a different assert behaviour is desirable, it is possible to override
 the default behaviour in runtime part of flatcc library via logic defined
 in [flatcc_assert.h](include/flatcc/flatcc_assert.h).
 
-By default Posix `assert` is beeing used. It can be changed by preprocessor definition:
+By default Posix `assert` is being used. It can be changed by preprocessor definition:
 
     -DFLATCC_ASSERT=own_assert
 

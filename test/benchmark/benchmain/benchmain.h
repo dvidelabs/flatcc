@@ -23,6 +23,10 @@ int main(int argc, char *argv[])
     /* Use volatie to prevent over optimization. */
     volatile int64_t total = 0;
     int i, ret = 0;
+
+    (void)(argc);
+    (void)(argv);
+
     DECLARE_BENCHMARK(BM);
 
     buf = malloc(bufsize);
@@ -57,6 +61,12 @@ int main(int argc, char *argv[])
     show_benchmark(BENCH_TITLE " decode/traverse " COMPILE_TYPE, t2, t3, size, rep, "1M");
     printf("----\n");
     ret = 0;
+
+#ifdef NDEBUG
+    // Silence warnings in optimised builds.
+    (void)ret;
+#endif
+
 done:
     if (buf) {
         free(buf);
