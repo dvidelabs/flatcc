@@ -47,7 +47,7 @@ DEFINE_HASH_TABLE(str_set)
  */
 static inline int ht_match(const void *key, size_t len, str_set_item_t item)
 {
-    return len == strlen(item) && strncmp(key, item, len) == 0;
+    return strncmp(key, item, len) == 0 && item[len] == '\0';
 }
 
 static inline const void *ht_key(str_set_item_t item)
