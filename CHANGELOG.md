@@ -51,6 +51,11 @@
 - Update verifier to accept buffers with misaligned empty vectors because C++
   has been discovered to be doing this for 10 years by now. The original
   stricter verifier can be activated with a compile time flag (#287, #289).
+- Fix low impact incorrect use of strncmp in str_set hash table comparison.
+  In flatcc this only affects duplicate header file inclusion detection during
+  C code generation. Unlikely worst case a file might not be included which
+  would cause a compile time error in user code. However, do take note if
+  using the str_set table for other purposes. (#308).
 
 ## [0.6.1]
 
