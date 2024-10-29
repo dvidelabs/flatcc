@@ -61,6 +61,11 @@ option(FLATCC_RTONLY "enable build of runtime library only" OFF)
 # cmake -DBUILD_SHARED_LIBS=on can override.
 option(FLATCC_INSTALL "enable install targets" OFF)
 
+# Place built targets into the source tree, not under the binary directory. This
+# does not affect the install behavior.
+option(FLATCC_BUILD_INTO_SOURCE_DIR
+    "place built targets under the source directory" ON)
+
 # Use with debug build with testing enabled only. Enables generation
 # of coverage information during build and run. Adds target "coverage"
 # which collects data and makes HTML report in build directory
@@ -174,10 +179,13 @@ else()
     set(lib_dir ${FLATCC_INSTALL_LIB})
 endif()
 
-# The folder of this directory, as apposed to CMAKE_BINARY_DIR
-# which would usually be the build/Release and build/Debug paths
-set (dist_dir "${PROJECT_SOURCE_DIR}")
-# set (dist_dir "${CMAKE_BINARY_DIR}")
+if (FLATCC_BUILD_INTO_SOURCE_DIR)
+    # The folder of this directory, as apposed to CMAKE_BINARY_DIR
+    # which would usually be the build/Release and build/Debug paths
+    set (dist_dir "${PROJECT_SOURCE_DIR}")
+else()
+    set (dist_dir "${CMAKE_BINARY_DIR}")
+endif()
 
 message(STATUS "dist install dir ${dist_dir}")
 message(STATUS "lib install dir ${dist_dir}/${lib_dir}")
@@ -340,12 +348,15 @@ if (GCC_VERSION)
 endif()
 message(STATUS "Configured C_FLAGS: ${CMAKE_C_FLAGS}")
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/${lib_dir})
+set(LIBRARY_OUTPUT_PATH ${dist_dir}/${lib_dir})
 
-set(CMAKE_DEBUG_POSTFIX "_d")
-
-if (CMAKE_BUILD_TYPE MATCHES "Debug")
-    set(CMAKE_EXECUTABLE_SUFFIX "_d${CMAKE_EXECUTABLE_SUFFIX}")
+if (FLATCC_BUILD_INTO_SOURCE_DIR)
+    # Release and debug target artifacts need to coexist in the same directory.
+    # Add a suffix to debug libraries and executables.
+    set(CMAKE_DEBUG_POSTFIX "_d")
+    if (CMAKE_BUILD_TYPE MATCHES "Debug")
+        set(CMAKE_EXECUTABLE_SUFFIX "_d${CMAKE_EXECUTABLE_SUFFIX}")
+    endif()
 endif()
 
 
