@@ -63,11 +63,16 @@ int flatcc_jsonbench_init(flatcc_jsonbench_t *bench)
          */
         C(list_push_start(B));
         FooBar(sibling_create(B,
-                0xABADCAFEABADCAFE + i, 10000 + i, '@' + i, 1000000 + i,
-                123456 + i, 3.14159f + i, 10000 + i));
+                0xABADCAFEABADCAFE + (unsigned long)i,
+                10000 + (short)i,
+                '@' + (char)i,
+                1000000 + (unsigned int)i,
+                123456 + i,
+                3.14159f + (float)i,
+                10000 + (unsigned short)i));
         FooBar(name_create_str(B, "Hello, World!"));
         FooBar(rating_add(B, 3.1415432432445543543 + i));
-        FooBar(postfix_add(B, '!' + i));
+        FooBar(postfix_add(B, '!' + (unsigned char)i));
         C(list_push_end(B));
     }
     C(list_end(B));
