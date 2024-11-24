@@ -287,7 +287,7 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "  _uvref.type = flatcc_builder_refmap_find(B, vec.type); _uvref.value = flatcc_builder_refmap_find(B, vec.value);\\\n"
         "  _len = N ## _union_vec_len(vec); if (_uvref.type == 0) {\\\n"
         "  _uvref.type = flatcc_builder_refmap_insert(B, vec.type, (flatcc_builder_create_type_vector(B, vec.type, _len))); }\\\n"
-        "  if (_uvref.type == 0) return _ret; if (_uvref.value == 0) {\\\n"
+        "  if (_uvref.type == 0) { return _ret; } if (_uvref.value == 0) {\\\n"
         "  if (flatcc_builder_start_offset_vector(B)) return _ret;\\\n"
         "  for (_i = 0; _i < _len; ++_i) { _uref = N ## _clone(B, N ## _union_vec_at(vec, _i));\\\n"
         "    if (!_uref.value || !(flatcc_builder_offset_vector_push(B, _uref.value))) return _ret; }\\\n"
@@ -416,11 +416,11 @@ int fb_gen_common_c_builder_header(fb_output_t *out)
         "static inline T *N ## _array_copy(T *p, const T *p2, size_t n)\\\n"
         "{ memcpy(p, p2, n * sizeof(T)); return p; }\\\n"
         "static inline T *N ## _array_copy_from_pe(T *p, const T *p2, size_t n)\\\n"
-        "{ size_t i; if (NS ## is_native_pe()) memcpy(p, p2, n * sizeof(T)); else\\\n"
-        "  for (i = 0; i < n; ++i) N ## _copy_from_pe(&p[i], &p2[i]); return p; }\\\n"
+        "{ size_t i; if (NS ## is_native_pe()) memcpy(p, p2, n * sizeof(T)); else {\\\n"
+        "  for (i = 0; i < n; ++i) N ## _copy_from_pe(&p[i], &p2[i]); } return p; }\\\n"
         "static inline T *N ## _array_copy_to_pe(T *p, const T *p2, size_t n)\\\n"
-        "{ size_t i; if (NS ## is_native_pe()) memcpy(p, p2, n * sizeof(T)); else\\\n"
-        "  for (i = 0; i < n; ++i) N ## _copy_to_pe(&p[i], &p2[i]); return p; }\n",
+        "{ size_t i; if (NS ## is_native_pe()) memcpy(p, p2, n * sizeof(T)); else {\\\n"
+        "  for (i = 0; i < n; ++i) N ## _copy_to_pe(&p[i], &p2[i]); } return p; }\n",
         nsc);
     fprintf(out->fp,
         "#define __%sdefine_scalar_primitives(NS, N, T)\\\n"
