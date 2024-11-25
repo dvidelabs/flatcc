@@ -1,8 +1,5 @@
-# Ubuntu 14.04 (Trusty)
-cmake_minimum_required (VERSION 2.8.12.2)
-# Centos 7
-#cmake_minimum_required (VERSION 2.8.11)
-#cmake_minimum_required (VERSION 2.8)
+# CMake minimal version.
+cmake_minimum_required (VERSION 3.25)
 
 # Experimental for generating compile_commands.json so editors with
 # clangd language server support can use it. Symlink
