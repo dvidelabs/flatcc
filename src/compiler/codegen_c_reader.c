@@ -289,7 +289,7 @@ static void gen_union(fb_output_t *out)
         "__## NS ## field_present(ID, t__tmp)\\\n"
         "static inline T ## _union_t N ## _ ## NK ## _union(N ## _table_t t__tmp)\\\n"
         "{ T ## _union_t u__tmp = { 0, 0 }; u__tmp.type = N ## _ ## NK ## _type_get(t__tmp);\\\n"
-        "  if (u__tmp.type == 0) return u__tmp; u__tmp.value = N ## _ ## NK ## _get(t__tmp); return u__tmp; }\\\n"
+        "  if (u__tmp.type == 0) { return u__tmp; } u__tmp.value = N ## _ ## NK ## _get(t__tmp); return u__tmp; }\\\n"
         "static inline NS ## string_t N ## _ ## NK ## _as_string(N ## _table_t t__tmp)\\\n"
         "{ return NS ## string_cast_from_generic(N ## _ ## NK ## _get(t__tmp)); }\\\n"
         "\n");
