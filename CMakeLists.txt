@@ -174,10 +174,13 @@ else()
     set(lib_dir ${FLATCC_INSTALL_LIB})
 endif()
 
-# The folder of this directory, as apposed to CMAKE_BINARY_DIR
-# which would usually be the build/Release and build/Debug paths
-set (dist_dir "${PROJECT_SOURCE_DIR}")
-# set (dist_dir "${CMAKE_BINARY_DIR}")
+if (NOT DEFINED FLATCC_DIST_DIR)
+    # The folder of this directory, as apposed to CMAKE_BINARY_DIR
+    # which would usually be the build/Release and build/Debug paths
+    set(dist_dir "${PROJECT_SOURCE_DIR}")
+else()
+    set(dist_dir ${FLATCC_DIST_DIR})
+endif()
 
 message(STATUS "dist install dir ${dist_dir}")
 message(STATUS "lib install dir ${dist_dir}/${lib_dir}")
@@ -389,4 +392,3 @@ set_target_properties(${dist_targets}
 if (FLATCC_INSTALL)
     install(DIRECTORY include/flatcc DESTINATION include)
 endif()
-
