@@ -479,7 +479,7 @@ int flatcc_verify_buffer_header_with_size(const void *buf, size_t *bufsiz, const
     verify_runtime(size_field <= *bufsiz - offset_size, flatcc_verify_error_runtime_buffer_size_less_than_size_field);
     if (fid != 0) {
         id2 = read_thash_identifier(fid);
-        id = read_thash(buf, offset_size);
+        id = read_thash(buf, 2 * offset_size);
         verify(id2 == 0 || id == id2, flatcc_verify_error_identifier_mismatch);
     }
     *bufsiz = size_field + offset_size;
@@ -524,7 +524,7 @@ int flatcc_verify_typed_buffer_header_with_size(const void *buf, size_t *bufsiz,
     verify_runtime(size_field <= *bufsiz - offset_size, flatcc_verify_error_runtime_buffer_size_less_than_size_field);
     if (thash != 0) {
         id2 = thash;
-        id = read_thash(buf, offset_size);
+        id = read_thash(buf, 2 * offset_size);
         verify(id2 == 0 || id == id2, flatcc_verify_error_identifier_mismatch);
     }
     *bufsiz = size_field + offset_size;
