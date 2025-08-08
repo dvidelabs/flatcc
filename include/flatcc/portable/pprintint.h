@@ -385,7 +385,7 @@ static int print_int8(int8_t n, char *p)
 
     if ((sign = n < 0)) {
         *p++ = '-';
-        n = -n;
+        n = (int8_t)-n;
     }
     return print_uint8((uint8_t)n, p) + sign;
 }
@@ -396,7 +396,7 @@ static int print_int16(int16_t n, char *p)
 
     if ((sign = n < 0)) {
         *p++ = '-';
-        n = -n;
+        n = (int16_t)-n;
     }
     return print_uint16((uint16_t)n, p) + sign;
 }
