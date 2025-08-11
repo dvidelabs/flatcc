@@ -24,7 +24,7 @@ jobs:
         uses: aminya/setup-cpp@a276e6e3d1db9160db5edc458e99a30d3b109949 # v1.7.1
         with:
           llvm: ${{ matrix.clang-version }}
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Build and run tests
         run: |
           scripts/initbuild.sh make-concurrent
@@ -38,7 +38,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install gcc-multilib g++-multilib
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Build and run tests
         env:
           CC: clang
@@ -64,7 +64,7 @@ jobs:
           sudo dpkg -i ./cpp-4.4_4.4.7-8ubuntu1_amd64.deb
           sudo dpkg -i ./gcc-4.4_4.4.7-8ubuntu1_amd64.deb
           sudo dpkg -i ./libstdc++6-4.4-dev_4.4.7-8ubuntu1_amd64.deb ./g++-4.4_4.4.7-8ubuntu1_amd64.deb
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Build and run tests
         env:
           CC: gcc-4.4
@@ -85,7 +85,7 @@ jobs:
         uses: aminya/setup-cpp@a276e6e3d1db9160db5edc458e99a30d3b109949 # v1.7.1
         with:
           gcc: ${{ matrix.gcc-version }}
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Build and run tests
         run: |
           scripts/initbuild.sh make-concurrent
@@ -97,7 +97,7 @@ jobs:
     container:
       image: ubuntu:25.04 # Provides gcc-15
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Prepare
         run: |
           apt update && apt-get install -y gcc-15 g++-15 cmake
@@ -117,7 +117,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install gcc-multilib g++-multilib
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Build and run tests
         run: |
           scripts/initbuild.sh make-32bit
@@ -143,7 +143,7 @@ jobs:
         run: |
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Build and run tests
         env:
           CC: ${{ matrix.compiler }}
@@ -156,7 +156,7 @@ jobs:
     name: macOS Clang
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Build and run tests
         run: |
           scripts/initbuild.sh make-concurrent
@@ -166,7 +166,7 @@ jobs:
     name: macOS Clang (x86)
     runs-on: macos-13 # Last macos x86 runner
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Build and run tests
         run: |
           scripts/initbuild.sh make-concurrent
@@ -180,7 +180,7 @@ jobs:
       matrix:
         gcc-version: [12, 14] # Github supports the 3 latest major versions.
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Prepare
         run: |
           # Install gcc if not already available.
@@ -202,7 +202,7 @@ jobs:
       matrix:
         gcc-version: [12, 14] # Github supports the 3 latest major versions.
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Prepare
         run: |
           # Install gcc if not already available.
@@ -225,7 +225,7 @@ jobs:
         version: [2022, 2025]
     steps:
       - uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Build and run tests
         run: |
           cmake .
@@ -246,7 +246,7 @@ jobs:
     container:
       image: debian:${{ matrix.version }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Prepare
         run: |
           apt update && apt-get install -y build-essential cmake
@@ -263,7 +263,7 @@ jobs:
         uses: jwlawson/actions-setup-cmake@802fa1a2c4e212495c05bf94dba2704a92a472be # v2.0.2
         with:
           cmake-version: 3.16
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Build and run tests
         run: |
           cmake --version
@@ -274,7 +274,7 @@ jobs:
     name: Big-endian (s390x via QEMU)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - uses: uraimo/run-on-arch-action@d94c13912ea685de38fccc1109385b83fd79427d # v3.0.1
         with:
           arch: s390x
