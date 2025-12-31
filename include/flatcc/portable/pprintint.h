@@ -599,19 +599,19 @@ int main()
     }
     k = print_bool(1, buf);
     if (strlen(buf) != k) printf("length error\n");
-    if (strcmp("true", buf) {
+    if (strcmp("true", buf)) {
         printf("1 didn't print 'true' as expected, got:\n'%s'\n", buf);
         ++failed;
     }
     k = print_bool(-1, buf);
     if (strlen(buf) != k) printf("length error\n");
-    if (strcmp("true", buf) {
+    if (strcmp("true", buf)) {
         printf("-1 didn't print 'true' as expected, got:\n'%s'\n", buf);
         ++failed;
     }
-    k = print_bool(, buf);
+    k = print_bool(0, buf);
     if (strlen(buf) != k) printf("length error\n");
-    if (strcmp("false", buf) {
+    if (strcmp("false", buf)) {
         printf("0 didn't print 'false' as expected, got:\n'%s'\n", buf);
         ++failed;
     }
