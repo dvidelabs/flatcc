@@ -324,12 +324,12 @@ fi
 
 Release 0.6.2 (in development) is primarily a bug fix release, refer to
 CHANGELOG for details. A long standing bug has been fixed where where objects
-created before a call to _create_as_root would not be properly aligned, and
+created before a call to `_create_as_root` would not be properly aligned, and
 buffer end is now also padded to largest object seen within the buffer. Note
 that for clang debug builds, -fsanitize=undefined has been added and this may
 require dependent source code to also use that flag to avoid missing linker
 symbols. The feature can be disabled in CMakeLists.txt. CMake has been bumped to
-version 3.16 which is the latest version where Appveyor will build MVSC 2015.
+version 3.16 which is the latest version where Appveyor will build MVSC 2025.
 Warnings added for potential name conflicts in enum names and table fields
 that could result in confusing C compiler errors. Not all warnigs are errors
 to the option `-s` was also added to silence warnings. The existing `-g`
@@ -428,7 +428,7 @@ different target platforms.
 
 ### Supported platforms (CI tested)
 
-As of flatcc v.0.6.2 the weekly build on github actions tests a range of
+As of flatcc v0.6.2 the weekly build on github actions tests a range of
 gcc and clang versions on Ubuntu and macOS but the lists changes slightly
 as the underlying CI runners sometimes drop a compiler version. Windows
 is tested on Appveyor with MSVC 2025 and a later version on Github actions.
