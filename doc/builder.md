@@ -125,7 +125,7 @@ building a buffer the `myschema_builder.h` must be used but when only
 reading then the `myschema_reader.h` file should be used instead. Here
 we are only concerned with building. When building, it is necessary to
 link with `libflatccrt.a` runtime library but when reading, all
-nesessary code is contained in the generated header files.
+necessary code is contained in the generated header files.
 
 The builder object only manages a stack of currently active objects and
 does not store an object that is complete. Instead it calls an emitter
@@ -141,12 +141,12 @@ constrained environment - the allocator handles temporary stacks,
 virtual table caches etc. but not the emitter.
 
 The allocator and emitter interface is documented in the builder library
-header pflatcc_builder.h] and the default implementation in
+header [flatcc_builder.h] and the default implementation in
 [flatcc_emitter.h]. The default allocator is implemented as part of the
 flatcc_builder source.
 
 The builder can be reused between buffers using the `reset` operation.
-The default emitter can also be reused and will automaticallhy reset
+The default emitter can also be reused and will automatically reset
 when the buffer is. For custom emitters, any reset operation must be
 called manually. The same applies to clear. The reset operations
 maintain allocated memory by also reduce memory consumption across
@@ -177,7 +177,7 @@ guarantee that the next buffer in a file can be appended directly
 because the next buffers alignment is unknown and because it potentially
 wastes padding bytes.  The buffer size at offset 0 can increased to the
 needed alignment as long as endianness is handled and the size of the
-size field is subtracted, and zeroes are appended as necesary.
+size field is subtracted, and zeroes are appended as necessary.
 
 ## Namespaces
 
@@ -188,8 +188,8 @@ into the namespace. We often use an empty namespace for custom types and
 be used on both cases, where `foo` is a custom namespace.
 
 Note that the name `flatcc_emitter` is only used with the default emitter
-and the name [flatcc_builder] is only used for buffer management but not
-for constructing content. Once a valid buffer is ready the common and
+and the name `flatcc_builder` is only used for buffer management but not
+for constructing content. Once a valid buffer is ready, the common
 namespace (`flatbuffers`) and schema specific (or empty) namespace is used
 with schema specific operations.
 
@@ -259,7 +259,7 @@ protocols.
 > [README Endianness](https://github.com/dvidelabs/flatcc#endianness)
 
 
-By testing `is_native_pe` dependencies on speficic compile time flags
+By testing `is_native_pe` dependencies on specific compile time flags
 can be avoided, and these are fragile:
 
 During build, vectors and structs behave differently from tables: A
@@ -291,7 +291,7 @@ buffer without endian conversion.
 ### Deprecated
 
 __NOTE: `FLATBUFFERS_LITTLEENDIAN` is deprecated and will be removed in
-a future version. It just complicates endina handling.__
+a future version. It just complicates endian handling.__
 
 The header files tries to define `FLATBUFFERS_LITTLEENDIAN` to 0 or 1
 based on system definitions but otherwise leaves the flag undefined.
@@ -313,9 +313,9 @@ little or big endian.
 ## Buffers
 
 A buffer can most simply be created with the `create_as_root` call for
-a table or a struct as seen ealier. The `as_root` part is just a thin
+a table or a struct as seen earlier. The `as_root` part is just a thin
 wrapper around buffer start and stop calls and using these allows for
-more flexibility. the `as_root` also automatically uses the defined file
+more flexibility. The `as_root` also automatically uses the defined file
 identifier if any.
 
 The build process begins with starting a buffer. The buffer may contain
@@ -371,7 +371,7 @@ and defaults to null. The schema specified extension is given as:
 
 and defaults to null. Note that `flatbuffers_` is replaced by whatever
 namespace is chosen. Each specific schema type also has a named file
-exntension reflection the extension active when the type was defined,
+extension reflection the extension active when the type was defined,
 for example:
 
     MyGame_Example_Monster_file_identifier
@@ -527,7 +527,7 @@ as an operation on the field name, here with `Monster_Mini_start/end`:
 
     flatcc_builder_buffer_end(B, root);
 
-We can repeat the the table nesting as deep as we like, provided our
+We can repeat the table nesting as deep as we like, provided our
 builder is willing to allocate enough stack space.
 
 **Warning**: It is possible to use the wrong table type operations
@@ -608,7 +608,7 @@ Strings can be added to tables with zero terminated strings as source
     Monster_name_create_str(B, "Mega Monster");
     Monster_end(B);
 
-or strings potententially containing zeroes:
+or strings potentially containing zeroes:
 
     #define MONSTER "Mega\0Monster"
     Monster_start(B);
@@ -652,7 +652,7 @@ for that:
 
 Strings are generally expected to be utf-8, but any binary data will be
 stored. Zero termination or embedded control codes are includes as is.
-The string gets a final zero temination regardless, not counted in the
+The string gets a final zero termination regardless, not counted in the
 string length (in compliance with the FlatBuffers format).
 
 A string can also be constructed from a more elaborate sequence of
@@ -725,7 +725,7 @@ The above essentially does the following:
 
 Some versions of the monster schema has extra test fields - these would
 break the assign approach above because there would be extra arguments.
-Instead we can rely on the zero intialization and assign known fields.
+Instead we can rely on the zero initialization and assign known fields.
 
     Vec3_t *v;
     v = Monster_pos_start(B);
@@ -765,9 +765,9 @@ does nothing.
     Monster_pos_end_pe(B);
 
 There are several assignment types that convert between host (native)
-endianness and buffer endiannes. We use `pe` to indicate
+endianness and buffer endianness. We use `pe` to indicate
 `protocol_endian` rather than just `le` for `little endian` because it
-allows us to change endianness to big endian in the the future and it
+allows us to change endianness to big endian in the future and it
 more clearly states the intention. While big endian is not allowed in
 FlatBuffers, big endian structs may be useful in other network
 protocols - but it is not currently supported because it would force
@@ -796,8 +796,8 @@ renamed and assigned 0 when using assign or copy, and assign / create has
 no argument for them.
 
 Because padding can carry noise and unintended information, structs
-should be cleared before assignment - but if used as a source to copy
-the padding is not copied so only the destation need to be zeroed.
+should be cleared before assignment - but if used as a source to copy,
+the padding is not copied so only the destination needs to be zeroed.
 
 If a struct is nested, the assign operation includes all fields as if
 the struct was flattened:
@@ -889,7 +889,7 @@ also as source type in the clone operation.
 As of flatcc 0.6.0 it is possible to have fixed length arrays as structs
 members. A fixed length array is equivalent to having a struct field repeated
 one or more times. The schema syntax is `name : [type:count];` similar to an
-ordinary struct field `name : type;`. The type is any type that can ba valid
+ordinary struct field `name : type;`. The type is any type that can be a valid
 struct field type including enums and nested structs. The size cannot be 0 and
 the overall size is limited by the maximum struct size the array is contained
 within which is typically 65535 (2^16-1).
@@ -961,7 +961,7 @@ An alternative to `strnlen` is strip trailing zeroes which will allow for
 char arrays embedded zeroes, but there is no direct support for this. The JSON
 printer uses this approach to shorten the printed char array string.
 
-The `_get` suffix can be ommitted in the above if the flatcc `-g` has not
+The `_get` suffix can be omitted in the above if the flatcc `-g` has not
 supplied to reduce the risk of name conflicts, but not for `_get_len` and
 `_get_ptr`.
 
@@ -1406,11 +1406,11 @@ vector of unions and later split into two before final storage. If it is
 necessary to create a union vector from a vector of tables and types,
 the low level builder interface has a `direct` call to do this.
 
-Union vectos generally use more temporary stack space because during
+Union vectors generally use more temporary stack space because during
 construction because each element as a struct of type and reference
 which don't back as densely as a two separate tables. In addition the
 separated type and table vectors must be constructed temporarily. The
-finaly buffer result is resonably compatct since the type vector does
+final buffer result is reasonably compact since the type vector does
 not use much space. Unions will also be somewhat slower to construct,
 but not unreasonably so.
 
@@ -1519,10 +1519,10 @@ table field.
 
 On a server with reasonable amount of memory using the default
 allocator, and with an emitter that will not return errors, and when it
-can be expected that inputs will not exceed the size contraints of the
+can be expected that inputs will not exceed the size constraints of the
 flatbuffer data types, and if the api is being used correctly, then there
 are no reason for failure and error handling may be skipped. However,
-it is sometimes desireable for servers to restrict a single clients
+it is sometimes desirable for servers to restrict a single clients
 memory usage, and then errors are very likely unless the source data is
 already limited. As an opposite example, an embedded device sending
 small network packages using a fixed but large enough allocation pool,
@@ -1637,7 +1637,7 @@ with flatcc 0.5.2. A pick method is only defined on a table
 field or a struct field. Instead of taking an a read reference
 of same type as the field, it takes a reference to to the same
 container type (table or struct). Essentially pick means: find
-myself in the other table, clone me, and and me to the new table
+myself in the other table, clone me, and add me to the new table
 which is currently open. So clone takes an entire table where
 pick takes a single field. Table cloning is implemented as a
 sequence of pick method, one for each field as can be seen in
@@ -1730,7 +1730,7 @@ quicksort and has a compact implementation that does not require
 recursion or external memory and is robust against DOS attacks by having
 worst case O(n log n). It is, however, not a stable sort. The sort
 assumes struct have a reasonable size so swap operations can be done
-efficiently. For large structs a decicated sort operation building an
+efficiently. For large structs a dedicated sort operation building an
 external index vector would be better, but this is not supported.
 
 Note that a DAG is valid so there can be multiple vectors referring to
@@ -1778,10 +1778,10 @@ A resource constrained microcontroller is building flatbuffers from
 sensor data using an emitter that sends UDP packages of the flatbuffer
 as soon as enough data is ready. A server reassembles the packages or
 discards them if any UDP package was lost. One the package is assembled,
-the server sorts specific vectors such as temparture levels in the buffer
+the server sorts specific vectors such as temperature levels in the buffer
 before it sends the buffer upstream to a storage service through a
-TCP/IP connection. The analyzers perform taks such as detecting
-abnormal temparature readings based on the sorted vector data.
+TCP/IP connection. The analyzers perform tasks such as detecting
+abnormal temperature readings based on the sorted vector data.
 
 In the above example, the original sensor devices are not interested in
 the reader interface nor the sort interface. While the sort and find
@@ -1789,7 +1789,7 @@ operations may be available, it is dead inline code that does not
 inflate the binary codes image size, but the libflatccrt library is
 linked in. The collecting server is not interested in the builder
 interface and does not link with the `libflatccrt` library but uses
-both the inline functions of the reader intrface and the sort interface.
+both the inline functions of the reader interface and the sort interface.
 The upstream data storage service uses no interface at all since it
 treats the buffers as binary blobs in a database indexed by device and
 time. The end users only use the read only interface to visualize and
@@ -1818,7 +1818,7 @@ allocate space in the emitters internal datastructure so the vector can
 be filled after the fact if so desired. Pointer tagging may be another
 way to communicate special intent. Be aware that only `create` calls
 support this - any `append`, `start/end` or other dynamic operation will
-require valid inpout and will stack allocate temporary space.
+require valid input and will stack allocate temporary space.
 
 Emitters always receive a small table of iov entries that together form
 a single object including necessary headers and padding, for example a

@@ -168,7 +168,7 @@ See also [Building](#building).
 
 NOTE: see
 [CHANGELOG](https://github.com/dvidelabs/flatcc/blob/master/CHANGELOG.md).
-There are occassionally minor breaking changes as API inconsistencies
+There are occasionally minor breaking changes as API inconsistencies
 are discovered. Unless clearly stated, breaking changes will not affect
 the compiled runtime library, only the header files. In case of trouble,
 make sure the `flatcc` tool is same version as the `include/flatcc`
@@ -337,7 +337,7 @@ to the option `-s` was also added to silence warnings. The existing `-g`
 option can resolve some conflicts.
 
 Release 0.6.1 contains primarily bug fixes and numerous contributions from the
-community to handle platform edge cases. Additionally, pendantic GCC warnings
+community to handle platform edge cases. Additionally, pedantic GCC warnings
 are disabled, relying instead on clang, since GCC is too aggressive, breaks
 builds frequently and works against portability. An existing C++ test case
 ensures that C code also works with common C++ compilers, but it can break some
@@ -365,8 +365,8 @@ be removed in favor of `read/write_from/to` because the cast interface breaks
 float conversion on some uncommon platforms. This should not affect normal use
 but remains valid in this release.
 
-Release 0.5.3 inlcudes various bug fixes (see changelog) and one
-breaking but likely low impact change: BREAKING: 0.5.3 changes behavour
+Release 0.5.3 includes various bug fixes (see changelog) and one
+breaking but likely low impact change: BREAKING: 0.5.3 changes behavior
 of builder create calls so arguments are always ordered by field id when
 id attributes are being used, for example
 `MyGame_Example_Monster_create()` in `monster_test.fbs`
@@ -375,7 +375,7 @@ behavior when sorting tables by a numeric key field.
 
 Release 0.5.2 introduces optional `_get` suffix to reader methods. By
 using `flatcc -g` only `_get` methods are valid. This removes potential
-name conficts for some field names. 0.5.2 also introduces the long
+name conflicts for some field names. 0.5.2 also introduces the long
 awaited clone operation for tables and vectors. A C++ smoketest was
 added to reduce the number void pointer assignment errors that kept
 sneaking in. The runtime library now needs an extra file `refmap.c`.
@@ -465,7 +465,7 @@ uses C99 style code to better follow the C++ version.
 
 The build option `FLATCC_TEST` can be used to disable all tests which
 might make flatcc compile on platforms that are otherwise problematic.
-The buld option `FLATCC_CXX_TEST` can be disabled specifically for C++
+The build option `FLATCC_CXX_TEST` can be disabled specifically for C++
 tests (a simple C++ file that includes generated C code).
 
 ### Platforms reported to work by users
@@ -506,7 +506,7 @@ doesn't really matter with respect to the compiled code size.
 The priority has been to design an easy to use C builder interface that
 is reasonably fast, suitable for both servers and embedded devices, but
 with usability over absolute performance - still the small buffer output
-rate is measured in millons per second and read access 10-100 millon
+rate is measured in millions per second and read access 10-100 million
 buffers per second from a rough estimate. Reading FlatBuffers is more
 than an order of magnitude faster than building them.
 
@@ -794,7 +794,7 @@ Make sure `flatcc` under the `include` folder is visible in the C
 compilers include path when compiling flatbuffer builders.
 
 The `flatcc` (-I) include path will assume all schema files with same
-base name (case insentive) are identical and will only include the
+base name (case insensitive) are identical and will only include the
 first. All generated files use the input basename and will land in
 working directory or the path set by (-o).
 
@@ -805,7 +805,7 @@ missing include files.
 
 The generated code, especially with all combined with --stdout, may
 appear large, but only the parts actually used will take space up the
-the final executable or object file. Modern compilers inline and include
+final executable or object file. Modern compilers inline and include
 only necessary parts of the statically linked builder library.
 
 JSON printer and parser can be generated using the --json flag or
@@ -1032,7 +1032,7 @@ This produces:
 
 Note: we wouldn't actually do the readonly generation shown earlier
 unless we only intend to read buffers - the builder generation always
-generates read acces too.
+generates read access too.
 
 By including `"monster_test_builder.h"` all other files are included
 automatically. The C compiler needs the `-I include` directive to access
@@ -1056,7 +1056,7 @@ buffer using `flatcc_builder_finalize_buffer`, or the simplistic
 too large. See also documentation comments in [flatcc_builder.h] and
 [flatcc_emitter.h]. See also `flatc_builder_finalize_aligned_buffer` in
 `builder.h` and the [Builder Interface Reference] when malloc aligned
-buffers are insufficent.
+buffers are insufficient.
 
 
     #include "monster_test_builder.h"
@@ -1117,7 +1117,7 @@ Compile the example project:
     cc -std=c11 -I include monster_example.c lib/libflatccrt.a -o monster_example
 
 Note that the runtime library is required for building buffers, but not
-for reading them. If it is incovenient to distribute the runtime library
+for reading them. If it is inconvenient to distribute the runtime library
 for a given target, source files may be used instead. Each feature has
 its own source file, so not all runtime files are needed for building a
 buffer:
@@ -1135,7 +1135,7 @@ builder and emitter source files.
 ### Verifying a Buffer
 
 A buffer can be verified to ensure it does not contain any ranges that
-point outside the the given buffer size, that all data structures are
+point outside the given buffer size, that all data structures are
 aligned according to the flatbuffer principles, that strings are zero
 terminated, and that required fields are present.
 
@@ -1200,7 +1200,7 @@ this behaviour even if C++ will eventually fix this issue. The FlatCC
 verifier has been updated to accept such buffers by default with an optional
 compile time flag to enforce the strict behaviour as well
 (`FLATCC_ENFORCE_ALIGNED_EMPTY_VECTORS`). In principle the misaligned vectors
-can potentially lead to undefined behaviour in agressively optimized C
+can potentially lead to undefined behaviour in aggressively optimized C
 compilers. As of now it appears to be safe to read such buffers on common
 platforms and it is preferable to avoid additional runtime reader overhead to
 deal with this. For more, see [FlatCC #287], [Google Flatbuffers #8374],
@@ -1217,10 +1217,10 @@ As of flatcc 0.6.2 conservative warnings will detect most likely
 potential conflicts in enum member names and table field names. The
 `-s` option silences warnings.
 
-As of flatcc 0.5.2 read accors are generated with and without a `_get`
+As of flatcc 0.5.2 read accessors are generated with and without a `_get`
 suffix so it is also possible to use `Monster_pos_get(monster)` instead
 of `Monster_pos(monster)`. When calling flatcc with option `-g` the
-read accesors will only be generated with `_get` suffix. This avoids
+read accessors will only be generated with `_get` suffix. This avoids
 potential name conflicts. An example of a conflict is a field name
 like `pos_add` when there is also a `pos` field because the builder
 interface generates the `add` suffix. Using the -g option avoids this
@@ -1234,7 +1234,7 @@ use different versions of this file if they are not mixed.
 If an external code generator depends on flatcc output, it should use
 the `_get` suffix because it will work with and without the -g option,
 but only as of version 0.5.2 or later. For human readable code it is
-probaly simpler to stick to the orignal naming convention without the
+probably simpler to stick to the original naming convention without the
 `_get` suffix.
 
 Even with the above, it is still possible to have a conflict with the
@@ -1276,7 +1276,7 @@ Strings and tables will be returned as null pointers when their
 corresponding field is not set in the buffer. User code should test for
 this but it might also be helpful to temporarily or permanently set the
 `required` attribute in the schema. The builder will then detect missing fields
-when cerating buffers and the verifier can will detect their absence in
+when creating buffers and the verifier can will detect their absence in
 an existing buffer.
 
 If the verifier rejects a buffer, the error can be printed (see
@@ -1343,17 +1343,17 @@ Type identifiers are not to be confused with union types.
 ### File Identifiers
 
 The FlatBuffers schema language has the optional `file_identifier`
-declaration which accepts a 4 characer ASCII string. It is intended to be
+declaration which accepts a 4 character ASCII string. It is intended to be
 human readable. When absent, the buffer potentially becomes 4 bytes
 shorter (depending on padding).
 
 The `file_identifier` is intended to match the `root_type` schema
 declaration, but this does not take into account that it is convenient
 to create FlatBuffers for other types as well. `flatcc` makes no special
-destinction for the `root_type` while Googles `flatc` JSON parser uses
+distinction for the `root_type` while Googles `flatc` JSON parser uses
 it to determine the JSON root object type.
 
-As a consequence, the file identifier is ambigous. Included schema may
+As a consequence, the file identifier is ambiguous. Included schema may
 have separate `file_identifier` declarations. To at least make sure each
 type is associated with its own schemas `file_identifier`, a symbol is
 defined for each type. If the schema has such identifier, it will be
@@ -1384,7 +1384,7 @@ The `file_extension` is handled in a similar manner:
 
 ### Type Identifiers
 
-To better deal with the ambigouties of file identifiers, type
+To better deal with the ambiguities of file identifiers, type
 identifiers have been introduced as an alternative 4 byte buffer
 identifier. The hash is standardized on FNV-1a for interoperability.
 
@@ -1531,7 +1531,7 @@ also with other possible future extensions: `color: Green Red`_
 
 These value-valued expressions were originally intended for enums that
 have the bit flag attribute defined (which Color does have), but this is
-tricky to process, so therefore any symblic value can be listed in a
+tricky to process, so therefore any symbolic value can be listed in a
 sequence with or without namespace as appropriate. Because this further
 causes problems with signed symbols the exact definition is that all
 symbols are first coerced to the target type (or fail), then added to
@@ -1563,14 +1563,14 @@ symbolic enum values using the `noenum` option.
 Only enums will print symbolic values are there is no history of any
 parsed symbolic values at all. Furthermore, symbolic values are only
 printed if the stored value maps cleanly to one value, or in the case of
-bit-flags, cleanly to multiple values. For exmaple if parsing `color: Green Red`
+bit-flags, cleanly to multiple values. For example if parsing `color: Green Red`
 it will print as `"color":"Red Green"` by default, while `color: Green
 Blue Red Blue` will print as `color:19`.
 
 Both printer and parser are limited to roughly 100 table nesting levels
 and an additional 100 nested struct depths. This can be changed by
 configuration flags but must fit in the runtime stack since the
-operation is recursive descent. Exceedning the limits will result in an
+operation is recursive descent. Exceeding the limits will result in an
 error.
 
 Numeric values are coerced to the receiving type. Integer types will
@@ -1655,7 +1655,7 @@ If more complex data needs to be encoded as base64 such as vectors of
 structs, this can be done via nested FlatBuffers which are also of type
 `[uint8]`.
 
-Note that for some use cases it might be desireable to read binary data as
+Note that for some use cases it might be desirable to read binary data as
 base64 into memory aligned to more than 8 bits. This is not currently
 possible, but it is recognized that a `(force_align: n)` attribute on
 `[ubyte]` vectors could be useful, but it can also be handled via nested
@@ -1763,7 +1763,7 @@ SSE 4.2 has been experimentally added, but it the gains are limited
 because it works best when parsing space, and the space parsing is
 already fast without SSE 4.2 and because one might just leave out the
 spaces if in a hurry. For parsing strings, trivial use of SSE 4.2 string
-scanning doesn't work well becasuse all the escape codes below ASCII 32
+scanning doesn't work well because all the escape codes below ASCII 32
 must be detected rather than just searching for `\` and `"`. That is not
 to say there are not gains, they just don't seem worthwhile.
 
@@ -1788,7 +1788,7 @@ see other types previously defined in the global scope. Because include
 statements always appear first in a schema, this can only be earlier
 included files, not types from a containing schema.
 
-The generated output for any included schema is indendent of how it was
+The generated output for any included schema is independent of how it was
 included, but it might not compile without the earlier included files
 being present and included first. By including the toplevel `myschema.h`
 or `myschema_builder.h` all these dependencies are handled correctly.
@@ -1802,7 +1802,7 @@ errors because if one parent schema includes two child schema `a.fbs`
 and `b.fbs`, then `b.fbs` should not be able to see anything in `a.fbs`
 even if they share namespaces. This would rarely be a problem in praxis,
 but it means that schema compilation from memory buffers cannot
-authoratively validate a schema. The reason the schema must be isolated
+authoritatively validate a schema. The reason the schema must be isolated
 is that otherwise code generation for a given schema could change with
 how it is being used leading to very strange errors in user code.
 
@@ -1845,11 +1845,11 @@ they are never accessed directly.
 
 Enums support schema evolution meaning that more names can be added to
 the enumeration in a future schema version. As of v0.5.0 the function
-`_is_known_value` can be used ot check if an enum value is known to the
+`_is_known_value` can be used to check if an enum value is known to the
 current schema version.
 
 Structs have a dual purpose because they are also valid types in native
-format, yet the native reprsention has a slightly different purpose.
+format, yet the native representation has a slightly different purpose.
 Thus the convention is that a const pointer to a struct encoded in a
 flatbuffer has the type `Vec3_struct_t` where as a writeable pointer to
 a native struct has the type `Vec3_t *` or `struct Vec3 *`.
@@ -2045,7 +2045,7 @@ value, so it could be represented as `lifeforce : uint8 = null`. Now the
 this means that the field is written, it will always be written also if the
 value is 0 or any other representable value. It also means that the `force_add`
 method is not available for the field because `force_add` is essentially always
-in effect for the field. On the read side, optional scalar fields behave exactly is ordinary scalar fields that have not specified a default value, that is, if the field is absent, 0 will be returned and `is_present` will return false. Instead optional scalar fields get a new accessor method with the suffix `_option()` which returns a struct with two fiels: `{ is_null, value }` where `_option().is_null == !is_present()` and `_option().value` is the same value is the `_get()` method, which will be 0 if `is_null` is true. The option struct is named after the type similar to unions, for example `flatbuffers_uint8_option_t` or `MyGame_Example_Color_option_t`, and the option accessor method also works similar to unions. Note that `_get()` will also return 0 for optional enum values that are null (i.e. absent), even if the enum value does not have an enumerated element with the value 0. Normally enums without a 0 element is not allowed in the schema unless a default value is specified, but in this case it is null, and `_get()` needs some value to return in this case.
+in effect for the field. On the read side, optional scalar fields behave exactly is ordinary scalar fields that have not specified a default value, that is, if the field is absent, 0 will be returned and `is_present` will return false. Instead optional scalar fields get a new accessor method with the suffix `_option()` which returns a struct with two fields: `{ is_null, value }` where `_option().is_null == !is_present()` and `_option().value` is the same value is the `_get()` method, which will be 0 if `is_null` is true. The option struct is named after the type similar to unions, for example `flatbuffers_uint8_option_t` or `MyGame_Example_Color_option_t`, and the option accessor method also works similar to unions. Note that `_get()` will also return 0 for optional enum values that are null (i.e. absent), even if the enum value does not have an enumerated element with the value 0. Normally enums without a 0 element is not allowed in the schema unless a default value is specified, but in this case it is null, and `_get()` needs some value to return in this case.
 
 By keeping the original accessors, read logic can be made simpler and faster when it is not important whether a value is null or 0 and at the same time the option value can be returned and stored.
 
@@ -2056,7 +2056,7 @@ fields differently according the optional semantics. For example parsing a
 missing field will not store a default value even if the parser is executed with
 a flag to force default values to be stored and the printer will not print
 absent optional fields even if otherwise flagged to print default values.
-Currenlty the JSON printers and parsers do not print or parse JSON null and can
+Currently the JSON printers and parsers do not print or parse JSON null and can
 only represent null be absence of a field.
 
 For an example of reading and writing, as well as printing and parsing JSON,
@@ -2065,7 +2065,7 @@ optional scalar fields, please refer to [optional_scalars_test.fbs] and [optiona
 
 ## Endianness
 
-The [pendian_detect.h]` file detects endianness
+The [pendian_detect.h] file detects endianness
 for popular compilers and provides a runtime fallback detection for
 others. In most cases even the runtime detection will be optimized out
 at compile time in release builds.
@@ -2106,15 +2106,15 @@ the monster buffer has the identifier "MONS", but internally the buffer
 will store the identifier as "SNOM" on big endian encoded buffers.
 
 Because buffers can be encode in two ways, `flatcc` uses the term
-`native` endianness and `protocol` endianess. `_pe` is a suffix used in
+`native` endianness and `protocol` endianness. `_pe` is a suffix used in
 various low level API calls to convert between native and protocol
 endianness without caring about whether host or buffer is little or big
 endian.
 
 If it is necessary to write application code that behaves differently if
 the native encoding differs from protocol encoding, use
-`flatbuffers_is_pe_native()`. This is a function, not a define, but for
-all practical purposes it will have same efficience while also
+`flatbuffers_is_native_pe()`. This is a function, not a define, but for
+all practical purposes it will have same efficiency while also
 supporting runtime endian detection where necessary.
 
 The flatbuffer environment only supports reading either big or little
@@ -2159,7 +2159,7 @@ The first field maps to `<table_name>_vec_sort` and
 `<table_name>_vec_find`. Obviously the chosen find method must match
 the chosen sort method. The find operation is O(logN).
 
-As of v0.6.0 the default key used for find and and sort without the `by_name`
+As of v0.6.0 the default key used for find and sort without the `by_name`
 suffix is the field with the smaller id instead of the first listed in the
 schema which is often but not always the same thing.
 
@@ -2167,14 +2167,14 @@ v0.6.0 also introduces the `primary_key` attribute that can be used instead of
 the `key` attribute on at most one field. The two attributes are mutually
 exclusive. This can be used if a key field with a higher id should be the
 default key. There is no difference when only one field has a `key` or
-`primary_key` attribute, so in that case choose `key` for compatiblity.
+`primary_key` attribute, so in that case choose `key` for compatibility.
 Googles flatc compiler does not recognize the `primary_key` attribute.
 
 As of v0.6.0 a 'sorted' attribute has been introduced together with the sort
 operations `<table_name>_sort` and `<union_name>_sort`. If a table or a union,
 directly or indirectly, contains a vector with the 'sorted' attribute, then the
 sort operation is made available. The sort will recursively visit all children
-with vectors marked sorted. The sort operatoin will use the default (primary)
+with vectors marked sorted. The sort operation will use the default (primary)
 key. A table or union must first be cast to mutable, for example
 `ns(Monster_sort((ns(Monster_mutable_table_t))monster)`. The actual vector
 sort operations are the same as before, they are just called automatically.
@@ -2440,7 +2440,7 @@ a different assert behaviour is desirable, it is possible to override
 the default behaviour in runtime part of flatcc library via logic defined
 in [flatcc_assert.h](include/flatcc/flatcc_assert.h).
 
-By default Posix `assert` is beeing used. It can be changed by preprocessor definition:
+By default Posix `assert` is used. It can be changed by preprocessor definition:
 
     -DFLATCC_ASSERT=own_assert
 
@@ -2467,7 +2467,7 @@ By default libraries are built statically.
 Occasionally there are requests
 [#42](https://github.com/dvidelabs/flatcc/pull/42) for also building shared
 libraries. It is not clear how to build both static and shared libraries
-at the same time without choosing some unconvential naming scheme that
+at the same time without choosing some unconventional naming scheme that
 might affect install targets unexpectedly.
 
 CMake supports building shared libraries out of the box using the
@@ -2534,7 +2534,7 @@ while memcpy might not work efficient.
 
 ## Distribution
 
-Install targes may be built with:
+Install targets may be built with:
 
     mkdir -p build/install
     cd build/install
@@ -2594,7 +2594,7 @@ Run
 
     scripts/test.sh [--no-clean]
 
-**NOTE:** The test script will clean everything in the build directy before
+**NOTE:** The test script will clean everything in the build directly before
 initializing CMake with the chosen or default build configuration, then
 build Debug and Release builds, and run tests for both.
 
@@ -2709,7 +2709,7 @@ FlatCC coding style is largely similar to the [WebKit Style], with the following
 * In code generation there is essentially no formatting to avoid excessive bloat.
 * Struct names and other types is lower case since this is C, not C++.
 * `snake_case` is used over `camelCase`.
-* Header guards are used over `#pragma once` because it is non-standard and not always reliable in filesystems with ambigious paths.
+* Header guards are used over `#pragma once` because it is non-standard and not always reliable in filesystems with ambiguous paths.
 * Comma is not placed first in multi-line calls (but maybe that would be a good idea for diff stability).
 * `config.h` inclusion might be handled differently in that `flatbuffers.h` includes the config file.
 * `unsigned` is not used without `int` for historical reasons. Generally a type like `uint32_t` is preferred.
