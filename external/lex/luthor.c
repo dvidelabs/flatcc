@@ -1393,7 +1393,9 @@ lex_c_octal_to_exponent_part:
                 if (++p != q && *p != '+' && *p != '-') {
                     --p;
                 }
-                while (++p != q && lex_isdigit(*p)) {
+                if (p != q) {
+                    while (++p != q && lex_isdigit(*p)) {
+                    }
                 }
             }
             if (d != p) {
