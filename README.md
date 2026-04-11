@@ -2371,12 +2371,13 @@ In PowerShell:
     cd flatcc
     mkdir build\MSVC
     cd build\MSVC
+	cmake --help # Lists generators to choose from
     cmake -G "Visual Studio 14 2015" ..\..
 
 Optionally also build from the command line (in build\MSVC):
 
-    cmake --build . --target --config Debug
-    cmake --build . --target --config Release
+    cmake --build . --config Debug
+    cmake --build . --config Release
 
 In Visual Studio:
 
