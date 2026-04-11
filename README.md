@@ -330,6 +330,7 @@ that for clang debug builds, -fsanitize=undefined has been added and this may
 require dependent source code to also use that flag to avoid missing linker
 symbols. The feature can be disabled in CMakeLists.txt. CMake has been bumped to
 version 3.16 which is the latest version where Appveyor will build MVSC 2015.
+A buffer overrun in flatcc parser on malformed floating point input was fixed.
 Warnings added for potential name conflicts in enum names and table fields
 that could result in confusing C compiler errors. Not all warnigs are errors
 to the option `-s` was also added to silence warnings. The existing `-g`

@@ -66,6 +66,7 @@
 - Issue warnings on some potential name conflicts that can break C source
   and add `-s` option to silence warnings (#354).
 - Fix potential UB in pprintint due to integer promotion, and silence warnings.
+- Fix buffer overrun in flatcc parser on malformed floating point input (#374).
 
 ## [0.6.1]
 
