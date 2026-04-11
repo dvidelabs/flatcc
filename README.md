@@ -804,7 +804,7 @@ file output. Each include statement is guarded so this will not lead to
 missing include files.
 
 The generated code, especially with all combined with --stdout, may
-appear large, but only the parts actually used will take space up the
+appear large, but only the parts actually used will take up space in the
 final executable or object file. Modern compilers inline and include
 only necessary parts of the statically linked builder library.
 
@@ -2039,17 +2039,35 @@ not present, except that this is not a standardized technique. Optional fields
 represents a standardized way to achieve this.
 
 Scalar fields can be marked as optional by assigning `null` as a default
-value. For example, some objects might not have a meaningful `mana`
-value, so it could be represented as `lifeforce : uint8 = null`. Now the
-`lifeforce` field has become an optional field. In the FlatCC implementation
-this means that the field is written, it will always be written also if the
-value is 0 or any other representable value. It also means that the `force_add`
-method is not available for the field because `force_add` is essentially always
-in effect for the field. On the read side, optional scalar fields behave exactly is ordinary scalar fields that have not specified a default value, that is, if the field is absent, 0 will be returned and `is_present` will return false. Instead optional scalar fields get a new accessor method with the suffix `_option()` which returns a struct with two fields: `{ is_null, value }` where `_option().is_null == !is_present()` and `_option().value` is the same value is the `_get()` method, which will be 0 if `is_null` is true. The option struct is named after the type similar to unions, for example `flatbuffers_uint8_option_t` or `MyGame_Example_Color_option_t`, and the option accessor method also works similar to unions. Note that `_get()` will also return 0 for optional enum values that are null (i.e. absent), even if the enum value does not have an enumerated element with the value 0. Normally enums without a 0 element is not allowed in the schema unless a default value is specified, but in this case it is null, and `_get()` needs some value to return in this case.
+value. For example, some objects might not have a meaningful `mana` value,
+so it could be represented as `lifeforce : uint8 = null`. Now the `lifeforce`
+field has become an optional field. In the FlatCC implementation this means
+that if the field is written, it will always be written, even if the value is
+0 or any other representable value. It also means that the `force_add` method
+is not available for the field because `force_add` is essentially always in
+effect for the field. On the read side, optional scalar fields behave exactly
+as ordinary scalar fields that have not specified a default value, that is,
+if the field is absent, 0 will be returned and `is_present` will return false.
+Instead optional scalar fields get a new accessor method with the suffix
+`_option()` which returns a struct with two fields: `{ is_null, value }` where
+`_option().is_null == !is_present()` and `_option().value` is the same value
+as returned by the `_get()` method, which will be 0 if `is_null` is true.
+The option struct is named after the type, similar to unions, for example
+`flatbuffers_uint8_option_t` or `MyGame_Example_Color_option_t`, and the option
+accessor method also works similar to unions. Note that `_get()` will also
+return 0 for optional enum values that are null (i.e. absent), even if the
+enum value does not have an enumerated element with the value 0. Normally enums
+without a 0 element are not allowed in the schema unless a default value is
+specified, but in this case it is null, and `_get()` needs some value to return
+in this case.
 
-By keeping the original accessors, read logic can be made simpler and faster when it is not important whether a value is null or 0 and at the same time the option value can be returned and stored.
+By keeping the original accessors, read logic can be made simpler and faster
+when it is not important whether a value is null or 0 and at the same time the
+option value can be returned and stored.
 
-Note that struct fields cannot be optional. Also note that, non-scalar table fields are not declared optional because these types can already represent null via a null pointer or a NONE union type.
+Note that struct fields cannot be optional. Also note that, non-scalar table
+fields are not declared optional because these types can already represent null
+via a null pointer or a NONE union type.
 
 JSON parsing and printing change behavior for scalar fields by treating absent
 fields differently according the optional semantics. For example parsing a
