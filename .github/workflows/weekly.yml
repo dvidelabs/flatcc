@@ -164,7 +164,7 @@ jobs:
 
   macos-clang-x86:
     name: macOS Clang (x86)
-    runs-on: macos-13 # Last macos x86 runner
+    runs-on: macos-26-intel
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Build and run tests
@@ -174,11 +174,11 @@ jobs:
 
   macos-gcc:
     name: macOS GCC ${{ matrix.gcc-version }}
-    runs-on: macos-14
+    runs-on: macos-26
     strategy:
       fail-fast: false
       matrix:
-        gcc-version: [12, 14] # Github supports the 3 latest major versions.
+        gcc-version: [13, 14, 15] # Github supports the 3 latest major versions.
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Prepare
@@ -196,11 +196,11 @@ jobs:
 
   macos-gcc-x86:
     name: macOS GCC ${{ matrix.gcc-version }} (x86)
-    runs-on: macos-13 # Last macos x86 runner
+    runs-on: macos-26-intel
     strategy:
       fail-fast: false
       matrix:
-        gcc-version: [12, 14] # Github supports the 3 latest major versions.
+        gcc-version: [13, 14, 15] # Github supports the 3 latest major versions.
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Prepare
