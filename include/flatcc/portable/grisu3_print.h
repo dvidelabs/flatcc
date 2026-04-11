@@ -183,7 +183,7 @@ static int grisu3_i_to_str(int val, char *str)
 
 static int grisu3_print_nan(uint64_t v, char *dst)
 {
-    static char hexdigits[] = "0123456789ABCDEF";
+    static char hexdigits[17] = "0123456789ABCDEF";
     int i = 0;
 
     dst[0] = 'N';
