@@ -32,7 +32,7 @@ static char *readfile(const char *filename, size_t max_size, size_t *size_out)
     if (max_size > 0 && size > max_size) {
         goto fail;
     }
-    rewind(fp);
+    if (fseek(fp, 0L, SEEK_SET)) goto fail;
     buf = (char *)malloc(size ? size : 1);
     if (!buf) {
         goto fail;
