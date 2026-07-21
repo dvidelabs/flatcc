@@ -67,6 +67,7 @@
   and add `-s` option to silence warnings (#354).
 - Fix potential UB in pprintint due to integer promotion, and silence warnings.
 - Fix buffer overrun in flatcc parser on malformed floating point input (#374).
+- Fix overflow check of default values in schema parser (#381).
 
 ## [0.6.1]
 
