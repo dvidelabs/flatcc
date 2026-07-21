@@ -125,7 +125,7 @@ int fb_coerce_scalar_type(fb_parser_t *P, fb_symbol_t *sym, fb_scalar_type_t st,
             return 0;
         }
         if (value->type == vt_uint) {
-            if (value->i > INT32_MAX) {
+            if (value->u > INT32_MAX) {
                 error_sym(P, sym, "32-bit signed int overflow");
                 value->type = vt_invalid;
                 return -1;
@@ -147,7 +147,7 @@ int fb_coerce_scalar_type(fb_parser_t *P, fb_symbol_t *sym, fb_scalar_type_t st,
             return 0;
         }
         if (value->type == vt_uint) {
-            if (value->i > INT16_MAX) {
+            if (value->u > INT16_MAX) {
                 error_sym(P, sym, "16-bit signed short overflow");
                 value->type = vt_invalid;
                 return -1;
@@ -169,7 +169,7 @@ int fb_coerce_scalar_type(fb_parser_t *P, fb_symbol_t *sym, fb_scalar_type_t st,
             return 0;
         }
         if (value->type == vt_uint) {
-            if (value->i > INT8_MAX) {
+            if (value->u > INT8_MAX) {
                 error_sym(P, sym, "8-bit signed byte overflow");
                 value->type = vt_invalid;
                 return -1;
