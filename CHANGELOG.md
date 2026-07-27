@@ -69,6 +69,7 @@
 - Fix buffer overrun in flatcc parser on malformed floating point input (#374).
 - Fix overflow check of default values in schema parser (#381).
 - Replace rewind with fseek for better error handling, low impact (#380).
+- Fix binary schema gen. for string arrays (a rare FlatCC only feature) (#295).
 
 ## [0.6.1]
 

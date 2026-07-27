@@ -87,8 +87,7 @@ static reflection_Type_ref_t export_type(flatcc_builder_t *B, fb_value_t type)
         fixed_length = (uint16_t)type.len;
         break;
     case vt_fixed_array_string_type:
-        break;
-        element = BaseType(Byte);
+        st = fb_char;
         base_type = BaseType(Array);
         fixed_length = (uint16_t)type.len;
         break;
@@ -128,7 +127,7 @@ static reflection_Type_ref_t export_type(flatcc_builder_t *B, fb_value_t type)
     case fb_byte: primitive = BaseType(Byte); break;
     case fb_double: primitive = BaseType(Double); break;
     case fb_float: primitive = BaseType(Float); break;
-    /* TODO: Googles flatc tool does not have char arrays so we use Byte as element type */
+    /* Google's flatc tool does not have char arrays so we use Byte as element type */
     case fb_char: primitive = BaseType(Byte); break;
     default: break;
     }
