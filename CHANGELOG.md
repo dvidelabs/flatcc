@@ -68,6 +68,7 @@
 - Fix potential UB in pprintint due to integer promotion, and silence warnings.
 - Fix buffer overrun in flatcc parser on malformed floating point input (#374).
 - Fix overflow check of default values in schema parser (#381).
+- Replace rewind with fseek for better error handling, low impact (#380).
 
 ## [0.6.1]
 
