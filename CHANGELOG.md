@@ -70,6 +70,7 @@
 - Fix overflow check of default values in schema parser (#381).
 - Replace rewind with fseek for better error handling, low impact (#380).
 - Fix binary schema gen. for string arrays (a rare FlatCC only feature) (#295).
+- Fix _with_size verifier functions (#346).
 
 ## [0.6.1]
 
