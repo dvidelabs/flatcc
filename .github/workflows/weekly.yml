@@ -32,7 +32,7 @@ jobs:
 
   clang-32bit:
     name: Clang 32bit
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Prepare
         run: |
@@ -93,14 +93,13 @@ jobs:
 
   gcc-15:
     name: GCC 15
-    runs-on: ubuntu-24.04
-    container:
-      image: ubuntu:25.04 # Provides gcc-15
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Prepare
         run: |
-          apt update && apt-get install -y gcc-15 g++-15 cmake
+          sudo apt update
+          sudo apt install gcc-15 g++-15
       - name: Build and run tests
         env:
           CC: gcc-15
@@ -111,7 +110,7 @@ jobs:
 
   gcc-32bit:
     name: GCC 32bit
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Prepare
         run: |
@@ -233,7 +232,7 @@ jobs:
 
   debian:
     name: Debian ${{ matrix.version }} "${{ matrix.name }}"
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
