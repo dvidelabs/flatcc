@@ -12,13 +12,31 @@ permissions:
   contents: read
 
 jobs:
-  clang:
+  clang-old:
     name: Clang ${{ matrix.clang-version }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        clang-version: [5, 7, 9, 11, 13, 15, 17, 19, 21]
+        clang-version: [5, 7, 9, 11, 13]
+    steps:
+      - name: Setup Clang
+        uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d # v1.8.1
+        with:
+          llvm: ${{ matrix.clang-version }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build and run tests
+        run: |
+          scripts/initbuild.sh make-concurrent
+          scripts/test.sh
+
+  clang:
+    name: Clang ${{ matrix.clang-version }}
+    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        clang-version: [15, 17, 19, 21, 22]
     steps:
       - name: Setup Clang
         uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d # v1.8.1
