@@ -1,3 +1,5 @@
+#include <ctype.h>
+
 #include "codegen_c.h"
 #include "fileio.h"
 #include "pstrutil.h"
@@ -116,7 +118,7 @@ static void _str_set_destructor(void *context, char *item)
 void fb_gen_c_includes(fb_output_t *out, const char *ext, const char *extup)
 {
     fb_include_t *inc = out->S->includes;
-    char *basename, *basenameup, *s;
+    char *basename, *basenameup;
     str_set_t set;
 
     fb_clear(set);
@@ -128,11 +130,8 @@ void fb_gen_c_includes(fb_output_t *out, const char *ext, const char *extup)
                     inc->name.s.s, (size_t)inc->name.s.len, out->opts->default_schema_ext)));
         inc = inc->link;
         checkmem((basenameup = fb_copy_path(basename)));
-        s = basenameup;
-        while (*s) {
-            *s = (char)toupper(*s);
-            ++s;
-        }
+        pstrtoid(basenameup);
+        pstrtoupper(basenameup);
         if (str_set_insert_item(&set, basenameup, ht_keep)) {
             free(basenameup);
             free(basename);

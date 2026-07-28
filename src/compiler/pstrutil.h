@@ -52,6 +52,26 @@ static inline char *pstrntoupper(char *dst, size_t n) {
     return dst;
 }
 
+static inline char *pstrtoid(char *dst) {
+    char *p;
+    for (p = dst; *p; ++p) {
+        if (!isalnum(*p)) {
+            *p = '_';
+        }
+    }
+    return dst;
+}
+
+static inline char *pstrntoid(char *dst, size_t n) {
+    size_t i;
+    for (i = 0; i < n && dst[i]; ++i) {
+        if (!isalnum(dst[i])) {
+            dst[i] = '_';
+        }
+    }
+    return dst;
+}
+
 #undef strnlen
 #define strnlen pstrnlen
 

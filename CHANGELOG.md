@@ -72,6 +72,7 @@
 - Fix binary schema gen. for string arrays (a rare FlatCC only feature) (#295).
 - Fix _with_size verifier functions (#346).
 - Fix shortened identifier regression in parser error messager (#371).
+- Make sure header guards are valid symbols (e.g. filenames with '-') (#293).
 
 ## [0.6.1]
 

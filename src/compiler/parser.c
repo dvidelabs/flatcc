@@ -1437,6 +1437,7 @@ int fb_init_parser(fb_parser_t *P, fb_options_t *opts, const char *name,
     checkmem((P->schema.basename = fb_create_basename(name, name_len, opts->default_schema_ext)));
     n = strlen(P->schema.basename);
     checkmem(s = fb_copy_path_n(P->schema.basename, n));
+    pstrntoid(s, n);
     pstrntoupper(s, n);
     P->schema.basenameup = s;
     P->schema.name.name.s.s = s;
