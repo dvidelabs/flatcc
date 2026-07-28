@@ -140,9 +140,6 @@ void error_ref_sym(fb_parser_t *P, fb_ref_t *ref, const char *msg, fb_symbol_t *
     }
     if (p) truncated = 1;
     buf[n0] = '\0';
-    if (n0 > 0) {
-        --n0;
-    }
     if (truncated) {
         memcpy(buf + FLATCC_MAX_IDENT_SHOW + 1 - 4, "...\0", 4);
         n0 = FLATCC_MAX_IDENT_SHOW;
