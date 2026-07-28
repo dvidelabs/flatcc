@@ -340,8 +340,8 @@ hash identifier agains the wrong buffer location, but this appears to only
 have a effected very few users. Generated header guards could contain invalid
 symbols if present in the filename, such as hyphens - these are now mapped to
 underscore. It is still possible to create conflicting names, e.g. by having
-schema files 'foo-bar.fbs' and `foo_bar.fbs', or `foo.fbs` and `Foo.fbs`, but it
-is not considered to be a practical concern worth handling.
+schema files like 'foo-bar.fbs' and 'foo_bar.fbs', or 'foo.fbs' and 'Foo.fbs',
+but it is not considered to be a practical concern worth handling.
 
 
 Release 0.6.1 contains primarily bug fixes and numerous contributions from the
