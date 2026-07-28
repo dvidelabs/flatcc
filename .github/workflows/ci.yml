@@ -17,7 +17,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install ninja-build
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build and run tests
         env:
           CC: clang
@@ -29,7 +29,7 @@ jobs:
     name: Ubuntu (make, gcc)
     runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build and run tests
         env:
           CC: gcc
@@ -42,7 +42,7 @@ jobs:
     name: macOS
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build and run tests
         run: |
           scripts/test.sh
@@ -51,7 +51,7 @@ jobs:
     name: Windows
     runs-on: windows-2025
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build and run tests
         run: |
           cmake .
