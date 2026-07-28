@@ -20,6 +20,12 @@ jobs:
       matrix:
         clang-version: [5, 7, 9, 11, 13]
     steps:
+      - name: Install libtinfo5
+        run: |
+          # Old Clang binaries need libtinfo5 which is no longer in Ubuntu 24.04 repos.
+          # setup-cpp's fallback download from Launchpad is unreliable, so we install it directly.
+          wget -q http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2_amd64.deb
+          sudo dpkg -i libtinfo5_6.3-2_amd64.deb
       - name: Setup Clang
         uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d # v1.8.1
         with:
