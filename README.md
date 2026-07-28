@@ -341,7 +341,8 @@ have a effected very few users. Generated header guards could contain invalid
 symbols if present in the filename, such as hyphens - these are now mapped to
 underscore. It is still possible to create conflicting names, e.g. by having
 schema files like 'foo-bar.fbs' and 'foo_bar.fbs', or 'foo.fbs' and 'Foo.fbs',
-but it is not considered to be a practical concern worth handling.
+in which case conflicting schema files will not be processed as they are
+considered a different path to an already processed file.
 
 
 Release 0.6.1 contains primarily bug fixes and numerous contributions from the
