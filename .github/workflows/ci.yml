@@ -49,12 +49,11 @@ jobs:
 
   windows:
     name: Windows
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
-      - uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Build and run tests
         run: |
           cmake .
-          msbuild FlatCC.sln /m /property:Configuration=Release
+          cmake --build . --config Release
           ctest -VV
