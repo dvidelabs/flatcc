@@ -240,8 +240,8 @@ jobs:
         include:
           - version: 12
             name: Bookworm
-          - version: 11
-            name: Bullseye
+          - version: 13
+            name: Trixie
     container:
       image: debian:${{ matrix.version }}
     steps:
