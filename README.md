@@ -323,18 +323,26 @@ fi
 ## Status
 
 Release 0.6.2 (in development) is primarily a bug fix release, refer to
-CHANGELOG for details. A long standing bug has been fixed where where objects
-created before a call to `_create_as_root` would not be properly aligned, and
-buffer end is now also padded to largest object seen within the buffer. Note
-that for clang debug builds, -fsanitize=undefined has been added and this may
-require dependent source code to also use that flag to avoid missing linker
-symbols. The feature can be disabled in CMakeLists.txt. CMake has been bumped to
-version 3.16 which is the latest version where Appveyor will build MVSC 2025.
-A buffer overrun in flatcc parser on malformed floating point input was fixed.
-Warnings added for potential name conflicts in enum names and table fields
-that could result in confusing C compiler errors. Not all warnigs are errors
-to the option `-s` was also added to silence warnings. The existing `-g`
-option can resolve some conflicts.
+CHANGELOG for details, this note only mentions a subset of these. A long
+standing bug has been fixed where where objects created before a call to
+`_create_as_root` would not be properly aligned, and buffer end is now also
+padded to largest object seen within the buffer. Note that for clang debug
+builds, -fsanitize=undefined has been added and this may require dependent
+source code to also use that flag to avoid missing linker symbols. The feature
+can be disabled in CMakeLists.txt. CMake has been bumped to version 3.16 which
+is the latest version where Appveyor will build MVSC 2025. A buffer overrun
+in flatcc parser on malformed floating point input was fixed. Warnings added
+for potential name conflicts in enum names and table fields that could result
+in confusing C compiler errors. Not all warnings are errors to the option `-s`
+was also added to silence warnings. The existing `-g` option can resolve some
+conflicts. Some _with_size variants of verified functions would verify a type
+hash identifier agains the wrong buffer location, but this appears to only
+have a effected very few users. Generated header guards could contain invalid
+symbols if present in the filename, such as hyphens - these are now mapped to
+underscore. It is still possible to create conflicting names, e.g. by having
+schema files 'foo-bar.fbs' and `foo_bar.fbs', or `foo.fbs` and `Foo.fbs`, but it
+is not considered to be a practical concern worth handling.
+
 
 Release 0.6.1 contains primarily bug fixes and numerous contributions from the
 community to handle platform edge cases. Additionally, pedantic GCC warnings
