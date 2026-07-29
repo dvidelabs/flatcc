@@ -11,13 +11,13 @@ permissions:
 jobs:
   ubuntu-ninja-clang:
     name: Ubuntu (ninja, clang)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Prepare
         run: |
           sudo apt update
           sudo apt install ninja-build
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build and run tests
         env:
           CC: clang
@@ -27,9 +27,9 @@ jobs:
 
   ubuntu-make-gcc:
     name: Ubuntu (make, gcc)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build and run tests
         env:
           CC: gcc
@@ -40,21 +40,20 @@ jobs:
 
   macos:
     name: macOS
-    runs-on: macos-14
+    runs-on: macos-26
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build and run tests
         run: |
           scripts/test.sh
 
   windows:
     name: Windows
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
-      - uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build and run tests
         run: |
           cmake .
-          msbuild FlatCC.sln /m /property:Configuration=Release
+          cmake --build . --config Release
           ctest -VV
