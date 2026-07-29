@@ -1,6 +1,8 @@
 # Change Log
 
-## [0.6.3-pre]
+## [0.6.4-pre]
+
+## [0.6.3]
 
 - Release 0.6.3 is a point release immediately following 0.6.2 because the master
   branch would report flatcc --version as 0.6.2 instead of 0.6.2-pre prior to
