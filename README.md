@@ -322,7 +322,7 @@ fi
 
 ## Status
 
-Release 0.6.2 (in development) is primarily a bug fix release, refer to
+Release 0.6.2 is primarily a bug fix release, please refer to
 CHANGELOG for details, this note only mentions a subset of these. A long
 standing bug has been fixed where where objects created before a call to
 `_create_as_root` would not be properly aligned, and buffer end is now also

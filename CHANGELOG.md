@@ -1,6 +1,8 @@
 # Change Log
 
-## [0.6.2-pre]
+## [0.6.3-pre]
+
+## [0.6.2]
 
 - CMake: avoid assuming location of build dir during configuration.
 - Use untyped integer constants in place of enums for public interface flags to
