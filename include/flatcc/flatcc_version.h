@@ -2,7 +2,7 @@
 extern "C" {
 #endif
 
-#define FLATCC_VERSION_TEXT "0.6.2"
+#define FLATCC_VERSION_TEXT "0.6.2-pre"
 #define FLATCC_VERSION_MAJOR 0
 #define FLATCC_VERSION_MINOR 6
 #define FLATCC_VERSION_PATCH 2
