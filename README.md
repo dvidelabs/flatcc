@@ -322,6 +322,12 @@ fi
 
 ## Status
 
+Release 0.6.3 is a point release immediately following 0.6.2 because the master
+branch would report flatcc --version as 0.6.2 instead of 0.6.2-pre prior to
+the 0.6.2 release and version  comment in generated headers would do the same.
+By bumping to 0.6.3 ensures that 0.6.3 is indeeded a release version and not a
+development snapshot. 0.6.3 is unctionally equivalent to the 0.6.2 release.
+
 Release 0.6.2 is primarily a bug fix release, please refer to
 CHANGELOG for details, this note only mentions a subset of these. A long
 standing bug has been fixed where where objects created before a call to
