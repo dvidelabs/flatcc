@@ -327,13 +327,13 @@ lex_mode_c_string:
             lex_emit_string_part(s, p);
             s = p;
         }
+        if (p == q || lex_iszterm(*p)) {
+            lex_emit_string_unterminated(p);
+            goto lex_mode_normal;
+        }
         if (*p == '\"') {
             ++p;
             lex_emit_string_end(s, p);
-            goto lex_mode_normal;
-        }
-        if (p == q || lex_iszterm(*p)) {
-            lex_emit_string_unterminated(p);
             goto lex_mode_normal;
         }
         if (*p == '\\') {
