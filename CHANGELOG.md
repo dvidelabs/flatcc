@@ -2,6 +2,12 @@
 
 ## [0.6.4-pre]
 
+- Fix buffer overruns in lexer when adversarial schema presented to parser
+  (#384, #385).
+- Avoid operating on undefined parser state after detecting errors (duplicate
+  symbol, recursive structs) (#387, #388).
+- Clear hash table memory to prevent memory leak when clearing parser (#389).
+
 ## [0.6.3]
 
 - Release 0.6.3 is a point release immediately following 0.6.2 because the master
