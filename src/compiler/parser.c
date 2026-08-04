@@ -1527,6 +1527,7 @@ void fb_clear_parser(fb_parser_t *P)
     }
     fb_schema_table_clear(&P->schema.root_schema_instance.include_index);
     fb_name_table_clear(&P->schema.root_schema_instance.attribute_index);
+    fb_name_table_clear(&P->schema.root_schema_instance.keyword_index);
     ptr_set_clear(&P->schema.visible_schema);
     if (P->tmp_field_marker) {
         free(P->tmp_field_marker);
