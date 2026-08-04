@@ -1537,6 +1537,8 @@ static int process_table(fb_parser_t *P, fb_compound_type_t *ct)
             id_failed = 1;
         }
     }
+    // Ordering assumes there are no duplicates so conservatively abort on error.
+    if (P->failed) return P->failed;
     /* Order in which data is ordered in binary buffer. */
     if (ct->metadata_flags & fb_f_original_order) {
         ct->ordered_members = original_order_members(P, (fb_member_t *)ct->members);
@@ -2010,6 +2012,10 @@ int fb_build_schema(fb_parser_t *P)
 #endif
         }
     }
+
+    /* Semantic analysis assumes no duplicates so conservatibely abort on error. */
+    if (P->failed) return P->failed;
+
     install_known_attributes(P);
     install_reserved_keywords(P);
 
