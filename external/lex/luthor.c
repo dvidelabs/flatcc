@@ -1373,10 +1373,10 @@ lex_mode_normal:
             /* Leading integer digit in C integers. */
         case '1': case '2': case '3': case '4': case '5':
         case '6': case '7': case '8': case '9':
-            while (++p && lex_isdigit(*p)) {
+            while (++p != q && lex_isdigit(*p)) {
             }
             d = p;
-            if (*p == '.') {
+            if (p != q && *p == '.') {
 /* Silence unused label warnings when features are disabled. */
 #ifdef LEX_C_OCTAL_NUMERIC
 lex_c_octal_to_fraction_part:
