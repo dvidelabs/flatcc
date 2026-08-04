@@ -690,6 +690,9 @@ static int analyze_struct(fb_parser_t *P, fb_compound_type_t *ct)
     uint16_t align;
     fb_token_t *t;
 
+    /* Avoid triggering assertions on already detected circular references. */
+    if (P->failed) return P->failed;
+
     assert(ct->symbol.kind == fb_is_struct);
 
     assert(!(ct->symbol.flags & fb_circular_open));
