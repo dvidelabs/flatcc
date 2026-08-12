@@ -1956,6 +1956,25 @@ void *flatcc_builder_get_direct_buffer(flatcc_builder_t *B, size_t *size_out)
     return 0;
 }
 
+void *flatcc_builder_get_direct_buffer_aligned(flatcc_builder_t *B, size_t *size_out, size_t block_align)
+{
+    if (!B->is_default_emitter) {
+        *size_out = 0;
+        return 0;
+    }
+    size_t size = flatcc_builder_get_buffer_size(B);
+    size_t padding = (-size) & (block_align - 1);
+    if (padding > 0) {
+            iov_state_t iov;
+            init_iov();
+            push_iov(_pad, padding);
+            if (0 == emit_back(B, &iov)) {
+                return 0;
+            }
+    }
+    return flatcc_emitter_get_direct_buffer(&B->default_emit_context, size_out);
+}
+
 void *flatcc_builder_copy_buffer(flatcc_builder_t *B, void *buffer, size_t size)
 {
     /* User is allowed to call tentatively to see if there is support. */
