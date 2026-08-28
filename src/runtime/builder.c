@@ -351,11 +351,11 @@ static int alloc_ht(flatcc_builder_t *B)
     if (!reserve_buffer(B, flatcc_builder_alloc_vd, B->vd_end, sizeof(vtable_descriptor_t), 0)) {
         return -1;
     }
-    B->vd_end = sizeof(vtable_descriptor_t);
     size = field_size * FLATCC_BUILDER_MIN_HASH_COUNT;
     if (B->alloc(B->alloc_context, buf, size, 1, flatcc_builder_alloc_ht)) {
         return -1;
     }
+    B->vd_end = sizeof(vtable_descriptor_t);
     while (size * 2 <= buf->iov_len) {
         size *= 2;
     }
