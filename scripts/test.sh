@@ -25,6 +25,11 @@ fi
 echo "building before tests ..."
 $ROOT/scripts/build.sh $DEBUG
 
+# Configure the UBSan if used.
+if [ -z "${UBSAN_OPTIONS}" ]; then
+    export UBSAN_OPTIONS="print_stacktrace=1"
+fi
+
 echo "running test in debug build ..."
 cd $DBGDIR && ctest $ROOT
 

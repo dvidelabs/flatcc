@@ -77,6 +77,7 @@ extern "C" {
 #include <string.h> /* memcpy */
 
 #include "pattributes.h" /* fallthrough */
+#include "pmemaccess.h" /* mem_copy_word */
 
 #define PDIAGNOSTIC_IGNORE_UNUSED_FUNCTION
 #include "pdiagnostic_push.h"
@@ -103,14 +104,6 @@ static int print_int(int n, char *p);
 static int print_long(long n, char *p);
 
 
-#if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64)
-#define __print_unaligned_copy_16(p, q) (*(uint16_t*)(p) = *(uint16_t*)(q))
-#else
-#define __print_unaligned_copy_16(p, q)                                     \
-    ((((uint8_t*)(p))[0] = ((uint8_t*)(q))[0]),                             \
-     (((uint8_t*)(p))[1] = ((uint8_t*)(q))[1]))
-#endif
-
 static const char __print_digit_pairs[] =
     "0001020304050607080910111213141516171819"
     "2021222324252627282930313233343536373839"
@@ -122,7 +115,7 @@ static const char __print_digit_pairs[] =
         p -= 2;                                                             \
         dp = __print_digit_pairs + (n % 100) * 2;                           \
         n /= 100;                                                           \
-        __print_unaligned_copy_16(p, dp);
+        mem_copy_word(p, dp, 2);
 
 #define __print_long_stage()                                                \
         __print_stage()                                                     \
@@ -440,11 +433,11 @@ static int UNAME(UT n, char *buf)                                           \
         p -= 2;                                                             \
         m = (unsigned int)(n % 100) * 2;                                    \
         n /= 100;                                                           \
-        __print_unaligned_copy_16(p, __print_digit_pairs + m);              \
+        mem_copy_word(p, __print_digit_pairs + m, 2);                       \
     }                                                                       \
     p -= 2;                                                                 \
     m = (unsigned int)n * 2;                                                \
-    __print_unaligned_copy_16(p, __print_digit_pairs + m);                  \
+    mem_copy_word(p, __print_digit_pairs + m, 2);                           \
     if (n < 10) {                                                           \
         ++p;                                                                \
     }                                                                       \
