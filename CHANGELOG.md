@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.6.4-pre]
+## [0.6.4]
 
 - Fix buffer overruns in lexer when adversarial schema presented to parser
   (#384, #385).

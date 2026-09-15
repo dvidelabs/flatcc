@@ -322,6 +322,11 @@ fi
 
 ## Status
 
+Release 0.6.4 fixes a few unlikely vulnerabilities (adversial schema in flatcc
+parser), a memory leak on builder reuse, and a failure to allow a retry after
+an allocation error in low memory. Some were reported as CVEs through
+apparent AI assisted issue reporting, despite low practical impact, hence this release.
+
 Release 0.6.3 is a point release immediately following 0.6.2 because the master
 branch would report flatcc --version as 0.6.2 instead of 0.6.2-pre prior to
 the 0.6.2 release and version  comment in generated headers would do the same.
