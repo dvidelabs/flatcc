@@ -27,7 +27,7 @@ jobs:
           wget -q http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2_amd64.deb
           sudo dpkg -i libtinfo5_6.3-2_amd64.deb
       - name: Setup Clang
-        uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d # v1.8.1
+        uses: aminya/setup-cpp@15a6bd8cf39030f88b5da3d203a829ec4eea4955 # v1.10.1
         with:
           llvm: ${{ matrix.clang-version }}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -45,7 +45,7 @@ jobs:
         clang-version: [15, 17, 19, 21, 22]
     steps:
       - name: Setup Clang
-        uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d # v1.8.1
+        uses: aminya/setup-cpp@15a6bd8cf39030f88b5da3d203a829ec4eea4955 # v1.10.1
         with:
           llvm: ${{ matrix.clang-version }}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -106,7 +106,7 @@ jobs:
         gcc-version: [9, 11, 13, 14]
     steps:
       - name: Setup GCC
-        uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d # v1.8.1
+        uses: aminya/setup-cpp@15a6bd8cf39030f88b5da3d203a829ec4eea4955 # v1.10.1
         with:
           gcc: ${{ matrix.gcc-version }}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
