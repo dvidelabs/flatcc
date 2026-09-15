@@ -25,6 +25,8 @@ extern "C" {
 #pragma warning(disable: 4710) /* function not inlined */
 /* Well, we don't intend to add the padding manually. */
 #pragma warning(disable: 4820) /* x bytes padding added in struct */
+/* MSVC warns when negating unsigned int type, but using a signed int negation could be UB, so we need unsigned negation. */
+#pragma warning(disable: 4146) /* unary minus operator applied to unsigned type */
 
 /*
  * Don't warn that fopen etc. are unsafe
