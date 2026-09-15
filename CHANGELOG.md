@@ -8,6 +8,7 @@
   symbol, recursive structs) (#387, #388).
 - Clear hash table memory to prevent memory leak when clearing parser (#389).
 - Gracefully handle allocation error in runtime hashtable (#393).
+- Silence Visual Studio unsigned negation warnings in pprintint.h via pwarnings.h.
 
 ## [0.6.3]
 
