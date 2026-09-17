@@ -103,39 +103,39 @@ again:
      */
     //cmpistri(end, buf, "\x20\t\v\f\r\n", _SIDD_NEGATIVE_POLARITY);
     cmpistri(end, buf, "\x20\t\v\f", _SIDD_NEGATIVE_POLARITY);
-#else
-#if FLATCC_ALLOW_UNALIGNED_ACCESS
-    while (end - buf >= 16) {
-        if (*buf > 0x20) {
-            return buf;
-        }
-#if FLATCC_JSON_PARSE_WIDE_SPACE
-        if (((uint64_t *)buf)[0] != 0x2020202020202020) {
-descend:
-            if (((uint32_t *)buf)[0] == 0x20202020) {
-                buf += 4;
-            }
-#endif
-            if (((uint16_t *)buf)[0] == 0x2020) {
-                buf += 2;
-            }
-            if (*buf == 0x20) {
-                ++buf;
-            }
-            if (*buf > 0x20) {
-                return buf;
-            }
-            break;
-#if FLATCC_JSON_PARSE_WIDE_SPACE
-        }
-        if (((uint64_t *)buf)[1] != 0x2020202020202020) {
-            buf += 8;
-            goto descend;
-        }
-        buf += 16;
-#endif
-    }
-#endif
+//#else
+//#if FLATCC_ALLOW_UNALIGNED_ACCESS
+//    while (end - buf >= 16) {
+//        if (*buf > 0x20) {
+//            return buf;
+//        }
+//#if FLATCC_JSON_PARSE_WIDE_SPACE
+//        if (((uint64_t *)buf)[0] != 0x2020202020202020) {
+//descend:
+//            if (((uint32_t *)buf)[0] == 0x20202020) {
+//                buf += 4;
+//            }
+//#endif
+//            if (((uint16_t *)buf)[0] == 0x2020) {
+//                buf += 2;
+//            }
+//            if (*buf == 0x20) {
+//                ++buf;
+//            }
+//            if (*buf > 0x20) {
+//                return buf;
+//            }
+//            break;
+//#if FLATCC_JSON_PARSE_WIDE_SPACE
+//        }
+//        if (((uint64_t *)buf)[1] != 0x2020202020202020) {
+//            buf += 8;
+//            goto descend;
+//        }
+//        buf += 16;
+//#endif
+//    }
+//#endif
 #endif
     while (buf != end && *buf == 0x20) {
         ++buf;
