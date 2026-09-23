@@ -354,7 +354,6 @@ again:
     if (P->token == P->te) {
         /* We keep returning end of token to help binary operators etc., if any. */
         --P->token;
-        assert(0);
         switch (P->token->id) {
         case LEX_TOK_EOS: case LEX_TOK_EOB: case LEX_TOK_EOF:
             P->token->id = LEX_TOK_EOF;
