@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.6.5-pre]
+
+- Remove stray debug assert preventing proper syntax error in debug builds
+  on truncated schema input (limited practical impact) (#386).
+
 ## [0.6.4]
 
 - Fix buffer overruns in lexer when adversarial schema presented to parser
