@@ -38,8 +38,10 @@
  *
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "flatcc/flatcc.h"
+#include "flatcc/support/readfile.h"
 
 int main(void)
 {
@@ -78,6 +80,12 @@ int main(void)
         "}\n"
         "/// following_type_doc_should_remain\n"
         "struct comment_target { value: int; }\n"
+        "table comment_table { value: int;\n"
+        "/// drop table comment\n"
+        "}\n"
+        "union comment_union { point,\n"
+        "/// drop union comment\n"
+        "}\n"
         "/// the.ui is a union\n"
         "///\n"
         "/// We got one blank comment line above.\n"
@@ -132,14 +140,17 @@ int main(void)
 
     flatcc_options_t opts;
     flatcc_context_t ctx = 0;
+    char *output = 0, *resized_output;
+    size_t output_size = 0;
     int ret = -1;
+    const char *outfile = "cgen_test_output.tmp";
 
     flatcc_init_options(&opts);
     opts.cgen_common_reader = 1;
     opts.cgen_reader = 1;
     opts.cgen_common_builder = 1;
     opts.cgen_builder = 1;
-    opts.gen_stdout = 1;
+    opts.gen_outfile = outfile;
 
     /* The basename xyzzy is derived from path. */
     if (!(ctx = flatcc_create_context(&opts, name, 0, 0))) {
@@ -156,6 +167,40 @@ int main(void)
             fprintf(stderr, "failed to generate output for C\n");
             goto done;
         };
+        if (!(output = readfile(outfile, 0, &output_size))) {
+            fprintf(stderr, "failed to read generated output for C\n");
+            goto done;
+        }
+        if (!(resized_output = (char *)realloc(output, output_size + 1))) {
+            fprintf(stderr, "failed to allocate generated output buffer\n");
+            goto done;
+        }
+        output = resized_output;
+        output[output_size] = '\0';
+        if (!strstr(output,
+                "struct the_comment_source {\n"
+                "    alignas(4) int32_t value;\n"
+                "    /**  trailing_doc_comment_should_be_kept\n"
+                "     *  second_trailing_doc_comment_should_be_kept */\n"
+                "};")) {
+            fprintf(stderr, "trailing struct doc comments were not kept inside comment_source\n");
+            goto done;
+        }
+        if (!strstr(output,
+                "/**  following_type_doc_should_remain */\n"
+                "struct the_comment_target {")) {
+            fprintf(stderr, "doc comment after closing brace was not attached to comment_target\n");
+            goto done;
+        }
+        if (strstr(output, "drop table comment") ||
+                strstr(output, "drop union comment")) {
+            fprintf(stderr, "trailing table or union doc comments were unexpectedly emitted\n");
+            goto done;
+        }
+        if (fwrite(output, 1, output_size, stdout) != output_size) {
+            fprintf(stderr, "failed to write generated output to stdout\n");
+            goto done;
+        }
         fprintf(stdout,
                 "\n#if 0 /* FlatBuffers Schema Source */\n"
                 "%s\n"
@@ -164,6 +209,8 @@ int main(void)
     }
     ret = 0;
 done:
+    free(output);
+    remove(outfile);
     flatcc_destroy_context(ctx);
     return ret;
 }
