@@ -13,6 +13,11 @@ target_link_libraries(cgen_test
 )
 
 add_test(cgen_test cgen_test${CMAKE_EXECUTABLE_SUFFIX})
+add_test(NAME cgen_test_doc_comments
+    COMMAND ${CMAKE_COMMAND}
+        -DCGEN_TEST=$<TARGET_FILE:cgen_test>
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/check_doc_comments.cmake
+)
 
 
 # Compilation of the generated code tests many import edge cases 

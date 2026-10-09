@@ -1252,6 +1252,7 @@ static void gen_struct(fb_output_t *out, fb_compound_type_t *ct)
             fprintf(out->fp, "    uint8_t __padding%u[%u];\n",
                     pad_index, pad);
         }
+        print_doc(out, "    ", ct->trailing_doc);
         fprintf(out->fp, "};\n");
         if (do_pad) {
             fprintf(out->fp, "#pragma pack()\n");

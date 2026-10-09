@@ -1063,6 +1063,11 @@ static void parse_compound_type(fb_parser_t *P, fb_compound_type_t *ct, long tok
             goto fail;
         }
     }
+    if (ct->symbol.kind == fb_is_struct) {
+        revert_symbols(&P->doc);
+        ct->trailing_doc = P->doc;
+    }
+    P->doc = 0;
     if (!optional(P, '}') && t) {
         error_tok_2(P, P->token, "Declaration missing closing '}' to match", t);
     }

@@ -265,6 +265,7 @@ struct fb_compound_type {
     fb_member_t *primary_key;
     fb_metadata_t *metadata;
     fb_doc_t *doc;
+    fb_doc_t *trailing_doc;
     fb_value_t type;
     fb_symbol_table_t index;
     /* Only for enums. */
