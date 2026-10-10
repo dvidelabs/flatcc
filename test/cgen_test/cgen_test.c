@@ -1,7 +1,7 @@
 /*
- * Parse and verify schema complex nonsense schema, then generate common
- * and schema specific files for reader and builder, all outfileenated to
- * stdout, followed by the schema source in a comment.
+ * Parse and verify a complex schema, generate reader and builder C code
+ * to a temporary file, check doc-comment placement, then write the
+ * generated code and schema source to stdout.
  *
  * Notes:
  *
