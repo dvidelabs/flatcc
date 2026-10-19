@@ -206,8 +206,8 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang" AND NOT "${CMAKE_CXX_SIMULATE_ID}" STREQ
     endif()
     if (FLATCC_DEBUG_CLANG_SANITIZE)
         if (CMAKE_BUILD_TYPE MATCHES Debug)
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined -fno-sanitize-recover=all")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fno-sanitize-recover=all")
         endif()
     endif()
     # Suppress warning relaxed in clang-6, see https://reviews.llvm.org/D28148
