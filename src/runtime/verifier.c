@@ -127,7 +127,7 @@ static inline int check_header(uoffset_t end, uoffset_t base, uoffset_t offset)
 {
     uoffset_t k = base + offset;
 
-    if (uoffset_size <= voffset_size && k + offset_size < k) {
+    if (k + offset_size < k) {
         return 0;
     }
 
