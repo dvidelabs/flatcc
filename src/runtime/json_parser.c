@@ -538,7 +538,7 @@ static const char *__flatcc_json_parser_number(flatcc_json_parser_t *ctx, const 
     if (buf != end) {
         if (*buf == '.') {
             ++buf;
-            if (*buf < '0' || *buf > '9') {
+            if (buf == end || *buf < '0' || *buf > '9') {
                 return flatcc_json_parser_set_error(ctx, buf, end, flatcc_json_parser_error_invalid_numeric);
             }
             ++buf;

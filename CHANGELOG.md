@@ -4,6 +4,8 @@
 
 - Remove stray debug assert preventing proper syntax error in debug builds
   on truncated schema input (limited practical impact) (#386).
+- Guard against adversarial buffer overrun in JSON numeric parser
+  (FINDING 1 in #400).
 
 ## [0.6.4]
 
