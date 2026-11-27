@@ -1,0 +1,16 @@
+namespace CloneSample;
+
+table Item {
+  name:string;
+  weight:short;
+}
+
+table Document {
+  id:uint;
+  note:string;
+  values:[int];
+  left:Item;
+  right:Item;
+}
+
+root_type Document;

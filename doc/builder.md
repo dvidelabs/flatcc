@@ -1615,6 +1615,38 @@ taken from the refmap instead. See source comments in
 `flatcc_refmap.h` and `flatcc_builder.h`, and `monster_test.c`
 clone tests.
 
+### Runnable table-cloning example
+
+[`samples/clone`](../samples/clone) builds a source `Document`, clones it
+with and without a refmap, verifies the resulting buffers, and reads back
+every field. Its two `Item` fields refer to the same source table. The
+example checks that the ordinary clone has two copies and the refmap clone
+preserves the shared reference. From the repository root, run:
+
+```sh
+cmake -S . -B build/clone-example -DCMAKE_BUILD_TYPE=Release -DFLATCC_TEST=ON -DFLATCC_CXX_TEST=OFF
+cmake --build build/clone-example --target clone_sample
+(cd build/clone-example && ctest -R '^clone_sample$' -V)
+```
+
+`CloneSample_Document_clone_as_root` starts and ends the new root; finalize
+its builder afterward, without calling `CloneSample_Document_end_as_root`.
+The source buffer must remain valid while it is being read and cloned. The
+finalized target is a separately allocated buffer; free it with
+`flatcc_builder_aligned_free`.
+
+To change a field, the example instead starts a new root, adds a replacement
+`id`, and uses each other field's `_pick` function to copy it from the old
+root. It then ends and finalizes the new root. The original remains intact;
+`_clone_as_root` is not a way to open the old table for subsequent edits.
+
+The refmap is optional and is scoped to the source addresses and the target
+builder's current buffer. The example initializes one, attaches it during
+cloning, restores the builder's previous map, and clears it before leaving
+scope. Reset, replace, or detach a map before reusing source addresses for
+different data or building a different target buffer. Use separate maps for
+nested buffers, which cannot share references with their parent.
+
 Note that, for example, it might be relevant to preserve DAG
 structure when cloning one object with all its sub-objects, but
 if it is cloned a second time, a new copy is desired still while
